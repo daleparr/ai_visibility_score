@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Brain, Mail, Lock, User, Building, ArrowLeft } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { signIn } from 'next-auth/react'
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState({

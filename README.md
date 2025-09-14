@@ -5,7 +5,7 @@ A comprehensive platform that evaluates how brands appear in AI-powered search a
 ## 🚀 Features
 
 - **Multi-Agent Evaluation**: Test across multiple AI providers simultaneously
-- **Comprehensive Scoring**: 8-dimension evaluation framework with 0-100 scoring
+- **Comprehensive Scoring**: 12-dimension evaluation framework with 0-100 scoring
 - **Executive Reports**: Clean, C-suite ready dashboards and detailed reports
 - **Competitor Benchmarking**: Side-by-side analysis capabilities
 - **Actionable Roadmap**: Prioritized recommendations with clear timelines
@@ -30,6 +30,7 @@ A comprehensive platform that evaluates how brands appear in AI-powered search a
 - Ontologies & Taxonomy (10%)
 - Knowledge Graphs (5%)
 - LLM Readability (5%)
+- Conversational Copy (5%) 🆕
 
 #### 📰 Perception & Reputation (35% weight)
 *"Can AI explain why your brand matters?"*

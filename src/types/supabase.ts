@@ -417,6 +417,20 @@ export interface AIProviderConfig {
 }
 
 // Scoring types
+export type DimensionName =
+  | 'schema_structured_data'
+  | 'semantic_clarity'
+  | 'ontologies_taxonomy'
+  | 'knowledge_graphs'
+  | 'llm_readability'
+  | 'conversational_copy'
+  | 'geo_visibility'
+  | 'citation_strength'
+  | 'answer_quality'
+  | 'sentiment_trust'
+  | 'hero_products'
+  | 'shipping_freight'
+
 export interface ScoreBreakdown {
   infrastructure: number
   perception: number

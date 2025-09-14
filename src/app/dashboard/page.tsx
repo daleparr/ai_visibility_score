@@ -15,9 +15,9 @@ import {
   AlertCircle,
   ArrowRight
 } from 'lucide-react'
-import { getBrands, getEvaluations } from '@/lib/supabase'
+import { getBrands, getEvaluations } from '@/lib/database'
 import { formatDateTime, getGradeColor, formatScore } from '@/lib/utils'
-import type { Brand, Evaluation } from '@/types/supabase'
+import type { Brand, Evaluation } from '@/lib/db/schema'
 
 export default function DashboardPage() {
   const [brands, setBrands] = useState<Brand[]>([])
@@ -33,8 +33,8 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
-        // This would normally get the current user ID from auth
-        const userId = 'current-user-id' // Placeholder
+        // Get current user ID from session (will work with NextAuth)
+        const userId = 'demo-user-id' // Will be replaced with real session data
         
         const [brandsData] = await Promise.all([
           getBrands(userId)
@@ -59,8 +59,8 @@ export default function DashboardPage() {
           completedEvaluations += completed.length
           
           const scores = completed
-            .filter(e => e.overall_score !== null)
-            .map(e => e.overall_score!)
+            .filter(e => e.overallScore !== null)
+            .map(e => e.overallScore!)
           
           if (scores.length > 0) {
             totalScore += scores.reduce((sum, score) => sum + score, 0)
@@ -244,7 +244,7 @@ export default function DashboardPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-900">{brand.name}</p>
-                        <p className="text-xs text-gray-500">{brand.website_url}</p>
+                        <p className="text-xs text-gray-500">{brand.websiteUrl}</p>
                       </div>
                     </div>
                     <Button variant="ghost" size="sm" asChild>
@@ -304,9 +304,9 @@ export default function DashboardPage() {
                           >
                             {evaluation.status}
                           </Badge>
-                          {evaluation.overall_score && (
+                          {evaluation.overallScore && (
                             <Badge className={getGradeColor(evaluation.grade || 'F')}>
-                              {formatScore(evaluation.overall_score)} / {evaluation.grade}
+                              {formatScore(evaluation.overallScore)} / {evaluation.grade}
                             </Badge>
                           )}
                         </div>
@@ -314,7 +314,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-gray-500">
-                        {formatDateTime(evaluation.created_at)}
+                        {evaluation.createdAt ? formatDateTime(evaluation.createdAt) : 'N/A'}
                       </p>
                     </div>
                   </div>

@@ -1,4 +1,5 @@
 {
+  "_comment": "DEPRECATED: This file is for Vercel deployment. Project has been migrated to Netlify. See netlify.toml for current deployment configuration.",
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
@@ -9,17 +10,22 @@
     }
   },
   "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key",
-    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
+    "_comment": "LEGACY: These were Supabase environment variables. Now using Neon + NextAuth.",
+    "DATABASE_URL": "@database_url",
+    "NEXTAUTH_SECRET": "@nextauth_secret",
+    "NEXTAUTH_URL": "@nextauth_url",
+    "GOOGLE_CLIENT_ID": "@google_client_id",
+    "GOOGLE_CLIENT_SECRET": "@google_client_secret",
     "ENCRYPTION_KEY": "@encryption_key",
     "NEXT_PUBLIC_APP_URL": "@app_url"
   },
   "build": {
     "env": {
-      "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
-      "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key",
-      "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
+      "DATABASE_URL": "@database_url",
+      "NEXTAUTH_SECRET": "@nextauth_secret",
+      "NEXTAUTH_URL": "@nextauth_url",
+      "GOOGLE_CLIENT_ID": "@google_client_id",
+      "GOOGLE_CLIENT_SECRET": "@google_client_secret",
       "ENCRYPTION_KEY": "@encryption_key",
       "NEXT_PUBLIC_APP_URL": "@app_url"
     }

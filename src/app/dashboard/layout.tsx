@@ -24,8 +24,8 @@ import {
   Menu,
   X
 } from 'lucide-react'
-import { supabase, getUser, signOut } from '@/lib/supabase'
-import type { User } from '@supabase/supabase-js'
+import { getSession } from 'next-auth/react'
+import type { User } from '@/lib/db/schema'
 
 interface DashboardLayoutProps {
   children: React.ReactNode

@@ -61,8 +61,11 @@ export const EVALUATION_PROMPTS = {
     knowledge_graphs: (brandName: string, websiteUrl: string) => 
       `Assess ${brandName}'s presence in knowledge graphs. Check: 1) Google Knowledge Graph presence, 2) Wikidata entries, 3) Internal entity linking, 4) Relationship mapping between concepts, 5) Entity disambiguation quality. Score 0-100 with explanation.`,
     
-    llm_readability: (brandName: string, websiteUrl: string) => 
-      `Evaluate how well ${brandName} (${websiteUrl}) is structured for LLM comprehension. Consider: 1) Content chunking and structure, 2) Alt text completeness, 3) Accessibility markup (ARIA), 4) Narrative flow coherence, 5) Machine-readable formatting. Score 0-100 with details.`
+    llm_readability: (brandName: string, websiteUrl: string) =>
+      `Evaluate how well ${brandName} (${websiteUrl}) is structured for LLM comprehension. Consider: 1) Content chunking and structure, 2) Alt text completeness, 3) Accessibility markup (ARIA), 4) Narrative flow coherence, 5) Machine-readable formatting. Score 0-100 with details.`,
+    
+    conversational_copy: (brandName: string, websiteUrl: string) =>
+      `Analyze the conversational copy quality of ${brandName} (${websiteUrl}). Evaluate how well their content teaches AI why the brand matters through natural language. Assess: 1) Coverage - Rich conversational copy across products vs flat descriptions (0-25 pts), 2) Quality & Use-Case Framing - Distinct, application-driven language like "Perfect under a blazer" vs generic phrasing (0-25 pts), 3) Query Alignment - Content that mirrors natural queries like "Best T-shirt for layering" vs no Q&A style (0-25 pts), 4) Semantic Enrichment - Integration of brand values, attributes, and ontologies vs no brand integration (0-25 pts). Provide detailed scoring breakdown and overall 0-100 score with specific examples from their content.`
   },
 
   // Perception & Reputation Tests

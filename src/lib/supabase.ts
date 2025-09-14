@@ -1,15 +1,15 @@
 import { createClient } from '@supabase/supabase-js'
-import { Database } from '@/types/supabase'
+import { isDemoMode, mockUser, mockBrands, mockEvaluations, mockDimensionScores, mockRecommendations } from './demo-mode'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Server-side client with service role key
-export const supabaseAdmin = createClient<Database>(
+export const supabaseAdmin = createClient(
   supabaseUrl,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey, // Fallback to anon key for development
   {
     auth: {
       autoRefreshToken: false,
@@ -20,18 +20,31 @@ export const supabaseAdmin = createClient<Database>(
 
 // Auth helpers
 export const getUser = async () => {
+  if (isDemoMode()) {
+    return mockUser
+  }
+  
   const { data: { user }, error } = await supabase.auth.getUser()
   if (error) throw error
   return user
 }
 
 export const signOut = async () => {
+  if (isDemoMode()) {
+    window.location.href = '/'
+    return
+  }
+  
   const { error } = await supabase.auth.signOut()
   if (error) throw error
 }
 
 // Database helpers
 export const getBrands = async (userId: string) => {
+  if (isDemoMode()) {
+    return mockBrands.filter(brand => brand.userId === userId)
+  }
+  
   const { data, error } = await supabase
     .from('brands')
     .select('*')
@@ -43,6 +56,10 @@ export const getBrands = async (userId: string) => {
 }
 
 export const getBrand = async (brandId: string) => {
+  if (isDemoMode()) {
+    return mockBrands.find(brand => brand.id === brandId) || mockBrands[0]
+  }
+  
   const { data, error } = await supabase
     .from('brands')
     .select('*')
@@ -53,7 +70,16 @@ export const getBrand = async (brandId: string) => {
   return data
 }
 
-export const createBrand = async (brand: Database['public']['Tables']['brands']['Insert']) => {
+export const createBrand = async (brand: any) => {
+  if (isDemoMode()) {
+    return {
+      id: `demo-brand-${Date.now()}`,
+      ...brand,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+  }
+  
   const { data, error } = await supabase
     .from('brands')
     .insert(brand)
@@ -65,9 +91,18 @@ export const createBrand = async (brand: Database['public']['Tables']['brands'][
 }
 
 export const updateBrand = async (
-  brandId: string, 
-  updates: Database['public']['Tables']['brands']['Update']
+  brandId: string,
+  updates: any
 ) => {
+  if (isDemoMode()) {
+    const brand = mockBrands.find(b => b.id === brandId)
+    return {
+      ...brand,
+      ...updates,
+      updated_at: new Date().toISOString()
+    }
+  }
+  
   const { data, error } = await supabase
     .from('brands')
     .update(updates)
@@ -80,6 +115,11 @@ export const updateBrand = async (
 }
 
 export const deleteBrand = async (brandId: string) => {
+  if (isDemoMode()) {
+    // In demo mode, just return success
+    return
+  }
+  
   const { error } = await supabase
     .from('brands')
     .delete()
@@ -89,6 +129,10 @@ export const deleteBrand = async (brandId: string) => {
 }
 
 export const getEvaluations = async (brandId: string) => {
+  if (isDemoMode()) {
+    return mockEvaluations.filter(evaluation => evaluation.brandId === brandId)
+  }
+  
   const { data, error } = await supabase
     .from('evaluations')
     .select(`
@@ -120,7 +164,7 @@ export const getEvaluation = async (evaluationId: string) => {
 }
 
 export const createEvaluation = async (
-  evaluation: Database['public']['Tables']['evaluations']['Insert']
+  evaluation: any
 ) => {
   const { data, error } = await supabase
     .from('evaluations')
@@ -134,7 +178,7 @@ export const createEvaluation = async (
 
 export const updateEvaluation = async (
   evaluationId: string,
-  updates: Database['public']['Tables']['evaluations']['Update']
+  updates: any
 ) => {
   const { data, error } = await supabase
     .from('evaluations')
@@ -159,7 +203,7 @@ export const getDimensionScores = async (evaluationId: string) => {
 }
 
 export const createDimensionScore = async (
-  dimensionScore: Database['public']['Tables']['dimension_scores']['Insert']
+  dimensionScore: any
 ) => {
   const { data, error } = await supabase
     .from('dimension_scores')
@@ -183,7 +227,7 @@ export const getRecommendations = async (evaluationId: string) => {
 }
 
 export const createRecommendation = async (
-  recommendation: Database['public']['Tables']['recommendations']['Insert']
+  recommendation: any
 ) => {
   const { data, error } = await supabase
     .from('recommendations')
@@ -207,7 +251,7 @@ export const getAIProviders = async (userId: string) => {
 }
 
 export const createAIProvider = async (
-  provider: Database['public']['Tables']['ai_providers']['Insert']
+  provider: any
 ) => {
   const { data, error } = await supabase
     .from('ai_providers')
@@ -221,7 +265,7 @@ export const createAIProvider = async (
 
 export const updateAIProvider = async (
   providerId: string,
-  updates: Database['public']['Tables']['ai_providers']['Update']
+  updates: any
 ) => {
   const { data, error } = await supabase
     .from('ai_providers')
@@ -255,7 +299,7 @@ export const getUserProfile = async (userId: string) => {
 }
 
 export const createUserProfile = async (
-  profile: Database['public']['Tables']['user_profiles']['Insert']
+  profile: any
 ) => {
   const { data, error } = await supabase
     .from('user_profiles')
@@ -269,7 +313,7 @@ export const createUserProfile = async (
 
 export const updateUserProfile = async (
   userId: string,
-  updates: Database['public']['Tables']['user_profiles']['Update']
+  updates: any
 ) => {
   const { data, error } = await supabase
     .from('user_profiles')
@@ -303,7 +347,7 @@ export const subscribeToEvaluation = (
 }
 
 export const createEvaluationResult = async (
-  result: Database['public']['Tables']['evaluation_results']['Insert']
+  result: any
 ) => {
   const { data, error } = await supabase
     .from('evaluation_results')

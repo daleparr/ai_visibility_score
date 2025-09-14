@@ -20,7 +20,7 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react'
-import { createBrand } from '@/lib/supabase'
+import { createBrand } from '@/lib/database'
 import { validateUrl, extractDomain } from '@/lib/utils'
 import Link from 'next/link'
 

@@ -123,6 +123,48 @@ AI Visibility Score = (Infrastructure × 0.40) + (Perception × 0.35) + (Commerc
 - 30-49: Poor structure, significant accessibility problems
 - 0-29: Unstructured content, major readability barriers
 
+### 1.6 Conversational Copy (5% of total score)
+**Evaluation Criteria:**
+- Content coverage and conversational tone across product descriptions
+- Use-case framing and distinct, application-driven language
+- Natural query alignment and Q&A style content
+- Semantic enrichment with brand values and attribute integration
+
+**Testing Method:**
+- Multi-agent analysis of product descriptions and editorial content
+- Use-case detection and conversational tone assessment
+- Query simulation testing across natural language patterns
+- Brand value integration analysis
+
+**Scoring:**
+- 90-100: Rich conversational copy across all content with excellent use-case framing and query alignment
+- 70-89: Good conversational elements with clear use-cases and moderate query alignment
+- 50-69: Some conversational copy but inconsistent use-case framing
+- 30-49: Limited conversational elements, mostly functional descriptions
+- 0-29: Flat, generic descriptions with no conversational or use-case elements
+
+**Detailed Scoring Rubric:**
+
+**Coverage (0-25 pts)**
+- 0 = Minimal/flat descriptions ("100% cotton T-shirt")
+- 10 = Some PDPs with conversational tone
+- 25 = Rich copy across most products + editorial content
+
+**Quality & Use-Case Framing (0-25 pts)**
+- 0 = Generic, repetitive phrasing
+- 10 = Functional but bland
+- 25 = Distinct, use-case-driven ("Perfect under a blazer", "Designed for festivals")
+
+**Query Alignment (0-25 pts)**
+- 0 = No natural language Q&A
+- 15 = Some "how/why/when" phrasing
+- 25 = Consistently mirrors natural queries ("Best T-shirt for layering")
+
+**Semantic Enrichment (0-25 pts)**
+- 0 = No integration of brand values or attributes
+- 15 = Some integration but inconsistent
+- 25 = Copy integrates key attributes (material, fit, price), values (heritage, sustainability), and links to ontologies
+
 ## Pillar 2: Perception & Reputation (35% weight)
 
 *"Can AI explain why your brand matters?"*

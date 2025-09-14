@@ -14,6 +14,7 @@ export const DIMENSION_WEIGHTS = {
   'ontologies_taxonomy': 0.10,
   'knowledge_graphs': 0.05,
   'llm_readability': 0.05,
+  'conversational_copy': 0.05,
   
   // Perception & Reputation (35% total)
   'geo_visibility': 0.10,
@@ -39,6 +40,7 @@ export const DIMENSION_PILLARS = {
   'ontologies_taxonomy': 'infrastructure',
   'knowledge_graphs': 'infrastructure',
   'llm_readability': 'infrastructure',
+  'conversational_copy': 'infrastructure',
   
   // Perception & Reputation
   'geo_visibility': 'perception',
@@ -57,6 +59,7 @@ export const DIMENSION_NAMES = {
   'ontologies_taxonomy': 'Ontologies & Taxonomy',
   'knowledge_graphs': 'Knowledge Graphs',
   'llm_readability': 'LLM Readability',
+  'conversational_copy': 'Conversational Copy',
   'geo_visibility': 'Geographic Visibility',
   'citation_strength': 'Citation Strength',
   'answer_quality': 'Answer Quality',

@@ -52,14 +52,14 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="text-lg px-8" asChild>
-              <Link href="/dashboard/new-evaluation">
-                Start Free Evaluation
+              <Link href="/demo">
+                Try Demo Version
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="text-lg px-8" asChild>
-              <Link href="#demo">
-                View Sample Report
+              <Link href="/dashboard/new-evaluation">
+                Start Free Evaluation
               </Link>
             </Button>
           </div>
@@ -154,6 +154,7 @@ export default function HomePage() {
                   <li>• Ontologies & Taxonomy Structure</li>
                   <li>• Knowledge Graph Presence</li>
                   <li>• LLM Readability Optimization</li>
+                  <li>• Conversational Copy Analysis</li>
                 </ul>
               </CardContent>
             </Card>
@@ -242,7 +243,7 @@ export default function HomePage() {
               </div>
               <h3 className="font-semibold mb-2">Scoring Analysis</h3>
               <p className="text-gray-600 text-sm">
-                Generate comprehensive scores across 8 key dimensions
+                Generate comprehensive scores across 12 key dimensions
               </p>
             </div>
             <div className="text-center">
