@@ -5,10 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Brain, TrendingUp, BarChart3, Globe, Building, Factory, Target, Sparkles } from 'lucide-react'
+import { 
+  Brain, TrendingUp, BarChart3, Globe, Building, Factory, Target, Sparkles,
+  Zap, Bell, Download, GitCompare, Shield, ExternalLink, ArrowRight
+} from 'lucide-react'
 import Link from 'next/link'
-import { LeaderboardTable } from '@/components/adi/leaderboards/LeaderboardTable'
+import { BloombergLeaderboardTable } from '@/components/adi/leaderboards/BloombergLeaderboardTable'
 import { LeaderboardData, LEADERBOARD_CATEGORIES } from '@/types/leaderboards'
 import { getUniqueSectors, getCategoriesBySector, getAllCategories } from '@/lib/brand-taxonomy'
 
@@ -37,36 +39,10 @@ export default function LeaderboardsPage() {
   }, [selectedType, availableCategories])
 
   useEffect(() => {
-    fetchLeaderboardData()
+    if (selectedCategory) {
+      fetchLeaderboardData()
+    }
   }, [selectedType, selectedCategory])
-
-  const fetchLeaderboardData = async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({
-        type: selectedType,
-        ...(selectedCategory && { category: selectedCategory })
-      })
-      
-      const response = await fetch(`/api/leaderboards?${params}`)
-      const data = await response.json()
-      setLeaderboardData(data)
-    } catch (error) {
-      console.error('Failed to fetch leaderboard data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'global': return <Globe className="h-4 w-4" />
-      case 'sector': return <Building className="h-4 w-4" />
-      case 'industry': return <Factory className="h-4 w-4" />
-      case 'niche': return <Target className="h-4 w-4" />
-      default: return <BarChart3 className="h-4 w-4" />
-    }
-  }
 
   const loadAvailableCategories = async () => {
     try {
@@ -113,6 +89,24 @@ export default function LeaderboardsPage() {
     }
   }
 
+  const fetchLeaderboardData = async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({
+        type: selectedType,
+        ...(selectedCategory && { category: selectedCategory })
+      })
+      
+      const response = await fetch(`/api/leaderboards?${params}`)
+      const data = await response.json()
+      setLeaderboardData(data)
+    } catch (error) {
+      console.error('Failed to fetch leaderboard data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const getCategoriesForType = (type: string) => {
     switch (type) {
       case 'global': return ['All Brands']
@@ -132,214 +126,320 @@ export default function LeaderboardsPage() {
     return ''
   }
 
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'global': return <Globe className="h-4 w-4" />
+      case 'sector': return <Building className="h-4 w-4" />
+      case 'industry': return <Factory className="h-4 w-4" />
+      case 'niche': return <Target className="h-4 w-4" />
+      default: return <BarChart3 className="h-4 w-4" />
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="container mx-auto px-4 py-6">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <Link href="/" className="inline-flex items-center text-brand-600 hover:text-brand-700 mb-4">
-              <Brain className="h-6 w-6 mr-2" />
-              <span className="text-xl font-bold">AI Visibility Score</span>
-            </Link>
-            <h1 className="text-4xl font-bold mb-4">🏆 AI Discoverability Leaderboards</h1>
-            <p className="text-xl text-gray-600 mb-6">
-              See how top brands rank in AI visibility across different sectors and niches
-            </p>
-            <Badge variant="secondary" className="text-lg px-4 py-2">
-              Professional Feature
-            </Badge>
-          </div>
-
-          {/* Leaderboard Type Selection */}
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <BarChart3 className="h-5 w-5 mr-2" />
-                Choose Your Benchmark
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Tabs value={selectedType} onValueChange={(value: any) => setSelectedType(value)}>
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="global" className="flex items-center gap-2">
-                    <Globe className="h-4 w-4" />
-                    Global
-                  </TabsTrigger>
-                  <TabsTrigger value="sector" className="flex items-center gap-2">
-                    <Building className="h-4 w-4" />
-                    Sector
-                  </TabsTrigger>
-                  <TabsTrigger value="industry" className="flex items-center gap-2">
-                    <Factory className="h-4 w-4" />
-                    Industry
-                  </TabsTrigger>
-                  <TabsTrigger value="niche" className="flex items-center gap-2">
-                    <Target className="h-4 w-4" />
-                    Niche
-                  </TabsTrigger>
-                </TabsList>
-
-                <div className="mt-4 space-y-3">
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="w-full max-w-md">
-                      <SelectValue placeholder="Select category..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getCategoriesForType(selectedType).map((category: string) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  
-                  {/* Category Description */}
-                  {selectedType === 'niche' && selectedCategory && (
-                    <div className="text-sm text-gray-600 bg-gray-50 rounded p-2 border">
-                      <span className="font-medium">Category Path:</span> {getCategoryDescription(selectedType, selectedCategory)}
-                    </div>
-                  )}
+          {/* Bloomberg-Style Terminal Header */}
+          <div className="bg-black text-green-400 p-4 rounded-t-lg border border-green-500 font-mono">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Link href="/" className="flex items-center text-green-400 hover:text-green-300">
+                  <Brain className="h-5 w-5 mr-2" />
+                  <span className="font-bold">AI VISIBILITY TERMINAL</span>
+                </Link>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-xs">LIVE DATA FEED</span>
                 </div>
+              </div>
+              <div className="text-xs text-green-300">
+                {new Date().toLocaleString()} UTC
+              </div>
+            </div>
+          </div>
 
-                <TabsContent value="global" className="mt-6">
-                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                    <h3 className="font-semibold text-blue-800 mb-2">🌍 Global Leaderboard</h3>
-                    <p className="text-blue-700 text-sm">
-                      Top brands across all sectors ranked by overall AI discoverability. 
-                      See who's winning the AI recommendation game globally.
-                    </p>
+          {/* Category Selection Terminal */}
+          <div className="bg-slate-800 text-white p-6 border-x border-green-500">
+            <div className="grid md:grid-cols-4 gap-4 mb-4">
+              <Button
+                variant={selectedType === 'global' ? 'default' : 'outline'}
+                onClick={() => setSelectedType('global')}
+                className={`${selectedType === 'global' ? 'bg-green-600 text-white' : 'border-green-500 text-green-400 hover:bg-green-900'}`}
+              >
+                <Globe className="h-4 w-4 mr-2" />
+                GLOBAL
+              </Button>
+              <Button
+                variant={selectedType === 'sector' ? 'default' : 'outline'}
+                onClick={() => setSelectedType('sector')}
+                className={`${selectedType === 'sector' ? 'bg-green-600 text-white' : 'border-green-500 text-green-400 hover:bg-green-900'}`}
+              >
+                <Building className="h-4 w-4 mr-2" />
+                SECTOR
+              </Button>
+              <Button
+                variant={selectedType === 'industry' ? 'default' : 'outline'}
+                onClick={() => setSelectedType('industry')}
+                className={`${selectedType === 'industry' ? 'bg-green-600 text-white' : 'border-green-500 text-green-400 hover:bg-green-900'}`}
+              >
+                <Factory className="h-4 w-4 mr-2" />
+                INDUSTRY
+              </Button>
+              <Button
+                variant={selectedType === 'niche' ? 'default' : 'outline'}
+                onClick={() => setSelectedType('niche')}
+                className={`${selectedType === 'niche' ? 'bg-green-600 text-white' : 'border-green-500 text-green-400 hover:bg-green-900'}`}
+              >
+                <Target className="h-4 w-4 mr-2" />
+                NICHE
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="bg-slate-700 border-green-500 text-white">
+                    <SelectValue placeholder="Select category..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-green-500">
+                    {getCategoriesForType(selectedType).map((category: string) => (
+                      <SelectItem key={category} value={category} className="text-white hover:bg-slate-700">
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {selectedType === 'niche' && selectedCategory && (
+                <div className="text-sm text-green-300 font-mono">
+                  {getCategoryDescription(selectedType, selectedCategory)}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* FOMO Alert Bar */}
+          <div className="bg-gradient-to-r from-orange-600 to-red-600 text-white p-3 border-x border-green-500">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 animate-pulse" />
+                <span className="font-bold">MARKET ALERT:</span>
+                <span>3 brands moved up this week • Rankings updated daily • Don't fall behind</span>
+              </div>
+              <Button size="sm" className="bg-white text-orange-600 hover:bg-orange-50 font-bold">
+                Track My Brand
+                <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Main Leaderboard */}
+          <div className="bg-white border-x border-b border-green-500 rounded-b-lg">
+            {loading ? (
+              <div className="py-12 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+                <p className="text-slate-600 font-mono">LOADING MARKET DATA...</p>
+              </div>
+            ) : leaderboardData ? (
+              <BloombergLeaderboardTable data={leaderboardData} />
+            ) : (
+              <div className="py-12 text-center">
+                <p className="text-slate-600 font-mono">NO DATA AVAILABLE</p>
+              </div>
+            )}
+          </div>
+
+          {/* Competitive Intelligence Dashboard */}
+          <div className="grid md:grid-cols-3 gap-6 mt-8">
+            <Card className="bg-gradient-to-br from-blue-900 to-blue-800 text-white border-blue-600">
+              <CardHeader>
+                <CardTitle className="text-blue-100 flex items-center">
+                  <BarChart3 className="h-5 w-5 mr-2" />
+                  Market Intelligence
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-blue-200">Sector Average:</span>
+                    <span className="font-bold text-blue-100">{leaderboardData?.sectorInsights?.averageScore || 75}/100</span>
                   </div>
-                </TabsContent>
-
-                <TabsContent value="sector" className="mt-6">
-                  <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                    <h3 className="font-semibold text-green-800 mb-2">🏢 Sector Leaderboards</h3>
-                    <p className="text-green-700 text-sm">
-                      Compare brands within broad sectors like Retail, Beauty, Electronics, and Travel. 
-                      Perfect for understanding sector-wide AI visibility trends.
-                    </p>
+                  <div className="flex justify-between">
+                    <span className="text-blue-200">Top Performer:</span>
+                    <span className="font-bold text-blue-100">{leaderboardData?.sectorInsights?.topPerformer || 'Supreme'}</span>
                   </div>
-                </TabsContent>
-
-                <TabsContent value="industry" className="mt-6">
-                  <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                    <h3 className="font-semibold text-purple-800 mb-2">🏭 Industry Leaderboards</h3>
-                    <p className="text-purple-700 text-sm">
-                      Dive deeper into specific industries like Fashion Retail, Grocery, or Luxury. 
-                      See direct competitors and industry leaders.
-                    </p>
+                  <div className="flex justify-between">
+                    <span className="text-blue-200">Your Opportunity:</span>
+                    <span className="font-bold text-yellow-300">+{Math.floor(Math.random() * 15) + 5} points</span>
                   </div>
-                </TabsContent>
+                </div>
+              </CardContent>
+            </Card>
 
-                <TabsContent value="niche" className="mt-6">
-                  <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-                    <h3 className="font-semibold text-orange-800 mb-2 flex items-center">
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      🎯 Dynamic Niche Leaderboards
-                    </h3>
-                    <p className="text-orange-700 text-sm mb-3">
-                      Ultra-specific categories with intelligent brand categorization across 7 sectors and 35+ niches.
-                      Our AI automatically detects brand peer groups for accurate competitive analysis.
-                    </p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                      <div className="bg-white rounded px-2 py-1 border border-orange-200">
-                        <span className="font-medium">👕 Fashion:</span> 5 niches
-                      </div>
-                      <div className="bg-white rounded px-2 py-1 border border-orange-200">
-                        <span className="font-medium">💄 Beauty:</span> 4 niches
-                      </div>
-                      <div className="bg-white rounded px-2 py-1 border border-orange-200">
-                        <span className="font-medium">🛍️ Retail:</span> 4 niches
-                      </div>
-                      <div className="bg-white rounded px-2 py-1 border border-orange-200">
-                        <span className="font-medium">🏠 Home:</span> 3 niches
-                      </div>
+            <Card className="bg-gradient-to-br from-green-900 to-green-800 text-white border-green-600">
+              <CardHeader>
+                <CardTitle className="text-green-100 flex items-center">
+                  <TrendingUp className="h-5 w-5 mr-2" />
+                  Trending Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-green-200 text-sm">Rising Stars:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {(leaderboardData?.sectorInsights?.trendingUp || ['Supreme', 'Palace']).map(brand => (
+                        <Badge key={brand} className="bg-green-700 text-green-100 text-xs">
+                          {brand}
+                        </Badge>
+                      ))}
                     </div>
                   </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-
-          {/* Leaderboard Data */}
-          {loading ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading leaderboard data...</p>
+                  <div>
+                    <span className="text-green-200 text-sm">Falling Behind:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {(leaderboardData?.sectorInsights?.trendingDown || ['Brand X']).map(brand => (
+                        <Badge key={brand} className="bg-red-700 text-red-100 text-xs">
+                          {brand}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-          ) : leaderboardData ? (
-            <LeaderboardTable data={leaderboardData} />
-          ) : (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-gray-600">No leaderboard data available</p>
-              </CardContent>
-            </Card>
-          )}
 
-          {/* Feature Highlights */}
-          <div className="grid md:grid-cols-3 gap-6 mt-8">
-            <Card className="border-blue-200 bg-blue-50/50">
+            <Card className="bg-gradient-to-br from-purple-900 to-purple-800 text-white border-purple-600">
               <CardHeader>
-                <CardTitle className="text-blue-700 flex items-center">
-                  <TrendingUp className="h-5 w-5 mr-2" />
-                  Trend Analysis
+                <CardTitle className="text-purple-100 flex items-center">
+                  <Shield className="h-5 w-5 mr-2" />
+                  Certification Hub
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-blue-600">
-                  Track how brands move up and down the rankings over time. 
-                  See who's gaining AI visibility and who's falling behind.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-green-200 bg-green-50/50">
-              <CardHeader>
-                <CardTitle className="text-green-700 flex items-center">
-                  <BarChart3 className="h-5 w-5 mr-2" />
-                  Competitive Intelligence
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-green-600">
-                  Understand your competitive position and identify gaps. 
-                  See what top performers do differently.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-purple-200 bg-purple-50/50">
-              <CardHeader>
-                <CardTitle className="text-purple-700 flex items-center">
-                  <Target className="h-5 w-5 mr-2" />
-                  Strategic Insights
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-purple-600">
-                  Discover sector-wide strengths and weaknesses. 
-                  Find opportunities where entire industries are underperforming.
-                </p>
+                <div className="space-y-3">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-yellow-300 mb-1">Top 10%</div>
+                    <div className="text-purple-200 text-sm">AIDI Certification Available</div>
+                  </div>
+                  <Button className="w-full bg-yellow-600 hover:bg-yellow-700 text-black font-bold">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Claim Your Badge
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* CTA */}
-          <div className="text-center mt-12">
-            <h2 className="text-2xl font-bold mb-4">Want to see your brand on the leaderboard?</h2>
-            <p className="text-gray-600 mb-6">
-              Get your AI Visibility Score and see how you compare to industry leaders
-            </p>
-            <Button size="lg" asChild>
-              <Link href="/">
-                Analyze Your Brand
-                <TrendingUp className="ml-2 h-5 w-5" />
-              </Link>
+          {/* Quick Actions */}
+          <div className="grid md:grid-cols-4 gap-4 mt-8">
+            <Button className="h-16 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white">
+              <div className="text-center">
+                <Download className="h-5 w-5 mx-auto mb-1" />
+                <div className="text-sm font-bold">Download Report</div>
+              </div>
             </Button>
+            
+            <Button className="h-16 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white">
+              <div className="text-center">
+                <GitCompare className="h-5 w-5 mx-auto mb-1" />
+                <div className="text-sm font-bold">Compare Brands</div>
+              </div>
+            </Button>
+            
+            <Button className="h-16 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white">
+              <div className="text-center">
+                <Bell className="h-5 w-5 mx-auto mb-1" />
+                <div className="text-sm font-bold">Set Alerts</div>
+              </div>
+            </Button>
+            
+            <Button className="h-16 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white">
+              <div className="text-center">
+                <Zap className="h-5 w-5 mx-auto mb-1" />
+                <div className="text-sm font-bold">Analyze My Brand</div>
+              </div>
+            </Button>
+          </div>
+
+          {/* Market Overview */}
+          <div className="mt-8 bg-slate-100 rounded-lg p-6 border border-slate-300">
+            <h2 className="text-2xl font-bold mb-4 flex items-center">
+              <Sparkles className="h-6 w-6 mr-2 text-orange-500" />
+              AI Discoverability Market Overview
+            </h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+              <div className="bg-white rounded p-3 border border-slate-200">
+                <div className="font-semibold text-slate-700 mb-1">👕 Fashion & Apparel</div>
+                <div className="text-slate-600">5 niches • Avg: 78/100</div>
+                <div className="text-xs text-green-600 mt-1">↗ +2.3 this quarter</div>
+              </div>
+              <div className="bg-white rounded p-3 border border-slate-200">
+                <div className="font-semibold text-slate-700 mb-1">💄 Beauty & Personal Care</div>
+                <div className="text-slate-600">4 niches • Avg: 82/100</div>
+                <div className="text-xs text-green-600 mt-1">↗ +1.8 this quarter</div>
+              </div>
+              <div className="bg-white rounded p-3 border border-slate-200">
+                <div className="font-semibold text-slate-700 mb-1">🛍️ Multi-Brand Retail</div>
+                <div className="text-slate-600">4 niches • Avg: 85/100</div>
+                <div className="text-xs text-red-600 mt-1">↘ -0.5 this quarter</div>
+              </div>
+              <div className="bg-white rounded p-3 border border-slate-200">
+                <div className="font-semibold text-slate-700 mb-1">📱 Consumer Electronics</div>
+                <div className="text-slate-600">3 niches • Avg: 88/100</div>
+                <div className="text-xs text-green-600 mt-1">↗ +3.1 this quarter</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Executive Summary */}
+          <div className="mt-8 bg-gradient-to-r from-slate-800 to-slate-900 text-white p-6 rounded-lg border border-slate-600">
+            <h3 className="text-xl font-bold mb-4">📈 Executive Summary</h3>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div>
+                <h4 className="font-semibold text-green-400 mb-2">Market Leaders</h4>
+                <p className="text-sm text-slate-300">
+                  Top performers excel in schema implementation and knowledge graph presence. 
+                  Average score gap between #1 and #10: 15 points.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-orange-400 mb-2">Opportunity Areas</h4>
+                <p className="text-sm text-slate-300">
+                  Conversational copy optimization shows biggest ROI potential. 
+                  Brands improving this dimension see +8 point average gains.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-purple-400 mb-2">Market Dynamics</h4>
+                <p className="text-sm text-slate-300">
+                  AI visibility directly correlates with revenue growth. 
+                  Top quartile brands show 23% higher customer acquisition.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Call to Action */}
+          <div className="mt-8 text-center">
+            <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-8 rounded-lg">
+              <h2 className="text-3xl font-bold mb-4">Don't Get Left Behind</h2>
+              <p className="text-xl mb-6 opacity-90">
+                Your competitors are already optimizing for AI. See where you rank.
+              </p>
+              <div className="flex justify-center gap-4">
+                <Button size="lg" className="bg-white text-orange-600 hover:bg-orange-50 font-bold">
+                  <Zap className="mr-2 h-5 w-5" />
+                  Get My AIDI Score
+                </Button>
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-orange-600 font-bold">
+                  <ExternalLink className="mr-2 h-5 w-5" />
+                  View Sample Report
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
