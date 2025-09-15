@@ -3,6 +3,8 @@ import { EvaluationEngine } from '@/lib/evaluation-engine'
 import { isDemoMode } from '@/lib/demo-mode'
 import type { AIProviderName } from '@/types/supabase'
 
+// API route for brand evaluation - Netlify deployment fix
+
 export async function POST(request: NextRequest) {
   try {
     const { url, tier = 'free' } = await request.json()
