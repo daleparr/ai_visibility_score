@@ -16,7 +16,7 @@ export default function LeaderboardsPage() {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null)
   const [loading, setLoading] = useState(false)
   const [selectedType, setSelectedType] = useState<'global' | 'sector' | 'industry' | 'niche'>('niche')
-  const [selectedCategory, setSelectedCategory] = useState<string>('Luxury Fashion Houses')
+  const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [availableCategories, setAvailableCategories] = useState<any>({
     sectors: [],
     industries: [],
@@ -27,6 +27,14 @@ export default function LeaderboardsPage() {
   useEffect(() => {
     loadAvailableCategories()
   }, [])
+
+  // Update selected category when type changes
+  useEffect(() => {
+    const categories = getCategoriesForType(selectedType)
+    if (categories.length > 0 && !categories.includes(selectedCategory)) {
+      setSelectedCategory(categories[0])
+    }
+  }, [selectedType, availableCategories])
 
   useEffect(() => {
     fetchLeaderboardData()
@@ -67,24 +75,50 @@ export default function LeaderboardsPage() {
       
       if (data.availableFilters) {
         setAvailableCategories(data.availableFilters)
+        
+        // Set initial category based on type
+        const initialCategories = {
+          global: ['All Brands'],
+          sector: data.availableFilters.sectors,
+          industry: data.availableFilters.industries,
+          niche: data.availableFilters.niches
+        }
+        
+        const typeCategories = initialCategories[selectedType] || []
+        if (typeCategories.length > 0) {
+          setSelectedCategory(typeCategories[0])
+        }
       }
     } catch (error) {
       console.error('Failed to load categories:', error)
       // Fallback to static categories
-      setAvailableCategories({
+      const fallbackCategories = {
         sectors: getUniqueSectors(),
         industries: [...new Set(getAllCategories().map(c => c.industry))],
         niches: getAllCategories().map(c => c.niche)
-      })
+      }
+      setAvailableCategories(fallbackCategories)
+      
+      // Set initial category for fallback
+      const typeCategories = {
+        global: ['All Brands'],
+        sector: fallbackCategories.sectors,
+        industry: fallbackCategories.industries,
+        niche: fallbackCategories.niches
+      }[selectedType] || []
+      
+      if (typeCategories.length > 0) {
+        setSelectedCategory(typeCategories[0])
+      }
     }
   }
 
   const getCategoriesForType = (type: string) => {
     switch (type) {
       case 'global': return ['All Brands']
-      case 'sector': return availableCategories.sectors || []
-      case 'industry': return availableCategories.industries || []
-      case 'niche': return availableCategories.niches || []
+      case 'sector': return availableCategories.sectors || getUniqueSectors()
+      case 'industry': return availableCategories.industries || [...new Set(getAllCategories().map(c => c.industry))]
+      case 'niche': return availableCategories.niches || getAllCategories().map(c => c.niche)
       default: return []
     }
   }
