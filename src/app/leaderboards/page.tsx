@@ -6,16 +6,27 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Brain, TrendingUp, BarChart3, Globe, Building, Factory, Target } from 'lucide-react'
+import { Brain, TrendingUp, BarChart3, Globe, Building, Factory, Target, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { LeaderboardTable } from '@/components/adi/leaderboards/LeaderboardTable'
 import { LeaderboardData, LEADERBOARD_CATEGORIES } from '@/types/leaderboards'
+import { getUniqueSectors, getCategoriesBySector, getAllCategories } from '@/lib/brand-taxonomy'
 
 export default function LeaderboardsPage() {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null)
   const [loading, setLoading] = useState(false)
   const [selectedType, setSelectedType] = useState<'global' | 'sector' | 'industry' | 'niche'>('niche')
-  const [selectedCategory, setSelectedCategory] = useState<string>('Streetwear')
+  const [selectedCategory, setSelectedCategory] = useState<string>('Luxury Fashion Houses')
+  const [availableCategories, setAvailableCategories] = useState<any>({
+    sectors: [],
+    industries: [],
+    niches: []
+  })
+
+  // Load dynamic categories on component mount
+  useEffect(() => {
+    loadAvailableCategories()
+  }, [])
 
   useEffect(() => {
     fetchLeaderboardData()
@@ -49,14 +60,42 @@ export default function LeaderboardsPage() {
     }
   }
 
+  const loadAvailableCategories = async () => {
+    try {
+      const response = await fetch('/api/brand-categorization?action=categories')
+      const data = await response.json()
+      
+      if (data.availableFilters) {
+        setAvailableCategories(data.availableFilters)
+      }
+    } catch (error) {
+      console.error('Failed to load categories:', error)
+      // Fallback to static categories
+      setAvailableCategories({
+        sectors: getUniqueSectors(),
+        industries: [...new Set(getAllCategories().map(c => c.industry))],
+        niches: getAllCategories().map(c => c.niche)
+      })
+    }
+  }
+
   const getCategoriesForType = (type: string) => {
     switch (type) {
-      case 'global': return LEADERBOARD_CATEGORIES.global
-      case 'sector': return LEADERBOARD_CATEGORIES.sector
-      case 'industry': return LEADERBOARD_CATEGORIES.industry
-      case 'niche': return LEADERBOARD_CATEGORIES.niche
+      case 'global': return ['All Brands']
+      case 'sector': return availableCategories.sectors || []
+      case 'industry': return availableCategories.industries || []
+      case 'niche': return availableCategories.niches || []
       default: return []
     }
+  }
+
+  const getCategoryDescription = (type: string, category: string) => {
+    if (type === 'niche') {
+      const allCategories = getAllCategories()
+      const categoryData = allCategories.find(c => c.niche === category)
+      return categoryData ? `${categoryData.emoji} ${categoryData.sector} > ${categoryData.industry}` : ''
+    }
+    return ''
   }
 
   return (
@@ -107,19 +146,26 @@ export default function LeaderboardsPage() {
                   </TabsTrigger>
                 </TabsList>
 
-                <div className="mt-4">
+                <div className="mt-4 space-y-3">
                   <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                     <SelectTrigger className="w-full max-w-md">
                       <SelectValue placeholder="Select category..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {getCategoriesForType(selectedType).map((category) => (
+                      {getCategoriesForType(selectedType).map((category: string) => (
                         <SelectItem key={category} value={category}>
                           {category}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  
+                  {/* Category Description */}
+                  {selectedType === 'niche' && selectedCategory && (
+                    <div className="text-sm text-gray-600 bg-gray-50 rounded p-2 border">
+                      <span className="font-medium">Category Path:</span> {getCategoryDescription(selectedType, selectedCategory)}
+                    </div>
+                  )}
                 </div>
 
                 <TabsContent value="global" className="mt-6">
@@ -154,11 +200,28 @@ export default function LeaderboardsPage() {
 
                 <TabsContent value="niche" className="mt-6">
                   <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-                    <h3 className="font-semibold text-orange-800 mb-2">🎯 Niche Leaderboards</h3>
-                    <p className="text-orange-700 text-sm">
-                      Ultra-specific categories like Streetwear, DTC Activewear, or Skincare. 
-                      Perfect for understanding your exact competitive landscape.
+                    <h3 className="font-semibold text-orange-800 mb-2 flex items-center">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      🎯 Dynamic Niche Leaderboards
+                    </h3>
+                    <p className="text-orange-700 text-sm mb-3">
+                      Ultra-specific categories with intelligent brand categorization across 7 sectors and 35+ niches.
+                      Our AI automatically detects brand peer groups for accurate competitive analysis.
                     </p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                      <div className="bg-white rounded px-2 py-1 border border-orange-200">
+                        <span className="font-medium">👕 Fashion:</span> 5 niches
+                      </div>
+                      <div className="bg-white rounded px-2 py-1 border border-orange-200">
+                        <span className="font-medium">💄 Beauty:</span> 4 niches
+                      </div>
+                      <div className="bg-white rounded px-2 py-1 border border-orange-200">
+                        <span className="font-medium">🛍️ Retail:</span> 4 niches
+                      </div>
+                      <div className="bg-white rounded px-2 py-1 border border-orange-200">
+                        <span className="font-medium">🏠 Home:</span> 3 niches
+                      </div>
+                    </div>
                   </div>
                 </TabsContent>
               </Tabs>

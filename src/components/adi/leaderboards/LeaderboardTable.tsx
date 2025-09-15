@@ -125,6 +125,25 @@ export function LeaderboardTable({ data, onFilterChange, showFilters = true }: L
                 <span className="ml-2">{data.sectorInsights.commonWeaknesses[0] || 'N/A'}</span>
               </div>
             </div>
+            
+            {/* Dynamic Category Distribution */}
+            {(data.sectorInsights as any).dominantCategory && (
+              <div className="mt-3 pt-3 border-t border-blue-200">
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-600 font-medium">🎯 Dominant Category:</span>
+                  <Badge variant="outline" className="text-blue-700">
+                    {(data.sectorInsights as any).dominantCategory}
+                  </Badge>
+                </div>
+                {(data.sectorInsights as any).categoryDistribution && (
+                  <div className="mt-2 text-xs text-blue-600">
+                    Category Mix: {Object.entries((data.sectorInsights as any).categoryDistribution)
+                      .map(([cat, count]) => `${cat} (${count})`)
+                      .join(' • ')}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -152,6 +171,15 @@ export function LeaderboardTable({ data, onFilterChange, showFilters = true }: L
                     </Button>
                   </div>
                   <p className="text-sm text-gray-500">{entry.domain}</p>
+                  {/* Dynamic Category Badge */}
+                  {(entry as any).category && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="text-sm">{(entry as any).category.emoji}</span>
+                      <Badge variant="secondary" className="text-xs">
+                        {(entry as any).category.niche}
+                      </Badge>
+                    </div>
+                  )}
                 </div>
 
                 {/* Overall Score */}
