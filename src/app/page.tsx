@@ -1,10 +1,43 @@
+'use client'
+
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { ArrowRight, Brain, Search, TrendingUp, Shield, Zap, BarChart3 } from 'lucide-react'
+import { ArrowRight, Brain, Search, TrendingUp, Shield, Zap, BarChart3, Globe, CheckCircle, Lock } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function HomePage() {
+  const [url, setUrl] = useState('')
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const router = useRouter()
+
+  const handleAnalyze = async () => {
+    if (!url) return
+    
+    // Basic URL validation
+    try {
+      new URL(url.startsWith('http') ? url : `https://${url}`)
+    } catch {
+      alert('Please enter a valid URL')
+      return
+    }
+
+    setIsAnalyzing(true)
+    
+    // Navigate to evaluation with URL parameter
+    const encodedUrl = encodeURIComponent(url)
+    router.push(`/evaluate?url=${encodedUrl}`)
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleAnalyze()
+    }
+  }
+
   return (
     <div className="min-h-screen">
       {/* Header */}
@@ -19,102 +52,181 @@ export default function HomePage() {
               <Link href="#features" className="text-gray-600 hover:text-brand-600 transition-colors">
                 Features
               </Link>
-              <Link href="#how-it-works" className="text-gray-600 hover:text-brand-600 transition-colors">
-                How It Works
-              </Link>
               <Link href="#pricing" className="text-gray-600 hover:text-brand-600 transition-colors">
                 Pricing
               </Link>
+              <Link href="/demo" className="text-gray-600 hover:text-brand-600 transition-colors">
+                Demo
+              </Link>
               <Button variant="outline" asChild>
                 <Link href="/auth/signin">Sign In</Link>
-              </Button>
-              <Button asChild>
-                <Link href="/auth/signup">Get Started</Link>
               </Button>
             </nav>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="py-20 gradient-bg">
-        <div className="container mx-auto px-4 text-center">
-          <Badge variant="secondary" className="mb-4">
-            🚀 Now Supporting 5+ AI Models
-          </Badge>
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 text-balance">
-            Measure Your Brand's
-            <span className="gradient-text block">AI Visibility</span>
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto text-balance">
-            Unlike traditional SEO audits, AI Visibility Score tests whether frontier models 
-            (OpenAI, Anthropic, Google) can find, parse, and reason about your brand's presence.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="text-lg px-8" asChild>
-              <Link href="/demo">
-                Try Demo Version
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8" asChild>
-              <Link href="/dashboard/new-evaluation">
-                Start Free Evaluation
-              </Link>
-            </Button>
+      {/* Hero Section with URL Input */}
+      <section className="py-16 md:py-24 gradient-bg">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <Badge variant="secondary" className="mb-6">
+              🚀 Free AI Visibility Audit
+            </Badge>
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-balance">
+              How Visible Is Your Brand
+              <span className="gradient-text block">to AI Models?</span>
+            </h1>
+            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto text-balance">
+              Test how ChatGPT, Claude, and Gemini discover, understand, and recommend your brand. 
+              Get your free AI visibility audit in minutes.
+            </p>
+
+            {/* URL Input Section */}
+            <div className="max-w-2xl mx-auto mb-8">
+              <Card className="p-6 shadow-lg border-2">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex-1 relative">
+                    <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Input
+                      type="url"
+                      placeholder="Enter your website URL (e.g., example.com)"
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      className="pl-10 h-12 text-lg"
+                      disabled={isAnalyzing}
+                    />
+                  </div>
+                  <Button 
+                    size="lg" 
+                    onClick={handleAnalyze}
+                    disabled={!url || isAnalyzing}
+                    className="h-12 px-8 text-lg"
+                  >
+                    {isAnalyzing ? 'Analyzing...' : 'Analyze Now'}
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </div>
+                <div className="flex items-center justify-center mt-4 text-sm text-gray-500">
+                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                  Free audit • No signup required • Results in 10 minutes
+                </div>
+              </Card>
+            </div>
+
+            {/* Trust Indicators */}
+            <div className="flex flex-wrap justify-center items-center gap-6 text-sm text-gray-500">
+              <div className="flex items-center">
+                <Brain className="h-4 w-4 mr-1" />
+                5+ AI Models
+              </div>
+              <div className="flex items-center">
+                <BarChart3 className="h-4 w-4 mr-1" />
+                12 Dimensions
+              </div>
+              <div className="flex items-center">
+                <Shield className="h-4 w-4 mr-1" />
+                3 Core Pillars
+              </div>
+            </div>
           </div>
-          <p className="text-sm text-gray-500 mt-4">
-            No credit card required • Get results in 10 minutes
-          </p>
         </div>
       </section>
 
-      {/* Problem Statement */}
+      {/* What You Get - Free vs Premium */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-6">
-              Is Your Brand Invisible to AI?
-            </h2>
-            <p className="text-lg text-gray-600 mb-8">
-              As AI-powered search and recommendations reshape how customers discover brands, 
-              traditional SEO metrics tell only half the story.
-            </p>
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card className="text-left">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">
+                What's Included in Your Free Audit
+              </h2>
+              <p className="text-lg text-gray-600">
+                Get comprehensive insights into your brand's AI visibility across all major models
+              </p>
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Free Features */}
+              <Card className="border-2 border-green-200 bg-green-50/50">
                 <CardHeader>
-                  <Search className="h-8 w-8 text-brand-600 mb-2" />
-                  <CardTitle className="text-lg">AI Search Revolution</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-2xl text-green-700">Free Audit</CardTitle>
+                    <Badge variant="secondary" className="bg-green-100 text-green-700">
+                      $0
+                    </Badge>
+                  </div>
+                  <CardDescription>
+                    Complete AI visibility analysis with actionable insights
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600">
-                    ChatGPT, Claude, and Gemini are becoming primary research tools, 
-                    but can they find and recommend your brand?
-                  </p>
+                  <ul className="space-y-3">
+                    <li className="flex items-start">
+                      <CheckCircle className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
+                      <span>Full AI visibility score across 12 dimensions</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
+                      <span>Testing across 5+ AI models (ChatGPT, Claude, Gemini)</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
+                      <span>Infrastructure, Perception & Commerce pillar analysis</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
+                      <span>Basic recommendations and priority actions</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
+                      <span>Online report viewing and sharing</span>
+                    </li>
+                  </ul>
                 </CardContent>
               </Card>
-              <Card className="text-left">
+
+              {/* Premium Features */}
+              <Card className="border-2 border-brand-200 bg-brand-50/50">
                 <CardHeader>
-                  <Shield className="h-8 w-8 text-warning-600 mb-2" />
-                  <CardTitle className="text-lg">Reputation Risk</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-2xl text-brand-700">Premium Features</CardTitle>
+                    <Badge className="bg-brand-600 text-white">
+                      Upgrade
+                    </Badge>
+                  </div>
+                  <CardDescription>
+                    Advanced insights and competitive intelligence
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600">
-                    AI models may provide incomplete, outdated, or inaccurate information 
-                    about your brand to millions of users.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="text-left">
-                <CardHeader>
-                  <TrendingUp className="h-8 w-8 text-success-600 mb-2" />
-                  <CardTitle className="text-lg">Competitive Advantage</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600">
-                    Brands optimized for AI discovery will capture more mindshare 
-                    and recommendations in the AI-first future.
-                  </p>
+                  <ul className="space-y-3">
+                    <li className="flex items-start">
+                      <Lock className="h-5 w-5 text-brand-500 mr-3 mt-0.5 flex-shrink-0" />
+                      <span>PDF/Excel report exports</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Lock className="h-5 w-5 text-brand-500 mr-3 mt-0.5 flex-shrink-0" />
+                      <span>Detailed optimization suggestions with implementation guides</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Lock className="h-5 w-5 text-brand-500 mr-3 mt-0.5 flex-shrink-0" />
+                      <span>Industry leaderboards and competitive benchmarking</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Lock className="h-5 w-5 text-brand-500 mr-3 mt-0.5 flex-shrink-0" />
+                      <span>Market insights and trend analysis</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Lock className="h-5 w-5 text-brand-500 mr-3 mt-0.5 flex-shrink-0" />
+                      <span>AI Discoverability Index (ADI) tracking</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Lock className="h-5 w-5 text-brand-500 mr-3 mt-0.5 flex-shrink-0" />
+                      <span>Historical tracking and progress monitoring</span>
+                    </li>
+                  </ul>
                 </CardContent>
               </Card>
             </div>
@@ -122,16 +234,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Three Pillars */}
       <section id="features" className="py-16 gradient-bg">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">
-              Comprehensive AI Visibility Analysis
+              Three Pillars of AI Visibility
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Our multi-agent system evaluates your brand across three critical pillars 
-              using the latest AI models.
+              Our evaluation framework tests how AI models discover, understand, and recommend your brand
             </p>
           </div>
           
@@ -207,14 +318,14 @@ export default function HomePage() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-16 bg-white">
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">
-              How AI Visibility Score Works
+              How It Works
             </h2>
             <p className="text-lg text-gray-600">
-              Our multi-agent evaluation process tests your brand across multiple AI models
+              Get your AI visibility score in 4 simple steps
             </p>
           </div>
           
@@ -223,56 +334,233 @@ export default function HomePage() {
               <div className="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-brand-600 font-bold">1</span>
               </div>
-              <h3 className="font-semibold mb-2">Brand Input</h3>
+              <h3 className="font-semibold mb-2">Enter URL</h3>
               <p className="text-gray-600 text-sm">
-                Enter your website URL and select competitors for benchmarking
+                Simply paste your website URL above - no signup required
               </p>
             </div>
             <div className="text-center">
               <div className="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-brand-600 font-bold">2</span>
               </div>
-              <h3 className="font-semibold mb-2">Multi-Agent Testing</h3>
+              <h3 className="font-semibold mb-2">AI Analysis</h3>
               <p className="text-gray-600 text-sm">
-                Test across OpenAI, Anthropic, Google, and other AI models simultaneously
+                Our agents test your brand across 5+ AI models simultaneously
               </p>
             </div>
             <div className="text-center">
               <div className="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-brand-600 font-bold">3</span>
               </div>
-              <h3 className="font-semibold mb-2">Scoring Analysis</h3>
+              <h3 className="font-semibold mb-2">Get Your Score</h3>
               <p className="text-gray-600 text-sm">
-                Generate comprehensive scores across 12 key dimensions
+                Receive comprehensive scores across 12 key dimensions
               </p>
             </div>
             <div className="text-center">
               <div className="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-brand-600 font-bold">4</span>
               </div>
-              <h3 className="font-semibold mb-2">Actionable Report</h3>
+              <h3 className="font-semibold mb-2">Take Action</h3>
               <p className="text-gray-600 text-sm">
-                Receive prioritized recommendations with clear implementation timelines
+                View insights online or upgrade for exports and advanced features
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* Pricing Section */}
+      <section id="pricing" className="py-16 gradient-bg">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">
+              Simple, Transparent Pricing
+            </h2>
+            <p className="text-lg text-gray-600">
+              Start free, upgrade when you need advanced features
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* Free Tier */}
+            <Card className="border-2 border-green-200">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl">Free Audit</CardTitle>
+                <div className="text-4xl font-bold text-green-600">$0</div>
+                <CardDescription>Perfect for getting started</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-3 mb-6">
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    Complete AI visibility analysis
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    All 12 dimension scores
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    Basic recommendations
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    Online report viewing
+                  </li>
+                </ul>
+                <Button className="w-full" variant="outline">
+                  Always Free
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Professional Tier */}
+            <Card className="border-2 border-brand-500 relative">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <Badge className="bg-brand-600 text-white px-4 py-1">
+                  Most Popular
+                </Badge>
+              </div>
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl">Professional</CardTitle>
+                <div className="text-4xl font-bold text-brand-600">$49</div>
+                <CardDescription>For serious optimization</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-3 mb-6">
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    Everything in Free
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    PDF & Excel exports
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    Detailed optimization guides
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    Industry benchmarking
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    Priority support
+                  </li>
+                </ul>
+                <Button className="w-full">
+                  Upgrade After Audit
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Enterprise Tier */}
+            <Card className="border-2 border-purple-200">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl">Enterprise</CardTitle>
+                <div className="text-4xl font-bold text-purple-600">Custom</div>
+                <CardDescription>For large organizations</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-3 mb-6">
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    Everything in Professional
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    ADI leaderboard access
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    Market insights & trends
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    Historical tracking
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    API access & integrations
+                  </li>
+                </ul>
+                <Button className="w-full" variant="outline">
+                  Contact Sales
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Social Proof / Trust */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl font-bold mb-8">
+              Why AI Visibility Matters Now
+            </h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card className="text-left">
+                <CardHeader>
+                  <Search className="h-8 w-8 text-brand-600 mb-2" />
+                  <CardTitle className="text-lg">AI Search Revolution</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600">
+                    ChatGPT, Claude, and Gemini are becoming primary research tools. 
+                    Is your brand discoverable when customers ask AI for recommendations?
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="text-left">
+                <CardHeader>
+                  <Shield className="h-8 w-8 text-warning-600 mb-2" />
+                  <CardTitle className="text-lg">Reputation Risk</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600">
+                    AI models may provide incomplete, outdated, or inaccurate information 
+                    about your brand to millions of users daily.
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="text-left">
+                <CardHeader>
+                  <TrendingUp className="h-8 w-8 text-success-600 mb-2" />
+                  <CardTitle className="text-lg">First-Mover Advantage</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600">
+                    Brands optimized for AI discovery will capture more mindshare 
+                    and recommendations as AI adoption accelerates.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
       <section className="py-16 bg-brand-600 text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">
-            Ready to Measure Your AI Visibility?
+            Start Your Free AI Visibility Audit
           </h2>
-          <p className="text-xl mb-8 text-brand-100">
-            Join forward-thinking brands optimizing for the AI-first future
+          <p className="text-xl mb-8 text-brand-100 max-w-2xl mx-auto">
+            Enter your URL above to discover how AI models see your brand. 
+            No signup required - get results in minutes.
           </p>
-          <Button size="lg" variant="secondary" className="text-lg px-8" asChild>
-            <Link href="/dashboard/new-evaluation">
-              Start Your Free Evaluation
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
+          <Button size="lg" variant="secondary" className="text-lg px-8" onClick={() => {
+            const input = document.querySelector('input[type="url"]') as HTMLInputElement
+            input?.focus()
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }}>
+            Get Your Free Audit Now
+            <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
       </section>
