@@ -6,18 +6,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { ArrowRight, Brain, Search, BarChart3, Zap, Shield, TrendingUp, Download, Lock, Star } from 'lucide-react'
+import { ArrowRight, Brain, Search, BarChart3, Zap, Shield, TrendingUp, Download, Lock, Star, Trophy } from 'lucide-react'
 import Link from 'next/link'
 import { ExecutiveSummary } from '@/components/adi/reporting/ExecutiveSummary'
 import { UserFriendlyDimensionCard } from '@/components/adi/reporting/UserFriendlyDimensionCard'
 import { PriorityActionCard } from '@/components/adi/reporting/PriorityActionCard'
 import { AIInteractionExample } from '@/components/adi/reporting/AIInteractionExample'
+import { LeaderboardTable } from '@/components/adi/leaderboards/LeaderboardTable'
 import {
   getImprovementPriority,
   getAIInteractionExample,
   getImplementationSteps,
   getBusinessImpactForRecommendation
 } from '@/lib/report-utils'
+import { LeaderboardData } from '@/types/leaderboards'
 
 interface DimensionScore {
   name: string
@@ -99,6 +101,7 @@ export default function EvaluatePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [evaluationData, setEvaluationData] = useState<EvaluationData | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null)
 
   useEffect(() => {
     const runEvaluation = async () => {
@@ -120,6 +123,19 @@ export default function EvaluatePage() {
 
         const data = await response.json()
         setEvaluationData(data)
+        
+        // Fetch leaderboard data for professional tier
+        if (tier === 'professional') {
+          try {
+            const leaderboardResponse = await fetch('/api/leaderboards?type=niche&category=Streetwear')
+            if (leaderboardResponse.ok) {
+              const leaderboardData = await leaderboardResponse.json()
+              setLeaderboardData(leaderboardData)
+            }
+          } catch (leaderboardError) {
+            console.error('Failed to fetch leaderboard data:', leaderboardError)
+          }
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred')
       } finally {
@@ -467,6 +483,55 @@ export default function EvaluatePage() {
                           ))}
                         </ul>
                       </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* AI Discoverability Leaderboards */}
+              {leaderboardData && (
+                <Card className="mb-8">
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Trophy className="h-5 w-5 mr-2" />
+                      AI Discoverability Leaderboards
+                    </CardTitle>
+                    <CardDescription>See how you compare to top brands in your category</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-200 mb-4">
+                      <h3 className="font-semibold text-purple-800 mb-2">🏆 Your Competitive Position</h3>
+                      <p className="text-purple-700 text-sm mb-3">
+                        Based on your score of {evaluationData.overallScore}/100, here's how you rank against similar brands:
+                      </p>
+                      <div className="grid md:grid-cols-3 gap-4 text-sm">
+                        <div className="bg-white rounded p-3 border">
+                          <span className="text-purple-600 font-medium">Estimated Rank:</span>
+                          <span className="ml-2 font-bold">#{Math.max(1, Math.floor((100 - evaluationData.overallScore) / 5))}</span>
+                        </div>
+                        <div className="bg-white rounded p-3 border">
+                          <span className="text-purple-600 font-medium">Category:</span>
+                          <span className="ml-2 font-bold">{leaderboardData.category}</span>
+                        </div>
+                        <div className="bg-white rounded p-3 border">
+                          <span className="text-purple-600 font-medium">Percentile:</span>
+                          <span className="ml-2 font-bold">{Math.max(50, evaluationData.overallScore)}th</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <LeaderboardTable
+                      data={leaderboardData}
+                      showFilters={false}
+                    />
+                    
+                    <div className="text-center mt-4">
+                      <Button variant="outline" asChild>
+                        <Link href="/leaderboards">
+                          View Full Leaderboards
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
