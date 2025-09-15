@@ -43,6 +43,8 @@ interface EvaluationData {
     score: number
     description: string
   }>
+  analysisMethod?: string
+  upgradeMessage?: string
 }
 
 export default function EvaluatePage() {
