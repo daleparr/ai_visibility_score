@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  metadataBase: new URL('https://ai-visibility-score.netlify.app'),
   openGraph: {
     title: 'AI Visibility Score - Brand AI Discoverability Platform',
     description: 'Evaluate how your brand appears in AI-powered search and recommendation systems.',

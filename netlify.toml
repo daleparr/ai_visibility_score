@@ -5,6 +5,8 @@
 [build.environment]
   NODE_VERSION = "18"
   NPM_FLAGS = "--production=false"
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_APP_URL"
+  SECRETS_SCAN_OMIT_PATHS = ".next/**,.netlify/**"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
