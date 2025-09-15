@@ -8,6 +8,16 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { ArrowRight, Brain, Search, BarChart3, Zap, Shield, TrendingUp, Download, Lock, Star } from 'lucide-react'
 import Link from 'next/link'
+import { ExecutiveSummary } from '@/components/adi/reporting/ExecutiveSummary'
+import { UserFriendlyDimensionCard } from '@/components/adi/reporting/UserFriendlyDimensionCard'
+import { PriorityActionCard } from '@/components/adi/reporting/PriorityActionCard'
+import { AIInteractionExample } from '@/components/adi/reporting/AIInteractionExample'
+import {
+  getImprovementPriority,
+  getAIInteractionExample,
+  getImplementationSteps,
+  getBusinessImpactForRecommendation
+} from '@/lib/report-utils'
 
 interface DimensionScore {
   name: string
@@ -242,49 +252,15 @@ export default function EvaluatePage() {
               <span className="text-xl font-bold">AI Visibility Score</span>
             </Link>
             <h1 className="text-3xl font-bold mb-2">AI Visibility Report</h1>
-            <p className="text-gray-600 mb-4">Analysis for <span className="font-semibold">{evaluationData.url}</span></p>
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <Badge variant="secondary" className="text-lg px-4 py-2">
-                Overall Score: <span className={`font-bold ml-1 ${getScoreColor(evaluationData.overallScore)}`}>{evaluationData.overallScore}/100</span>
-              </Badge>
-              <Badge variant="outline">
-                {evaluationData.isDemo ? 'Demo Mode' : 'Live Analysis'} • {evaluationData.aiProviders.length} AI Model{evaluationData.aiProviders.length > 1 ? 's' : ''}
-              </Badge>
-            </div>
           </div>
 
-          {/* Overall Score Card */}
-          <Card className="mb-8 border-2">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Your AI Visibility Score</CardTitle>
-              <CardDescription>How well AI models can discover, understand, and recommend your brand</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center mb-6">
-                <div className={`text-6xl font-bold ${getScoreColor(evaluationData.overallScore)} mb-2`}>
-                  {evaluationData.overallScore}
-                </div>
-                <div className="text-gray-500">out of 100</div>
-                <Progress value={evaluationData.overallScore} className="w-full max-w-md mx-auto mt-4" />
-              </div>
-              
-              {/* Pillar Scores */}
-              <div className="grid md:grid-cols-3 gap-6">
-                {pillarScores.map((pillar, index) => (
-                  <div key={index} className="text-center">
-                    <div className={`${pillar.color} mb-2 flex justify-center`}>
-                      {pillar.icon}
-                    </div>
-                    <h3 className="font-semibold text-sm mb-1">{pillar.name}</h3>
-                    <div className={`text-2xl font-bold ${getScoreColor(pillar.score)}`}>
-                      {pillar.score}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">{pillar.description}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Executive Summary */}
+          <ExecutiveSummary
+            overallScore={evaluationData.overallScore}
+            url={evaluationData.url}
+            tier={tier}
+            pillarScores={evaluationData.pillarScores}
+          />
 
           {/* AI Models Used */}
           <Card className="mb-8">
@@ -498,25 +474,35 @@ export default function EvaluatePage() {
             </>
           )}
 
-          {/* Detailed Dimension Scores */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {evaluationData.dimensionScores.map((dimension, index) => (
-              <Card key={index}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm">{dimension.name}</CardTitle>
-                    <Badge variant={getScoreBadgeVariant(dimension.score)}>
-                      {dimension.score}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <Progress value={dimension.score} className="mb-2" />
-                  <p className="text-xs text-gray-600">{dimension.description}</p>
-                </CardContent>
-              </Card>
-            ))}
+          {/* User-Friendly Dimension Analysis */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4 text-center">📊 How AI Sees Your Brand (Detailed Breakdown)</h2>
+            <p className="text-gray-600 text-center mb-6">
+              Each area shows how well AI can discover, understand, and recommend your brand.
+              Click to see improvement opportunities and real AI examples.
+            </p>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {evaluationData.dimensionScores.map((dimension, index) => (
+                <UserFriendlyDimensionCard
+                  key={index}
+                  dimension={dimension}
+                  isConversationalCopy={dimension.name.toLowerCase().includes('conversational')}
+                />
+              ))}
+            </div>
           </div>
+
+          {/* AI Interaction Example */}
+          {evaluationData.dimensionScores.length > 0 && (
+            <div className="mb-8">
+              <AIInteractionExample
+                dimensionName={evaluationData.dimensionScores[0].name}
+                currentExample={getAIInteractionExample(evaluationData.dimensionScores[0].name, evaluationData.dimensionScores[0].score).before}
+                improvedExample={getAIInteractionExample(evaluationData.dimensionScores[0].name, evaluationData.dimensionScores[0].score).after}
+                improvementDescription="Better structured data and content organization helps AI give more accurate, detailed responses about your brand."
+              />
+            </div>
+          )}
 
           {/* Action Cards */}
           <div className="grid md:grid-cols-2 gap-6 mb-8">
@@ -573,29 +559,32 @@ export default function EvaluatePage() {
             </Card>
           </div>
 
-          {/* Basic Recommendations */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Key Recommendations</CardTitle>
-              <CardDescription>Priority actions to improve your AI visibility</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {evaluationData.recommendations.map((rec, index) => (
-                  <div key={index} className="flex items-start space-x-3">
-                    <Badge variant={getPriorityColor(rec.priority)} className="mt-1 capitalize">
-                      {rec.priority}
-                    </Badge>
-                    <div>
-                      <h4 className="font-semibold">{rec.title}</h4>
-                      <p className="text-sm text-gray-600">Score: {rec.score}/100 - {rec.description}</p>
-                      <p className="text-xs text-gray-500 mt-1">💡 Upgrade for detailed implementation guide</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Priority Action Cards */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4 text-center">🚀 Your Action Plan</h2>
+            <p className="text-gray-600 text-center mb-6">
+              Focus on these improvements for the biggest impact on your AI visibility.
+              Each card shows the business impact, timeline, and effort required.
+            </p>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {evaluationData.recommendations.map((rec, index) => {
+                const priority = getImprovementPriority(rec.score, rec.description)
+                const implementationSteps = getImplementationSteps(rec.title)
+                
+                return (
+                  <PriorityActionCard
+                    key={index}
+                    recommendation={rec}
+                    businessImpact={getBusinessImpactForRecommendation(rec.title)}
+                    timeline={priority.timeline}
+                    effort={priority.effort}
+                    expectedIncrease={priority.expectedIncrease}
+                    implementationSteps={implementationSteps}
+                  />
+                )
+              })}
+            </div>
+          </div>
 
           {/* Bottom CTA */}
           <div className="text-center mt-8">
