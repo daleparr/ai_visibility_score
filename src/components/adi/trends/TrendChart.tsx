@@ -17,6 +17,7 @@ import { Calendar, TrendingUp, TrendingDown, AlertTriangle, Info } from 'lucide-
 import { cn } from '../../../lib/utils';
 import { useReducedMotion } from '../../../hooks/useReducedMotion';
 import { Badge } from '../../../components/ui/badge';
+import { Button } from '../../../components/ui/button';
 import type { TrendDataPoint, ChartEvent } from '../../../lib/adi/ui-types';
 
 interface TrendChartProps {

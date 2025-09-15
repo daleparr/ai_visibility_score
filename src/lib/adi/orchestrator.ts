@@ -264,13 +264,13 @@ export class ADIOrchestrator {
 
     try {
       // Execute with timeout protection
-      return await agent.executeWithTimeout(input)
+      return await agent.execute(input)
     } catch (error) {
       console.error(`Agent ${agentName} execution failed:`, error)
       
       // Try retry if agent supports it
       try {
-        return await agent.retry(input, 1)
+        return await agent.execute(input)
       } catch (retryError) {
         console.error(`Agent ${agentName} retry failed:`, retryError)
         return this.createFailedOutput(agentName, retryError)

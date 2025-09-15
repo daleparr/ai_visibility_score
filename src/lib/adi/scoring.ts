@@ -366,10 +366,10 @@ export class ADIScoringEngine {
           const improvement = Math.min(20, 85 - dimension.score)
           
           recommendations.push({
-            priority: dimension.score < 50 ? 1 : dimension.score < 65 ? 2 : 3,
+            priority: (dimension.score < 50 ? 1 : dimension.score < 65 ? 2 : 3) as 1 | 2 | 3,
             title: `Improve ${dimensionName}`,
             description: this.getRecommendationDescription(dimension.dimension, dimension.score),
-            impact: improvement > 15 ? 'high' : improvement > 8 ? 'medium' : 'low',
+            impact: (improvement > 15 ? 'high' : improvement > 8 ? 'medium' : 'low') as 'high' | 'medium' | 'low',
             effort: this.getEffortLevel(dimension.dimension),
             category: pillar.pillar,
             estimatedImprovement: `+${improvement} points`

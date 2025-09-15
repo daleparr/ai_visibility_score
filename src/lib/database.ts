@@ -20,7 +20,7 @@ import { isDemoMode, mockBrands, mockEvaluations, mockDimensionScores, mockRecom
 // Brand operations
 export const getBrands = async (userId: string): Promise<Brand[]> => {
   if (isDemoMode()) {
-    return mockBrands.filter(brand => brand.user_id === userId)
+    return mockBrands.filter(brand => brand.userId === userId)
   }
   
   return await db.select().from(brands).where(eq(brands.userId, userId)).orderBy(desc(brands.createdAt))
@@ -77,7 +77,7 @@ export const deleteBrand = async (brandId: string): Promise<void> => {
 // Evaluation operations
 export const getEvaluations = async (brandId: string): Promise<Evaluation[]> => {
   if (isDemoMode()) {
-    return mockEvaluations.filter(evaluation => evaluation.brand_id === brandId)
+    return mockEvaluations.filter(evaluation => evaluation.brandId === brandId)
   }
   
   return await db.select().from(evaluations).where(eq(evaluations.brandId, brandId)).orderBy(desc(evaluations.createdAt))
@@ -92,7 +92,7 @@ export const getEvaluation = async (evaluationId: string): Promise<{
 } | null> => {
   if (isDemoMode()) {
     const evaluation = mockEvaluations.find(e => e.id === evaluationId)
-    const brand = mockBrands.find(b => b.id === evaluation?.brand_id)
+    const brand = mockBrands.find(b => b.id === evaluation?.brandId)
     return {
       evaluation: evaluation as any,
       brand: brand as any,
@@ -152,7 +152,7 @@ export const updateEvaluation = async (evaluationId: string, updates: Partial<Ne
 // Dimension scores operations
 export const getDimensionScores = async (evaluationId: string): Promise<DimensionScore[]> => {
   if (isDemoMode()) {
-    return mockDimensionScores.filter(score => score.evaluation_id === evaluationId) as any
+    return mockDimensionScores.filter(score => score.evaluationId === evaluationId) as any
   }
   
   return await db.select().from(dimensionScores).where(eq(dimensionScores.evaluationId, evaluationId))
@@ -174,7 +174,7 @@ export const createDimensionScore = async (dimensionScore: NewDimensionScore): P
 // Recommendations operations
 export const getRecommendations = async (evaluationId: string): Promise<Recommendation[]> => {
   if (isDemoMode()) {
-    return mockRecommendations.filter(rec => rec.evaluation_id === evaluationId) as any
+    return mockRecommendations.filter(rec => rec.evaluationId === evaluationId) as any
   }
   
   return await db.select().from(recommendations).where(eq(recommendations.evaluationId, evaluationId))

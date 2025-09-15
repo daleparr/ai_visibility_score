@@ -1,10 +1,10 @@
-import type { 
+import type {
   ADIScore,
   ADIBenchmark,
   ADIIndustry,
-  ADIDimensionName,
-  ADI_DIMENSION_NAMES
+  ADIDimensionName
 } from '../../types/adi'
+import { ADI_DIMENSION_NAMES } from '../../types/adi'
 
 /**
  * ADI Benchmarking Engine
@@ -27,8 +27,8 @@ export class ADIBenchmarkingEngine {
     const cutoffDate = new Date(Date.now() - timeWindow * 24 * 60 * 60 * 1000)
     
     // Filter evaluations within time window
-    const recentEvaluations = evaluations.filter(eval => 
-      new Date(eval.evaluationDate) >= cutoffDate
+    const recentEvaluations = evaluations.filter(evaluation =>
+      new Date(evaluation.evaluationDate) >= cutoffDate
     )
 
     if (recentEvaluations.length < 5) {
@@ -37,7 +37,7 @@ export class ADIBenchmarkingEngine {
 
     // Extract overall scores
     const overallScores = recentEvaluations
-      .map(eval => eval.adiScore.overall)
+      .map(evaluation => evaluation.adiScore.overall)
       .sort((a, b) => a - b)
 
     // Calculate percentiles
@@ -74,13 +74,6 @@ export class ADIBenchmarkingEngine {
       dimension_medians: dimensionBenchmarks,
       methodology_version: 'ADI-v1.0',
       created_at: new Date().toISOString(),
-      metadata: {
-        timeWindow,
-        average: Math.round(statistics.average * 100) / 100,
-        bottomPerformer: Math.round(statistics.bottomPerformer * 100) / 100,
-        trends,
-        insights
-      }
     }
   }
 

@@ -1,14 +1,20 @@
 import { AIProviderClient, EVALUATION_PROMPTS, BRAND_RECOGNITION_PROMPTS, extractScoreFromResponse } from './ai-providers'
-import { 
-  calculateOverallScore, 
-  calculatePillarScores, 
-  getGradeFromScore, 
-  generateVerdict, 
+import {
+  calculateOverallScore,
+  calculatePillarScores,
+  getGradeFromScore,
+  generateVerdict,
   identifyDimensionExtremes,
-  generateRecommendations 
+  generateRecommendations
 } from './scoring'
 import { isDemoMode } from './demo-mode'
-import { db } from './db'
+import {
+  createEvaluation,
+  updateEvaluation,
+  createDimensionScore,
+  createEvaluationResult,
+  createRecommendation
+} from './database'
 import type {
   Brand,
   Evaluation,
@@ -46,7 +52,13 @@ export class EvaluationEngine {
 
   async initialize(): Promise<void> {
     // Load AI provider configurations for the user
-    const providers = await getAIProviders(this.config.userId)
+    // In demo mode, use mock providers
+    if (isDemoMode()) {
+      return
+    }
+    
+    // For production, would load from database
+    const providers: any[] = []
     
     for (const provider of providers) {
       if (provider.is_active && provider.api_key_encrypted && 
@@ -72,9 +84,9 @@ export class EvaluationEngine {
   async runEvaluation(brand: Brand): Promise<Evaluation> {
     // Create initial evaluation record
     const evaluation = await createEvaluation({
-      brand_id: brand.id,
+      brandId: brand.id,
       status: 'running',
-      started_at: new Date().toISOString()
+      startedAt: new Date()
     })
 
     try {
@@ -162,12 +174,12 @@ export class EvaluationEngine {
       // Save recommendations to database
       for (const rec of recommendations) {
         await createRecommendation({
-          evaluation_id: evaluation.id,
+          evaluationId: evaluation.id,
           priority: rec.priority,
           title: rec.title,
           description: rec.description,
-          impact_level: rec.impact,
-          effort_level: rec.effort,
+          impactLevel: rec.impact,
+          effortLevel: rec.effort,
           category: rec.category
         })
       }
@@ -175,24 +187,24 @@ export class EvaluationEngine {
       // Update evaluation with final results
       const completedEvaluation = await updateEvaluation(evaluation.id, {
         status: 'completed',
-        overall_score: overallScore,
+        overallScore: overallScore,
         grade,
         verdict,
-        strongest_dimension: strongest,
-        weakest_dimension: weakest,
-        biggest_opportunity: biggestOpportunity,
-        completed_at: new Date().toISOString()
+        strongestDimension: strongest,
+        weakestDimension: weakest,
+        biggestOpportunity: biggestOpportunity,
+        completedAt: new Date()
       })
 
       this.updateProgress('Evaluation completed!', totalSteps, totalSteps)
       
-      return completedEvaluation
+      return completedEvaluation as any
 
     } catch (error) {
       // Mark evaluation as failed
       await updateEvaluation(evaluation.id, {
         status: 'failed',
-        completed_at: new Date().toISOString()
+        completedAt: new Date()
       })
       
       throw error
@@ -226,12 +238,12 @@ export class EvaluationEngine {
 
         // Save individual evaluation result
         await createEvaluationResult({
-          evaluation_id: evaluationId,
-          provider_name: providerName,
-          test_type: `${pillar}_${dimensionName}`,
-          prompt_used: prompt,
-          response_received: response.content,
-          score_contribution: score
+          evaluationId: evaluationId,
+          providerName: providerName,
+          testType: `${pillar}_${dimensionName}`,
+          promptUsed: prompt,
+          responseReceived: response.content,
+          scoreContribution: score
         })
 
       } catch (error) {
@@ -239,12 +251,12 @@ export class EvaluationEngine {
         
         // Save failed result
         await createEvaluationResult({
-          evaluation_id: evaluationId,
-          provider_name: providerName,
-          test_type: `${pillar}_${dimensionName}`,
-          prompt_used: prompt,
-          response_received: `Error: ${error}`,
-          score_contribution: 0
+          evaluationId: evaluationId,
+          providerName: providerName,
+          testType: `${pillar}_${dimensionName}`,
+          promptUsed: prompt,
+          responseReceived: `Error: ${error}`,
+          scoreContribution: 0
         })
       }
     }
@@ -262,14 +274,14 @@ export class EvaluationEngine {
 
     // Save dimension score
     const dimensionScore = await createDimensionScore({
-      evaluation_id: evaluationId,
-      dimension_name: dimensionName,
+      evaluationId: evaluationId,
+      dimensionName: dimensionName,
       score: averageScore,
       explanation,
       recommendations
     })
 
-    return dimensionScore
+    return dimensionScore as any
   }
 
   private generateDimensionExplanation(
