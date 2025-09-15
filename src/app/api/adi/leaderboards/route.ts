@@ -80,7 +80,12 @@ async function validateAPIAccess(apiKey: string) {
     }
   }
   
-  return { valid: false, error: 'Invalid API key', status: 401 }
+  return {
+    valid: false,
+    error: 'Invalid API key',
+    status: 401,
+    userId: 'anonymous'
+  }
 }
 
 async function getLeaderboardData(params: any) {
