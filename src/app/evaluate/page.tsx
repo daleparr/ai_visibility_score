@@ -20,6 +20,7 @@ import {
   getBusinessImpactForRecommendation
 } from '@/lib/report-utils'
 import { LeaderboardData } from '@/types/leaderboards'
+import { BrandCategorizationService } from '@/lib/brand-categorization-service'
 
 interface DimensionScore {
   name: string
@@ -92,6 +93,13 @@ interface EvaluationData {
     opportunities: string[]
     nextSteps: string[]
   }
+  brandCategory?: {
+    sector: string
+    industry: string
+    niche: string
+    emoji: string
+  }
+  brandName?: string
 }
 
 export default function EvaluatePage() {
@@ -102,12 +110,25 @@ export default function EvaluatePage() {
   const [evaluationData, setEvaluationData] = useState<EvaluationData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null)
+  const [brandCategory, setBrandCategory] = useState<any>(null)
 
   useEffect(() => {
     const runEvaluation = async () => {
       try {
         setIsLoading(true)
         setError(null)
+
+        // Get brand categorization first
+        const brandName = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('.')[0]
+        try {
+          const categorizationResponse = await fetch(`/api/brand-categorization?action=categorize&brand=${encodeURIComponent(brandName)}&url=${encodeURIComponent(url)}`)
+          if (categorizationResponse.ok) {
+            const categoryData = await categorizationResponse.json()
+            setBrandCategory(categoryData.category)
+          }
+        } catch (error) {
+          console.log('Brand categorization failed, using fallback')
+        }
 
         const response = await fetch('/api/evaluate', {
           method: 'POST',
@@ -565,6 +586,9 @@ export default function EvaluatePage() {
                 currentExample={getAIInteractionExample(evaluationData.dimensionScores[0].name, evaluationData.dimensionScores[0].score).before}
                 improvedExample={getAIInteractionExample(evaluationData.dimensionScores[0].name, evaluationData.dimensionScores[0].score).after}
                 improvementDescription="Better structured data and content organization helps AI give more accurate, detailed responses about your brand."
+                brandName={evaluationData.brandName || url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('.')[0]}
+                websiteUrl={evaluationData.url}
+                brandCategory={brandCategory}
               />
             </div>
           )}

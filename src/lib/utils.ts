@@ -24,7 +24,7 @@ export function formatDateTime(date: string | Date) {
 }
 
 export function formatScore(score: number): string {
-  return Math.round(score).toString()
+  return score.toFixed(2)
 }
 
 export function getGradeFromScore(score: number): 'A' | 'B' | 'C' | 'D' | 'F' {

@@ -158,7 +158,7 @@ export function BloombergLeaderboardTable({ data, onFilterChange, showFilters = 
       <div className="grid grid-cols-4 gap-4">
         <Card className="bg-green-50 border-green-200">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">{data.sectorInsights?.averageScore || 75}</div>
+            <div className="text-2xl font-bold text-green-600">{(data.sectorInsights?.averageScore || 75).toFixed(2)}</div>
             <div className="text-sm text-green-700">Sector Average</div>
           </CardContent>
         </Card>
@@ -247,7 +247,7 @@ export function BloombergLeaderboardTable({ data, onFilterChange, showFilters = 
                   {/* AIDI Score */}
                   <div className="col-span-1 text-center">
                     <div className={`text-2xl font-bold px-2 py-1 rounded ${getScoreColor(entry.overallScore)}`}>
-                      {entry.overallScore}
+                      {entry.overallScore.toFixed(2)}
                     </div>
                     <div className="text-xs text-slate-500 mt-1">Grade {entry.grade}</div>
                   </div>

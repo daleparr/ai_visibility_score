@@ -348,7 +348,7 @@ function generateSectorInsights(entries: any[]) {
     .sort(([,a], [,b]) => b - a)[0]?.[0] || 'Mixed Categories'
   
   return {
-    averageScore: Math.round(averageScore),
+    averageScore: parseFloat(averageScore.toFixed(2)),
     topPerformer,
     dominantCategory,
     categoryDistribution,
@@ -374,7 +374,7 @@ function generateRealisticScore(rank: number, leaderboardType: string): number {
   const decay = Math.log(rank + 1) * 5 // Logarithmic decay
   const randomVariation = (Math.random() - 0.5) * 4 // ±2 points variation
   
-  return Math.max(45, Math.min(98, Math.round(base - decay + randomVariation)))
+  return Math.max(45, Math.min(98, parseFloat((base - decay + randomVariation).toFixed(2))))
 }
 
 function getGradeFromScore(score: number): string {
@@ -392,9 +392,9 @@ function getGradeFromScore(score: number): string {
 function generatePillarScores(rank: number) {
   const base = generateRealisticScore(rank, 'global')
   return {
-    infrastructure: Math.max(40, Math.min(100, base + (Math.random() - 0.5) * 10)),
-    perception: Math.max(40, Math.min(100, base + (Math.random() - 0.5) * 10)),
-    commerce: Math.max(40, Math.min(100, base + (Math.random() - 0.5) * 10))
+    infrastructure: parseFloat(Math.max(40, Math.min(100, base + (Math.random() - 0.5) * 10)).toFixed(2)),
+    perception: parseFloat(Math.max(40, Math.min(100, base + (Math.random() - 0.5) * 10)).toFixed(2)),
+    commerce: parseFloat(Math.max(40, Math.min(100, base + (Math.random() - 0.5) * 10)).toFixed(2))
   }
 }
 
