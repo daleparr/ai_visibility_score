@@ -7,20 +7,14 @@ import {
   identifyDimensionExtremes,
   generateRecommendations 
 } from './scoring'
-import { 
-  createEvaluation, 
-  updateEvaluation, 
-  createDimensionScore, 
-  createRecommendation,
-  createEvaluationResult,
-  getAIProviders 
-} from './supabase'
-import type { 
-  Brand, 
-  Evaluation, 
-  DimensionScore, 
+import { isDemoMode } from './demo-mode'
+import { db } from './db'
+import type {
+  Brand,
+  Evaluation,
+  DimensionScore,
   EvaluationResult,
-  AIProviderName 
+  AIProviderName
 } from '@/types/supabase'
 
 export interface EvaluationConfig {
