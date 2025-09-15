@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation'
 
 export default function HomePage() {
   const [url, setUrl] = useState('')
+  const [tier, setTier] = useState('free')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const router = useRouter()
 
@@ -27,9 +28,9 @@ export default function HomePage() {
 
     setIsAnalyzing(true)
     
-    // Navigate to evaluation with URL parameter
+    // Navigate to evaluation with URL and tier parameters
     const encodedUrl = encodeURIComponent(url)
-    router.push(`/evaluate?url=${encodedUrl}`)
+    router.push(`/evaluate?url=${encodedUrl}&tier=${tier}`)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -85,6 +86,34 @@ export default function HomePage() {
             {/* URL Input Section */}
             <div className="max-w-2xl mx-auto mb-8">
               <Card className="p-6 shadow-lg border-2">
+                {/* Tier Selection */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-center gap-4">
+                    <button
+                      onClick={() => setTier('free')}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                        tier === 'free'
+                          ? 'bg-green-100 text-green-700 border-2 border-green-300'
+                          : 'bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200'
+                      }`}
+                    >
+                      🆓 Free Tier
+                      <div className="text-xs mt-1">GPT-4 Analysis</div>
+                    </button>
+                    <button
+                      onClick={() => setTier('professional')}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                        tier === 'professional'
+                          ? 'bg-brand-100 text-brand-700 border-2 border-brand-300'
+                          : 'bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200'
+                      }`}
+                    >
+                      🚀 Professional
+                      <div className="text-xs mt-1">Multi-Model Analysis</div>
+                    </button>
+                  </div>
+                </div>
+
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="flex-1 relative">
                     <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -98,19 +127,24 @@ export default function HomePage() {
                       disabled={isAnalyzing}
                     />
                   </div>
-                  <Button 
-                    size="lg" 
+                  <Button
+                    size="lg"
                     onClick={handleAnalyze}
                     disabled={!url || isAnalyzing}
-                    className="h-12 px-8 text-lg"
+                    className={`h-12 px-8 text-lg ${
+                      tier === 'professional' ? 'bg-brand-600 hover:bg-brand-700' : ''
+                    }`}
                   >
-                    {isAnalyzing ? 'Analyzing...' : 'Analyze Now'}
+                    {isAnalyzing ? 'Analyzing...' : tier === 'professional' ? 'Pro Analysis' : 'Analyze Now'}
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </div>
                 <div className="flex items-center justify-center mt-4 text-sm text-gray-500">
                   <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  Free audit • No signup required • Results in 10 minutes
+                  {tier === 'professional'
+                    ? 'Professional analysis • Multi-model comparison • Advanced insights'
+                    : 'Free audit • No signup required • Results in 10 minutes'
+                  }
                 </div>
               </Card>
             </div>
