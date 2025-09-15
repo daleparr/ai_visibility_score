@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,18 +10,20 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Building2, 
-  Globe, 
-  Plus, 
-  X, 
-  ArrowLeft, 
+import {
+  Building2,
+  Globe,
+  Plus,
+  X,
+  ArrowLeft,
   ArrowRight,
   CheckCircle,
   AlertCircle
 } from 'lucide-react'
 import { createBrand } from '@/lib/database'
 import { validateUrl, extractDomain } from '@/lib/utils'
+import { getOrCreateSessionUser } from '@/lib/session-manager'
+import type { SessionUser } from '@/lib/session-manager'
 import Link from 'next/link'
 
 const industries = [
@@ -47,6 +49,7 @@ export default function NewBrandPage() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [sessionUser, setSessionUser] = useState<SessionUser | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     websiteUrl: '',
@@ -56,6 +59,12 @@ export default function NewBrandPage() {
   })
   const [urlValidation, setUrlValidation] = useState<{[key: string]: boolean}>({})
   const router = useRouter()
+
+  // Initialize session user on component mount
+  useEffect(() => {
+    const user = getOrCreateSessionUser()
+    setSessionUser(user)
+  }, [])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -168,7 +177,7 @@ export default function NewBrandPage() {
         industry: formData.industry,
         description: formData.description.trim() || null,
         competitors: validCompetitors.length > 0 ? validCompetitors : null,
-        userId: 'current-user-id' // This would come from auth context
+        userId: sessionUser?.id || 'fallback-user-id' // Use session-based user ID
       }
 
       const newBrand = await createBrand(brandData)

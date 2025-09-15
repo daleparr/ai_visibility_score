@@ -17,12 +17,15 @@ import {
 } from 'lucide-react'
 import { getBrands, getEvaluations } from '@/lib/database'
 import { formatDateTime, getGradeColor, formatScore } from '@/lib/utils'
+import { getOrCreateSessionUser } from '@/lib/session-manager'
+import type { SessionUser } from '@/lib/session-manager'
 import type { Brand, Evaluation } from '@/lib/db/schema'
 
 export default function DashboardPage() {
   const [brands, setBrands] = useState<Brand[]>([])
   const [recentEvaluations, setRecentEvaluations] = useState<Evaluation[]>([])
   const [loading, setLoading] = useState(true)
+  const [sessionUser, setSessionUser] = useState<SessionUser | null>(null)
   const [stats, setStats] = useState({
     totalBrands: 0,
     totalEvaluations: 0,
@@ -33,11 +36,12 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
-        // Get current user ID from session (will work with NextAuth)
-        const userId = 'demo-user-id' // Will be replaced with real session data
+        // Get or create session user for OAuth-free operation
+        const user = getOrCreateSessionUser()
+        setSessionUser(user)
         
         const [brandsData] = await Promise.all([
-          getBrands(userId)
+          getBrands(user.id)
         ])
 
         setBrands(brandsData)
