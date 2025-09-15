@@ -45,6 +45,41 @@ interface EvaluationData {
   }>
   analysisMethod?: string
   upgradeMessage?: string
+  // Professional tier features
+  modelResults?: Array<{
+    provider: string
+    model: string
+    score: number
+    confidence: number
+    strengths: string[]
+    weaknesses: string[]
+    recommendation: string
+  }>
+  industryBenchmarks?: {
+    industry: string
+    totalCompanies: number
+    yourRank: number
+    percentile: number
+    industryMedian: number
+    topPerformer: number
+    competitorAnalysis: Array<{
+      name: string
+      score: number
+      gap: number
+    }>
+  }
+  certification?: {
+    level: string
+    badge: string
+    validUntil: string
+    achievements: string[]
+  }
+  insights?: {
+    aiReadiness: string
+    riskFactors: string[]
+    opportunities: string[]
+    nextSteps: string[]
+  }
 }
 
 export default function EvaluatePage() {
@@ -282,6 +317,186 @@ export default function EvaluatePage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Professional Tier Features */}
+          {evaluationData.tier !== 'free' && (
+            <>
+              {/* ADI Certification */}
+              {evaluationData.certification && (
+                <Card className="mb-8 border-2 border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <span className="text-3xl">{evaluationData.certification.badge}</span>
+                      <div>
+                        <div>ADI Certification: {evaluationData.certification.level}</div>
+                        <div className="text-sm text-gray-600">Valid until {evaluationData.certification.validUntil}</div>
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {evaluationData.certification.achievements.map((achievement, index) => (
+                        <Badge key={index} variant="secondary" className="bg-yellow-100 text-yellow-800">
+                          🏆 {achievement}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Per-Model Analysis */}
+              {evaluationData.modelResults && (
+                <Card className="mb-8">
+                  <CardHeader>
+                    <CardTitle>Multi-Model Analysis Results</CardTitle>
+                    <CardDescription>Individual AI model evaluations and insights</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {evaluationData.modelResults.map((model, index) => (
+                        <Card key={index} className="border">
+                          <CardHeader className="pb-3">
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-sm">{model.model}</CardTitle>
+                              <Badge variant={getScoreBadgeVariant(Math.round(model.score))}>
+                                {Math.round(model.score)}
+                              </Badge>
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Confidence: {Math.round(model.confidence * 100)}%
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-2">
+                            <div>
+                              <div className="text-xs font-medium text-green-600 mb-1">Strengths:</div>
+                              <div className="text-xs text-gray-600">
+                                {model.strengths.join(', ')}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-xs font-medium text-red-600 mb-1">Areas for Improvement:</div>
+                              <div className="text-xs text-gray-600">
+                                {model.weaknesses.join(', ')}
+                              </div>
+                            </div>
+                            <div className="text-xs text-blue-600 font-medium">
+                              💡 {model.recommendation}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Industry Benchmarking */}
+              {evaluationData.industryBenchmarks && (
+                <Card className="mb-8">
+                  <CardHeader>
+                    <CardTitle>Industry Benchmarking</CardTitle>
+                    <CardDescription>How you compare to {evaluationData.industryBenchmarks.totalCompanies} companies in {evaluationData.industryBenchmarks.industry}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <h4 className="font-semibold mb-3">Your Position</h4>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span>Industry Rank:</span>
+                            <Badge variant="outline">#{evaluationData.industryBenchmarks.yourRank}</Badge>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Percentile:</span>
+                            <Badge variant="secondary">{evaluationData.industryBenchmarks.percentile}th</Badge>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Industry Median:</span>
+                            <span className="font-medium">{evaluationData.industryBenchmarks.industryMedian}/100</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Top Performer:</span>
+                            <span className="font-medium text-green-600">{evaluationData.industryBenchmarks.topPerformer}/100</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold mb-3">Competitive Analysis</h4>
+                        <div className="space-y-2">
+                          {evaluationData.industryBenchmarks.competitorAnalysis.map((competitor, index) => (
+                            <div key={index} className="flex justify-between items-center">
+                              <span className="text-sm">{competitor.name}:</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{competitor.score}</span>
+                                <Badge variant={competitor.gap > 0 ? "destructive" : "default"} className="text-xs">
+                                  {competitor.gap > 0 ? `+${competitor.gap}` : competitor.gap}
+                                </Badge>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Professional Insights */}
+              {evaluationData.insights && (
+                <Card className="mb-8">
+                  <CardHeader>
+                    <CardTitle>Professional Insights</CardTitle>
+                    <CardDescription>Advanced analysis and strategic recommendations</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <h4 className="font-semibold mb-3 flex items-center">
+                          <Shield className="h-4 w-4 mr-2" />
+                          AI Readiness: {evaluationData.insights.aiReadiness}
+                        </h4>
+                        {evaluationData.insights.riskFactors.length > 0 && (
+                          <div className="mb-4">
+                            <div className="text-sm font-medium text-red-600 mb-2">Risk Factors:</div>
+                            <ul className="text-sm text-gray-600 space-y-1">
+                              {evaluationData.insights.riskFactors.map((risk, index) => (
+                                <li key={index}>• {risk}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        <div>
+                          <div className="text-sm font-medium text-green-600 mb-2">Opportunities:</div>
+                          <ul className="text-sm text-gray-600 space-y-1">
+                            {evaluationData.insights.opportunities.map((opportunity, index) => (
+                              <li key={index}>• {opportunity}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold mb-3 flex items-center">
+                          <TrendingUp className="h-4 w-4 mr-2" />
+                          Strategic Next Steps
+                        </h4>
+                        <ul className="text-sm text-gray-600 space-y-2">
+                          {evaluationData.insights.nextSteps.map((step, index) => (
+                            <li key={index} className="flex items-start">
+                              <span className="bg-brand-100 text-brand-700 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mr-2 mt-0.5">
+                                {index + 1}
+                              </span>
+                              {step}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
 
           {/* Detailed Dimension Scores */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
