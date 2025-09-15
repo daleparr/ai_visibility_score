@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Log API usage
-    await logAPIUsage(subscription.userId, 'GET', '/api/adi/leaderboards', leaderboardData.length)
+    await logAPIUsage(subscription.userId || 'anonymous', 'GET', '/api/adi/leaderboards', leaderboardData.length)
 
     return NextResponse.json({
       success: true,
