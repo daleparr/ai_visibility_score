@@ -50,28 +50,13 @@ export default function SignUpPage() {
     }
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            full_name: formData.fullName,
-            company_name: formData.companyName,
-          }
-        }
-      })
-
-      if (error) throw error
-
-      if (data.user) {
-        setSuccess(true)
-        // Redirect to dashboard after successful signup
-        setTimeout(() => {
-          router.push('/dashboard')
-        }, 2000)
-      }
+      // For demo purposes, redirect to demo mode
+      setSuccess(true)
+      setTimeout(() => {
+        router.push('/demo')
+      }, 2000)
     } catch (error: any) {
-      setError(error.message)
+      setError(error.message || 'Sign up failed')
     } finally {
       setLoading(false)
     }
@@ -82,16 +67,11 @@ export default function SignUpPage() {
     setError('')
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`
-        }
+      await signIn('google', {
+        callbackUrl: '/dashboard'
       })
-
-      if (error) throw error
     } catch (error: any) {
-      setError(error.message)
+      setError(error.message || 'Google sign up failed')
       setLoading(false)
     }
   }

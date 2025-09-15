@@ -24,18 +24,21 @@ export default function SignInPage() {
     setError('')
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const result = await signIn('credentials', {
         email,
         password,
+        redirect: false,
       })
 
-      if (error) throw error
+      if (result?.error) {
+        throw new Error(result.error)
+      }
 
-      if (data.user) {
+      if (result?.ok) {
         router.push('/dashboard')
       }
     } catch (error: any) {
-      setError(error.message)
+      setError(error.message || 'Sign in failed')
     } finally {
       setLoading(false)
     }
@@ -46,16 +49,11 @@ export default function SignInPage() {
     setError('')
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`
-        }
+      await signIn('google', {
+        callbackUrl: '/dashboard'
       })
-
-      if (error) throw error
     } catch (error: any) {
-      setError(error.message)
+      setError(error.message || 'Google sign in failed')
       setLoading(false)
     }
   }
