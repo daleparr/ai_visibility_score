@@ -21,10 +21,7 @@
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
     Access-Control-Allow-Headers = "Content-Type, Authorization, x-api-key"
 
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+# Removed manual API redirect - let @netlify/plugin-nextjs handle API routes automatically
 
 # Environment variables (these will be set in Netlify dashboard)
 [context.production.environment]
