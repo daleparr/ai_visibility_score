@@ -51,12 +51,13 @@ export class ADIOrchestrator {
       'knowledge_graph_agent': ['crawl_agent', 'semantic_agent'],
       'conversational_copy_agent': ['crawl_agent'],
       'llm_test_agent': ['crawl_agent'],
+      'geo_visibility_agent': ['crawl_agent', 'llm_test_agent'], // NEW
       'citation_agent': [], // Can run in parallel with crawl
       'sentiment_agent': ['citation_agent'],
       'commerce_agent': ['crawl_agent', 'llm_test_agent'],
-      'score_aggregator': ['schema_agent', 'semantic_agent', 'knowledge_graph_agent', 
-                          'conversational_copy_agent', 'llm_test_agent', 'citation_agent', 
-                          'sentiment_agent', 'commerce_agent']
+      'score_aggregator': ['schema_agent', 'semantic_agent', 'knowledge_graph_agent',
+                          'conversational_copy_agent', 'llm_test_agent', 'geo_visibility_agent',
+                          'citation_agent', 'sentiment_agent', 'commerce_agent']
     }
 
     // Calculate execution phases
@@ -339,6 +340,7 @@ export class ADIOrchestrator {
       'knowledge_graph_agent': 10000,
       'conversational_copy_agent': 6000,
       'llm_test_agent': 20000,
+      'geo_visibility_agent': 12000,  // NEW
       'citation_agent': 12000,
       'sentiment_agent': 5000,
       'commerce_agent': 8000,

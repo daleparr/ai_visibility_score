@@ -126,7 +126,7 @@ export class CommerceAgent extends BaseADIAgent {
     )
 
     return this.createResult(
-      'hero_products',
+      'hero_products_use_case',
       overallScore,
       this.normalizeScore(overallScore, 0, 100, 20, 95),
       confidence,
@@ -171,7 +171,7 @@ export class CommerceAgent extends BaseADIAgent {
     const confidence = this.calculateConfidence(totalProducts, 0.7, overallScore / 100)
 
     return this.createResult(
-      'product_recommendations',
+      'product_recommendations_use_case',
       overallScore,
       this.normalizeScore(overallScore, 0, 100, 15, 90),
       confidence,
@@ -211,7 +211,7 @@ export class CommerceAgent extends BaseADIAgent {
     const confidence = this.calculateConfidence(totalAnalyzed, 0.8, overallScore / 100)
 
     return this.createResult(
-      'use_case_articulation',
+      'use_case_articulation_hero_products',
       overallScore,
       this.normalizeScore(overallScore, 0, 100, 25, 95),
       confidence,
@@ -251,7 +251,7 @@ export class CommerceAgent extends BaseADIAgent {
     const confidence = shippingInfoFound ? 0.9 : 0.2
 
     return this.createResult(
-      'shipping_clarity',
+      'shipping_logistics_clarity',
       overallScore,
       this.normalizeScore(overallScore, 0, 100, 30, 95),
       confidence,
@@ -291,7 +291,7 @@ export class CommerceAgent extends BaseADIAgent {
     const confidence = returnPolicyFound ? 0.9 : 0.3
 
     return this.createResult(
-      'return_policy',
+      'return_policy_logistics',
       overallScore,
       this.normalizeScore(overallScore, 0, 100, 25, 95),
       confidence,
@@ -330,7 +330,7 @@ export class CommerceAgent extends BaseADIAgent {
     const confidence = this.calculateConfidence(totalProducts, 0.9, overallScore / 100)
 
     return this.createResult(
-      'pricing_transparency',
+      'pricing_policy_transparency',
       overallScore,
       this.normalizeScore(overallScore, 0, 100, 40, 95),
       confidence,
@@ -369,7 +369,7 @@ export class CommerceAgent extends BaseADIAgent {
     const confidence = this.calculateConfidence(totalProducts, 0.8, overallScore / 100)
 
     return this.createResult(
-      'availability_info',
+      'availability_logistics_info',
       overallScore,
       this.normalizeScore(overallScore, 0, 100, 35, 95),
       confidence,

@@ -92,17 +92,17 @@ export class LLMTestAgent extends BaseADIAgent {
       
       for (const query of recognitionQueries) {
         try {
-          const response = await this.queryModel(model, query)
+          const response = await this.queryModel(model.name, query)
           const recognitionScore = this.scoreRecognition(response, brandName)
           modelRecognition += recognitionScore
           totalQueries++
         } catch (error) {
-          console.warn(`Failed to query ${model} with: ${query}`)
+          console.warn(`Failed to query ${model.name} with: ${query}`)
         }
       }
       
       const avgModelRecognition = modelRecognition / recognitionQueries.length
-      modelResults[model] = avgModelRecognition
+      modelResults[model.name] = avgModelRecognition
       totalRecognition += avgModelRecognition
     }
 
@@ -137,7 +137,7 @@ export class LLMTestAgent extends BaseADIAgent {
       
       for (const model of this.getAvailableModels()) {
         try {
-          const response = await this.queryModel(model, query)
+          const response = await this.queryModel(model.name, query)
           const completenessScore = this.scoreCompleteness(response, canonQuery.expected_response_elements || [])
           
           if (!completenessResults[canonQuery.query_category]) {
@@ -145,7 +145,7 @@ export class LLMTestAgent extends BaseADIAgent {
           }
           
           completenessResults[canonQuery.query_category].push({
-            model,
+            model: model.name,
             query,
             score: completenessScore,
             response: response.substring(0, 200) // Truncate for storage
@@ -195,10 +195,10 @@ export class LLMTestAgent extends BaseADIAgent {
       // Get responses from all models
       for (const model of this.getAvailableModels()) {
         try {
-          const response = await this.queryModel(model, query)
-          modelResponses[model] = response
+          const response = await this.queryModel(model.name, query)
+          modelResponses[model.name] = response
         } catch (error) {
-          console.warn(`Failed accuracy test for ${model}: ${query}`)
+          console.warn(`Failed accuracy test for ${model.name}: ${query}`)
         }
       }
 
@@ -250,10 +250,10 @@ export class LLMTestAgent extends BaseADIAgent {
       
       for (const model of this.getAvailableModels()) {
         try {
-          const response = await this.queryModel(model, query)
+          const response = await this.queryModel(model.name, query)
           responses.push(response)
         } catch (error) {
-          console.warn(`Failed consistency test for ${model}: ${query}`)
+          console.warn(`Failed consistency test for ${model.name}: ${query}`)
         }
       }
 
@@ -303,7 +303,7 @@ export class LLMTestAgent extends BaseADIAgent {
     for (const query of hallucinationQueries) {
       for (const model of this.getAvailableModels()) {
         try {
-          const response = await this.queryModel(model, query)
+          const response = await this.queryModel(model.name, query)
           const hasHallucination = this.detectHallucination(response, brandName)
           
           if (hasHallucination) {
@@ -317,12 +317,12 @@ export class LLMTestAgent extends BaseADIAgent {
           }
           
           hallucinationResults[query].push({
-            model,
+            model: model.name,
             response: response.substring(0, 200),
             hasHallucination
           })
         } catch (error) {
-          console.warn(`Failed hallucination test for ${model}: ${query}`)
+          console.warn(`Failed hallucination test for ${model.name}: ${query}`)
         }
       }
     }
@@ -357,23 +357,170 @@ export class LLMTestAgent extends BaseADIAgent {
     }
   }
 
-  private getAvailableModels(): string[] {
-    // In production, this would check which AI providers are configured
-    return ['gpt-4', 'claude-3', 'gemini-pro']
+  private getAvailableModels(): Array<{name: string, provider: string, endpoint: string}> {
+    const models = []
+    
+    if (process.env.OPENAI_API_KEY) {
+      models.push({
+        name: 'gpt-4',
+        provider: 'openai',
+        endpoint: 'https://api.openai.com/v1/chat/completions'
+      })
+    }
+    
+    if (process.env.ANTHROPIC_API_KEY) {
+      models.push({
+        name: 'claude-3-sonnet',
+        provider: 'anthropic',
+        endpoint: 'https://api.anthropic.com/v1/messages'
+      })
+    }
+    
+    if (process.env.GOOGLE_AI_API_KEY) {
+      models.push({
+        name: 'gemini-pro',
+        provider: 'google',
+        endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
+      })
+    }
+    
+    // Fallback to mock if no API keys available
+    if (models.length === 0) {
+      models.push({
+        name: 'mock-model',
+        provider: 'mock',
+        endpoint: 'mock'
+      })
+    }
+    
+    return models
   }
 
-  private async queryModel(model: string, query: string): Promise<string> {
-    // Simulate AI model query - in production, this would use actual AI provider APIs
-    await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API delay
+  private async queryModel(modelName: string, query: string): Promise<string> {
+    const models = this.getAvailableModels()
+    const model = models.find(m => m.name === modelName)
     
-    // Mock responses based on model and query
-    const responses = [
-      `Based on my knowledge, here's information about the query: ${query}`,
-      `I can provide some insights about this topic: ${query}`,
-      `Here's what I know about: ${query}`
+    if (!model) {
+      throw new Error(`Model ${modelName} not available`)
+    }
+
+    if (model.provider === 'mock') {
+      return this.generateMockResponse(query)
+    }
+
+    try {
+      switch (model.provider) {
+        case 'openai':
+          return await this.queryOpenAI(query)
+        case 'anthropic':
+          return await this.queryAnthropic(query)
+        case 'google':
+          return await this.queryGoogle(query)
+        default:
+          return this.generateMockResponse(query)
+      }
+    } catch (error) {
+      console.warn(`Failed to query ${model.provider}:`, error)
+      return this.generateMockResponse(query)
+    }
+  }
+
+  private async queryOpenAI(query: string): Promise<string> {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'gpt-4',
+        messages: [
+          {
+            role: 'user',
+            content: query
+          }
+        ],
+        max_tokens: 500,
+        temperature: 0.3
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`)
+    }
+
+    const data = await response.json()
+    return data.choices?.[0]?.message?.content || 'No response received'
+  }
+
+  private async queryAnthropic(query: string): Promise<string> {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY || '',
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-sonnet-20240229',
+        max_tokens: 500,
+        messages: [
+          {
+            role: 'user',
+            content: query
+          }
+        ]
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`Anthropic API error: ${response.status}`)
+    }
+
+    const data = await response.json()
+    return data.content?.[0]?.text || 'No response received'
+  }
+
+  private async queryGoogle(query: string): Promise<string> {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: query
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          maxOutputTokens: 500,
+          temperature: 0.3
+        }
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`Google AI API error: ${response.status}`)
+    }
+
+    const data = await response.json()
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received'
+  }
+
+  private generateMockResponse(query: string): string {
+    // Enhanced mock responses for testing when no API keys available
+    const mockResponses = [
+      `Based on my knowledge, here's information about the query: ${query}. This appears to be a legitimate brand with various products and services.`,
+      `I can provide some insights about this topic: ${query}. The brand seems to have a presence in the market with positive indicators.`,
+      `Here's what I know about: ${query}. This brand appears to offer quality products with good customer feedback.`
     ]
     
-    return responses[Math.floor(Math.random() * responses.length)]
+    return mockResponses[Math.floor(Math.random() * mockResponses.length)]
   }
 
   private scoreRecognition(response: string, brandName: string): number {

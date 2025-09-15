@@ -230,19 +230,20 @@ export interface ADIScore {
   methodologyVersion: string
 }
 
-// ADI Dimension Names (9 dimensions)
-export type ADIDimensionName = 
+// ADI Dimension Names (10 dimensions - restored Geo Visibility)
+export type ADIDimensionName =
   | 'schema_structured_data'           // 12% - Pillar A
-  | 'semantic_clarity_ontology'        // 10% - Pillar A  
+  | 'semantic_clarity_ontology'        // 10% - Pillar A
   | 'knowledge_graphs_entity_linking'  // 8%  - Pillar A
   | 'llm_readability_conversational'   // 10% - Pillar A
-  | 'ai_answer_quality_presence'       // 18% - Pillar B
+  | 'geo_visibility_presence'          // 10% - Pillar B (RESTORED)
+  | 'ai_answer_quality_presence'       // 15% - Pillar B (reduced from 18%)
   | 'citation_authority_freshness'     // 12% - Pillar B
   | 'reputation_signals'               // 10% - Pillar B
   | 'hero_products_use_case'           // 12% - Pillar C
   | 'policies_logistics_clarity'       // 8%  - Pillar C
 
-// ADI Weights Configuration
+// ADI Weights Configuration (Updated with Geo Visibility)
 export const ADI_DIMENSION_WEIGHTS: Record<ADIDimensionName, number> = {
   // Pillar A: Infrastructure & Machine Readability (40%)
   'schema_structured_data': 0.12,
@@ -250,8 +251,9 @@ export const ADI_DIMENSION_WEIGHTS: Record<ADIDimensionName, number> = {
   'knowledge_graphs_entity_linking': 0.08,
   'llm_readability_conversational': 0.10,
   
-  // Pillar B: Perception & Reputation (40%)
-  'ai_answer_quality_presence': 0.18,
+  // Pillar B: Perception & Reputation (47% - increased to accommodate Geo Visibility)
+  'geo_visibility_presence': 0.10,        // RESTORED
+  'ai_answer_quality_presence': 0.15,     // Reduced from 0.18
   'citation_authority_freshness': 0.12,
   'reputation_signals': 0.10,
   
@@ -262,7 +264,7 @@ export const ADI_DIMENSION_WEIGHTS: Record<ADIDimensionName, number> = {
 
 export const ADI_PILLAR_WEIGHTS = {
   infrastructure: 0.40,
-  perception: 0.40,
+  perception: 0.47,  // Increased to accommodate Geo Visibility
   commerce: 0.20,
 } as const
 
@@ -271,6 +273,7 @@ export const ADI_DIMENSION_PILLARS: Record<ADIDimensionName, keyof typeof ADI_PI
   'semantic_clarity_ontology': 'infrastructure',
   'knowledge_graphs_entity_linking': 'infrastructure',
   'llm_readability_conversational': 'infrastructure',
+  'geo_visibility_presence': 'perception',           // RESTORED
   'ai_answer_quality_presence': 'perception',
   'citation_authority_freshness': 'perception',
   'reputation_signals': 'perception',
@@ -283,6 +286,7 @@ export const ADI_DIMENSION_NAMES: Record<ADIDimensionName, string> = {
   'semantic_clarity_ontology': 'Semantic Clarity & Ontology',
   'knowledge_graphs_entity_linking': 'Knowledge Graphs & Entity Linking',
   'llm_readability_conversational': 'LLM Readability & Conversational Copy',
+  'geo_visibility_presence': 'Geographic Visibility & Presence',     // RESTORED
   'ai_answer_quality_presence': 'AI Answer Quality & Presence',
   'citation_authority_freshness': 'Citation Authority & Freshness',
   'reputation_signals': 'Reputation Signals',

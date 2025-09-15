@@ -104,7 +104,7 @@ export class SchemaAgent extends BaseADIAgent {
     const confidence = this.calculateConfidence(totalPages, 1.0, coverage / 100)
 
     return this.createResult(
-      'schema_coverage',
+      'schema_structured_data_coverage',
       coverage,
       this.normalizeScore(coverage, 0, 100, 10, 95),
       confidence,
@@ -149,7 +149,7 @@ export class SchemaAgent extends BaseADIAgent {
     const confidence = this.calculateConfidence(productPages, 1.0, completeness / 100)
 
     return this.createResult(
-      'product_schema_completeness',
+      'product_schema_structured_data',
       completeness,
       this.normalizeScore(completeness, 0, 100, 20, 95),
       confidence,
@@ -198,7 +198,7 @@ export class SchemaAgent extends BaseADIAgent {
     const confidence = hasOrganizationSchema ? 0.9 : 1.0
 
     return this.createResult(
-      'organization_schema',
+      'organization_schema_structured_data',
       score,
       this.normalizeScore(score, 0, 100, 0, 100),
       confidence,
@@ -240,7 +240,7 @@ export class SchemaAgent extends BaseADIAgent {
     const confidence = this.calculateConfidence(pagesWithReviews, 1.0, reviewSchemaRatio / 100)
 
     return this.createResult(
-      'review_schema',
+      'review_schema_structured_data',
       reviewSchemaRatio,
       this.normalizeScore(reviewSchemaRatio, 0, 100, 0, 95),
       confidence,
@@ -281,7 +281,7 @@ export class SchemaAgent extends BaseADIAgent {
     const confidence = faqPages > 0 ? this.calculateConfidence(faqPages, 1.0, faqSchemaRatio / 100) : 0.5
 
     return this.createResult(
-      'faq_schema',
+      'faq_schema_structured_data',
       faqSchemaRatio,
       this.normalizeScore(faqSchemaRatio, 0, 100, 0, 100),
       confidence,
@@ -320,7 +320,7 @@ export class SchemaAgent extends BaseADIAgent {
     const confidence = this.calculateConfidence(productSchemas, 1.0, gs1Alignment / 100)
 
     return this.createResult(
-      'gs1_alignment',
+      'gs1_alignment_structured_data',
       gs1Alignment,
       this.normalizeScore(gs1Alignment, 0, 100, 10, 90),
       confidence,

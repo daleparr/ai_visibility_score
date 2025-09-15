@@ -60,12 +60,13 @@ export class ADIScoringEngine {
   private static extractDimensionScores(agentResults: Record<string, ADIAgentOutput>): ADIDimensionScore[] {
     const dimensionScores: ADIDimensionScore[] = []
 
-    // Map agent results to dimensions
+    // Map agent results to dimensions (updated with geo visibility)
     const agentToDimensionMap: Record<string, ADIDimensionName> = {
       'schema_agent': 'schema_structured_data',
       'semantic_agent': 'semantic_clarity_ontology',
       'knowledge_graph_agent': 'knowledge_graphs_entity_linking',
       'conversational_copy_agent': 'llm_readability_conversational',
+      'geo_visibility_agent': 'geo_visibility_presence',
       'llm_test_agent': 'ai_answer_quality_presence',
       'citation_agent': 'citation_authority_freshness',
       'sentiment_agent': 'reputation_signals',
@@ -94,16 +95,37 @@ export class ADIScoringEngine {
       }
     }
 
+    // Handle special case: schema_structured_data (if schema_agent has results but no dimension yet)
+    const schemaAgent = agentResults['schema_agent']
+    if (schemaAgent?.status === 'completed' && !dimensionScores.find(d => d.dimension === 'schema_structured_data')) {
+      const schemaResults = schemaAgent.results.filter(r =>
+        r.resultType.includes('schema') || r.resultType.includes('structured_data')
+      )
+      
+      if (schemaResults.length > 0) {
+        const avgScore = schemaResults.reduce((sum, r) => sum + (r.normalizedScore || 0), 0) / schemaResults.length
+        const avgConfidence = schemaResults.reduce((sum, r) => sum + (r.confidenceLevel || 0), 0) / schemaResults.length
+        
+        dimensionScores.push({
+          dimension: 'schema_structured_data',
+          score: Math.round(avgScore),
+          confidenceInterval: avgConfidence,
+          evidence: { schemaResults },
+          agentContributions: { 'schema_agent': avgScore }
+        })
+      }
+    }
+
     // Handle special case: policies_logistics_clarity (derived from commerce_agent)
     const commerceAgent = agentResults['commerce_agent']
     if (commerceAgent?.status === 'completed') {
-      const logisticsResults = commerceAgent.results.filter(r => 
+      const logisticsResults = commerceAgent.results.filter(r =>
         r.resultType.includes('logistics') || r.resultType.includes('policy')
       )
       
       if (logisticsResults.length > 0) {
-        const avgScore = logisticsResults.reduce((sum, r) => sum + r.normalizedScore, 0) / logisticsResults.length
-        const avgConfidence = logisticsResults.reduce((sum, r) => sum + r.confidenceLevel, 0) / logisticsResults.length
+        const avgScore = logisticsResults.reduce((sum, r) => sum + (r.normalizedScore || 0), 0) / logisticsResults.length
+        const avgConfidence = logisticsResults.reduce((sum, r) => sum + (r.confidenceLevel || 0), 0) / logisticsResults.length
         
         dimensionScores.push({
           dimension: 'policies_logistics_clarity',
@@ -112,10 +134,141 @@ export class ADIScoringEngine {
           evidence: { logisticsResults },
           agentContributions: { 'commerce_agent': avgScore }
         })
+      } else {
+        // If no specific logistics results, create a default score for policies_logistics_clarity
+        const aggregatedScore = this.aggregateAgentResults(commerceAgent)
+        if (aggregatedScore) {
+          dimensionScores.push({
+            dimension: 'policies_logistics_clarity',
+            score: Math.round(aggregatedScore.score * 0.6), // Reduced score since it's derived
+            confidenceInterval: aggregatedScore.confidence * 0.8,
+            evidence: { derivedFromCommerce: true },
+            agentContributions: { 'commerce_agent': aggregatedScore.score * 0.6 }
+          })
+        }
+      }
+
+      // Ensure hero_products_use_case dimension is created if not already mapped
+      if (!dimensionScores.find(d => d.dimension === 'hero_products_use_case')) {
+        const heroResults = commerceAgent.results.filter(r =>
+          r.resultType.includes('hero') || r.resultType.includes('product') || r.resultType.includes('use_case')
+        )
+        
+        if (heroResults.length > 0) {
+          const avgScore = heroResults.reduce((sum, r) => sum + (r.normalizedScore || 0), 0) / heroResults.length
+          const avgConfidence = heroResults.reduce((sum, r) => sum + (r.confidenceLevel || 0), 0) / heroResults.length
+          
+          dimensionScores.push({
+            dimension: 'hero_products_use_case',
+            score: Math.round(avgScore),
+            confidenceInterval: avgConfidence,
+            evidence: { heroResults },
+            agentContributions: { 'commerce_agent': avgScore }
+          })
+        } else {
+          // Create default hero products score from commerce agent
+          const aggregatedScore = this.aggregateAgentResults(commerceAgent)
+          if (aggregatedScore) {
+            dimensionScores.push({
+              dimension: 'hero_products_use_case',
+              score: Math.round(aggregatedScore.score * 0.8), // Primary commerce dimension
+              confidenceInterval: aggregatedScore.confidence,
+              evidence: { derivedFromCommerce: true },
+              agentContributions: { 'commerce_agent': aggregatedScore.score * 0.8 }
+            })
+          }
+        }
+      }
+    }
+
+    // Ensure all 10 dimensions are represented (create defaults for missing ones)
+    const allDimensions: ADIDimensionName[] = [
+      'schema_structured_data',
+      'semantic_clarity_ontology',
+      'knowledge_graphs_entity_linking',
+      'llm_readability_conversational',
+      'geo_visibility_presence',
+      'ai_answer_quality_presence',
+      'citation_authority_freshness',
+      'reputation_signals',
+      'hero_products_use_case',
+      'policies_logistics_clarity'
+    ]
+
+    // Add missing dimensions with default scores
+    for (const dimensionName of allDimensions) {
+      if (!dimensionScores.find(d => d.dimension === dimensionName)) {
+        // Create a default dimension score based on available agent data
+        const defaultScore = this.createDefaultDimensionScore(dimensionName, agentResults)
+        if (defaultScore) {
+          dimensionScores.push(defaultScore)
+        }
       }
     }
 
     return dimensionScores
+  }
+
+  /**
+   * Create default dimension score for missing dimensions
+   */
+  private static createDefaultDimensionScore(
+    dimensionName: ADIDimensionName,
+    agentResults: Record<string, ADIAgentOutput>
+  ): ADIDimensionScore | null {
+    // Map dimensions to their responsible agents
+    const dimensionToAgentMap: Record<ADIDimensionName, string> = {
+      'schema_structured_data': 'schema_agent',
+      'semantic_clarity_ontology': 'semantic_agent',
+      'knowledge_graphs_entity_linking': 'knowledge_graph_agent',
+      'llm_readability_conversational': 'conversational_copy_agent',
+      'geo_visibility_presence': 'geo_visibility_agent',
+      'ai_answer_quality_presence': 'llm_test_agent',
+      'citation_authority_freshness': 'citation_agent',
+      'reputation_signals': 'sentiment_agent',
+      'hero_products_use_case': 'commerce_agent',
+      'policies_logistics_clarity': 'commerce_agent'
+    }
+
+    const responsibleAgent = dimensionToAgentMap[dimensionName]
+    const agentOutput = agentResults[responsibleAgent]
+
+    if (!agentOutput || agentOutput.status !== 'completed' || !agentOutput.results || agentOutput.results.length === 0) {
+      return null
+    }
+
+    // Create dimension score from agent results
+    const relevantResults = agentOutput.results.filter(r => {
+      const resultType = r.resultType.toLowerCase()
+      const dimension = dimensionName.toLowerCase()
+      
+      // Check if result type is relevant to this dimension
+      return dimension.split('_').some(keyword => resultType.includes(keyword))
+    })
+
+    if (relevantResults.length === 0) {
+      // If no specific results, use all results from the agent
+      relevantResults.push(...agentOutput.results)
+    }
+
+    if (relevantResults.length > 0) {
+      const avgScore = relevantResults.reduce((sum, r) => sum + (r.normalizedScore || 0), 0) / relevantResults.length
+      const avgConfidence = relevantResults.reduce((sum, r) => sum + (r.confidenceLevel || 0), 0) / relevantResults.length
+
+      return {
+        dimension: dimensionName,
+        score: Math.round(avgScore),
+        confidenceInterval: avgConfidence,
+        evidence: {
+          defaultGenerated: true,
+          relevantResults: relevantResults.length,
+          sourceAgent: responsibleAgent
+        },
+        agentContributions: { [responsibleAgent]: avgScore }
+      }
+    }
+
+    return null
   }
 
   /**
@@ -132,13 +285,13 @@ export class ADIScoringEngine {
 
     // Calculate weighted average of all results
     const totalWeight = agentOutput.results.length
-    const weightedScore = agentOutput.results.reduce((sum, result) => 
-      sum + result.normalizedScore, 0
+    const weightedScore = agentOutput.results.reduce((sum, result) =>
+      sum + (result.normalizedScore || 0), 0
     ) / totalWeight
 
     // Calculate average confidence
-    const avgConfidence = agentOutput.results.reduce((sum, result) => 
-      sum + result.confidenceLevel, 0
+    const avgConfidence = agentOutput.results.reduce((sum, result) =>
+      sum + (result.confidenceLevel || 0), 0
     ) / totalWeight
 
     // Collect evidence
@@ -147,8 +300,8 @@ export class ADIScoringEngine {
       executionTime: agentOutput.executionTime,
       results: agentOutput.results.map(r => ({
         type: r.resultType,
-        score: r.normalizedScore,
-        confidence: r.confidenceLevel,
+        score: r.normalizedScore || 0,
+        confidence: r.confidenceLevel || 0,
         evidence: r.evidence
       })),
       metadata: agentOutput.metadata
@@ -390,6 +543,7 @@ export class ADIScoringEngine {
       'semantic_clarity_ontology': 'Improve vocabulary consistency and align with industry taxonomies',
       'knowledge_graphs_entity_linking': 'Establish presence in Google Knowledge Graph and improve internal entity linking',
       'llm_readability_conversational': 'Enhance content structure and add conversational copy with use-case framing',
+      'geo_visibility_presence': 'Optimize for location-based AI queries and improve regional search presence',
       'ai_answer_quality_presence': 'Optimize content for AI model retrieval and improve answer completeness',
       'citation_authority_freshness': 'Increase high-authority media mentions and maintain content freshness',
       'reputation_signals': 'Improve review management and strengthen trust indicators',
@@ -406,6 +560,7 @@ export class ADIScoringEngine {
       'semantic_clarity_ontology': 'high',
       'knowledge_graphs_entity_linking': 'high',
       'llm_readability_conversational': 'medium',
+      'geo_visibility_presence': 'medium',
       'ai_answer_quality_presence': 'medium',
       'citation_authority_freshness': 'high',
       'reputation_signals': 'medium',

@@ -239,12 +239,16 @@ export default function ADIDashboard() {
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                  <h3 className="font-semibold text-purple-900">Perception (40%)</h3>
+                  <h3 className="font-semibold text-purple-900">Perception (47%)</h3>
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
+                    <span>Geographic Visibility</span>
+                    <span className="font-medium">10%</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span>AI Answer Quality</span>
-                    <span className="font-medium">18%</span>
+                    <span className="font-medium">15%</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Citation Authority</span>

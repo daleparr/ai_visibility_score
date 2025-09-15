@@ -1,9 +1,9 @@
 /**
- * ADI Integration Test Script
+ * ADI Integration Test Script (TypeScript)
  * Tests the complete evaluation pipeline with new agents
  */
 
-const { adiService } = require('../src/lib/adi/adi-service')
+import { adiService } from '../src/lib/adi/adi-service'
 
 async function testADIIntegration() {
   console.log('🚀 Starting ADI Integration Test...\n')
@@ -110,7 +110,7 @@ async function testADIIntegration() {
     console.log(`   Expected Dimensions: ${expectedDimensions.length}`)
     console.log(`   Found Dimensions: ${foundDimensions.length}`)
     
-    const missingDimensions = expectedDimensions.filter(d => !foundDimensions.includes(d))
+    const missingDimensions = expectedDimensions.filter(d => !foundDimensions.includes(d as any))
     if (missingDimensions.length === 0) {
       console.log('✅ All dimensions implemented correctly')
     } else {
@@ -153,7 +153,7 @@ async function testADIIntegration() {
     
     return {
       success: false,
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error',
       testResults: {
         serviceInitialization: false,
         brandEvaluation: false,
@@ -167,6 +167,9 @@ async function testADIIntegration() {
     }
   }
 }
+
+// Export for use in other modules
+export { testADIIntegration }
 
 // Run test if called directly
 if (require.main === module) {
@@ -185,5 +188,3 @@ if (require.main === module) {
       process.exit(1)
     })
 }
-
-module.exports = { testADIIntegration }
