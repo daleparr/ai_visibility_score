@@ -49,7 +49,7 @@ export default function NewBrandPage() {
   const [error, setError] = useState('')
   const [formData, setFormData] = useState({
     name: '',
-    website_url: '',
+    websiteUrl: '',
     industry: '',
     description: '',
     competitors: ['']
@@ -64,10 +64,10 @@ export default function NewBrandPage() {
     }))
 
     // Validate URLs in real-time
-    if (field === 'website_url' && value) {
+    if (field === 'websiteUrl' && value) {
       setUrlValidation(prev => ({
         ...prev,
-        website_url: validateUrl(value)
+        websiteUrl: validateUrl(value)
       }))
     }
   }
@@ -113,11 +113,11 @@ export default function NewBrandPage() {
       setError('Brand name is required')
       return false
     }
-    if (!formData.website_url.trim()) {
+    if (!formData.websiteUrl.trim()) {
       setError('Website URL is required')
       return false
     }
-    if (!validateUrl(formData.website_url)) {
+    if (!validateUrl(formData.websiteUrl)) {
       setError('Please enter a valid website URL')
       return false
     }
@@ -164,7 +164,7 @@ export default function NewBrandPage() {
       
       const brandData = {
         name: formData.name.trim(),
-        websiteUrl: formData.website_url.trim(),
+        websiteUrl: formData.websiteUrl.trim(),
         industry: formData.industry,
         description: formData.description.trim() || null,
         competitors: validCompetitors.length > 0 ? validCompetitors : null,
@@ -204,21 +204,21 @@ export default function NewBrandPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="website_url">Website URL *</Label>
+          <Label htmlFor="websiteUrl">Website URL *</Label>
           <div className="relative">
             <Globe className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input
-              id="website_url"
+              id="websiteUrl"
               type="url"
               placeholder="https://example.com"
-              value={formData.website_url}
-              onChange={(e) => handleInputChange('website_url', e.target.value)}
+              value={formData.websiteUrl}
+              onChange={(e) => handleInputChange('websiteUrl', e.target.value)}
               className="pl-10"
               required
             />
-            {formData.website_url && (
+            {formData.websiteUrl && (
               <div className="absolute right-3 top-3">
-                {urlValidation.website_url ? (
+                {urlValidation.websiteUrl ? (
                   <CheckCircle className="h-4 w-4 text-success-600" />
                 ) : (
                   <AlertCircle className="h-4 w-4 text-danger-600" />
@@ -226,9 +226,9 @@ export default function NewBrandPage() {
               </div>
             )}
           </div>
-          {formData.website_url && urlValidation.website_url && (
+          {formData.websiteUrl && urlValidation.websiteUrl && (
             <p className="text-xs text-success-600">
-              Domain: {extractDomain(formData.website_url)}
+              Domain: {extractDomain(formData.websiteUrl)}
             </p>
           )}
         </div>
@@ -353,7 +353,7 @@ export default function NewBrandPage() {
         <CardContent className="space-y-4">
           <div>
             <Label className="text-sm font-medium text-gray-500">Website</Label>
-            <p className="text-sm">{formData.website_url}</p>
+            <p className="text-sm">{formData.websiteUrl}</p>
           </div>
           
           <div>

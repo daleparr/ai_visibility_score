@@ -232,9 +232,9 @@ export default function DemoPage() {
                           >
                             {evaluation.status}
                           </Badge>
-                          {evaluation.overall_score && (
+                          {evaluation.overallScore && (
                             <Badge className="bg-brand-100 text-brand-700">
-                              {evaluation.overall_score} / {evaluation.grade}
+                              {evaluation.overallScore} / {evaluation.grade}
                             </Badge>
                           )}
                         </div>
