@@ -2,6 +2,36 @@
 
 A comprehensive platform that evaluates how brands appear in AI-powered search and recommendation systems. Unlike traditional SEO audits, AI Visibility Score tests whether frontier models (OpenAI, Anthropic, Google, etc.) can find, parse, and reason about your brand's presence.
 
+## ⚡ **Quick Start for User Testing (5 Minutes)**
+
+**Want to test the platform immediately? Use our zero-friction setup:**
+
+### **🚀 Super Quick Demo Setup**
+```bash
+# 1. Get Neon database URL from neon.tech (2 min)
+# 2. Copy environment template
+cp .env.neon.example .env.local
+
+# 3. Edit .env.local - only change these 3 lines:
+DATABASE_URL=your_neon_database_url_here
+ENCRYPTION_KEY=any_32_character_string_here
+DEMO_MODE=true
+
+# 4. Launch
+npm install && npm run db:migrate && npm run dev
+```
+
+**✅ Done! Visit: http://localhost:3005/demo**
+
+- **No authentication required** - Zero barriers for user testing
+- **Full platform access** - All features work in demo mode
+- **Real database** - Data persists between sessions
+- **Production-ready** - Deploy to Netlify in minutes
+
+📖 **[Complete Zero-Friction Setup Guide →](./ZERO_FRICTION_SETUP.md)**
+
+---
+
 ## 🚀 Features
 
 - **Multi-Agent Evaluation**: Test across multiple AI providers simultaneously
@@ -16,9 +46,9 @@ A comprehensive platform that evaluates how brands appear in AI-powered search a
 ### Technology Stack
 - **Frontend**: Next.js 14 with TypeScript, Tailwind CSS, Shadcn/ui
 - **Backend**: Next.js API routes (serverless)
-- **Database**: Supabase (PostgreSQL)
-- **Authentication**: Supabase Auth
-- **Deployment**: Vercel + Supabase
+- **Database**: Neon PostgreSQL (serverless)
+- **Authentication**: NextAuth.js (optional in demo mode)
+- **Deployment**: Netlify + Neon
 - **AI Integration**: Multi-provider system with API key management
 
 ### Evaluation Pillars
@@ -48,8 +78,8 @@ A comprehensive platform that evaluates how brands appear in AI-powered search a
 
 ### Prerequisites
 - Node.js 18+ and npm
-- Supabase account
-- AI provider API keys (OpenAI, Anthropic, etc.)
+- Neon account (free tier available)
+- AI provider API keys (optional - can be configured in-app)
 
 ### Installation
 
@@ -66,38 +96,44 @@ A comprehensive platform that evaluates how brands appear in AI-powered search a
 
 3. **Set up environment variables**
    ```bash
-   cp .env.example .env.local
+   cp .env.neon.example .env.local
    ```
    
-   Fill in your environment variables:
+   **For Demo Mode (Simplest):**
    ```env
-   # Supabase Configuration
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-
-   # AI Provider API Keys
-   OPENAI_API_KEY=your_openai_api_key
-   ANTHROPIC_API_KEY=your_anthropic_api_key
-   GOOGLE_AI_API_KEY=your_google_ai_api_key
-
-   # Encryption Key for API Key Storage
+   # Neon Database
+   DATABASE_URL=postgresql://user:pass@ep-xxx.neon.tech/neondb
+   
+   # Application
+   NEXT_PUBLIC_APP_URL=http://localhost:3005
    ENCRYPTION_KEY=your_32_character_encryption_key
+   
+   # Enable Demo Mode (no authentication required)
+   DEMO_MODE=true
    ```
 
-4. **Set up Supabase**
+   **For Production Mode (Full Authentication):**
+   ```env
+   # Same as above, plus:
+   NEXTAUTH_URL=http://localhost:3005
+   NEXTAUTH_SECRET=your_nextauth_secret
+   
+   # Optional: Google OAuth
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   
+   # Optional: AI Provider API Keys
+   OPENAI_API_KEY=your_openai_api_key
+   ANTHROPIC_API_KEY=your_anthropic_api_key
+   ```
+
+4. **Set up Neon Database**
    ```bash
-   # Install Supabase CLI
-   npm install -g @supabase/cli
-
-   # Initialize Supabase (if not already done)
-   supabase init
-
-   # Link to your project
-   supabase link --project-ref your-project-ref
-
-   # Run migrations
-   supabase db push
+   # Run database migrations
+   npm run db:migrate
+   
+   # Optional: Seed with sample data
+   npm run db:seed
    ```
 
 5. **Run the development server**
@@ -105,7 +141,8 @@ A comprehensive platform that evaluates how brands appear in AI-powered search a
    npm run dev
    ```
 
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
+   **Demo Mode:** Open [http://localhost:3005/demo](http://localhost:3005/demo)
+   **Full Mode:** Open [http://localhost:3005](http://localhost:3005)
 
 ## 📊 Usage
 
@@ -133,13 +170,18 @@ A comprehensive platform that evaluates how brands appear in AI-powered search a
 ai-visibility-score/
 ├── src/
 │   ├── app/                 # Next.js 14 app directory
+│   │   ├── demo/            # Demo mode pages (no auth required)
+│   │   ├── dashboard/       # Main application dashboard
+│   │   └── api/             # API routes
 │   ├── components/          # Reusable UI components
+│   │   ├── adi/             # ADI premium components
+│   │   └── ui/              # Base UI components
 │   ├── lib/                 # Utility functions and configurations
+│   │   ├── db/              # Database schema and client
+│   │   └── adi/             # ADI evaluation engine
 │   ├── types/               # TypeScript type definitions
 │   └── hooks/               # Custom React hooks
-├── supabase/
-│   ├── migrations/          # Database migrations
-│   └── seed.sql            # Initial data
+├── scripts/                 # Setup and deployment scripts
 ├── docs/                   # Documentation
 └── tests/                  # Test files
 ```
@@ -162,15 +204,17 @@ The application uses a comprehensive PostgreSQL schema with:
 - AI provider configuration
 - Scoring and recommendations
 - Competitor benchmarking
+- ADI (AI Discoverability Index) premium features
 
-See `supabase/migrations/001_initial_schema.sql` for the complete schema.
+See [`src/lib/db/schema.ts`](src/lib/db/schema.ts) for the complete schema definition.
 
 ## 🔒 Security
 
-- **Row Level Security (RLS)**: All database tables use RLS policies
-- **API Key Encryption**: AI provider keys are encrypted at rest
-- **Authentication**: Supabase Auth with JWT tokens
+- **Database Security**: Neon provides built-in security with SSL connections
+- **API Key Encryption**: AI provider keys are encrypted at rest using AES-256
+- **Authentication**: NextAuth.js with JWT tokens (optional in demo mode)
 - **Environment Variables**: Sensitive data stored securely
+- **Demo Mode**: Safe for testing - no sensitive data exposure
 
 ## 📈 Scoring Methodology
 
@@ -199,24 +243,55 @@ Each provider is tested with standardized prompts to ensure consistent evaluatio
 
 ## 🚀 Deployment
 
-### Vercel Deployment
+### Netlify Deployment (Recommended)
+1. **Connect Repository**
+   - Connect your GitHub repository to Netlify
+   - Set build command: `npm run build`
+   - Set publish directory: `.next`
+
+2. **Configure Environment Variables**
+   ```env
+   DATABASE_URL=your_neon_production_url
+   NEXT_PUBLIC_APP_URL=https://your-domain.netlify.app
+   ENCRYPTION_KEY=your_encryption_key
+   DEMO_MODE=true  # or false for production
+   
+   # If using authentication:
+   NEXTAUTH_URL=https://your-domain.netlify.app
+   NEXTAUTH_SECRET=your_production_secret
+   ```
+
+3. **Deploy**
+   - Push to main branch for automatic deployment
+   - Or deploy manually from Netlify dashboard
+
+### Alternative: Vercel Deployment
 1. Connect your GitHub repository to Vercel
-2. Configure environment variables in Vercel dashboard
+2. Configure same environment variables in Vercel dashboard
 3. Deploy automatically on push to main branch
 
-### Supabase Setup
-1. Create a new Supabase project
-2. Run the migration files
-3. Configure RLS policies
-4. Set up authentication providers
+### Neon Database Setup
+1. Create a new Neon project at [neon.tech](https://neon.tech)
+2. Copy the connection string to `DATABASE_URL`
+3. Migrations run automatically on first deployment
+4. Scale automatically with serverless architecture
 
 ## 📚 Documentation
 
+### Setup & Deployment
+- **[⚡ Zero-Friction Setup](./ZERO_FRICTION_SETUP.md)** - 5-minute setup for user testing
+- [Neon + Netlify Migration Guide](./NEON_NETLIFY_MIGRATION_GUIDE.md)
+- [Deployment Checklist](./DEPLOYMENT_CHECKLIST.md)
+
+### Architecture & Development
 - [Architecture Overview](./ARCHITECTURE.md)
 - [Project Plan](./PROJECT_PLAN.md)
 - [Scoring Methodology](./SCORING_METHODOLOGY.md)
-- [API Documentation](./docs/api.md)
-- [Deployment Guide](./docs/deployment.md)
+
+### ADI Premium Features
+- [ADI Implementation Summary](./ADI_IMPLEMENTATION_SUMMARY.md)
+- [ADI Component Library](./ADI_COMPONENT_LIBRARY.md)
+- [ADI Manual Testing Guide](./ADI_MANUAL_TESTING_GUIDE.md)
 
 ## 🤝 Contributing
 
@@ -239,6 +314,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - [Next.js](https://nextjs.org/) for the amazing React framework
-- [Supabase](https://supabase.com/) for the backend infrastructure
+- [Neon](https://neon.tech/) for the serverless PostgreSQL database
+- [Netlify](https://netlify.com/) for the deployment platform
 - [Tailwind CSS](https://tailwindcss.com/) for the utility-first CSS framework
 - [Shadcn/ui](https://ui.shadcn.com/) for the beautiful UI components
+- [Drizzle ORM](https://orm.drizzle.team/) for the type-safe database toolkit

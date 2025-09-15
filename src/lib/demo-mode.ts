@@ -1,9 +1,26 @@
-// Demo mode detection and mock data for testing without database
+// Demo mode detection and mock data for testing without authentication
 export const isDemoMode = () => {
+  // Check explicit demo mode flag first
+  const demoMode = process.env.DEMO_MODE
+  if (demoMode === 'true') return true
+  if (demoMode === 'false') return false
+  
+  // Fallback to legacy detection methods
   const databaseUrl = process.env.DATABASE_URL || ''
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-  return databaseUrl.includes('demo') || supabaseUrl.includes('demo.supabase.co') || supabaseAnonKey.includes('demo')
+  
+  return databaseUrl.includes('demo') ||
+         supabaseUrl.includes('demo.supabase.co') ||
+         supabaseAnonKey.includes('demo') ||
+         !process.env.NEXTAUTH_SECRET // No auth configured = demo mode
+}
+
+// Check if authentication is enabled
+export const isAuthEnabled = () => {
+  return !isDemoMode() &&
+         process.env.NEXTAUTH_SECRET &&
+         process.env.NEXTAUTH_URL
 }
 
 // Mock user for demo mode
