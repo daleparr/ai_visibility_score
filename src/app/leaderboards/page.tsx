@@ -24,10 +24,21 @@ export default function LeaderboardsPage() {
     industries: [],
     niches: []
   })
+  const [currentTime, setCurrentTime] = useState<string>('')
+  const [error, setError] = useState<string | null>(null)
 
   // Load dynamic categories on component mount
   useEffect(() => {
     loadAvailableCategories()
+    // Set current time on client side to avoid hydration mismatch
+    setCurrentTime(new Date().toLocaleString())
+    
+    // Update time every minute
+    const interval = setInterval(() => {
+      setCurrentTime(new Date().toLocaleString())
+    }, 60000)
+    
+    return () => clearInterval(interval)
   }, [])
 
   // Update selected category when type changes
@@ -46,7 +57,13 @@ export default function LeaderboardsPage() {
 
   const loadAvailableCategories = async () => {
     try {
+      setError(null)
       const response = await fetch('/api/brand-categorization?action=categories')
+      
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`)
+      }
+      
       const data = await response.json()
       
       if (data.availableFilters) {
@@ -67,6 +84,8 @@ export default function LeaderboardsPage() {
       }
     } catch (error) {
       console.error('Failed to load categories:', error)
+      setError('Failed to load categories. Using fallback data.')
+      
       // Fallback to static categories
       const fallbackCategories = {
         sectors: getUniqueSectors(),
@@ -91,6 +110,7 @@ export default function LeaderboardsPage() {
 
   const fetchLeaderboardData = async () => {
     setLoading(true)
+    setError(null)
     try {
       const params = new URLSearchParams({
         type: selectedType,
@@ -98,10 +118,16 @@ export default function LeaderboardsPage() {
       })
       
       const response = await fetch(`/api/leaderboards?${params}`)
+      
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`)
+      }
+      
       const data = await response.json()
       setLeaderboardData(data)
     } catch (error) {
       console.error('Failed to fetch leaderboard data:', error)
+      setError('Failed to load leaderboard data. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -154,7 +180,7 @@ export default function LeaderboardsPage() {
                 </div>
               </div>
               <div className="text-xs text-green-300">
-                {new Date().toLocaleString()} UTC
+                {currentTime} UTC
               </div>
             </div>
           </div>
@@ -235,6 +261,14 @@ export default function LeaderboardsPage() {
             </div>
           </div>
 
+          {/* Error Display */}
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              <strong className="font-bold">Error: </strong>
+              <span className="block sm:inline">{error}</span>
+            </div>
+          )}
+
           {/* Main Leaderboard */}
           <div className="bg-white border-x border-b border-green-500 rounded-b-lg">
             {loading ? (
@@ -247,6 +281,9 @@ export default function LeaderboardsPage() {
             ) : (
               <div className="py-12 text-center">
                 <p className="text-slate-600 font-mono">NO DATA AVAILABLE</p>
+                {error && (
+                  <p className="text-red-600 font-mono text-sm mt-2">Check console for details</p>
+                )}
               </div>
             )}
           </div>
