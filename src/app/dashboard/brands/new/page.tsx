@@ -164,11 +164,11 @@ export default function NewBrandPage() {
       
       const brandData = {
         name: formData.name.trim(),
-        website_url: formData.website_url.trim(),
+        websiteUrl: formData.website_url.trim(),
         industry: formData.industry,
         description: formData.description.trim() || null,
         competitors: validCompetitors.length > 0 ? validCompetitors : null,
-        user_id: 'current-user-id' // This would come from auth context
+        userId: 'current-user-id' // This would come from auth context
       }
 
       const newBrand = await createBrand(brandData)
