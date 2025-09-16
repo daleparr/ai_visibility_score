@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { isDemoMode } from '@/lib/demo-mode'
 
 export default function DashboardLayout({
@@ -10,18 +10,29 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
-    // In demo mode, redirect to demo dashboard
+    // Allow admin routes to bypass redirects
+    if (pathname.includes('/admin')) {
+      return
+    }
+    
+    // In demo mode, redirect to demo dashboard (except for admin routes)
     if (isDemoMode()) {
       router.push('/demo')
       return
     }
     
-    // For production, would check authentication here
-    // For now, redirect to demo
+    // For production, would check authentication here for non-admin routes
+    // For now, redirect non-admin routes to demo
     router.push('/demo')
-  }, [router])
+  }, [router, pathname])
+
+  // If this is an admin route, render children directly
+  if (pathname.includes('/admin')) {
+    return children
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
