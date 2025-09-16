@@ -443,6 +443,12 @@ export class ADIError extends Error {
   }
 }
 
+// Export aliases for backward compatibility with ADI naming
+export const ADI_DIMENSION_WEIGHTS = AIDI_DIMENSION_WEIGHTS
+export const ADI_DIMENSION_PILLARS = AIDI_DIMENSION_PILLARS
+export const ADI_PILLAR_WEIGHTS = AIDI_PILLAR_WEIGHTS
+export const ADI_DIMENSION_NAMES = AIDI_DIMENSION_NAMES
+
 export class AIDIAgentError extends ADIError {
   constructor(
     agentName: string,

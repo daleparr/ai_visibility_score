@@ -4,7 +4,7 @@ import { stripe } from '@/lib/stripe'
 import { db } from '@/lib/db'
 import { users, subscriptions } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
-import type Stripe from 'stripe'
+import Stripe from 'stripe'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 

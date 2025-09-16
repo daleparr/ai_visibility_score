@@ -344,3 +344,6 @@ export class ADIAgentUtils {
     await new Promise(resolve => setTimeout(resolve, delay))
   }
 }
+
+// Export alias for backward compatibility
+export { BaseAIDIAgent as BaseADIAgent }
