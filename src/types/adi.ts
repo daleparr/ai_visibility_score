@@ -451,6 +451,14 @@ export const ADI_DIMENSION_NAMES = AIDI_DIMENSION_NAMES
 
 // Type aliases for backward compatibility
 export type ADISubscription = AIDISubscription
+export type ADIAgentConfig = AIDIAgentConfig
+export type ADIAgentInput = AIDIAgentInput
+export type ADIAgentOutput = AIDIAgentOutput
+export type ADIDimensionName = AIDIDimensionName
+export type ADIDimensionScore = AIDIDimensionScore
+export type ADIOrchestrationPlan = AIDIOrchestrationPlan
+export type IADIAgent = IAIDIAgent
+// Note: ADIOrchestrationResult, ADIEvaluationContext, ADIPillarScore and ADIScore already exist as interfaces above
 
 export class AIDIAgentError extends ADIError {
   constructor(
