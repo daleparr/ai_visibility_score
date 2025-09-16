@@ -1,7 +1,22 @@
 'use client'
 
+import { useSession, signIn } from 'next-auth/react'
+
 export async function createCheckoutSession(tier: 'professional' | 'enterprise') {
   try {
+    // Check if user is authenticated first
+    const response = await fetch('/api/auth/session')
+    const session = await response.json()
+    
+    if (!session?.user?.email) {
+      console.log('🔐 User not authenticated, redirecting to sign in...')
+      alert('Please sign in to upgrade your subscription.')
+      signIn('google', { callbackUrl: window.location.href })
+      return
+    }
+    
+    console.log('✅ User authenticated:', session.user.email)
+
     // Get price ID from environment or use fallback for development
     let priceId = tier === 'professional'
       ? process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PROFESSIONAL
@@ -15,7 +30,7 @@ export async function createCheckoutSession(tier: 'professional' | 'enterprise')
         : 'price_1QKqGKP7VqU7bNcLQXKqGKP7' // Fallback for enterprise
     }
 
-    const response = await fetch('/api/stripe/create-checkout-session', {
+    const checkoutResponse = await fetch('/api/stripe/create-checkout-session', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -26,13 +41,13 @@ export async function createCheckoutSession(tier: 'professional' | 'enterprise')
       }),
     })
 
-    if (!response.ok) {
-      const error = await response.json()
+    if (!checkoutResponse.ok) {
+      const error = await checkoutResponse.json()
       console.error('❌ Checkout session creation failed:', error)
       throw new Error(error.error || 'Failed to create checkout session')
     }
 
-    const { url } = await response.json()
+    const { url } = await checkoutResponse.json()
     console.log('✅ Checkout session created successfully:', { url })
     
     if (url) {
