@@ -1,6 +1,6 @@
-# AI Discoverability Index
+# AI Discoverability Terminal
 
-A comprehensive platform that evaluates how brands appear in AI-powered search and recommendation systems. Unlike traditional SEO audits, the AI Discoverability Index (AIDI) tests whether frontier models (OpenAI, Anthropic, Google, etc.) can find, parse, and reason about your brand's presence.
+A comprehensive platform that evaluates how brands appear in AI-powered search and recommendation systems. Unlike traditional SEO audits, the AI Discoverability Terminal (AIDI) tests whether frontier models (OpenAI, Anthropic, Google, etc.) can find, parse, and reason about your brand's presence.
 
 ## ⚡ **Quick Start for User Testing (5 Minutes)**
 
@@ -204,7 +204,7 @@ The application uses a comprehensive PostgreSQL schema with:
 - AI provider configuration
 - Scoring and recommendations
 - Competitor benchmarking
-- ADI (AI Discoverability Index) premium features
+- ADI (AI Discoverability Terminal) premium features
 
 See [`src/lib/db/schema.ts`](src/lib/db/schema.ts) for the complete schema definition.
 

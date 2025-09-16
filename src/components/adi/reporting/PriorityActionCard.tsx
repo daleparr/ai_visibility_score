@@ -240,7 +240,7 @@ Generated on: ${new Date().toLocaleString()}
     pdf.setFontSize(8)
     pdf.setTextColor(128, 128, 128)
     pdf.text(`Generated on: ${new Date().toLocaleString()}`, 20, 280)
-    pdf.text('AI Discoverability Index', 150, 280)
+    pdf.text('AI Discoverability Terminal', 150, 280)
     
     // Download PDF
     pdf.save(`${recommendation.title.replace(/[^a-zA-Z0-9]/g, '_')}_Implementation_Guide.pdf`)
