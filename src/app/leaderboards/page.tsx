@@ -172,7 +172,7 @@ export default function LeaderboardsPage() {
               <div className="flex items-center gap-4">
                 <Link href="/" className="flex items-center text-green-400 hover:text-green-300">
                   <Brain className="h-5 w-5 mr-2" />
-                  <span className="font-bold">AI VISIBILITY TERMINAL</span>
+                  <span className="font-bold">AI DISCOVERABILITY TERMINAL</span>
                 </Link>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>

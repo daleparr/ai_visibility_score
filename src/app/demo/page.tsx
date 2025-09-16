@@ -77,7 +77,7 @@ export default function DemoPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Brain className="h-8 w-8 text-brand-600" />
-              <span className="text-2xl font-bold gradient-text">AI Discoverability Terminal</span>
+              <span className="text-2xl font-bold gradient-text">AI Discoverability Index</span>
               <Badge variant="secondary" className="ml-2">Demo Mode</Badge>
             </div>
             <nav className="flex items-center space-x-4">
@@ -97,7 +97,7 @@ export default function DemoPage() {
         <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <h2 className="text-lg font-semibold text-blue-900 mb-2">🎯 Demo Mode Active</h2>
           <p className="text-blue-700">
-            You're viewing the AI Discoverability Terminal platform with sample data. This demonstrates the full UI and functionality without requiring authentication or database setup.
+            You're viewing the AI Discoverability Index platform with sample data. This demonstrates the full UI and functionality without requiring authentication or database setup.
           </p>
         </div>
 
@@ -257,7 +257,7 @@ export default function DemoPage() {
           <CardHeader>
             <CardTitle>Demo Features</CardTitle>
             <CardDescription>
-              Explore the AI Discoverability Terminal platform capabilities
+              Explore the AI Discoverability Index platform capabilities
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -275,7 +275,7 @@ export default function DemoPage() {
                   <TrendingUp className="h-5 w-5 mb-2" />
                   <span className="font-medium">AIDI Premium Dashboard</span>
                   <span className="text-xs text-muted-foreground mt-1">
-                    Advanced AI Discoverability Terminal
+                    Advanced AI Discoverability Index
                   </span>
                 </Button>
               </Link>
