@@ -2,8 +2,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MessageCircle, ArrowRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { MessageCircle, ArrowRight, Loader2, Sparkles, Zap } from 'lucide-react'
 import { BRAND_TAXONOMY } from '@/lib/brand-taxonomy'
+import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 
 interface AIInteractionExampleProps {
   dimensionName?: string
@@ -20,6 +23,14 @@ interface AIInteractionExampleProps {
   }
 }
 
+interface AIResponse {
+  current: string
+  improved: string
+  isRealAI: boolean
+  provider: string
+  timestamp: Date
+}
+
 export function AIInteractionExample({
   dimensionName,
   currentExample,
@@ -29,14 +40,112 @@ export function AIInteractionExample({
   websiteUrl,
   brandCategory
 }: AIInteractionExampleProps) {
+  const { data: session } = useSession()
+  const [aiResponse, setAiResponse] = useState<AIResponse | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [userTier, setUserTier] = useState<string>('free')
   
+  // Check user tier on component mount
+  useEffect(() => {
+    if (session?.user?.email) {
+      checkUserTier()
+    }
+  }, [session])
+
+  const checkUserTier = async () => {
+    try {
+      const response = await fetch('/api/ai-responses')
+      const data = await response.json()
+      setUserTier(data.userTier)
+    } catch (error) {
+      console.error('Failed to check user tier:', error)
+    }
+  }
+
+  const generateRealAIResponse = async () => {
+    if (!brandName || !websiteUrl || !dimensionName) {
+      setError('Missing required brand information')
+      return
+    }
+
+    if (!session?.user?.email) {
+      setError('Please sign in to use AI responses')
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/ai-responses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          brandName,
+          websiteUrl,
+          dimensionName,
+          brandCategory
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate AI response')
+      }
+
+      setAiResponse(data.data)
+    } catch (error) {
+      console.error('AI response error:', error)
+      setError(error instanceof Error ? error.message : 'Failed to generate AI response')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   // Generate dynamic peer comparison if brand info is provided
   const generateDynamicComparison = () => {
+    // If we have real AI response, use it
+    if (aiResponse) {
+      return {
+        current: aiResponse.current,
+        improved: aiResponse.improved,
+        description: improvementDescription || "Better structured data and content organization helps AI give more accurate, detailed responses about your brand."
+      }
+    }
+
+    // Prioritize brand-specific content when brand data is available
+    if (brandName && brandCategory) {
+      return generateBrandSpecificContent()
+    }
+    
+    // Fallback to provided examples if available
+    if (currentExample && improvedExample) {
+      return {
+        current: currentExample,
+        improved: improvedExample,
+        description: improvementDescription || "Better structured data and content organization helps AI give more accurate, detailed responses about your brand."
+      }
+    }
+    
+    // Final fallback to generic content
+    return {
+      current: "I'm not sure how they compare to other brands in their industry.",
+      improved: "They're positioned strategically within their market segment with clear competitive advantages.",
+      description: "Better structured data and content organization helps AI give more accurate, detailed responses about your brand."
+    }
+  }
+
+  // Generate brand-specific content based on category
+  const generateBrandSpecificContent = () => {
     if (!brandName || !brandCategory) {
       return {
-        current: currentExample || "I'm not sure how they compare to other fashion brands.",
-        improved: improvedExample || "They're positioned as a premium sustainable alternative to fast fashion, competing with COS and Arket in the conscious luxury space.",
-        description: improvementDescription || "Better structured data and content organization helps AI give more accurate, detailed responses about your brand."
+        current: "I'm not sure how they compare to other brands in their industry.",
+        improved: "They're positioned strategically within their market segment with clear competitive advantages.",
+        description: "Better structured data and content organization helps AI give more accurate, detailed responses about your brand."
       }
     }
 
@@ -95,11 +204,58 @@ export function AIInteractionExample({
   return (
     <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center">
-          <MessageCircle className="h-5 w-5 mr-2 text-blue-600" />
-          How AI Talks About You
-        </CardTitle>
-        <p className="text-sm text-gray-600">Real examples of how improvements change AI responses</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg flex items-center">
+              <MessageCircle className="h-5 w-5 mr-2 text-blue-600" />
+              How AI Talks About You
+              {aiResponse?.isRealAI && (
+                <Badge variant="default" className="ml-2 bg-green-600">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Real AI
+                </Badge>
+              )}
+            </CardTitle>
+            <p className="text-sm text-gray-600">
+              {aiResponse?.isRealAI
+                ? `Live AI responses from ${aiResponse.provider}`
+                : userTier === 'free'
+                  ? 'Simulated examples - upgrade for real AI responses'
+                  : 'Real examples of how improvements change AI responses'
+              }
+            </p>
+          </div>
+          
+          {session?.user?.email && brandName && websiteUrl && dimensionName && (
+            <Button
+              onClick={generateRealAIResponse}
+              disabled={isLoading}
+              variant={userTier === 'free' ? 'outline' : 'default'}
+              size="sm"
+              className={userTier === 'free' ? 'border-orange-300 text-orange-600' : ''}
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : userTier === 'free' ? (
+                <Zap className="h-4 w-4 mr-2" />
+              ) : (
+                <Sparkles className="h-4 w-4 mr-2" />
+              )}
+              {isLoading
+                ? 'Generating...'
+                : userTier === 'free'
+                  ? 'Try Real AI'
+                  : 'Get Real AI Response'
+              }
+            </Button>
+          )}
+        </div>
+        
+        {error && (
+          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600">
+            {error}
+          </div>
+        )}
       </CardHeader>
       
       <CardContent className="space-y-4">
