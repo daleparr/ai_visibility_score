@@ -263,10 +263,13 @@ ${evaluationData.certification ? `
 
         // Get brand categorization first
         const brandName = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('.')[0]
+        let detectedCategory = null
+        
         try {
           const categorizationResponse = await fetch(`/api/brand-categorization?action=categorize&brand=${encodeURIComponent(brandName)}&url=${encodeURIComponent(url)}`)
           if (categorizationResponse.ok) {
             const categoryData = await categorizationResponse.json()
+            detectedCategory = categoryData.category
             setBrandCategory(categoryData.category)
           }
         } catch (error) {
@@ -288,10 +291,36 @@ ${evaluationData.certification ? `
         const data = await response.json()
         setEvaluationData(data)
         
-        // Fetch leaderboard data for professional tier
+        // Fetch leaderboard data for professional tier using detected category
         if (tier === 'professional') {
           try {
-            const leaderboardResponse = await fetch('/api/leaderboards?type=niche&category=Streetwear')
+            // Use detected brand category or fallback based on URL analysis
+            let categoryForLeaderboard = detectedCategory?.niche || 'Multi-Brand Retail'
+            
+            // Fallback category detection based on URL if categorization failed
+            if (!detectedCategory) {
+              const urlLower = url.toLowerCase()
+              if (urlLower.includes('marks') || urlLower.includes('spencer')) {
+                categoryForLeaderboard = 'Mass-Market Department Stores'
+              } else if (urlLower.includes('selfridges') || urlLower.includes('harrods') || urlLower.includes('nordstrom')) {
+                categoryForLeaderboard = 'Luxury Department Stores'
+              } else if (urlLower.includes('amazon') || urlLower.includes('ebay') || urlLower.includes('walmart')) {
+                categoryForLeaderboard = 'Online Mega-Retailers'
+              } else if (urlLower.includes('fashion') || urlLower.includes('clothing')) {
+                categoryForLeaderboard = 'Contemporary Fashion'
+              } else if (urlLower.includes('luxury') || urlLower.includes('designer')) {
+                categoryForLeaderboard = 'Luxury Fashion Houses'
+              } else if (urlLower.includes('beauty') || urlLower.includes('cosmetic')) {
+                categoryForLeaderboard = 'Beauty & Personal Care'
+              } else if (urlLower.includes('tech') || urlLower.includes('software')) {
+                categoryForLeaderboard = 'Technology & Software'
+              } else {
+                // Default to Multi-Brand Retail for unknown brands
+                categoryForLeaderboard = 'Mass-Market Department Stores'
+              }
+            }
+            
+            const leaderboardResponse = await fetch(`/api/leaderboards?type=niche&category=${encodeURIComponent(categoryForLeaderboard)}`)
             if (leaderboardResponse.ok) {
               const leaderboardData = await leaderboardResponse.json()
               setLeaderboardData(leaderboardData)
