@@ -5,14 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { 
+import {
   Brain, TrendingUp, BarChart3, Globe, Building, Factory, Target, Sparkles,
-  Zap, Bell, Download, GitCompare, Shield, ExternalLink, ArrowRight
+  Zap, Bell, Download, GitCompare, Shield, ExternalLink, ArrowRight, Lock
 } from 'lucide-react'
 import Link from 'next/link'
 import { BloombergLeaderboardTable } from '@/components/adi/leaderboards/BloombergLeaderboardTable'
 import { LeaderboardData, LEADERBOARD_CATEGORIES } from '@/types/leaderboards'
 import { getUniqueSectors, getCategoriesBySector, getAllCategories } from '@/lib/brand-taxonomy'
+import { createCheckoutSession } from '@/lib/stripe-client'
 
 export default function LeaderboardsPage() {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null)
@@ -26,6 +27,7 @@ export default function LeaderboardsPage() {
   })
   const [currentTime, setCurrentTime] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
+  const [userTier, setUserTier] = useState<'free' | 'professional' | 'enterprise'>('free')
 
   // Load dynamic categories on component mount
   useEffect(() => {
@@ -271,7 +273,42 @@ export default function LeaderboardsPage() {
 
           {/* Main Leaderboard */}
           <div className="bg-white border-x border-b border-green-500 rounded-b-lg">
-            {loading ? (
+            {userTier === 'free' ? (
+              <div className="py-16 text-center relative">
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/80 to-white backdrop-blur-sm"></div>
+                <div className="relative z-10">
+                  <Lock className="h-16 w-16 mx-auto mb-6 text-gray-400" />
+                  <h3 className="text-2xl font-bold mb-4">Premium Leaderboards</h3>
+                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                    Access competitive intelligence and industry rankings with AIDI Index Pro or Enterprise.
+                  </p>
+                  <div className="flex justify-center gap-4">
+                    <Button
+                      size="lg"
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={async () => {
+                        try {
+                          await createCheckoutSession('professional')
+                        } catch (error) {
+                          console.error('Error starting checkout:', error)
+                          alert('Unable to start checkout. Please try again.')
+                        }
+                      }}
+                    >
+                      <Shield className="mr-2 h-5 w-5" />
+                      Upgrade to Index Pro - £119
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      onClick={() => window.location.href = '/demo'}
+                    >
+                      View Demo
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : loading ? (
               <div className="py-12 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
                 <p className="text-slate-600 font-mono">LOADING MARKET DATA...</p>
@@ -412,8 +449,8 @@ export default function LeaderboardsPage() {
             <Button
               className="h-16 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white"
               onClick={() => {
-                // Navigate to alerts setup page or show modal
-                window.location.href = '/dashboard?tab=alerts'
+                // Navigate to AIDI trends dashboard with alerts
+                window.location.href = '/dashboard/adi/trends'
               }}
             >
               <div className="text-center">
@@ -422,15 +459,28 @@ export default function LeaderboardsPage() {
               </div>
             </Button>
             
-            <Button
-              className="h-16 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white"
-              onClick={() => window.location.href = '/evaluate'}
-            >
-              <div className="text-center">
-                <Zap className="h-5 w-5 mx-auto mb-1" />
-                <div className="text-sm font-bold">Analyze My Brand</div>
-              </div>
-            </Button>
+            {userTier === 'professional' ? (
+              <Button
+                className="h-16 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white"
+                onClick={() => window.location.href = '/pricing'}
+              >
+                <div className="text-center">
+                  <Shield className="h-5 w-5 mx-auto mb-1" />
+                  <div className="text-sm font-bold">Upgrade to Enterprise</div>
+                  <div className="text-xs opacity-90">£319</div>
+                </div>
+              </Button>
+            ) : (
+              <Button
+                className="h-16 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white"
+                onClick={() => window.location.href = '/evaluate'}
+              >
+                <div className="text-center">
+                  <Zap className="h-5 w-5 mx-auto mb-1" />
+                  <div className="text-sm font-bold">Analyze My Brand</div>
+                </div>
+              </Button>
+            )}
           </div>
 
           {/* Market Overview */}
@@ -499,14 +549,32 @@ export default function LeaderboardsPage() {
                 Your competitors are already optimizing for AI. See where you rank.
               </p>
               <div className="flex justify-center gap-4">
-                <Button
-                  size="lg"
-                  className="bg-white text-orange-600 hover:bg-orange-50 font-bold"
-                  onClick={() => window.location.href = '/evaluate'}
-                >
-                  <Zap className="mr-2 h-5 w-5" />
-                  Get My AIDI Score
-                </Button>
+                {userTier === 'professional' ? (
+                  <Button
+                    size="lg"
+                    className="bg-white text-purple-600 hover:bg-purple-50 font-bold"
+                    onClick={async () => {
+                      try {
+                        await createCheckoutSession('enterprise')
+                      } catch (error) {
+                        console.error('Error starting checkout:', error)
+                        alert('Unable to start checkout. Please try again.')
+                      }
+                    }}
+                  >
+                    <Shield className="mr-2 h-5 w-5" />
+                    Upgrade to Enterprise - £319
+                  </Button>
+                ) : (
+                  <Button
+                    size="lg"
+                    className="bg-white text-orange-600 hover:bg-orange-50 font-bold"
+                    onClick={() => window.location.href = '/evaluate'}
+                  >
+                    <Zap className="mr-2 h-5 w-5" />
+                    Get My AIDI Score
+                  </Button>
+                )}
                 <Button
                   size="lg"
                   variant="outline"

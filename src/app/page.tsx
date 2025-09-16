@@ -145,8 +145,8 @@ export default function HomePage() {
               <span className="gradient-text block">to AI Models?</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto text-balance">
-              Test how ChatGPT, Claude, and Gemini discover, understand, and recommend your brand. 
-              Get your free AI visibility audit in minutes.
+              Test how AI discovers, understands, and recommends your brand.
+              Get your free GPT-4 visibility audit in minutes.
             </p>
 
             {/* URL Input Section */}
@@ -269,7 +269,7 @@ export default function HomePage() {
                     </li>
                     <li className="flex items-start">
                       <CheckCircle className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                      <span>Testing across 5+ AI models (ChatGPT, Claude, Gemini)</span>
+                      <span>GPT-4 analysis with comprehensive insights</span>
                     </li>
                     <li className="flex items-start">
                       <CheckCircle className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
@@ -445,7 +445,7 @@ export default function HomePage() {
               </div>
               <h3 className="font-semibold mb-2">AI Analysis</h3>
               <p className="text-gray-600 text-sm">
-                Our agents test your brand across 5+ AI models simultaneously
+                Our agents analyze your brand using advanced AI evaluation
               </p>
             </div>
             <div className="text-center">
@@ -535,6 +535,10 @@ export default function HomePage() {
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    Testing across 5+ AI models (ChatGPT, Claude, Gemini)
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
                     PDF & Excel exports
                   </li>
                   <li className="flex items-center">
@@ -610,7 +614,7 @@ export default function HomePage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-600">
-                    ChatGPT, Claude, and Gemini are becoming primary research tools. 
+                    AI models are becoming primary research tools.
                     Is your brand discoverable when customers ask AI for recommendations?
                   </p>
                 </CardContent>

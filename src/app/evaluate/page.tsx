@@ -23,6 +23,7 @@ import { LeaderboardData } from '@/types/leaderboards'
 import { BrandCategorizationService } from '@/lib/brand-categorization-service'
 import { AIDIPerformanceAnalyzer, AIDIPerformanceProfile } from '@/lib/adi/performance-framework'
 import { AIDIPerformanceDashboard } from '@/components/adi/performance/AIDIPerformanceDashboard'
+import { createCheckoutSession } from '@/lib/stripe-client'
 
 interface DimensionScore {
   name: string
@@ -812,8 +813,22 @@ ${evaluationData.certification ? `
                     Multi-model comparison ({evaluationData.aiProviders.length > 1 ? 'Active' : 'Available'})
                   </li>
                 </ul>
-                <Button className="w-full">
-                  Upgrade to AIDI Index Pro - £119
+                <Button
+                  className="w-full"
+                  onClick={async () => {
+                    try {
+                      const tier = evaluationData.tier === 'professional' ? 'enterprise' : 'professional'
+                      await createCheckoutSession(tier)
+                    } catch (error) {
+                      console.error('Error starting checkout:', error)
+                      alert('Unable to start checkout. Please try again.')
+                    }
+                  }}
+                >
+                  {evaluationData.tier === 'professional'
+                    ? 'Upgrade to Enterprise - £319'
+                    : 'Upgrade to AIDI Index Pro - £119'
+                  }
                   <Lock className="ml-2 h-4 w-4" />
                 </Button>
               </CardContent>
@@ -859,8 +874,23 @@ ${evaluationData.certification ? `
                 <Download className="mr-2 h-5 w-5" />
                 Download Technical Report
               </Button>
-              <Button size="lg" className="px-8">
-                Upgrade to AIDI Index Pro - £119
+              <Button
+                size="lg"
+                className="px-8"
+                onClick={async () => {
+                  try {
+                    const tier = evaluationData.tier === 'professional' ? 'enterprise' : 'professional'
+                    await createCheckoutSession(tier)
+                  } catch (error) {
+                    console.error('Error starting checkout:', error)
+                    alert('Unable to start checkout. Please try again.')
+                  }
+                }}
+              >
+                {evaluationData.tier === 'professional'
+                  ? 'Upgrade to Enterprise - £319'
+                  : 'Upgrade to AIDI Index Pro - £119'
+                }
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button size="lg" variant="outline" asChild>

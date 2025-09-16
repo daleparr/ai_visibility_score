@@ -1,6 +1,6 @@
-import { BaseADIAgent } from './base-agent'
+import { BaseAIDIAgent } from './base-agent'
 import { BRAND_TAXONOMY, DETECTION_KEYWORDS, PRICE_INDICATORS, BUSINESS_MODEL_INDICATORS, CategoryDetectionResult, BrandCategory } from '../../brand-taxonomy'
-import type { ADIAgentInput, ADIAgentOutput, ADIAgentConfig } from '@/types/adi'
+import type { AIDIAgentInput, AIDIAgentOutput, AIDIAgentConfig } from '@/types/adi'
 
 export interface BrandCategoryAnalysis {
   detectedCategory: CategoryDetectionResult
@@ -18,9 +18,9 @@ export interface BrandCategoryAnalysis {
   }
 }
 
-export class BrandCategoryDetectionAgent extends BaseADIAgent {
+export class BrandCategoryDetectionAgent extends BaseAIDIAgent {
   constructor() {
-    const config: ADIAgentConfig = {
+    const config: AIDIAgentConfig = {
       name: 'Brand Category Detection Agent',
       version: '1.0.0',
       description: 'Intelligently categorizes brands into appropriate peer groups and market segments',
@@ -32,7 +32,7 @@ export class BrandCategoryDetectionAgent extends BaseADIAgent {
     super(config)
   }
 
-  async execute(input: ADIAgentInput): Promise<ADIAgentOutput> {
+  async execute(input: AIDIAgentInput): Promise<AIDIAgentOutput> {
     const startTime = Date.now()
     
     try {
@@ -49,7 +49,7 @@ export class BrandCategoryDetectionAgent extends BaseADIAgent {
       
       const executionTime = Date.now() - startTime
       
-      // Create ADI-compatible results
+      // Create AIDI-compatible results
       const results = [
         this.createResult(
           'brand_category_confidence',
@@ -113,9 +113,16 @@ export class BrandCategoryDetectionAgent extends BaseADIAgent {
 
   private extractBrandSignals(content: string, url: string): BrandSignals {
     const text = content.toLowerCase()
-    // Fix URL validation - ensure protocol is present
-    const normalizedUrl = url.startsWith('http') ? url : `https://${url}`
-    const domain = new URL(normalizedUrl).hostname.toLowerCase()
+    
+    // Fix URL validation - ensure protocol is present and handle edge cases
+    let domain: string
+    try {
+      const normalizedUrl = url.startsWith('http') ? url : `https://${url}`
+      domain = new URL(normalizedUrl).hostname.toLowerCase()
+    } catch (error) {
+      // Fallback: extract domain from URL string if URL constructor fails
+      domain = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0].toLowerCase()
+    }
     
     return {
       // Content analysis

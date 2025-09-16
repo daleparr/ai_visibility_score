@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, integer, boolean, timestamp, pgEnum, jsonb } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, varchar, text, integer, boolean, timestamp, pgEnum, jsonb, serial } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
 // Enums
@@ -20,6 +20,7 @@ export const users = pgTable('users', {
   emailVerified: timestamp('email_verified'),
   name: varchar('name', { length: 255 }),
   image: varchar('image', { length: 500 }),
+  stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow()
 })
@@ -153,7 +154,35 @@ export const competitorBenchmarks = pgTable('competitor_benchmarks', {
   createdAt: timestamp('created_at').defaultNow()
 })
 
-// ADI Premium tables
+// AIDI Subscription Management
+export const subscriptions = pgTable('subscriptions', {
+  id: serial('id').primaryKey(),
+  userId: varchar('user_id').references(() => users.id),
+  stripeCustomerId: varchar('stripe_customer_id').unique(),
+  stripeSubscriptionId: varchar('stripe_subscription_id').unique(),
+  tier: varchar('tier', { enum: ['free', 'professional', 'enterprise'] }).default('free'),
+  status: varchar('status', { enum: ['active', 'canceled', 'past_due', 'unpaid', 'incomplete'] }).default('active'),
+  currentPeriodStart: timestamp('current_period_start'),
+  currentPeriodEnd: timestamp('current_period_end'),
+  cancelAtPeriodEnd: boolean('cancel_at_period_end').default(false),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+})
+
+export const payments = pgTable('payments', {
+  id: serial('id').primaryKey(),
+  userId: varchar('user_id').references(() => users.id),
+  subscriptionId: integer('subscription_id').references(() => subscriptions.id),
+  stripePaymentIntentId: varchar('stripe_payment_intent_id').unique(),
+  stripeInvoiceId: varchar('stripe_invoice_id'),
+  amount: integer('amount'), // in pence
+  currency: varchar('currency').default('gbp'),
+  status: varchar('status'),
+  tier: varchar('tier'),
+  createdAt: timestamp('created_at').defaultNow()
+})
+
+// AIDI Premium tables (legacy - keeping for compatibility)
 export const adiSubscriptions = pgTable('adi_subscriptions', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),

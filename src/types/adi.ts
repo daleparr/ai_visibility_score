@@ -1,5 +1,5 @@
-// ADI-specific database types (standalone until DB types are regenerated)
-export interface ADISubscription {
+// AIDI-specific database types (standalone until DB types are regenerated)
+export interface AIDISubscription {
   id: string
   user_id: string
   tier: ADISubscriptionTier
@@ -26,7 +26,7 @@ export interface ADIIndustry {
   updated_at: string
 }
 
-export interface ADIAgent {
+export interface AIDIAgent {
   id: string
   evaluation_id: string
   agent_name: string
@@ -42,7 +42,7 @@ export interface ADIAgent {
   created_at: string
 }
 
-export interface ADIAgentResult {
+export interface AIDIAgentResult {
   id: string
   agent_id: string
   result_type: string
@@ -135,8 +135,8 @@ export type ADIIndustryCategory =
 export type AgentStatus = 'pending' | 'running' | 'completed' | 'failed' | 'skipped'
 export type ADIEvaluationType = 'standard' | 'adi_premium' | 'benchmark'
 
-// ADI Agent Framework Types
-export interface ADIAgentConfig {
+// AIDI Agent Framework Types
+export interface AIDIAgentConfig {
   name: string
   version: string
   description: string
@@ -157,13 +157,13 @@ export interface ADIEvaluationContext {
   metadata: Record<string, any>
 }
 
-export interface ADIAgentInput {
+export interface AIDIAgentInput {
   context: ADIEvaluationContext
-  previousResults?: ADIAgentResult[]
+  previousResults?: AIDIAgentResult[]
   config: Record<string, any>
 }
 
-export interface ADIAgentOutput {
+export interface AIDIAgentOutput {
   agentName: string
   status: AgentStatus
   results: {
@@ -178,16 +178,16 @@ export interface ADIAgentOutput {
   metadata: Record<string, any>
 }
 
-// Core ADI Agent Interface
-export interface IADIAgent {
-  readonly config: ADIAgentConfig
-  execute(input: ADIAgentInput): Promise<ADIAgentOutput>
-  validate(output: ADIAgentOutput): boolean
-  retry(input: ADIAgentInput, attempt: number): Promise<ADIAgentOutput>
+// Core AIDI Agent Interface
+export interface IAIDIAgent {
+  readonly config: AIDIAgentConfig
+  execute(input: AIDIAgentInput): Promise<AIDIAgentOutput>
+  validate(output: AIDIAgentOutput): boolean
+  retry(input: AIDIAgentInput, attempt: number): Promise<AIDIAgentOutput>
 }
 
-// ADI Orchestrator Types
-export interface ADIOrchestrationPlan {
+// AIDI Orchestrator Types
+export interface AIDIOrchestrationPlan {
   parallelPhases: string[][]
   sequentialPhases: string[]
   dependencies: Record<string, string[]>
@@ -197,15 +197,15 @@ export interface ADIOrchestrationPlan {
 export interface ADIOrchestrationResult {
   evaluationId: string
   overallStatus: 'completed' | 'partial' | 'failed'
-  agentResults: Record<string, ADIAgentOutput>
+  agentResults: Record<string, AIDIAgentOutput>
   totalExecutionTime: number
   errors: string[]
   warnings: string[]
 }
 
-// ADI Scoring Types
-export interface ADIDimensionScore {
-  dimension: ADIDimensionName
+// AIDI Scoring Types
+export interface AIDIDimensionScore {
+  dimension: AIDIDimensionName
   score: number
   confidenceInterval: number
   evidence: Record<string, any>
@@ -216,7 +216,7 @@ export interface ADIPillarScore {
   pillar: 'infrastructure' | 'perception' | 'commerce'
   score: number
   weight: number
-  dimensions: ADIDimensionScore[]
+  dimensions: AIDIDimensionScore[]
 }
 
 export interface ADIScore {
@@ -230,8 +230,8 @@ export interface ADIScore {
   methodologyVersion: string
 }
 
-// ADI Dimension Names (10 dimensions - restored Geo Visibility)
-export type ADIDimensionName =
+// AIDI Dimension Names (10 dimensions - restored Geo Visibility)
+export type AIDIDimensionName =
   | 'schema_structured_data'           // 12% - Pillar A
   | 'semantic_clarity_ontology'        // 10% - Pillar A
   | 'knowledge_graphs_entity_linking'  // 8%  - Pillar A
@@ -243,8 +243,8 @@ export type ADIDimensionName =
   | 'hero_products_use_case'           // 12% - Pillar C
   | 'policies_logistics_clarity'       // 8%  - Pillar C
 
-// ADI Weights Configuration (Updated with Geo Visibility)
-export const ADI_DIMENSION_WEIGHTS: Record<ADIDimensionName, number> = {
+// AIDI Weights Configuration (Updated with Geo Visibility)
+export const AIDI_DIMENSION_WEIGHTS: Record<AIDIDimensionName, number> = {
   // Pillar A: Infrastructure & Machine Readability (40%)
   'schema_structured_data': 0.12,
   'semantic_clarity_ontology': 0.10,
@@ -262,13 +262,13 @@ export const ADI_DIMENSION_WEIGHTS: Record<ADIDimensionName, number> = {
   'policies_logistics_clarity': 0.08,
 }
 
-export const ADI_PILLAR_WEIGHTS = {
+export const AIDI_PILLAR_WEIGHTS = {
   infrastructure: 0.40,
   perception: 0.47,  // Increased to accommodate Geo Visibility
   commerce: 0.20,
 } as const
 
-export const ADI_DIMENSION_PILLARS: Record<ADIDimensionName, keyof typeof ADI_PILLAR_WEIGHTS> = {
+export const AIDI_DIMENSION_PILLARS: Record<AIDIDimensionName, keyof typeof AIDI_PILLAR_WEIGHTS> = {
   'schema_structured_data': 'infrastructure',
   'semantic_clarity_ontology': 'infrastructure',
   'knowledge_graphs_entity_linking': 'infrastructure',
@@ -281,7 +281,7 @@ export const ADI_DIMENSION_PILLARS: Record<ADIDimensionName, keyof typeof ADI_PI
   'policies_logistics_clarity': 'commerce',
 }
 
-export const ADI_DIMENSION_NAMES: Record<ADIDimensionName, string> = {
+export const AIDI_DIMENSION_NAMES: Record<AIDIDimensionName, string> = {
   'schema_structured_data': 'Schema & Structured Data',
   'semantic_clarity_ontology': 'Semantic Clarity & Ontology',
   'knowledge_graphs_entity_linking': 'Knowledge Graphs & Entity Linking',
@@ -306,7 +306,7 @@ export interface ADIIndustryBenchmark {
     p90: number
     topPerformer: number
   }
-  dimensionMedians: Record<ADIDimensionName, number>
+  dimensionMedians: Record<AIDIDimensionName, number>
   trends: {
     monthOverMonth: number
     quarterOverQuarter: number
@@ -388,8 +388,8 @@ export interface ADIEvaluationWithDetails {
     websiteUrl: string
     industry: ADIIndustry
   }
-  agents: ADIAgent[]
-  agentResults: ADIAgentResult[]
+  agents: AIDIAgent[]
+  agentResults: AIDIAgentResult[]
   crawlArtifacts: ADICrawlArtifact[]
   leaderboardEntry?: ADILeaderboard
 }
@@ -443,15 +443,15 @@ export class ADIError extends Error {
   }
 }
 
-export class ADIAgentError extends ADIError {
+export class AIDIAgentError extends ADIError {
   constructor(
     agentName: string,
     message: string,
-    public agentConfig: ADIAgentConfig,
+    public agentConfig: AIDIAgentConfig,
     details?: Record<string, any>
   ) {
     super(`Agent ${agentName}: ${message}`, 'AGENT_ERROR', details)
-    this.name = 'ADIAgentError'
+    this.name = 'AIDIAgentError'
   }
 }
 
