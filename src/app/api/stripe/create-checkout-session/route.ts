@@ -8,15 +8,20 @@ import { eq } from 'drizzle-orm'
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🔄 Creating checkout session...')
+    
     const session = await getServerSession(authOptions)
     
     if (!session?.user?.email) {
+      console.error('❌ No authenticated user session')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { priceId, tier } = await request.json()
+    console.log('📋 Request data:', { priceId, tier, userEmail: session.user.email })
 
     if (!priceId || !tier) {
+      console.error('❌ Missing required fields:', { priceId, tier })
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -83,9 +88,21 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error creating checkout session:', error)
+    console.error('❌ Error creating checkout session:', error)
+    
+    // Provide more specific error messages
+    let errorMessage = 'Internal server error'
+    if (error instanceof Error) {
+      errorMessage = error.message
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      })
+    }
+    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: errorMessage },
       { status: 500 }
     )
   }
