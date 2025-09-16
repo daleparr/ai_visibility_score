@@ -18,6 +18,9 @@ interface PriorityActionCardProps {
   effort: 'easy' | 'medium' | 'hard'
   expectedIncrease: string
   implementationSteps?: string[]
+  onGetGuide?: () => void
+  websiteUrl?: string
+  dimensionName?: string
 }
 
 export function PriorityActionCard({
@@ -26,8 +29,82 @@ export function PriorityActionCard({
   timeline,
   effort,
   expectedIncrease,
-  implementationSteps = []
+  implementationSteps = [],
+  onGetGuide,
+  websiteUrl,
+  dimensionName
 }: PriorityActionCardProps) {
+
+  const handleGetGuide = () => {
+    if (onGetGuide) {
+      onGetGuide()
+    } else {
+      // Generate and download technical implementation guide
+      generateTechnicalGuide()
+    }
+  }
+
+  const generateTechnicalGuide = () => {
+    const guideContent = `
+# Technical Implementation Guide
+## ${recommendation.title}
+
+**Website:** ${websiteUrl || 'N/A'}
+**Dimension:** ${dimensionName || 'General'}
+**Current Score:** ${recommendation.score}/100
+**Priority:** ${recommendation.priority}
+
+## Business Impact
+${businessImpact}
+
+## Implementation Timeline
+${timeline}
+
+## Effort Level
+${effort} - ${getEffortDescription(effort)}
+
+## Expected Results
+${expectedIncrease}
+
+## Step-by-Step Implementation
+${implementationSteps.map((step, index) => `${index + 1}. ${step}`).join('\n')}
+
+## Technical Specifications
+- Implementation complexity: ${effort}
+- Expected timeline: ${timeline}
+- Business impact: ${businessImpact}
+- Score improvement potential: +${Math.min(25, 100 - recommendation.score)} points
+
+## Next Steps
+1. Review current implementation status
+2. Allocate development resources
+3. Follow implementation steps in order
+4. Monitor score improvements
+5. Validate with AI testing
+
+Generated on: ${new Date().toLocaleString()}
+    `.trim()
+
+    // Create and download the guide
+    const blob = new Blob([guideContent], { type: 'text/markdown' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${recommendation.title.replace(/[^a-zA-Z0-9]/g, '_')}_Implementation_Guide.md`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const getEffortDescription = (effort: string) => {
+    switch (effort) {
+      case 'easy': return 'Quick implementation, minimal technical complexity'
+      case 'medium': return 'Moderate implementation, some technical expertise required'
+      case 'hard': return 'Complex implementation, significant technical resources needed'
+      default: return 'Implementation complexity varies'
+    }
+  }
   const getPriorityColor = (priority: string) => {
     switch (priority.toLowerCase()) {
       case 'high': return 'bg-red-50 border-red-200'
@@ -169,7 +246,7 @@ export function PriorityActionCard({
         )}
 
         {/* Action Button */}
-        <Button className="w-full" size="sm">
+        <Button className="w-full" size="sm" onClick={handleGetGuide}>
           Get Implementation Guide
           <ChevronRight className="h-4 w-4 ml-2" />
         </Button>

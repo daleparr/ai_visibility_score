@@ -146,7 +146,13 @@ export function BloombergLeaderboardTable({ data, onFilterChange, showFilters = 
             </div>
           </div>
           <div className="text-right">
-            <Button className="bg-orange-600 hover:bg-orange-700 text-white font-bold">
+            <Button
+              className="bg-orange-600 hover:bg-orange-700 text-white font-bold"
+              onClick={() => {
+                // Navigate to evaluation page
+                window.location.href = '/evaluate'
+              }}
+            >
               <Download className="h-4 w-4 mr-2" />
               Get Your AIDI Report
             </Button>
@@ -188,11 +194,26 @@ export function BloombergLeaderboardTable({ data, onFilterChange, showFilters = 
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl font-bold">League Table</CardTitle>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // Navigate to comparison tool with top 3 brands pre-selected
+                  const topBrands = data.entries.slice(0, 3).map(e => e.domain).join(',')
+                  window.location.href = `/evaluate?compare=${topBrands}&mode=comparison`
+                }}
+              >
                 <GitCompare className="h-4 w-4 mr-1" />
                 Compare Brands
               </Button>
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // Show alert setup modal or navigate to alerts page
+                  alert(`🔔 Alert Setup\n\nGet notified when:\n• Rankings change in ${data.category}\n• New brands enter top 10\n• Sector average shifts\n\nFeature coming soon!`)
+                }}
+              >
                 <Bell className="h-4 w-4 mr-1" />
                 Set Alerts
               </Button>
@@ -291,13 +312,55 @@ export function BloombergLeaderboardTable({ data, onFilterChange, showFilters = 
 
                   {/* Actions */}
                   <div className="col-span-2 flex justify-center gap-1">
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 hover:bg-blue-100"
+                      onClick={() => window.open(`https://${entry.domain}`, '_blank')}
+                      title="Visit Website"
+                    >
                       <ExternalLink className="h-3 w-3" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 hover:bg-purple-100"
+                      onClick={() => {
+                        // Navigate to evaluation page with comparison mode
+                        window.location.href = `/evaluate?url=${entry.domain}&compare=${entry.brand}`
+                      }}
+                      title="Compare with My Brand"
+                    >
                       <GitCompare className="h-3 w-3" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 hover:bg-green-100"
+                      onClick={() => {
+                        // Generate and download brand report
+                        const reportData = {
+                          brand: entry.brand,
+                          domain: entry.domain,
+                          score: entry.overallScore,
+                          grade: entry.grade,
+                          rank: entry.rank,
+                          category: data.category,
+                          pillarScores: entry.pillarScores,
+                          timestamp: new Date().toISOString()
+                        }
+                        const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' })
+                        const url = URL.createObjectURL(blob)
+                        const a = document.createElement('a')
+                        a.href = url
+                        a.download = `${entry.brand.toLowerCase().replace(/\s+/g, '-')}-adi-report.json`
+                        document.body.appendChild(a)
+                        a.click()
+                        document.body.removeChild(a)
+                        URL.revokeObjectURL(url)
+                      }}
+                      title="Download Report"
+                    >
                       <Download className="h-3 w-3" />
                     </Button>
                   </div>
@@ -392,11 +455,24 @@ export function BloombergLeaderboardTable({ data, onFilterChange, showFilters = 
             <span className="text-slate-300">See where your brand ranks in this leaderboard</span>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary" size="sm">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                // Navigate to certification page or show info
+                alert(`🏅 AIDI Certification\n\nEarn official AI Discoverability badges:\n• AI Shelf Leader (Top 10%)\n• Schema Ready Certified\n• Conversational Copy Excellence\n\nAnalyze your brand to qualify!`)
+              }}
+            >
               <Shield className="h-4 w-4 mr-1" />
               Get Certified
             </Button>
-            <Button className="bg-orange-600 hover:bg-orange-700">
+            <Button
+              className="bg-orange-600 hover:bg-orange-700"
+              onClick={() => {
+                // Navigate to evaluation page
+                window.location.href = '/evaluate'
+              }}
+            >
               <Zap className="h-4 w-4 mr-1" />
               Analyze My Brand
             </Button>

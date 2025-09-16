@@ -12,7 +12,8 @@ import { CitationAgent } from './agents/citation-agent'
 import { SentimentAgent } from './agents/sentiment-agent'
 import { CommerceAgent } from './agents/commerce-agent'
 import { ScoreAggregatorAgent } from './agents/score-aggregator-agent'
-import type { 
+import { traceLogger, EvaluationTrace } from './trace-logger'
+import type {
   ADIEvaluationContext,
   ADIOrchestrationResult,
   ADIScore,
@@ -74,6 +75,7 @@ export class ADIService {
     adiScore: ADIScore
     industryPercentile?: number
     globalRank?: number
+    evaluationTrace?: EvaluationTrace
   }> {
     await this.initialize()
 
@@ -95,6 +97,10 @@ export class ADIService {
       }
     }
 
+    // Start trace logging
+    const evaluationStartTime = Date.now()
+    traceLogger.startEvaluation(context.evaluationId, websiteUrl, 'professional')
+
     // Run orchestrated evaluation
     const orchestrationResult = await this.orchestrator.executeEvaluation(context)
 
@@ -104,6 +110,24 @@ export class ADIService {
 
     // Calculate ADI score
     const adiScore = ADIScoringEngine.calculateADIScore(orchestrationResult)
+
+    // Log aggregation trace
+    const pillarScores = adiScore.pillars?.reduce((acc, pillar) => {
+      acc[pillar.pillar] = pillar.score
+      return acc
+    }, {} as Record<string, number>) || {}
+
+    traceLogger.logAggregation(
+      context.evaluationId,
+      pillarScores,
+      adiScore.overall,
+      'ADI Framework v1.0',
+      {
+        infrastructure: 0.4,
+        perception: 0.35,
+        commerce: 0.25
+      }
+    )
 
     // Calculate industry percentile if industry provided
     let industryPercentile: number | undefined
