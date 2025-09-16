@@ -1,0 +1,273 @@
+# AIDI Refined Branding Strategy
+## Updated Brand Framework: "AI Discoverability Index"
+
+---
+
+## 🎯 Refined Brand Decision
+
+Based on strategic review, the branding has been refined for maximum clarity and authority:
+
+### Primary Brand Name
+- **From**: "AIDI Platform" (too vague)
+- **To**: "AI Discoverability Index" (descriptive and authoritative)
+
+### URL Strategy
+- **Primary Domain**: AI-Discoverability-Index.com
+- **Project URL**: ai-discoverability-index.netlify.app
+
+---
+
+## 🏢 Updated Brand Architecture
+
+### Primary Brand Framework
+```
+🏢 AI Discoverability Index (Primary Brand)
+   ├── 📊 AIDI Score (Free Tier)
+   ├── 🔍 AIDI Index Pro (Premium Tier)
+   ├── ⚙️ Multi-Agent Framework (Technical)
+   └── 🏆 AIDI Certified (Certification)
+```
+
+### Brand Hierarchy Clarity
+- **Full Name**: "AI Discoverability Index"
+- **Short Name**: "AIDI"
+- **Tagline**: "The Standard for AI Discoverability"
+- **Authority**: "Dale Parr, Creator of the AI Discoverability Index"
+
+---
+
+## 📝 Updated Technical Implementation
+
+### Core Metadata Updates (src/app/layout.tsx)
+```typescript
+export const metadata: Metadata = {
+  title: 'AI Discoverability Index - The Standard for AI Discoverability',
+  description: 'The definitive framework for measuring and optimizing your brand\'s AI discoverability. Get your AIDI score and master AI visibility.',
+  keywords: 'AI discoverability index, AIDI, AI visibility, brand analysis, AI SEO',
+  authors: [{ name: 'Dale Parr, Creator of AI Discoverability Index' }],
+  creator: 'AI Discoverability Index',
+  publisher: 'AI Discoverability Index',
+  metadataBase: new URL('https://ai-discoverability-index.com'),
+  openGraph: {
+    title: 'AI Discoverability Index - The Standard for AI Discoverability',
+    description: 'Master your brand\'s AI discoverability with the AI Discoverability Index framework.',
+    url: '/',
+    siteName: 'AI Discoverability Index',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'AI Discoverability Index - AIDI Framework',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AI Discoverability Index - The Standard for AI Discoverability',
+    description: 'Master your brand\'s AI discoverability with the AI Discoverability Index framework.',
+  },
+}
+```
+
+### Package.json Updates
+```json
+{
+  "name": "ai-discoverability-index",
+  "version": "1.0.0",
+  "description": "The AI Discoverability Index - The Standard for AI Discoverability",
+  // ... rest unchanged
+}
+```
+
+### README.md Updates
+```markdown
+# AI Discoverability Index
+
+The definitive framework for measuring and optimizing brand visibility in AI-powered systems. The AI Discoverability Index (AIDI) provides comprehensive evaluation across 13 dimensions to help brands master their AI discoverability.
+
+## About the AI Discoverability Index
+
+Created by Dale Parr, the AI Discoverability Index represents the industry standard for measuring how effectively brands appear in AI-powered search and recommendation systems.
+```
+
+---
+
+## 🌐 Updated Domain Strategy
+
+### Primary Domain Priority
+1. **AI-Discoverability-Index.com** (Primary - Highest Priority)
+2. **AIDIindex.com** (Secondary - Medium Priority)
+3. **AIDiscoverabilityIndex.com** (Backup - Low Priority)
+4. **GetAIDI.com** (Marketing - Low Priority)
+
+### URL Structure
+- **Primary**: `AI-Discoverability-Index.com`
+- **Free Tool**: `AI-Discoverability-Index.com/score`
+- **Premium**: `AI-Discoverability-Index.com/pro`
+- **Certification**: `AI-Discoverability-Index.com/certified`
+- **API**: `api.AI-Discoverability-Index.com`
+
+### Netlify Configuration
+```toml
+[[redirects]]
+  from = "https://ai-visibility-score.netlify.app/*"
+  to = "https://ai-discoverability-index.com/:splat"
+  status = 301
+  force = true
+```
+
+---
+
+## 🎨 Updated Brand Identity
+
+### Visual Identity
+```
+Primary Logo: [AI Discoverability Index] with brain icon
+Abbreviated: [AIDI] for compact spaces
+Tagline: "The Standard for AI Discoverability"
+```
+
+### Messaging Framework
+- **Primary Value Prop**: "The definitive standard for AI discoverability measurement"
+- **Authority Statement**: "Created by Dale Parr, the AI Discoverability Index sets the industry standard"
+- **Free Tier**: "Get your AIDI score from the AI Discoverability Index"
+- **Premium Tier**: "Master your AI discoverability with professional AIDI analysis"
+
+---
+
+## 📋 Updated File Changes
+
+### Key Branding Updates Needed
+
+#### `src/app/page.tsx`
+**Line 51**: 
+```tsx
+<span className="text-2xl font-bold gradient-text">AI Discoverability Index</span>
+```
+
+**Line 675**: 
+```tsx
+<span className="text-lg font-bold">AI Discoverability Index</span>
+```
+
+**Line 711**: 
+```tsx
+<p>&copy; 2024 AI Discoverability Index. All rights reserved.</p>
+```
+
+#### `src/app/evaluate/page.tsx`
+**Line 198-199**: 
+```markdown
+---
+*Report generated by AI Discoverability Index*
+*For technical support: support@ai-discoverability-index.com*
+```
+
+#### `src/components/adi/reporting/PriorityActionCard.tsx`
+**Line 243**: 
+```typescript
+pdf.text('AI Discoverability Index', 150, 280)
+```
+
+#### `src/lib/ai-providers.ts`
+**Line 384**: 
+```typescript
+'User-Agent': 'AI-Discoverability-Index-Bot/1.0 (+https://ai-discoverability-index.com/bot)'
+```
+
+---
+
+## 🔍 Updated SEO Strategy
+
+### Primary Keywords
+- **"AI Discoverability Index"** (Primary brand term)
+- **"AIDI"** (Abbreviated brand)
+- **"AI discoverability"** (Category term)
+- **"Dale Parr AI Discoverability Index"** (Authority term)
+
+### Content Optimization
+- All instances of "AI Visibility Score" → "AI Discoverability Index"
+- Meta titles emphasize full brand name
+- H1 tags use "AI Discoverability Index" for authority
+- Internal linking uses descriptive anchor text
+
+---
+
+## 📈 Updated Marketing Messaging
+
+### Thought Leadership Positioning
+```
+Dale Parr Professional Title:
+"Creator of the AI Discoverability Index"
+
+Bio Update:
+"Dale Parr is the creator of the AI Discoverability Index (AIDI), 
+the industry standard for measuring AI discoverability. His framework 
+helps brands optimize their visibility in AI-powered systems."
+
+Speaking Topics:
+- "Introducing the AI Discoverability Index: Setting the Standard"
+- "The AI Discoverability Index: 13 Dimensions Every Brand Must Master"
+- "From Invisible to Indispensable: The AI Discoverability Index Transformation"
+```
+
+### Press Release Updates
+```
+Headline: "AI Visibility Score Evolves into AI Discoverability Index, 
+Setting New Industry Standard"
+
+Key Quote: "We realized we weren't just creating another measurement tool - 
+we were defining the AI Discoverability Index as an entirely new standard," 
+said Dale Parr, Creator of the AI Discoverability Index.
+```
+
+---
+
+## ⚖️ Updated Legal Strategy
+
+### Trademark Priority
+1. **"AI Discoverability Index"** (Primary - Highest Priority)
+2. **"AIDI"** (Secondary - High Priority)
+3. **"Dale Parr AI Discoverability Index"** (Personal brand - Medium Priority)
+
+### Domain Protection
+- Secure AI-Discoverability-Index.com immediately
+- Defensive registration of variations
+- Social media handle consistency
+
+---
+
+## 🚀 Implementation Priority
+
+### Immediate Updates (Week 1)
+1. **Domain Acquisition**: AI-Discoverability-Index.com
+2. **Core Branding**: Update all "AI Visibility Score" to "AI Discoverability Index"
+3. **Metadata**: Update titles, descriptions, and schema
+4. **Legal**: File trademark for "AI Discoverability Index"
+
+### Brand Consistency Rules
+- **Full Name**: Always "AI Discoverability Index" in formal contexts
+- **Abbreviated**: "AIDI" only in space-constrained situations
+- **Authority**: "Dale Parr, Creator of the AI Discoverability Index"
+- **Never**: "AIDI Platform" (too vague)
+
+---
+
+## 📊 Expected Impact
+
+### Brand Clarity Benefits
+- **Descriptive Authority**: "AI Discoverability Index" immediately conveys purpose
+- **SEO Advantage**: Exact match for "AI discoverability index" searches
+- **Professional Credibility**: Sounds like an established industry standard
+- **Trademark Strength**: More distinctive and defensible
+
+### Competitive Positioning
+- **Category Ownership**: "The AI Discoverability Index" implies THE standard
+- **Authority Building**: Dale Parr becomes "Creator of the AI Discoverability Index"
+- **Market Differentiation**: Clear distinction from generic "AI tools"
+- **Premium Justification**: "Index" implies sophisticated, professional analysis
+
+---
+
+*This refined branding strategy positions the AI Discoverability Index as the definitive industry standard while maintaining the AIDI abbreviation for practical use. The full descriptive name provides immediate clarity and authority that "AIDI Platform" lacked.*

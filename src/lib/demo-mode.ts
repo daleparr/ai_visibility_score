@@ -42,7 +42,7 @@ export const mockBrands = [
     name: 'TechCorp Demo',
     websiteUrl: 'https://techcorp-demo.com',
     industry: 'Technology',
-    description: 'A demo technology company for testing AI Visibility Score',
+    description: 'A demo technology company for testing AI Discoverability Index',
     competitors: ['https://competitor1.com', 'https://competitor2.com'],
     adiIndustryId: null,
     adiEnabled: false,

@@ -381,7 +381,7 @@ export async function fetchWebsiteContent(url: string): Promise<string> {
     // Fetch the actual website content
     const response = await fetch(fullUrl, {
       headers: {
-        'User-Agent': 'AI-Visibility-Score-Bot/1.0 (+https://ai-visibility-score.com/bot)'
+        'User-Agent': 'AI-Discoverability-Index-Bot/1.0 (+https://ai-discoverability-index.com/bot)'
       }
     })
     

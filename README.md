@@ -1,6 +1,6 @@
-# AI Visibility Score
+# AI Discoverability Index
 
-A comprehensive platform that evaluates how brands appear in AI-powered search and recommendation systems. Unlike traditional SEO audits, AI Visibility Score tests whether frontier models (OpenAI, Anthropic, Google, etc.) can find, parse, and reason about your brand's presence.
+A comprehensive platform that evaluates how brands appear in AI-powered search and recommendation systems. Unlike traditional SEO audits, the AI Discoverability Index (AIDI) tests whether frontier models (OpenAI, Anthropic, Google, etc.) can find, parse, and reason about your brand's presence.
 
 ## ⚡ **Quick Start for User Testing (5 Minutes)**
 
@@ -85,8 +85,8 @@ npm install && npm run db:migrate && npm run dev
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-org/ai-visibility-score.git
-   cd ai-visibility-score
+   git clone https://github.com/your-org/ai-discoverability-index.git
+   cd ai-discoverability-index
    ```
 
 2. **Install dependencies**
@@ -167,7 +167,7 @@ npm install && npm run db:migrate && npm run dev
 
 ### Project Structure
 ```
-ai-visibility-score/
+ai-discoverability-index/
 ├── src/
 │   ├── app/                 # Next.js 14 app directory
 │   │   ├── demo/            # Demo mode pages (no auth required)

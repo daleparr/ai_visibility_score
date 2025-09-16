@@ -48,7 +48,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Brain className="h-8 w-8 text-brand-600" />
-              <span className="text-2xl font-bold gradient-text">AI Visibility Score</span>
+              <span className="text-2xl font-bold gradient-text">AI Discoverability Index</span>
             </div>
             
             {/* Desktop Navigation */}
@@ -672,7 +672,7 @@ export default function HomePage() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Brain className="h-6 w-6" />
-                <span className="text-lg font-bold">AI Visibility Score</span>
+                <span className="text-lg font-bold">AI Discoverability Index</span>
               </div>
               <p className="text-gray-400 text-sm">
                 The first platform to measure and optimize brand visibility 
@@ -708,7 +708,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
-            <p>&copy; 2024 AI Visibility Score. All rights reserved.</p>
+            <p>&copy; 2024 AI Discoverability Index. All rights reserved.</p>
           </div>
         </div>
       </footer>

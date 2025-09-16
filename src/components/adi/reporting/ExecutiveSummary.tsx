@@ -54,7 +54,7 @@ export function ExecutiveSummary({ overallScore, url, tier, pillarScores }: Exec
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-2xl mb-2">
-              🎯 Your AI Visibility Score: {overallScore}/100 (Grade {grade})
+              🎯 Your AIDI Score: {overallScore}/100 (Grade {grade})
             </CardTitle>
             <p className="text-gray-600">Analysis for <span className="font-semibold">{url}</span></p>
           </div>

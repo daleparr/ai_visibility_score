@@ -83,7 +83,7 @@ export default function SignUpPage() {
           <CardHeader className="text-center">
             <div className="flex items-center justify-center space-x-2 mb-4">
               <Brain className="h-8 w-8 text-brand-600" />
-              <span className="text-2xl font-bold gradient-text">AI Visibility Score</span>
+              <span className="text-2xl font-bold gradient-text">AI Discoverability Index</span>
             </div>
             <CardTitle className="text-xl text-success-600">Welcome aboard!</CardTitle>
             <CardDescription>
@@ -106,7 +106,7 @@ export default function SignUpPage() {
           </Link>
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Brain className="h-8 w-8 text-brand-600" />
-            <span className="text-2xl font-bold gradient-text">AI Visibility Score</span>
+            <span className="text-2xl font-bold gradient-text">AI Discoverability Index</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Create your account</h1>
           <p className="text-gray-600 mt-2">Start measuring your AI visibility today</p>
@@ -116,7 +116,7 @@ export default function SignUpPage() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-xl text-center">Sign up</CardTitle>
             <CardDescription className="text-center">
-              Create an account to get started with AI Visibility Score
+              Create an account to get started with AI Discoverability Index
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

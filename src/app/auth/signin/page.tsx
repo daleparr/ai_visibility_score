@@ -69,7 +69,7 @@ export default function SignInPage() {
           </Link>
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Brain className="h-8 w-8 text-brand-600" />
-            <span className="text-2xl font-bold gradient-text">AI Visibility Score</span>
+            <span className="text-2xl font-bold gradient-text">AI Discoverability Index</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
           <p className="text-gray-600 mt-2">Sign in to your account to continue</p>

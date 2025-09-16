@@ -1,6 +1,6 @@
 {
-  "name": "ai-visibility-score",
-  "version": "0.1.0",
+  "name": "ai-discoverability-index",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
