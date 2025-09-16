@@ -120,10 +120,9 @@ Generated on: ${new Date().toLocaleString()}
     pdf.setFontSize(24)
     pdf.text('Implementation Guide', 20, 25)
     
-    // Dimension name with emoji
-    const dimensionEmoji = getDimensionEmoji(dimensionName || '')
-    pdf.setFontSize(18)
-    pdf.text(`${recommendation.title} ${dimensionEmoji}`, 20, 35)
+    // Dimension name (clean text without emojis for better PDF compatibility)
+    pdf.setFontSize(16)
+    pdf.text(recommendation.title, 20, 35)
     
     // Reset text color
     pdf.setTextColor(0, 0, 0)
@@ -147,27 +146,27 @@ Generated on: ${new Date().toLocaleString()}
     pdf.setFontSize(12)
     pdf.text(`${recommendation.score}/100`, 25, 68)
     pdf.text(recommendation.priority.toUpperCase(), 70, 68)
-    pdf.text(`${effort} ⚡`, 115, 68)
+    pdf.text(`${effort} (Easy)`, 115, 68)
     pdf.text(timeline, 160, 68)
     
     // Business Impact Box
     pdf.setFillColor(255, 251, 235) // Light yellow
-    pdf.rect(15, 85, 180, 20, 'F')
+    pdf.rect(15, 85, 180, 25, 'F')
     pdf.setDrawColor(251, 191, 36)
-    pdf.rect(15, 85, 180, 20, 'S')
+    pdf.rect(15, 85, 180, 25, 'S')
     pdf.setFontSize(12)
     pdf.setFont('helvetica', 'bold')
-    pdf.text('💡 Business Impact:', 20, 95)
+    pdf.text('Business Impact:', 20, 95)
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(10)
     const impactText = pdf.splitTextToSize(businessImpact, 160)
-    pdf.text(impactText, 20, 100)
+    pdf.text(impactText, 20, 102)
     
     // Visual Gauge Section (Left Column)
-    let currentY = 120
+    let currentY = 125
     pdf.setFontSize(14)
     pdf.setFont('helvetica', 'bold')
-    pdf.text('📊 Score Improvement Potential', 20, currentY)
+    pdf.text('Score Improvement Potential', 20, currentY)
     
     // Simple gauge representation
     currentY += 15
@@ -194,16 +193,16 @@ Generated on: ${new Date().toLocaleString()}
     // Implementation Steps (Right Column)
     pdf.setFontSize(14)
     pdf.setFont('helvetica', 'bold')
-    pdf.text('✅ Step-by-Step Implementation', 110, 135)
+    pdf.text('Step-by-Step Implementation', 110, 140)
     
-    currentY = 145
+    currentY = 150
     pdf.setFontSize(10)
     pdf.setFont('helvetica', 'normal')
     implementationSteps.forEach((step, index) => {
       const stepText = `${index + 1}. ${step}`
       const wrappedStep = pdf.splitTextToSize(stepText, 80)
       pdf.text(wrappedStep, 110, currentY)
-      currentY += wrappedStep.length * 5 + 3
+      currentY += wrappedStep.length * 4 + 5
     })
     
     // Technical Specs Box (Bottom Left)
@@ -215,7 +214,7 @@ Generated on: ${new Date().toLocaleString()}
     
     pdf.setFontSize(12)
     pdf.setFont('helvetica', 'bold')
-    pdf.text('⚙️ Technical Specifications', 20, currentY + 10)
+    pdf.text('Technical Specifications', 20, currentY + 10)
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(9)
     pdf.text(`Implementation complexity: ${effort}`, 20, currentY + 18)
@@ -230,7 +229,7 @@ Generated on: ${new Date().toLocaleString()}
     
     pdf.setFontSize(12)
     pdf.setFont('helvetica', 'bold')
-    pdf.text('➡️ Next Steps', 115, currentY + 10)
+    pdf.text('Next Steps', 115, currentY + 10)
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(9)
     pdf.text('1. Review current implementation status', 115, currentY + 18)
