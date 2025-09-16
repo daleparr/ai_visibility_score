@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { db } from '@/lib/db'
 import { users, subscriptions } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     let event: Stripe.Event
 
     try {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
+      event = getStripe().webhooks.constructEvent(body, signature, webhookSecret)
     } catch (err) {
       console.error('Webhook signature verification failed:', err)
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
         const session = event.data.object as Stripe.Checkout.Session
         
         if (session.mode === 'subscription' && session.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(
+          const subscription = await getStripe().subscriptions.retrieve(
             session.subscription as string
           )
           
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
         const invoice = event.data.object as Stripe.Invoice
         const subscriptionId = (invoice as any).subscription
         if (subscriptionId && typeof subscriptionId === 'string') {
-          const subscription = await stripe.subscriptions.retrieve(
+          const subscription = await getStripe().subscriptions.retrieve(
             subscriptionId
           )
           await handleSubscriptionUpdated(subscription)

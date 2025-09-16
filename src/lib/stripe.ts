@@ -1,13 +1,25 @@
 import Stripe from 'stripe'
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not set in environment variables')
+// Initialize Stripe only if the secret key is available
+// This prevents build-time errors when environment variables aren't set
+let stripe: Stripe | null = null
+
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-08-27.basil',
+    typescript: true,
+  })
 }
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-08-27.basil',
-  typescript: true,
-})
+export { stripe }
+
+// Helper function to get Stripe instance with runtime check
+export function getStripe(): Stripe {
+  if (!stripe) {
+    throw new Error('Stripe is not initialized. Please check STRIPE_SECRET_KEY environment variable.')
+  }
+  return stripe
+}
 
 // AIDI Product Configuration
 export const AIDI_PRODUCTS = {
