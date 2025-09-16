@@ -449,6 +449,9 @@ export const ADI_DIMENSION_PILLARS = AIDI_DIMENSION_PILLARS
 export const ADI_PILLAR_WEIGHTS = AIDI_PILLAR_WEIGHTS
 export const ADI_DIMENSION_NAMES = AIDI_DIMENSION_NAMES
 
+// Type aliases for backward compatibility
+export type ADISubscription = AIDISubscription
+
 export class AIDIAgentError extends ADIError {
   constructor(
     agentName: string,

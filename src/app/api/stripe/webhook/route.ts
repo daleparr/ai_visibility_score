@@ -57,9 +57,10 @@ export async function POST(request: NextRequest) {
 
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice
-        if (invoice.subscription) {
+        const subscriptionId = (invoice as any).subscription
+        if (subscriptionId && typeof subscriptionId === 'string') {
           const subscription = await stripe.subscriptions.retrieve(
-            invoice.subscription as string
+            subscriptionId
           )
           await handleSubscriptionUpdated(subscription)
         }
@@ -100,16 +101,19 @@ async function handleSubscriptionCreated(
     return
   }
 
+  // Map Stripe status to our schema
+  const mappedStatus = mapStripeStatus(subscription.status)
+  
   // Create subscription record
   await db.insert(subscriptions).values({
     userId,
     stripeSubscriptionId: subscription.id,
     stripeCustomerId: subscription.customer as string,
-    status: subscription.status,
+    status: mappedStatus,
     tier: tier as 'professional' | 'enterprise',
-    currentPeriodStart: new Date(subscription.current_period_start * 1000),
-    currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-    cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
+    currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+    cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
   })
 
   console.log(`Subscription created for user ${userId}: ${subscription.id}`)
@@ -130,19 +134,42 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     return
   }
 
+  // Map Stripe status to our schema
+  const mappedStatus = mapStripeStatus(subscription.status)
+
   // Update subscription record
   await db
     .update(subscriptions)
     .set({
-      status: subscription.status,
-      currentPeriodStart: new Date(subscription.current_period_start * 1000),
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      status: mappedStatus,
+      currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
+      currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+      cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
       updatedAt: new Date(),
     })
     .where(eq(subscriptions.stripeSubscriptionId, subscription.id))
 
   console.log(`Subscription updated: ${subscription.id}`)
+}
+
+// Helper function to map Stripe subscription status to our schema
+function mapStripeStatus(stripeStatus: Stripe.Subscription.Status): 'active' | 'canceled' | 'past_due' | 'unpaid' | 'incomplete' {
+  switch (stripeStatus) {
+    case 'active':
+      return 'active'
+    case 'canceled':
+      return 'canceled'
+    case 'past_due':
+      return 'past_due'
+    case 'unpaid':
+      return 'unpaid'
+    case 'incomplete':
+    case 'incomplete_expired':
+    case 'trialing':
+    case 'paused':
+    default:
+      return 'incomplete'
+  }
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
