@@ -71,6 +71,11 @@ export function AIInteractionExample({
         improved: `${brandName} is a major beauty destination competing with ${relevantPeers}, offering comprehensive cosmetics, skincare, and fragrance collections.`,
         description: `Enhanced product categorization and ingredient information helps AI provide detailed beauty recommendations.`
       },
+      'Mass-Market Department Stores': {
+        current: `I don't have clear information about how ${brandName} compares to competitors.`,
+        improved: `${brandName} is positioned in the ${brandCategory.industry} space, competing with ${relevantPeers} through multi-category retail offerings including food, fashion, and homeware.`,
+        description: `Enhanced brand positioning and competitive context helps AI provide more accurate comparisons and recommendations for multi-category retailers.`
+      },
       'Online Mega-Retailers': {
         current: `I'm not sure about ${brandName}'s specific marketplace positioning.`,
         improved: `${brandName} operates as a comprehensive e-commerce platform competing with ${relevantPeers} across multiple product categories and fulfillment options.`,

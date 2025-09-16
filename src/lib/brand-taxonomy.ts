@@ -154,8 +154,8 @@ export const BRAND_TAXONOMY: Record<string, BrandCategory> = {
     niche: 'Mass-Market Department Stores',
     emoji: '🏪',
     description: 'Accessible department stores serving mainstream consumers',
-    keywords: ['department store', 'mainstream retail', 'family shopping', 'affordable', 'variety', 'everyday'],
-    competitorBrands: ['Target', 'John Lewis', 'Macy\'s', 'Kohl\'s', 'JCPenney', 'Dillard\'s', 'Belk', 'Bon-Ton'],
+    keywords: ['department store', 'mainstream retail', 'family shopping', 'affordable', 'variety', 'everyday', 'food', 'fashion', 'homeware', 'multi-category'],
+    competitorBrands: ['Marks & Spencer', 'Target', 'John Lewis', 'Macy\'s', 'Kohl\'s', 'JCPenney', 'Dillard\'s', 'Belk', 'Bon-Ton'],
     priceRange: 'mid-market',
     businessModel: 'b2c'
   },

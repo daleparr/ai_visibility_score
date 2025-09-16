@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { ArrowRight, Brain, Search, TrendingUp, Shield, Zap, BarChart3, Globe, CheckCircle, Lock } from 'lucide-react'
+import { ArrowRight, Brain, Search, TrendingUp, Shield, Zap, BarChart3, Globe, CheckCircle, Lock, Menu, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -13,6 +13,7 @@ export default function HomePage() {
   const [url, setUrl] = useState('')
   const [tier, setTier] = useState('free')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const router = useRouter()
 
   const handleAnalyze = async () => {
@@ -49,6 +50,8 @@ export default function HomePage() {
               <Brain className="h-8 w-8 text-brand-600" />
               <span className="text-2xl font-bold gradient-text">AI Visibility Score</span>
             </div>
+            
+            {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-6">
               <Link href="#features" className="text-gray-600 hover:text-brand-600 transition-colors">
                 Features
@@ -56,14 +59,77 @@ export default function HomePage() {
               <Link href="#pricing" className="text-gray-600 hover:text-brand-600 transition-colors">
                 Pricing
               </Link>
-              <Link href="/demo" className="text-gray-600 hover:text-brand-600 transition-colors">
-                Demo
+              <Link href="/leaderboards" className="text-gray-600 hover:text-brand-600 transition-colors">
+                <span className="flex items-center space-x-1">
+                  <TrendingUp className="h-4 w-4" />
+                  <span>Leaderboards</span>
+                  <Badge variant="secondary" className="text-xs">Premium</Badge>
+                </span>
               </Link>
               <Button variant="outline" asChild>
                 <Link href="/auth/signin">Sign In</Link>
               </Button>
+              <Button asChild>
+                <Link href="/evaluate">Get Your Score</Link>
+              </Button>
             </nav>
+
+            {/* Mobile Menu Button */}
+            <button
+              className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle mobile menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6 text-gray-600" />
+              ) : (
+                <Menu className="h-6 w-6 text-gray-600" />
+              )}
+            </button>
           </div>
+
+          {/* Mobile Navigation */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden mt-4 pb-4 border-t pt-4">
+              <nav className="flex flex-col space-y-4">
+                <Link
+                  href="#features"
+                  className="text-gray-600 hover:text-brand-600 transition-colors py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Features
+                </Link>
+                <Link
+                  href="#pricing"
+                  className="text-gray-600 hover:text-brand-600 transition-colors py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Pricing
+                </Link>
+                <Link
+                  href="/leaderboards"
+                  className="text-gray-600 hover:text-brand-600 transition-colors py-2 flex items-center space-x-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  <span>Leaderboards</span>
+                  <Badge variant="secondary" className="text-xs">Premium</Badge>
+                </Link>
+                <div className="flex flex-col space-y-2 pt-2">
+                  <Button variant="outline" asChild className="w-full">
+                    <Link href="/auth/signin" onClick={() => setIsMobileMenuOpen(false)}>
+                      Sign In
+                    </Link>
+                  </Button>
+                  <Button asChild className="w-full">
+                    <Link href="/evaluate" onClick={() => setIsMobileMenuOpen(false)}>
+                      Get Your Score
+                    </Link>
+                  </Button>
+                </div>
+              </nav>
+            </div>
+          )}
         </div>
       </header>
 

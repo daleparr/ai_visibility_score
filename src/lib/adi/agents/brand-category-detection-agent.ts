@@ -143,6 +143,12 @@ export class BrandCategoryDetectionAgent extends BaseADIAgent {
   private detectPrimaryCategory(signals: BrandSignals): CategoryDetectionResult {
     const categoryScores: Array<{ category: string; score: number; reasoning: string[] }> = []
 
+    // Check for specific brand domain overrides first
+    const domainOverride = this.checkDomainBasedCategorization(signals.domainSignals)
+    if (domainOverride) {
+      return domainOverride
+    }
+
     // Score each category based on signal matches
     for (const [categoryKey, category] of Object.entries(BRAND_TAXONOMY)) {
       const score = this.calculateCategoryScore(signals, category)
@@ -248,11 +254,32 @@ export class BrandCategoryDetectionAgent extends BaseADIAgent {
   }
 
   private scoreRetailSignals(signals: BrandSignals): number {
-    const retailKeywords = ['shop', 'store', 'retail', 'marketplace', 'brands', 'selection']
-    const matches = signals.businessModelSignals.filter(signal => 
+    const retailKeywords = ['shop', 'store', 'retail', 'marketplace', 'brands', 'selection', 'department', 'variety', 'multi-category']
+    const departmentStoreKeywords = ['food', 'fashion', 'homeware', 'clothing', 'grocery', 'home', 'multi-brand', 'everything']
+    
+    let score = 0
+    
+    // Base retail signals
+    const retailMatches = signals.businessModelSignals.filter(signal =>
       retailKeywords.some(rk => signal.includes(rk))
     ).length
-    return Math.min(matches / 2, 1)
+    score += Math.min(retailMatches / 2, 0.5)
+    
+    // Department store multi-category bonus
+    const deptMatches = signals.productKeywords.filter(keyword =>
+      departmentStoreKeywords.some(dk => keyword.includes(dk))
+    ).length
+    
+    // If we detect multiple categories (food + fashion + home), boost department store score
+    const hasFood = signals.productKeywords.some(k => k.includes('food') || k.includes('grocery'))
+    const hasFashion = signals.productKeywords.some(k => k.includes('fashion') || k.includes('clothing'))
+    const hasHome = signals.productKeywords.some(k => k.includes('home') || k.includes('homeware'))
+    
+    if ((hasFood && hasFashion) || (hasFood && hasHome) || (hasFashion && hasHome)) {
+      score += 0.5 // Strong department store indicator
+    }
+    
+    return Math.min(score, 1)
   }
 
   private scoreFoodBeverageSignals(signals: BrandSignals): number {
@@ -669,6 +696,42 @@ export class BrandCategoryDetectionAgent extends BaseADIAgent {
     }
 
     return reasoning
+  }
+
+  private checkDomainBasedCategorization(domainSignals: DomainSignals): CategoryDetectionResult | null {
+    const domain = domainSignals.tld
+    
+    // Known brand domain mappings
+    const knownBrands: Record<string, string> = {
+      'marksandspencer.com': 'mass-market-department-stores',
+      'johnlewis.com': 'mass-market-department-stores',
+      'target.com': 'mass-market-department-stores',
+      'macys.com': 'mass-market-department-stores',
+      'selfridges.com': 'luxury-department-stores',
+      'harrods.com': 'luxury-department-stores',
+      'supreme.com': 'streetwear',
+      'palace.com': 'streetwear',
+      'nike.com': 'activewear-athleisure',
+      'adidas.com': 'activewear-athleisure'
+    }
+    
+    // Check if this is a known brand domain
+    for (const [brandDomain, categoryKey] of Object.entries(knownBrands)) {
+      if (domain.includes(brandDomain.replace('.com', ''))) {
+        const category = BRAND_TAXONOMY[categoryKey]
+        return {
+          confidence: 95, // High confidence for known brands
+          sector: category.sector,
+          industry: category.industry,
+          niche: category.niche,
+          reasoning: `Known brand domain: ${brandDomain}`,
+          suggestedPeers: category.competitorBrands,
+          alternativeCategories: []
+        }
+      }
+    }
+    
+    return null
   }
 
   private getDefaultCategoryAnalysis(): BrandCategoryAnalysis {
