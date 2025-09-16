@@ -85,7 +85,7 @@ export default function DemoPage() {
                 <Button variant="outline">Back to Home</Button>
               </Link>
               <Link href="/demo/adi">
-                <Button>View ADI Dashboard</Button>
+                <Button>View AIDI Dashboard</Button>
               </Link>
             </nav>
           </div>
@@ -273,7 +273,7 @@ export default function DemoPage() {
               <Link href="/demo/adi">
                 <Button variant="outline" className="h-auto p-4 flex flex-col items-start w-full">
                   <TrendingUp className="h-5 w-5 mb-2" />
-                  <span className="font-medium">ADI Premium Dashboard</span>
+                  <span className="font-medium">AIDI Premium Dashboard</span>
                   <span className="text-xs text-muted-foreground mt-1">
                     Advanced AI Discoverability Index
                   </span>

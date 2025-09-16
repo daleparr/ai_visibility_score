@@ -240,7 +240,7 @@ export const DimensionScoreCard: React.FC<DimensionScoreCardProps> = ({
             <p className="text-xs text-blue-700">
               Implementing these recommendations could improve this dimension by{' '}
               <span className="font-semibold">8-12 points</span> and contribute{' '}
-              <span className="font-semibold">+3-5 points</span> to your overall ADI score.
+              <span className="font-semibold">+3-5 points</span> to your overall AIDI score.
             </p>
           </div>
         </motion.div>

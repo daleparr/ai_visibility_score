@@ -10,7 +10,7 @@ import type { PillarBreakdownProps } from '../../../lib/adi/ui-types';
 
 /**
  * PillarBreakdown Component
- * Shows the three ADI pillars with scores, progress bars, and trends
+ * Shows the three AIDI pillars with scores, progress bars, and trends
  */
 export const PillarBreakdown: React.FC<PillarBreakdownProps> = ({
   pillars,

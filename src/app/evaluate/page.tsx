@@ -115,7 +115,7 @@ export default function EvaluatePage() {
   const [brandCategory, setBrandCategory] = useState<any>(null)
   const [performanceProfile, setPerformanceProfile] = useState<AIDIPerformanceProfile | null>(null)
 
-  const generateTechnicalReport = () => {
+  const generateTechnicalReport = async () => {
     if (!evaluationData) return
 
     const reportContent = `
@@ -184,7 +184,7 @@ ${evaluationData.certification ? `
 ` : ''}
 
 ## Technical Implementation Notes
-- Analysis Method: ${evaluationData.analysisMethod || 'Standard ADI Framework'}
+- Analysis Method: ${evaluationData.analysisMethod || 'Standard AIDI Framework'}
 - AI Providers: ${evaluationData.aiProviders.join(', ')}
 - Default Model: ${evaluationData.defaultModel}
 
@@ -199,16 +199,35 @@ ${evaluationData.certification ? `
 *For technical support: support@ai-visibility-score.com*
     `.trim()
 
-    // Create and download the report
-    const blob = new Blob([reportContent], { type: 'text/markdown' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `AI_Visibility_Technical_Report_${evaluationData.url.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.md`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    // Create and download the report as PDF
+    const { jsPDF } = await import('jspdf')
+    const pdf = new jsPDF()
+    
+    // Add title
+    pdf.setFontSize(20)
+    pdf.text('AI Visibility Technical Report', 20, 30)
+    
+    // Add content (simplified for PDF format)
+    pdf.setFontSize(12)
+    const lines = reportContent.split('\n').filter(line => line.trim())
+    let yPosition = 50
+    
+    lines.forEach((line, index) => {
+      if (yPosition > 270) { // Start new page if needed
+        pdf.addPage()
+        yPosition = 30
+      }
+      
+      // Remove markdown formatting for PDF
+      const cleanLine = line.replace(/[#*`]/g, '').trim()
+      if (cleanLine) {
+        pdf.text(cleanLine, 20, yPosition)
+        yPosition += 7
+      }
+    })
+    
+    // Download PDF
+    pdf.save(`AI_Visibility_Technical_Report_${evaluationData.url.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`)
 
     // Log evaluation for backend tracking
     logEvaluationForAdmin(evaluationData)
@@ -458,14 +477,14 @@ ${evaluationData.certification ? `
           {/* Professional Tier Features */}
           {evaluationData.tier !== 'free' && (
             <>
-              {/* ADI Certification */}
+              {/* AIDI Certification */}
               {evaluationData.certification && (
                 <Card className="mb-8 border-2 border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-3">
                       <span className="text-3xl">{evaluationData.certification.badge}</span>
                       <div>
-                        <div>ADI Certification: {evaluationData.certification.level}</div>
+                        <div>AIDI Certification: {evaluationData.certification.level}</div>
                         <div className="text-sm text-gray-600">Valid until {evaluationData.certification.validUntil}</div>
                       </div>
                     </CardTitle>

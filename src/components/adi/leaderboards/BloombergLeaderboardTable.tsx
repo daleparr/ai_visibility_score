@@ -210,8 +210,8 @@ export function BloombergLeaderboardTable({ data, onFilterChange, showFilters = 
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  // Show alert setup modal or navigate to alerts page
-                  alert(`🔔 Alert Setup\n\nGet notified when:\n• Rankings change in ${data.category}\n• New brands enter top 10\n• Sector average shifts\n\nFeature coming soon!`)
+                  // Navigate to alerts setup page
+                  window.location.href = '/dashboard?tab=alerts'
                 }}
               >
                 <Bell className="h-4 w-4 mr-1" />

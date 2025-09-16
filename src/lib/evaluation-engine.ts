@@ -1,4 +1,4 @@
-import { AIProviderClient, EVALUATION_PROMPTS, BRAND_RECOGNITION_PROMPTS, extractScoreFromResponse } from './ai-providers'
+import { AIProviderClient, EVALUATION_PROMPTS, BRAND_RECOGNITION_PROMPTS, extractScoreFromResponse, fetchWebsiteContent } from './ai-providers'
 import {
   calculateOverallScore,
   calculatePillarScores,

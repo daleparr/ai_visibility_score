@@ -134,7 +134,7 @@ export default function ADIAnalysisDashboard() {
               </Link>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Dimension Analysis</h1>
-                <p className="text-gray-600">Deep dive into your ADI performance</p>
+                <p className="text-gray-600">Deep dive into your AIDI performance</p>
               </div>
             </div>
             <div className="flex items-center space-x-3">
@@ -216,7 +216,7 @@ export default function ADIAnalysisDashboard() {
                 Performance Overview
               </CardTitle>
               <CardDescription>
-                Your performance across all 9 ADI dimensions vs category average
+                Your performance across all 9 AIDI dimensions vs category average
               </CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center">
@@ -373,7 +373,7 @@ export default function ADIAnalysisDashboard() {
                 <div className="space-y-3 text-sm">
                   <div className="p-3 bg-green-50 rounded-lg border border-green-200">
                     <div className="font-medium text-green-800">Potential Score Improvement</div>
-                    <div className="text-green-700">+15-20 points overall ADI score</div>
+                    <div className="text-green-700">+15-20 points overall AIDI score</div>
                   </div>
                   <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <div className="font-medium text-blue-800">Timeline</div>

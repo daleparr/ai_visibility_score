@@ -33,7 +33,7 @@ interface TrendChartProps {
 
 /**
  * TrendChart Component
- * Interactive line chart showing ADI score trends with event markers
+ * Interactive line chart showing AIDI score trends with event markers
  */
 export const TrendChart: React.FC<TrendChartProps> = ({
   data,
@@ -148,7 +148,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
             <TrendingUp className="h-5 w-5 text-blue-600" />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">ADI Score Trend</h3>
+            <h3 className="font-semibold text-gray-900">AIDI Score Trend</h3>
             <p className="text-sm text-gray-600">Performance over time</p>
           </div>
         </div>

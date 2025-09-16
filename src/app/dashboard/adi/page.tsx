@@ -41,7 +41,7 @@ export default function ADIDashboard() {
             </div>
             <div className="flex items-center space-x-3">
               <Badge variant="secondary" className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700">
-                ADI v2.0
+                AIDI v2.0
               </Badge>
               <Link href="/dashboard/adi/executive">
                 <Button className="bg-gradient-to-r from-blue-600 to-purple-600">
@@ -59,7 +59,7 @@ export default function ADIDashboard() {
         <div className="mb-8 p-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl text-white">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold mb-2">Welcome to ADI 2.0</h2>
+              <h2 className="text-xl font-bold mb-2">Welcome to AIDI 2.0</h2>
               <p className="text-blue-100 mb-4">
                 Enhanced executive dashboard with advanced AI visibility insights and industry benchmarking
               </p>
@@ -201,7 +201,7 @@ export default function ADIDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Shield className="h-5 w-5 mr-2 text-blue-600" />
-              ADI 9-Dimension Framework
+              AIDI 9-Dimension Framework
             </CardTitle>
             <CardDescription>
               Enterprise-grade evaluation across Infrastructure, Perception, and Commerce pillars
@@ -287,7 +287,7 @@ export default function ADIDashboard() {
           <Link href="/dashboard/adi/executive">
             <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 text-lg px-8 py-3">
               <Crown className="h-5 w-5 mr-2" />
-              Launch ADI Executive Dashboard
+              Launch AIDI Executive Dashboard
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
           </Link>

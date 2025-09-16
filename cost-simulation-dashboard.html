@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Visibility Score - Cost Simulation Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            color: #64748b;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 1rem;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 1rem;
+        }
+        
+        .cost-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .cost-table th,
+        .cost-table td {
+            padding: 0.75rem;
+            text-align: right;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .cost-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #475569;
+        }
+        
+        .cost-table th:first-child,
+        .cost-table td:first-child {
+            text-align: left;
+        }
+        
+        .cost-table tr:hover {
+            background: #f8fafc;
+        }
+        
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .optimization-section {
+            grid-column: 1 / -1;
+            margin-top: 2rem;
+        }
+        
+        .optimization-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .optimization-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .optimization-card h4 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .optimization-card .savings {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .warning-box {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .warning-box h4 {
+            color: #92400e;
+            margin-bottom: 0.5rem;
+        }
+        
+        .warning-box ul {
+            color: #92400e;
+            margin-left: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI Visibility Score - Cost Simulation</h1>
+            <p>Operational cost analysis for different user volumes</p>
+        </div>
+
+        <div class="metric-grid">
+            <div class="metric-card">
+                <div class="metric-value" id="avgCostPerUser">$80.02</div>
+                <div class="metric-label">Avg Cost per User</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="avgEvaluationCost">$4.50</div>
+                <div class="metric-label">Cost per Evaluation</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="aiCostPercentage">98%</div>
+                <div class="metric-label">AI/LLM Cost Share</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="tokensPerEvaluation">100K</div>
+                <div class="metric-label">Tokens per Evaluation</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>Monthly Cost by User Volume</h3>
+                <div class="chart-container">
+                    <canvas id="costChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>Cost Breakdown by Component</h3>
+                <div class="chart-container">
+                    <canvas id="breakdownChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Detailed Cost Analysis</h3>
+            <table class="cost-table">
+                <thead>
+                    <tr>
+                        <th>Users</th>
+                        <th>Monthly Evaluations</th>
+                        <th>AI/LLM Costs</th>
+                        <th>Database</th>
+                        <th>Hosting</th>
+                        <th>Total Monthly</th>
+                        <th>Cost per User</th>
+                    </tr>
+                </thead>
+                <tbody id="costTableBody">
+                    <!-- Data will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card optimization-section">
+            <h3>Cost Optimization Scenarios</h3>
+            <div class="optimization-grid">
+                <div class="optimization-card">
+                    <h4>Basic Optimization</h4>
+                    <div class="savings">50% Savings</div>
+                    <p>Reduce to 3 AI providers, implement basic caching</p>
+                    <p><strong>Result:</strong> $40/user/month</p>
+                </div>
+                <div class="optimization-card">
+                    <h4>Advanced Optimization</h4>
+                    <div class="savings">70% Savings</div>
+                    <p>2 providers, smart caching, prompt optimization</p>
+                    <p><strong>Result:</strong> $24/user/month</p>
+                </div>
+                <div class="optimization-card">
+                    <h4>Aggressive Optimization</h4>
+                    <div class="savings">80% Savings</div>
+                    <p>Smart provider selection, heavy caching, batch processing</p>
+                    <p><strong>Result:</strong> $16/user/month</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="warning-box">
+            <h4>⚠️ Critical Cost Considerations</h4>
+            <ul>
+                <li><strong>AI Provider Dominance:</strong> 98%+ of costs come from AI/LLM APIs</li>
+                <li><strong>Linear Scaling:</strong> Costs scale directly with user adoption</li>
+                <li><strong>Price Volatility:</strong> AI provider pricing can change with 30-day notice</li>
+                <li><strong>Usage Spikes:</strong> Viral adoption could cause immediate cost explosions</li>
+                <li><strong>Rate Limits:</strong> High usage may trigger API throttling</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Cost simulation data
+        const costData = {
+            100: { total: 8036, ai: 7943, db: 74, hosting: 19, evaluations: 1765 },
+            500: { total: 40031, ai: 39713, db: 244, hosting: 74, evaluations: 8825 },
+            1000: { total: 80023, ai: 79425, db: 469, hosting: 129, evaluations: 17650 },
+            2500: { total: 200131, ai: 198563, db: 1194, hosting: 374, evaluations: 44125 },
+            5000: { total: 400093, ai: 397125, db: 2319, hosting: 649, evaluations: 88250 },
+            10000: { total: 800219, ai: 794250, db: 4569, hosting: 1400, evaluations: 176500 }
+        };
+
+        // Populate cost table
+        function populateCostTable() {
+            const tbody = document.getElementById('costTableBody');
+            
+            Object.entries(costData).forEach(([users, data]) => {
+                const row = tbody.insertRow();
+                const costPerUser = (data.total / parseInt(users)).toFixed(2);
+                
+                row.innerHTML = `
+                    <td><strong>${parseInt(users).toLocaleString()}</strong></td>
+                    <td>${data.evaluations.toLocaleString()}</td>
+                    <td>$${data.ai.toLocaleString()}</td>
+                    <td>$${data.db.toLocaleString()}</td>
+                    <td>$${data.hosting.toLocaleString()}</td>
+                    <td><strong>$${data.total.toLocaleString()}</strong></td>
+                    <td><strong>$${costPerUser}</strong></td>
+                `;
+            });
+        }
+
+        // Create cost chart
+        function createCostChart() {
+            const ctx = document.getElementById('costChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(costData).map(users => `${users} users`),
+                    datasets: [{
+                        label: 'Total Monthly Cost',
+                        data: Object.values(costData).map(d => d.total),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create breakdown chart
+        function createBreakdownChart() {
+            const ctx = document.getElementById('breakdownChart').getContext('2d');
+            
+            // Use 1000 users as representative example
+            const data1000 = costData[1000];
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['AI/LLM APIs', 'Database', 'Hosting'],
+                    datasets: [{
+                        data: [data1000.ai, data1000.db, data1000.hosting],
+                        backgroundColor: [
+                            '#ef4444',
+                            '#3b82f6', 
+                            '#10b981'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${context.label}: $${value.toLocaleString()} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            populateCostTable();
+            createCostChart();
+            createBreakdownChart();
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Cost Simulation Dashboard</h1>
+            <p>Interactive analysis of operational costs across user volumes</p>
+        </div>
+
+        <div class="metric-grid">
+            <div class="metric-card">
+                <div class="metric-value">$80.02</div>
+                <div class="metric-label">Avg Cost per User</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">$4.50</div>
+                <div class="metric-label">Cost per Evaluation</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">98%</div>
+                <div class="metric-label">AI/LLM Cost Share</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">100K</div>
+                <div class="metric-label">Tokens per Evaluation</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>Monthly Cost by User Volume</h3>
+                <div class="chart-container">
+                    <canvas id="costChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>Cost Breakdown (1,000 Users)</h3>
+                <div class="chart-container">
+                    <canvas id="breakdownChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Detailed Cost Analysis</h3>
+            <table class="cost-table">
+                <thead>
+                    <tr>
+                        <th>Users</th>
+                        <th>Monthly Evaluations</th>
+                        <th>AI/LLM Costs</th>
+                        <th>Database</th>
+                        <th>Hosting</th>
+                        <th>Total Monthly</th>
+                        <th>Cost per User</th>
+                    </tr>
+                </thead>
+                <tbody id="costTableBody">
+                    <!-- Data populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card optimization-section">
+            <h3>Cost Optimization Scenarios</h3>
+            <div class="optimization-grid">
+                <div class="optimization-card">
+                    <h4>Basic Optimization</h4>
+                    <div class="savings">50% Savings</div>
+                    <p>Reduce to 3 AI providers, implement basic caching</p>
+                    <p><strong>Result:</strong> $40/user/month</p>
+                </div>
+                <div class="optimization-card">
+                    <h4>Advanced Optimization</h4>
+                    <div class="savings">70% Savings</div>
+                    <p>2 providers, smart caching, prompt optimization</p>
+                    <p><strong>Result:</strong> $24/user/month</p>
+                </div>
+                <div class="optimization-card">
+                    <h4>Aggressive Optimization</h4>
+                    <div class="savings">80% Savings</div>
+                    <p>Smart provider selection, heavy caching, batch processing</p>
+                    <p><strong>Result:</strong> $16/user/month</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="warning-box">
+            <h4>⚠️ Critical Cost Considerations</h4>
+            <ul>
+                <li><strong>AI Provider Dominance:</strong> 98%+ of costs come from AI/LLM APIs</li>
+                <li><strong>Linear Scaling:</strong> Costs scale directly with user adoption</li>
+                <li><strong>Price Volatility:</strong> AI provider pricing can change with 30-day notice</li>
+                <li><strong>Usage Spikes:</strong> Viral adoption could cause immediate cost explosions</li>
+                <li><strong>Rate Limits:</strong> High usage may trigger API throttling</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

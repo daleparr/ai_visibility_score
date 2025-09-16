@@ -1,3 +1,6 @@
+import OpenAI from 'openai'
+import Anthropic from '@anthropic-ai/sdk'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { AIProviderName, EvaluationResult } from '@/types/supabase'
 
 // AI Provider configurations
@@ -366,5 +369,91 @@ export function validateApiKey(provider: AIProviderName, apiKey: string): boolea
       return apiKey.length > 20
     default:
       return false
+  }
+}
+
+// Website content fetcher for AI analysis
+export async function fetchWebsiteContent(url: string): Promise<string> {
+  try {
+    // Ensure URL has protocol
+    const fullUrl = url.startsWith('http') ? url : `https://${url}`
+    
+    // Fetch the actual website content
+    const response = await fetch(fullUrl, {
+      headers: {
+        'User-Agent': 'AI-Visibility-Score-Bot/1.0 (+https://ai-visibility-score.com/bot)'
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    
+    const html = await response.text()
+    
+    // Extract key content for AI analysis
+    const content = extractKeyContent(html, fullUrl)
+    
+    return content
+  } catch (error) {
+    console.error('Error fetching website content:', error)
+    // Return basic URL info if fetch fails
+    return `Unable to fetch content from ${url}. Please analyze based on the URL and any publicly available information about this website.`
+  }
+}
+
+// Extract key content from HTML for AI analysis
+function extractKeyContent(html: string, url: string): string {
+  try {
+    // Extract title
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
+    const title = titleMatch ? titleMatch[1].trim() : 'No title found'
+    
+    // Extract meta description
+    const metaDescMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i)
+    const metaDescription = metaDescMatch ? metaDescMatch[1].trim() : 'No meta description found'
+    
+    // Extract JSON-LD structured data
+    const jsonLdMatches = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>(.*?)<\/script>/gis)
+    const structuredData = jsonLdMatches ? jsonLdMatches.map(match => {
+      try {
+        const jsonContent = match.replace(/<script[^>]*>|<\/script>/gi, '').trim()
+        return JSON.parse(jsonContent)
+      } catch {
+        return null
+      }
+    }).filter(Boolean) : []
+    
+    // Extract main content (simplified - remove scripts, styles, nav)
+    let mainContent = html
+      .replace(/<script[^>]*>.*?<\/script>/gis, '')
+      .replace(/<style[^>]*>.*?<\/style>/gis, '')
+      .replace(/<nav[^>]*>.*?<\/nav>/gis, '')
+      .replace(/<header[^>]*>.*?<\/header>/gis, '')
+      .replace(/<footer[^>]*>.*?<\/footer>/gis, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+    
+    // Limit content length for AI processing
+    if (mainContent.length > 3000) {
+      mainContent = mainContent.substring(0, 3000) + '...'
+    }
+    
+    return `Website Analysis for: ${url}
+
+Title: ${title}
+
+Meta Description: ${metaDescription}
+
+Structured Data Found: ${structuredData.length > 0 ? JSON.stringify(structuredData, null, 2).substring(0, 1000) : 'None detected'}
+
+Main Content: ${mainContent}
+
+Please analyze this website content and provide a detailed evaluation with a numerical score from 0-100.`
+    
+  } catch (error) {
+    console.error('Error extracting content:', error)
+    return `Basic website information for ${url}. Unable to extract detailed content for analysis.`
   }
 }

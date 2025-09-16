@@ -320,7 +320,7 @@ export default function HomePage() {
                     </li>
                     <li className="flex items-start">
                       <Lock className="h-5 w-5 text-brand-500 mr-3 mt-0.5 flex-shrink-0" />
-                      <span>AI Discoverability Index (ADI) tracking</span>
+                      <span>AI Discoverability Index (AIDI) tracking</span>
                     </li>
                     <li className="flex items-start">
                       <Lock className="h-5 w-5 text-brand-500 mr-3 mt-0.5 flex-shrink-0" />
@@ -571,7 +571,7 @@ export default function HomePage() {
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                    ADI leaderboard access
+                    AIDI leaderboard access
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-green-500 mr-2" />

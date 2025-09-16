@@ -109,7 +109,7 @@ export default function ADIExecutiveDashboard() {
             </div>
             <div className="flex items-center space-x-3">
               <Badge variant="secondary" className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700">
-                ADI v2.0
+                AIDI v2.0
               </Badge>
               <Button className="bg-gradient-to-r from-blue-600 to-purple-600">
                 <Zap className="h-4 w-4 mr-2" />
@@ -126,7 +126,7 @@ export default function ADIExecutiveDashboard() {
           {/* Score Gauge Section */}
           <Card className="border-2 border-blue-100">
             <CardHeader className="text-center">
-              <CardTitle className="text-xl">Overall ADI Score</CardTitle>
+              <CardTitle className="text-xl">Overall AIDI Score</CardTitle>
               <CardDescription>
                 Your AI discoverability performance
               </CardDescription>
@@ -148,7 +148,7 @@ export default function ADIExecutiveDashboard() {
             <CardHeader>
               <CardTitle className="text-xl">Pillar Breakdown</CardTitle>
               <CardDescription>
-                Performance across the three ADI pillars
+                Performance across the three AIDI pillars
               </CardDescription>
             </CardHeader>
             <CardContent>

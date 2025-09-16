@@ -9,7 +9,7 @@ import type { ScoreGaugeProps } from '../../../lib/adi/ui-types';
 
 /**
  * ScoreGauge Component
- * Animated semicircle gauge showing ADI score with grade
+ * Animated semicircle gauge showing AIDI score with grade
  * Supports accessibility and reduced motion preferences
  */
 export const ScoreGauge: React.FC<ScoreGaugeProps> = ({

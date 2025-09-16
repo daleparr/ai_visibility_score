@@ -93,8 +93,8 @@ const mockData = {
 };
 
 /**
- * ADI Component Testing Page
- * Comprehensive testing environment for all ADI components
+ * AIDI Component Testing Page
+ * Comprehensive testing environment for all AIDI components
  */
 export default function ADITestPage() {
   const [filters, setFilters] = useState({});
@@ -114,7 +114,7 @@ export default function ADITestPage() {
         <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">ADI Component Testing</h1>
+              <h1 className="text-2xl font-bold text-gray-900">AIDI Component Testing</h1>
               <p className="text-gray-600">Comprehensive manual testing environment</p>
             </div>
             <Badge variant="secondary" className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700">

@@ -113,7 +113,9 @@ export class BrandCategoryDetectionAgent extends BaseADIAgent {
 
   private extractBrandSignals(content: string, url: string): BrandSignals {
     const text = content.toLowerCase()
-    const domain = new URL(url).hostname.toLowerCase()
+    // Fix URL validation - ensure protocol is present
+    const normalizedUrl = url.startsWith('http') ? url : `https://${url}`
+    const domain = new URL(normalizedUrl).hostname.toLowerCase()
     
     return {
       // Content analysis
@@ -127,6 +129,7 @@ export class BrandCategoryDetectionAgent extends BaseADIAgent {
       domainSignals: this.analyzeDomain(domain),
       metaDescription: this.extractMetaDescription(content),
       pageStructure: this.analyzePageStructure(content),
+      fullDomain: domain,
       
       // Brand positioning
       luxuryIndicators: this.detectLuxuryIndicators(text),
@@ -144,7 +147,7 @@ export class BrandCategoryDetectionAgent extends BaseADIAgent {
     const categoryScores: Array<{ category: string; score: number; reasoning: string[] }> = []
 
     // Check for specific brand domain overrides first
-    const domainOverride = this.checkDomainBasedCategorization(signals.domainSignals)
+    const domainOverride = this.checkDomainBasedCategorization(signals.domainSignals, signals.fullDomain)
     if (domainOverride) {
       return domainOverride
     }
@@ -698,8 +701,8 @@ export class BrandCategoryDetectionAgent extends BaseADIAgent {
     return reasoning
   }
 
-  private checkDomainBasedCategorization(domainSignals: DomainSignals): CategoryDetectionResult | null {
-    const domain = domainSignals.tld
+  private checkDomainBasedCategorization(domainSignals: DomainSignals, fullDomain: string): CategoryDetectionResult | null {
+    const domain = fullDomain
     
     // Known brand domain mappings
     const knownBrands: Record<string, string> = {
@@ -717,7 +720,7 @@ export class BrandCategoryDetectionAgent extends BaseADIAgent {
     
     // Check if this is a known brand domain
     for (const [brandDomain, categoryKey] of Object.entries(knownBrands)) {
-      if (domain.includes(brandDomain.replace('.com', ''))) {
+      if (domain === brandDomain || domain.includes(brandDomain.replace('.com', ''))) {
         const category = BRAND_TAXONOMY[categoryKey]
         return {
           confidence: 95, // High confidence for known brands
@@ -771,6 +774,7 @@ interface BrandSignals {
   domainSignals: DomainSignals
   metaDescription: string
   pageStructure: PageStructure
+  fullDomain: string
   luxuryIndicators: boolean
   technologyFocus: boolean
   sustainabilityFocus: boolean

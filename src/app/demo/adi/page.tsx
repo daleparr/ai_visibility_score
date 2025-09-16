@@ -71,7 +71,7 @@ interface ADIResult {
 }
 
 /**
- * ADI Demo Dashboard - Interactive AI Discoverability Index Evaluation
+ * AIDI Demo Dashboard - Interactive AI Discoverability Index Evaluation
  */
 export default function ADIDemoPage() {
   const [websiteUrl, setWebsiteUrl] = useState('https://example-brand.com');
@@ -221,7 +221,7 @@ export default function ADIDemoPage() {
             </div>
             <div className="flex items-center space-x-3">
               <Badge variant="secondary" className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700">
-                ADI v2.0 Demo
+                AIDI v2.0 Demo
               </Badge>
               <Link href="/demo">
                 <Button variant="outline">Back to Demo</Button>
@@ -238,7 +238,7 @@ export default function ADIDemoPage() {
       <div className="container mx-auto px-6 py-8">
         {/* Demo Notice */}
         <div className="mb-8 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-          <h2 className="text-lg font-semibold text-purple-900 mb-2">👑 ADI Premium Demo</h2>
+          <h2 className="text-lg font-semibold text-purple-900 mb-2">👑 AIDI Premium Demo</h2>
           <p className="text-purple-700">
             Experience the advanced AI Discoverability Index with enhanced executive dashboard, industry benchmarking, and competitive analysis features.
           </p>
@@ -248,7 +248,7 @@ export default function ADIDemoPage() {
         <div className="mb-8 p-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl text-white">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold mb-2">Welcome to ADI 2.0</h2>
+              <h2 className="text-xl font-bold mb-2">Welcome to AIDI 2.0</h2>
               <p className="text-blue-100 mb-4">
                 Enhanced executive dashboard with advanced AI visibility insights and industry benchmarking
               </p>
@@ -386,7 +386,7 @@ export default function ADIDemoPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Search className="h-5 w-5 mr-2 text-blue-600" />
-              Live ADI Evaluation
+              Live AIDI Evaluation
             </CardTitle>
             <CardDescription>
               Test the complete 10-dimension AI Discoverability Index evaluation system
@@ -416,7 +416,7 @@ export default function ADIDemoPage() {
                   ) : (
                     <>
                       <Zap className="h-4 w-4 mr-2" />
-                      Run ADI Evaluation
+                      Run AIDI Evaluation
                     </>
                   )}
                 </Button>
@@ -454,7 +454,7 @@ export default function ADIDemoPage() {
                 <CardTitle className="flex items-center justify-between">
                   <span className="flex items-center">
                     <Crown className="h-5 w-5 mr-2 text-blue-600" />
-                    ADI Evaluation Results
+                    AIDI Evaluation Results
                   </span>
                   <Badge variant="outline" className="bg-green-50 text-green-700">
                     <CheckCircle className="h-3 w-3 mr-1" />
@@ -471,7 +471,7 @@ export default function ADIDemoPage() {
                     <div className="text-5xl font-bold text-blue-600 mb-2">
                       {evaluationResult.adiScore.overall || 'N/A'}
                     </div>
-                    <div className="text-sm text-gray-600 mb-2">Overall ADI Score</div>
+                    <div className="text-sm text-gray-600 mb-2">Overall AIDI Score</div>
                     <Badge className={`${getGradeColor(evaluationResult.adiScore.grade)} border-0`}>
                       Grade {evaluationResult.adiScore.grade}
                     </Badge>
@@ -579,10 +579,10 @@ export default function ADIDemoPage() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Trophy className="h-5 w-5 mr-2 text-yellow-600" />
-                  ADI Certification & Achievement Badges
+                  AIDI Certification & Achievement Badges
                 </CardTitle>
                 <CardDescription>
-                  Earned certifications and performance badges based on your ADI evaluation
+                  Earned certifications and performance badges based on your AIDI evaluation
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -625,7 +625,7 @@ export default function ADIDemoPage() {
                     {getBadgesForScore(evaluationResult.adiScore.overall || 0, evaluationResult.benchmarking.globalRank).length === 0 && (
                       <div className="text-center py-8 text-gray-500">
                         <Medal className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                        <p className="text-sm">No badges earned yet. Improve your ADI score to unlock achievements!</p>
+                        <p className="text-sm">No badges earned yet. Improve your AIDI score to unlock achievements!</p>
                       </div>
                     )}
                   </div>
@@ -727,7 +727,7 @@ export default function ADIDemoPage() {
               <CardHeader>
                 <CardTitle>Framework Analysis</CardTitle>
                 <CardDescription>
-                  Technical evaluation of the 10-dimension ADI framework
+                  Technical evaluation of the 10-dimension AIDI framework
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -769,7 +769,7 @@ export default function ADIDemoPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Shield className="h-5 w-5 mr-2 text-blue-600" />
-              ADI 10-Dimension Framework
+              AIDI 10-Dimension Framework
             </CardTitle>
             <CardDescription>
               Complete enterprise-grade evaluation across Infrastructure, Perception, and Commerce pillars
@@ -860,7 +860,7 @@ export default function ADIDemoPage() {
               disabled={isEvaluating}
             >
               <Crown className="h-5 w-5 mr-2" />
-              {isEvaluating ? 'Running Evaluation...' : 'Run Live ADI Evaluation'}
+              {isEvaluating ? 'Running Evaluation...' : 'Run Live AIDI Evaluation'}
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
             <Button

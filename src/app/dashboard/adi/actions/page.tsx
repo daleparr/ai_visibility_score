@@ -140,7 +140,7 @@ export default function ADIActionsDashboard() {
               </Link>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Action Plan</h1>
-                <p className="text-gray-600">Prioritized roadmap to ADI excellence</p>
+                <p className="text-gray-600">Prioritized roadmap to AIDI excellence</p>
               </div>
             </div>
             <div className="flex items-center space-x-3">

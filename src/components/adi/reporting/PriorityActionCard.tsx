@@ -44,7 +44,7 @@ export function PriorityActionCard({
     }
   }
 
-  const generateTechnicalGuide = () => {
+  const generateTechnicalGuide = async () => {
     const guideContent = `
 # Technical Implementation Guide
 ## ${recommendation.title}
@@ -85,16 +85,50 @@ ${implementationSteps.map((step, index) => `${index + 1}. ${step}`).join('\n')}
 Generated on: ${new Date().toLocaleString()}
     `.trim()
 
-    // Create and download the guide
-    const blob = new Blob([guideContent], { type: 'text/markdown' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${recommendation.title.replace(/[^a-zA-Z0-9]/g, '_')}_Implementation_Guide.md`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    // Create and download the guide as PDF
+    const { jsPDF } = await import('jspdf')
+    const pdf = new jsPDF()
+    
+    // Add title
+    pdf.setFontSize(20)
+    pdf.text('Implementation Guide', 20, 30)
+    pdf.setFontSize(16)
+    pdf.text(recommendation.title, 20, 45)
+    
+    // Add content (convert markdown to PDF format)
+    pdf.setFontSize(12)
+    const lines = guideContent.split('\n').filter(line => line.trim())
+    let yPosition = 60
+    
+    lines.forEach((line) => {
+      if (yPosition > 270) { // Start new page if needed
+        pdf.addPage()
+        yPosition = 30
+      }
+      
+      // Remove markdown formatting for PDF
+      const cleanLine = line.replace(/[#*`]/g, '').trim()
+      if (cleanLine) {
+        // Handle headers
+        if (line.startsWith('##')) {
+          pdf.setFontSize(14)
+          pdf.text(cleanLine, 20, yPosition)
+          pdf.setFontSize(12)
+          yPosition += 10
+        } else if (line.startsWith('#')) {
+          pdf.setFontSize(16)
+          pdf.text(cleanLine, 20, yPosition)
+          pdf.setFontSize(12)
+          yPosition += 12
+        } else {
+          pdf.text(cleanLine, 20, yPosition)
+          yPosition += 7
+        }
+      }
+    })
+    
+    // Download PDF
+    pdf.save(`${recommendation.title.replace(/[^a-zA-Z0-9]/g, '_')}_Implementation_Guide.pdf`)
   }
 
   const getEffortDescription = (effort: string) => {

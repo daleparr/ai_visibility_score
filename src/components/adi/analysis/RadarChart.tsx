@@ -28,7 +28,7 @@ interface ChartDataPoint {
 
 /**
  * RadarChart Component
- * Interactive radar/spider chart for 9-dimension ADI analysis
+ * Interactive radar/spider chart for 9-dimension AIDI analysis
  */
 export const RadarChart: React.FC<RadarChartProps> = ({
   data,

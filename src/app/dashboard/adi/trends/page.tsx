@@ -233,7 +233,7 @@ export default function ADITrendsDashboard() {
               Performance Trends
             </CardTitle>
             <CardDescription>
-              ADI score evolution over time with key events
+              AIDI score evolution over time with key events
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -307,7 +307,7 @@ export default function ADITrendsDashboard() {
                     No Active Alerts
                   </h3>
                   <p className="text-gray-600">
-                    Your ADI performance is stable with no immediate issues requiring attention.
+                    Your AIDI performance is stable with no immediate issues requiring attention.
                   </p>
                 </div>
               )}

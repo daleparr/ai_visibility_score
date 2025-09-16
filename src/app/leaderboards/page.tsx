@@ -372,28 +372,60 @@ export default function LeaderboardsPage() {
 
           {/* Quick Actions */}
           <div className="grid md:grid-cols-4 gap-4 mt-8">
-            <Button className="h-16 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white">
+            <Button
+              className="h-16 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+              onClick={() => {
+                // Generate sample report download
+                const reportData = {
+                  category: selectedCategory,
+                  type: selectedType,
+                  timestamp: new Date().toISOString(),
+                  data: leaderboardData
+                }
+                const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `${selectedCategory}_leaderboard_report.json`
+                document.body.appendChild(a)
+                a.click()
+                document.body.removeChild(a)
+                URL.revokeObjectURL(url)
+              }}
+            >
               <div className="text-center">
                 <Download className="h-5 w-5 mx-auto mb-1" />
                 <div className="text-sm font-bold">Download Report</div>
               </div>
             </Button>
             
-            <Button className="h-16 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white">
+            <Button
+              className="h-16 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white"
+              onClick={() => window.location.href = '/evaluate?mode=comparison'}
+            >
               <div className="text-center">
                 <GitCompare className="h-5 w-5 mx-auto mb-1" />
                 <div className="text-sm font-bold">Compare Brands</div>
               </div>
             </Button>
             
-            <Button className="h-16 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white">
+            <Button
+              className="h-16 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white"
+              onClick={() => {
+                // Navigate to alerts setup page or show modal
+                window.location.href = '/dashboard?tab=alerts'
+              }}
+            >
               <div className="text-center">
                 <Bell className="h-5 w-5 mx-auto mb-1" />
                 <div className="text-sm font-bold">Set Alerts</div>
               </div>
             </Button>
             
-            <Button className="h-16 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white">
+            <Button
+              className="h-16 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white"
+              onClick={() => window.location.href = '/evaluate'}
+            >
               <div className="text-center">
                 <Zap className="h-5 w-5 mx-auto mb-1" />
                 <div className="text-sm font-bold">Analyze My Brand</div>
@@ -467,11 +499,20 @@ export default function LeaderboardsPage() {
                 Your competitors are already optimizing for AI. See where you rank.
               </p>
               <div className="flex justify-center gap-4">
-                <Button size="lg" className="bg-white text-orange-600 hover:bg-orange-50 font-bold">
+                <Button
+                  size="lg"
+                  className="bg-white text-orange-600 hover:bg-orange-50 font-bold"
+                  onClick={() => window.location.href = '/evaluate'}
+                >
                   <Zap className="mr-2 h-5 w-5" />
                   Get My AIDI Score
                 </Button>
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-orange-600 font-bold">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white text-white hover:bg-white hover:text-orange-600 font-bold"
+                  onClick={() => window.location.href = '/demo'}
+                >
                   <ExternalLink className="mr-2 h-5 w-5" />
                   View Sample Report
                 </Button>
