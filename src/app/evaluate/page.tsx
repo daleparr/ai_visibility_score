@@ -813,7 +813,7 @@ ${evaluationData.certification ? `
                   </li>
                 </ul>
                 <Button className="w-full">
-                  Upgrade to Premium - $49
+                  Upgrade to AIDI Index Pro - £119
                   <Lock className="ml-2 h-4 w-4" />
                 </Button>
               </CardContent>
@@ -860,7 +860,7 @@ ${evaluationData.certification ? `
                 Download Technical Report
               </Button>
               <Button size="lg" className="px-8">
-                Upgrade to Premium - $49
+                Upgrade to AIDI Index Pro - £119
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button size="lg" variant="outline" asChild>

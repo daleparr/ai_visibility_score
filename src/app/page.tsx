@@ -254,7 +254,7 @@ export default function HomePage() {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-2xl text-green-700">Free Audit</CardTitle>
                     <Badge variant="secondary" className="bg-green-100 text-green-700">
-                      $0
+                      £0
                     </Badge>
                   </div>
                   <CardDescription>
@@ -486,9 +486,9 @@ export default function HomePage() {
             {/* Free Tier */}
             <Card className="border-2 border-green-200">
               <CardHeader className="text-center">
-                <CardTitle className="text-2xl">Free Audit</CardTitle>
-                <div className="text-4xl font-bold text-green-600">$0</div>
-                <CardDescription>Perfect for getting started</CardDescription>
+                <CardTitle className="text-2xl">AIDI Score</CardTitle>
+                <div className="text-4xl font-bold text-green-600">£0</div>
+                <CardDescription>Get your AI discoverability score</CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3 mb-6">
@@ -523,9 +523,9 @@ export default function HomePage() {
                 </Badge>
               </div>
               <CardHeader className="text-center">
-                <CardTitle className="text-2xl">Professional</CardTitle>
-                <div className="text-4xl font-bold text-brand-600">$49</div>
-                <CardDescription>For serious optimization</CardDescription>
+                <CardTitle className="text-2xl">AIDI Index Pro</CardTitle>
+                <div className="text-4xl font-bold text-brand-600">£119</div>
+                <CardDescription>Professional AI discoverability analysis</CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3 mb-6">
@@ -560,8 +560,8 @@ export default function HomePage() {
             <Card className="border-2 border-purple-200">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl">Enterprise</CardTitle>
-                <div className="text-4xl font-bold text-purple-600">Custom</div>
-                <CardDescription>For large organizations</CardDescription>
+                <div className="text-4xl font-bold text-purple-600">£319</div>
+                <CardDescription>Complete AI discoverability mastery</CardDescription>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3 mb-6">
