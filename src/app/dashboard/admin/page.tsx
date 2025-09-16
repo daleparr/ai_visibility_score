@@ -315,6 +315,8 @@ export default function AdminDashboard() {
             <TabsTrigger value="evaluations">Recent Evaluations</TabsTrigger>
             <TabsTrigger value="upsell">Upsell Opportunities</TabsTrigger>
             <TabsTrigger value="trends">Trends</TabsTrigger>
+            <TabsTrigger value="tracing">Agent Tracing</TabsTrigger>
+            <TabsTrigger value="api-usage">API Usage</TabsTrigger>
           </TabsList>
           
           <Select value={tierFilter} onValueChange={setTierFilter}>
@@ -445,6 +447,151 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="tracing" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Search className="h-5 w-5" />
+                Agent Execution Tracing
+              </CardTitle>
+              <CardDescription>
+                Detailed tracing of agent execution for accountability and debugging
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {traceAnalytics && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">{traceAnalytics.totalEvaluations}</div>
+                      <div className="text-sm text-blue-700">Total Evaluations Traced</div>
+                    </div>
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">{traceAnalytics.averageDuration.toFixed(0)}ms</div>
+                      <div className="text-sm text-green-700">Average Execution Time</div>
+                    </div>
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600">{Object.keys(traceAnalytics.agentPerformance).length}</div>
+                      <div className="text-sm text-purple-700">Active Agents</div>
+                    </div>
+                  </div>
+                )}
+
+                {traceData.length > 0 ? (
+                  <div className="space-y-3">
+                    {traceData.slice(0, 10).map((trace, index) => (
+                      <div key={trace.evaluationId} className="border rounded-lg p-4 hover:bg-gray-50">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="font-medium">{trace.url}</div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">{trace.tier}</Badge>
+                            <span className="text-sm text-gray-500">{trace.totalDuration}ms</span>
+                          </div>
+                        </div>
+                        <div className="text-sm text-gray-600 mb-2">
+                          Evaluation ID: {trace.evaluationId} • {new Date(trace.timestamp).toLocaleString()}
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                          <div>
+                            <span className="font-medium">Agents:</span> {trace.agentTraces.length}
+                          </div>
+                          <div>
+                            <span className="font-medium">Failed:</span> {trace.issues.failedAgents.length}
+                          </div>
+                          <div>
+                            <span className="font-medium">Warnings:</span> {trace.issues.warnings.length}
+                          </div>
+                          <div>
+                            <span className="font-medium">Score:</span> {trace.aggregationTrace.overallScore}/100
+                          </div>
+                        </div>
+                        {trace.issues.failedAgents.length > 0 && (
+                          <div className="mt-2 p-2 bg-red-50 rounded text-sm text-red-700">
+                            Failed agents: {trace.issues.failedAgents.join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No trace data available yet.
+                    <br />
+                    Traces will appear here after evaluations are run.
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="api-usage" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                API Usage & Performance Metrics
+              </CardTitle>
+              <CardDescription>
+                Monitor API calls, token usage, and performance across all agents
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {traceAnalytics && Object.keys(traceAnalytics.agentPerformance).length > 0 ? (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {Object.entries(traceAnalytics.agentPerformance).map(([agentName, performance]) => (
+                        <div key={agentName} className="bg-gray-50 p-4 rounded-lg">
+                          <div className="font-medium text-sm mb-2">{agentName.replace('_', ' ').toUpperCase()}</div>
+                          <div className="space-y-1 text-xs">
+                            <div className="flex justify-between">
+                              <span>Success Rate:</span>
+                              <span className={`font-medium ${performance.successRate >= 0.9 ? 'text-green-600' : performance.successRate >= 0.7 ? 'text-yellow-600' : 'text-red-600'}`}>
+                                {(performance.successRate * 100).toFixed(1)}%
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Avg Duration:</span>
+                              <span className="font-medium">{performance.averageDuration.toFixed(0)}ms</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Avg Score:</span>
+                              <span className="font-medium">{performance.averageScore.toFixed(1)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Executions:</span>
+                              <span className="font-medium">{performance.totalExecutions}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="border-t pt-4">
+                      <h4 className="font-medium mb-3">Common Issues</h4>
+                      <div className="space-y-2">
+                        {Object.entries(traceAnalytics.commonIssues).map(([issue, count]) => (
+                          <div key={issue} className="flex items-center justify-between p-2 bg-red-50 rounded">
+                            <span className="text-sm">{issue}</span>
+                            <Badge variant="destructive">{count} occurrences</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No API usage data available yet.
+                    <br />
+                    Performance metrics will appear here after evaluations are run.
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
