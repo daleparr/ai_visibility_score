@@ -20,8 +20,10 @@ import {
   getBusinessImpactForRecommendation
 } from '@/lib/report-utils'
 import { LeaderboardData } from '@/types/leaderboards'
-import { BrandCategorizationService } from '@/lib/brand-categorization-service'
-import { AIDIPerformanceAnalyzer, AIDIPerformanceProfile } from '@/lib/adi/performance-framework'
+// Removed server-side imports that cause webpack bundling issues
+// import { BrandCategorizationService } from '@/lib/brand-categorization-service'
+// import { AIDIPerformanceAnalyzer, AIDIPerformanceProfile } from '@/lib/adi/performance-framework'
+import type { AIDIPerformanceProfile } from '@/lib/adi/performance-framework'
 import { AIDIPerformanceDashboard } from '@/components/adi/performance/AIDIPerformanceDashboard'
 import { createCheckoutSession } from '@/lib/stripe-client'
 

@@ -105,6 +105,9 @@ export abstract class BaseADIAgent implements IADIAgent {
    * Execute with timeout protection
    */
   async executeWithTimeout(input: ADIAgentInput): Promise<ADIAgentOutput> {
+    const startTime = Date.now()
+    console.log(`🚀 Starting agent: ${this.config.name} for evaluation: ${input.context.evaluationId}`)
+    
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => {
         reject(new AIDIAgentError(
@@ -122,6 +125,8 @@ export abstract class BaseADIAgent implements IADIAgent {
       ])
 
       if (!this.validate(result)) {
+        const executionTime = Date.now() - startTime
+        console.error(`❌ Agent ${this.config.name} validation failed after ${executionTime}ms`)
         throw new AIDIAgentError(
           this.config.name,
           'Agent output failed validation',
@@ -130,8 +135,13 @@ export abstract class BaseADIAgent implements IADIAgent {
         )
       }
 
+      const executionTime = Date.now() - startTime
+      console.log(`✅ Agent ${this.config.name} completed successfully in ${executionTime}ms`)
       return result
     } catch (error) {
+      const executionTime = Date.now() - startTime
+      console.error(`❌ Agent ${this.config.name} failed after ${executionTime}ms:`, error)
+      
       if (error instanceof AIDIAgentError) {
         throw error
       }
