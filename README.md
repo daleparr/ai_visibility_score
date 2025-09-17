@@ -318,4 +318,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Netlify](https://netlify.com/) for the deployment platform
 - [Tailwind CSS](https://tailwindcss.com/) for the utility-first CSS framework
 - [Shadcn/ui](https://ui.shadcn.com/) for the beautiful UI components
-- [Drizzle ORM](https://orm.drizzle.team/) for the type-safe database toolkit
+- [Drizzle ORM](https://orm.drizzle.team/) for the type-safe database toolkit"# Build trigger for secrets fix deployment"  
