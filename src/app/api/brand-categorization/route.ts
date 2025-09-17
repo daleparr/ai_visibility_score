@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { BrandCategorizationService, BrandCategorizationRequest, BrandCategorizationResult } from '@/lib/brand-categorization-service'
-import { BrandCategorizationUtils } from '@/lib/brand-categorization-service'
 import { getAllCategories, getUniqueSectors, getCategoriesBySector } from '@/lib/brand-taxonomy'
+
+// Use dynamic imports to prevent webpack bundling issues
+const getBrandCategorizationService = async () => {
+  const { BrandCategorizationService, BrandCategorizationUtils } = await import('@/lib/brand-categorization-service')
+  return { BrandCategorizationService, BrandCategorizationUtils }
+}
+
+// Import types separately to avoid bundling issues
+import type { BrandCategorizationRequest, BrandCategorizationResult } from '@/lib/brand-categorization-service'
 
 /**
  * Brand Categorization API
@@ -21,6 +28,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const action = searchParams.get('action') || 'categories'
     
+    const { BrandCategorizationService } = await getBrandCategorizationService()
     const categorizationService = BrandCategorizationService.getInstance()
     
     switch (action) {
@@ -128,6 +136,7 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    const { BrandCategorizationService } = await getBrandCategorizationService()
     const categorizationService = BrandCategorizationService.getInstance()
     
     switch (action) {
@@ -212,6 +221,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const { action, brandName, websiteUrl, forceRefresh } = body
     
+    const { BrandCategorizationService } = await getBrandCategorizationService()
     const categorizationService = BrandCategorizationService.getInstance()
     
     switch (action) {
