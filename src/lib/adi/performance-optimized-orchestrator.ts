@@ -336,16 +336,40 @@ export class PerformanceOptimizedADIOrchestrator {
         optimized: true, // Signal to agents to use optimized mode
         maxExecutionTime: 2000 // Individual agent limit
       },
-      previousResults: Object.values(previousResults).slice(0, 5).map(result => ({ // Limit previous results
-        id: '',
-        agent_id: '',
-        result_type: result.agentName,
-        raw_value: 0,
-        normalized_score: 0,
-        confidence_level: 0,
-        evidence: result.metadata,
-        created_at: new Date().toISOString()
-      })),
+      previousResults: Object.values(previousResults).slice(0, 5).map(result => {
+        // Special handling for crawl agent results - include actual content
+        if (result.agentName === 'crawl_agent' && result.results && result.results.length > 0) {
+          const crawlResult = result.results[0]
+          return {
+            id: '',
+            agent_id: 'crawl_agent',
+            result_type: 'homepage_crawl_optimized',
+            raw_value: crawlResult.normalizedScore || 0,
+            normalized_score: crawlResult.normalizedScore || 0,
+            confidence_level: crawlResult.confidenceLevel || 0,
+            evidence: {
+              ...crawlResult.evidence,
+              // Include the actual HTML content for analysis
+              htmlContent: crawlResult.evidence?.content || '',
+              structuredData: crawlResult.evidence?.structuredData || [],
+              metaData: crawlResult.evidence?.metaData || {}
+            },
+            created_at: new Date().toISOString()
+          }
+        }
+        
+        // Standard handling for other agents
+        return {
+          id: '',
+          agent_id: '',
+          result_type: result.agentName,
+          raw_value: 0,
+          normalized_score: 0,
+          confidence_level: 0,
+          evidence: result.metadata,
+          created_at: new Date().toISOString()
+        }
+      }),
       config: {
         optimized: true,
         maxTimeout: 2000,
