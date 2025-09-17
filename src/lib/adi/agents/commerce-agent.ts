@@ -25,12 +25,25 @@ export class CommerceAgent extends BaseADIAgent {
     try {
       console.log(`Executing Commerce Agent for evaluation ${input.context.evaluationId}`)
 
-      const { websiteUrl, crawlArtifacts } = input.context
+      const { websiteUrl } = input.context
       const brandName = this.extractBrandName(websiteUrl)
 
-      if (!crawlArtifacts || crawlArtifacts.length === 0) {
-        return this.createOutput('skipped', [], 0, 'No crawl artifacts available for analysis')
+      // Get crawl artifacts from previousResults (updated data flow)
+      const crawlResults = (input.previousResults || []).filter(
+        result => result.agent_id === 'crawl_agent' && result.evidence?.htmlContent
+      )
+
+      if (crawlResults.length === 0) {
+        return this.createOutput('skipped', [], 0, 'No HTML content available for analysis')
       }
+
+      // Convert crawl results to expected format
+      const crawlArtifacts = crawlResults.map(result => ({
+        artifact_type: 'html_snapshot',
+        content: result.evidence?.htmlContent || '',
+        metadata: result.evidence?.metaData || {},
+        structuredData: result.evidence?.structuredData || []
+      }))
 
       const results = []
 

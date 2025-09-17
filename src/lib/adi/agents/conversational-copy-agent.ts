@@ -72,7 +72,7 @@ export class ConversationalCopyAgent extends BaseADIAgent {
         executionTime,
         metadata: {
           totalPagesAnalyzed: crawlData?.pages?.length || 1,
-          contentWordsAnalyzed: this.countWords(crawlData),
+          contentWordsAnalyzed: this.countWords(crawlData || { content: '' }),
           readabilityScore: this.calculateOverallReadability(results),
           agentVersion: this.config.version,
           timestamp: new Date().toISOString()

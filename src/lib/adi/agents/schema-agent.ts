@@ -25,14 +25,22 @@ export class SchemaAgent extends BaseADIAgent {
     try {
       console.log(`Executing Schema Agent for evaluation ${input.context.evaluationId}`)
 
-      // Get crawl artifacts
-      const htmlArtifacts = input.context.crawlArtifacts.filter(
-        artifact => artifact.artifact_type === 'html_snapshot'
+      // Get crawl artifacts from previousResults (updated data flow)
+      const crawlResults = (input.previousResults || []).filter(
+        result => result.agent_id === 'crawl_agent' && result.evidence?.htmlContent
       )
 
-      if (htmlArtifacts.length === 0) {
-        return this.createOutput('skipped', [], 0, 'No HTML artifacts available for analysis')
+      if (crawlResults.length === 0) {
+        return this.createOutput('skipped', [], 0, 'No HTML content available for analysis')
       }
+
+      // Convert crawl results to expected format
+      const htmlArtifacts = crawlResults.map(result => ({
+        artifact_type: 'html_snapshot',
+        content: result.evidence?.htmlContent || '',
+        metadata: result.evidence?.metaData || {},
+        structuredData: result.evidence?.structuredData || []
+      }))
 
       const results = []
 
