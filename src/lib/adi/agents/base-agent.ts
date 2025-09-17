@@ -8,7 +8,7 @@ import type {
 
 import {
   ADIError,
-  ADIAgentError
+  AIDIAgentError
 } from '@/types/adi'
 
 /**
@@ -73,7 +73,7 @@ export abstract class BaseADIAgent implements IADIAgent {
    */
   async retry(input: ADIAgentInput, attempt: number): Promise<ADIAgentOutput> {
     if (attempt > this.config.retryLimit) {
-      throw new ADIAgentError(
+      throw new AIDIAgentError(
         this.config.name,
         `Maximum retry attempts (${this.config.retryLimit}) exceeded`,
         this.config,
@@ -90,7 +90,7 @@ export abstract class BaseADIAgent implements IADIAgent {
       return await this.execute(input)
     } catch (error) {
       if (attempt === this.config.retryLimit) {
-        throw new ADIAgentError(
+        throw new AIDIAgentError(
           this.config.name,
           `Final retry failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
           this.config,
@@ -107,7 +107,7 @@ export abstract class BaseADIAgent implements IADIAgent {
   async executeWithTimeout(input: ADIAgentInput): Promise<ADIAgentOutput> {
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => {
-        reject(new ADIAgentError(
+        reject(new AIDIAgentError(
           this.config.name,
           `Agent execution timed out after ${this.config.timeout}ms`,
           this.config
@@ -122,7 +122,7 @@ export abstract class BaseADIAgent implements IADIAgent {
       ])
 
       if (!this.validate(result)) {
-        throw new ADIAgentError(
+        throw new AIDIAgentError(
           this.config.name,
           'Agent output failed validation',
           this.config,
@@ -132,11 +132,11 @@ export abstract class BaseADIAgent implements IADIAgent {
 
       return result
     } catch (error) {
-      if (error instanceof ADIAgentError) {
+      if (error instanceof AIDIAgentError) {
         throw error
       }
       
-      throw new ADIAgentError(
+      throw new AIDIAgentError(
         this.config.name,
         `Execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         this.config,
@@ -345,5 +345,4 @@ export class ADIAgentUtils {
   }
 }
 
-// Export alias for backward compatibility
-export { BaseAIDIAgent as BaseADIAgent }
+// Export alias for backward compatibility - removed duplicate export

@@ -1,4 +1,4 @@
-import { BaseAIDIAgent } from './base-agent'
+import { BaseADIAgent } from './base-agent'
 import { BRAND_TAXONOMY, DETECTION_KEYWORDS, PRICE_INDICATORS, BUSINESS_MODEL_INDICATORS, CategoryDetectionResult, BrandCategory } from '../../brand-taxonomy'
 import type { AIDIAgentInput, AIDIAgentOutput, AIDIAgentConfig } from '@/types/adi'
 
@@ -18,7 +18,7 @@ export interface BrandCategoryAnalysis {
   }
 }
 
-export class BrandCategoryDetectionAgent extends BaseAIDIAgent {
+export class BrandCategoryDetectionAgent extends BaseADIAgent {
   constructor() {
     const config: AIDIAgentConfig = {
       name: 'Brand Category Detection Agent',
