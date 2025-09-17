@@ -397,11 +397,11 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Federated Learning Insights - Temporarily disabled for debugging */}
-      {sessionUser?.id && subscription && false && (
+      {/* Federated Learning Insights */}
+      {sessionUser?.id && subscription && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <FederatedInsightsCard
-            userId={sessionUser.id}
+            userId={sessionUser.id!}
             userIndustry={userProfile?.industry || 'technology'}
             subscriptionTier={subscription.tier}
           />

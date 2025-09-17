@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { Providers } from '@/components/providers'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -70,9 +71,11 @@ export default function RootLayout({
         <link rel="manifest" href="/site.webmanifest" />
       </head>
       <body className={`${inter.className} antialiased`}>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-          {children}
-        </div>
+        <Providers>
+          <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+            {children}
+          </div>
+        </Providers>
       </body>
     </html>
   )
