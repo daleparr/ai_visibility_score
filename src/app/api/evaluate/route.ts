@@ -63,12 +63,12 @@ export async function POST(request: NextRequest) {
       const recommendations = generateRecommendations(adiScore)
       
       // Convert ADI pillars to dimension scores for frontend compatibility
-      const dimensionScores = (adiScore.pillars || []).flatMap((pillar: any) =>
-        (pillar.dimensions || []).map((dim: any) => ({
-          name: formatDimensionName(dim.dimension.toString()),
-          score: dim.score,
-          pillar: pillar.pillar,
-          confidence: dim.confidenceInterval || 0.8
+      const dimensionScores = (adiScore?.pillars || []).flatMap((pillar: any) =>
+        (pillar?.dimensions || []).map((dim: any) => ({
+          name: formatDimensionName(dim?.dimension?.toString() || 'Unknown'),
+          score: dim?.score || 0,
+          pillar: pillar?.pillar || 'infrastructure',
+          confidence: dim?.confidenceInterval || 0.8
         }))
       )
       
@@ -83,10 +83,10 @@ export async function POST(request: NextRequest) {
         dimensionScores,
         
         // Pillar breakdown from ADI scoring
-        pillarScores: (adiScore.pillars || []).map((pillar: any) => ({
-          pillar: pillar.pillar,
-          score: pillar.score,
-          weight: pillar.weight
+        pillarScores: (adiScore?.pillars || []).map((pillar: any) => ({
+          pillar: pillar?.pillar || 'infrastructure',
+          score: pillar?.score || 0,
+          weight: pillar?.weight || 0
         })),
         
         // Performance metrics from orchestration
@@ -118,9 +118,9 @@ export async function POST(request: NextRequest) {
         agentResults: Object.entries(orchestrationResult?.agentResults || {}).slice(0, 5).map(([agentName, result]) => ({
           agentName,
           status: (result as any)?.status || 'unknown',
-          executionTime: (result as any).executionTime || 0,
-          score: (result as any).results?.[0]?.normalizedScore || 0,
-          insights: (result as any).results?.map((r: any) => r.evidence?.insight || '').filter(Boolean).slice(0, 2) || []
+          executionTime: (result as any)?.executionTime || 0,
+          score: (result as any)?.results?.[0]?.normalizedScore || 0,
+          insights: ((result as any)?.results || []).map((r: any) => r?.evidence?.insight || '').filter(Boolean).slice(0, 2) || []
         }))
       })
 

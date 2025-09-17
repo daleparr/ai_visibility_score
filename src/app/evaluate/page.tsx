@@ -142,14 +142,14 @@ How well AI understands your brand matters and positioning.
 How AI helps customers buy from you.
 
 ## Dimension Analysis
-${evaluationData.dimensionScores.map(dim => `
+${(evaluationData.dimensionScores || []).map(dim => `
 ### ${dim.name}: ${dim.score.toFixed(2)}/100
 **Pillar:** ${dim.pillar.charAt(0).toUpperCase() + dim.pillar.slice(1)}
 **Description:** ${dim.description}
 `).join('')}
 
 ## Priority Recommendations
-${evaluationData.recommendations.map((rec, index) => `
+${(evaluationData.recommendations || []).map((rec, index) => `
 ### ${index + 1}. ${rec.title} (${rec.priority.toUpperCase()} PRIORITY)
 **Current Score:** ${rec.score.toFixed(2)}/100
 **Description:** ${rec.description}
@@ -485,7 +485,7 @@ ${evaluationData.certification ? `
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {evaluationData.aiProviders.map((provider, index) => (
+                {(evaluationData.aiProviders || []).map((provider, index) => (
                   <Badge key={index} variant="outline" className="capitalize">
                     {provider === 'openai' ? 'ChatGPT (GPT-4)' : 
                      provider === 'anthropic' ? 'Claude-3-Sonnet' :
@@ -521,7 +521,7 @@ ${evaluationData.certification ? `
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {evaluationData.certification.achievements.map((achievement, index) => (
+                      {(evaluationData.certification?.achievements || []).map((achievement, index) => (
                         <Badge key={index} variant="secondary" className="bg-yellow-100 text-yellow-800">
                           🏆 {achievement}
                         </Badge>
@@ -540,7 +540,7 @@ ${evaluationData.certification ? `
                   </CardHeader>
                   <CardContent>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {evaluationData.modelResults.map((model, index) => (
+                      {(evaluationData.modelResults || []).map((model, index) => (
                         <Card key={index} className="border">
                           <CardHeader className="pb-3">
                             <div className="flex items-center justify-between">
@@ -557,13 +557,13 @@ ${evaluationData.certification ? `
                             <div>
                               <div className="text-xs font-medium text-green-600 mb-1">Strengths:</div>
                               <div className="text-xs text-gray-600">
-                                {model.strengths.join(', ')}
+                                {(model.strengths || []).join(', ')}
                               </div>
                             </div>
                             <div>
                               <div className="text-xs font-medium text-red-600 mb-1">Areas for Improvement:</div>
                               <div className="text-xs text-gray-600">
-                                {model.weaknesses.join(', ')}
+                                {(model.weaknesses || []).join(', ')}
                               </div>
                             </div>
                             <div className="text-xs text-blue-600 font-medium">
@@ -610,7 +610,7 @@ ${evaluationData.certification ? `
                       <div>
                         <h4 className="font-semibold mb-3">Competitive Analysis</h4>
                         <div className="space-y-2">
-                          {evaluationData.industryBenchmarks.competitorAnalysis.map((competitor, index) => (
+                          {(evaluationData.industryBenchmarks?.competitorAnalysis || []).map((competitor, index) => (
                             <div key={index} className="flex justify-between items-center">
                               <span className="text-sm">{competitor.name}:</span>
                               <div className="flex items-center gap-2">
@@ -646,7 +646,7 @@ ${evaluationData.certification ? `
                           <div className="mb-4">
                             <div className="text-sm font-medium text-red-600 mb-2">Risk Factors:</div>
                             <ul className="text-sm text-gray-600 space-y-1">
-                              {evaluationData.insights.riskFactors.map((risk, index) => (
+                              {(evaluationData.insights?.riskFactors || []).map((risk, index) => (
                                 <li key={index}>• {risk}</li>
                               ))}
                             </ul>
@@ -655,7 +655,7 @@ ${evaluationData.certification ? `
                         <div>
                           <div className="text-sm font-medium text-green-600 mb-2">Opportunities:</div>
                           <ul className="text-sm text-gray-600 space-y-1">
-                            {evaluationData.insights.opportunities.map((opportunity, index) => (
+                            {(evaluationData.insights?.opportunities || []).map((opportunity, index) => (
                               <li key={index}>• {opportunity}</li>
                             ))}
                           </ul>
@@ -667,7 +667,7 @@ ${evaluationData.certification ? `
                           Strategic Next Steps
                         </h4>
                         <ul className="text-sm text-gray-600 space-y-2">
-                          {evaluationData.insights.nextSteps.map((step, index) => (
+                          {(evaluationData.insights?.nextSteps || []).map((step, index) => (
                             <li key={index} className="flex items-start">
                               <span className="bg-brand-100 text-brand-700 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mr-2 mt-0.5">
                                 {index + 1}
@@ -741,7 +741,7 @@ ${evaluationData.certification ? `
               Click to see improvement opportunities and real AI examples.
             </p>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {evaluationData.dimensionScores.map((dimension, index) => (
+              {(evaluationData.dimensionScores || []).map((dimension, index) => (
                 <UserFriendlyDimensionCard
                   key={index}
                   dimension={dimension}
@@ -843,7 +843,7 @@ ${evaluationData.certification ? `
               Each card shows the business impact, timeline, and effort required.
             </p>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {evaluationData.recommendations.map((rec, index) => {
+              {(evaluationData.recommendations || []).map((rec, index) => {
                 const priority = getImprovementPriority(rec.score, rec.description)
                 const implementationSteps = getImplementationSteps(rec.title)
                 
