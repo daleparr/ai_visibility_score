@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://ai-discoverability-index.netlify.app'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   openGraph: {
     title: 'AI Discoverability Index - The Standard for AI Discoverability',
     description: 'Master your brand\'s AI discoverability with the AI Discoverability Index framework.',

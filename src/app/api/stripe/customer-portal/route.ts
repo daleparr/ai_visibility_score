@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     // Create customer portal session
     const portalSession = await getStripe().billingPortal.sessions.create({
       customer: user.stripeCustomerId,
-      return_url: `${request.headers.get('origin') || 'https://ai-discoverability-index.netlify.app'}/dashboard`,
+      return_url: `${request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard`,
     })
 
     return NextResponse.json({ 

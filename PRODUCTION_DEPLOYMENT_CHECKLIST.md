@@ -30,7 +30,7 @@ STRIPE_SECRET_KEY=sk_live_your_secret_key_here
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
 NEXT_PUBLIC_STRIPE_PRICE_ID_PROFESSIONAL=price_your_professional_price_id
 NEXT_PUBLIC_STRIPE_PRICE_ID_ENTERPRISE=price_your_enterprise_price_id
-NEXT_PUBLIC_APP_URL=https://ai-discoverability-index.netlify.app
+NEXT_PUBLIC_APP_URL=https://your-domain.netlify.app
 ```
 
 ### 2. Database Migration
@@ -44,7 +44,7 @@ npm run db:migrate
 
 ### 3. Test the Live Integration
 
-1. **Visit**: https://ai-discoverability-index.netlify.app/evaluate
+1. **Visit**: https://your-domain.netlify.app/evaluate
 2. **Click**: "Upgrade to AIDI Index Pro - £119"
 3. **Complete**: Test payment with live Stripe
 4. **Verify**: Webhook events received in Stripe Dashboard

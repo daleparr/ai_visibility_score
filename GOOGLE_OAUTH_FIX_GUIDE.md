@@ -38,7 +38,7 @@ In the **"Authorized redirect URIs"** section:
 In the **"Authorized JavaScript origins"** section, ensure you have:
 ```
 http://localhost:3000
-https://ai-discoverability-index.netlify.app
+https://your-domain.netlify.app
 ```
 
 ### Step 5: Save Changes
@@ -81,9 +81,9 @@ If you still get errors after this fix:
 
 When you deploy to production, you'll need to:
 1. Add your production domain to both:
-   - Authorized JavaScript origins: `https://ai-discoverability-index.netlify.app`
-   - Authorized redirect URIs: `https://ai-discoverability-index.netlify.app/api/auth/callback/google`
-2. Update `NEXTAUTH_URL` in your production environment variables to: `https://ai-discoverability-index.netlify.app`
+   - Authorized JavaScript origins: `https://your-domain.netlify.app`
+   - Authorized redirect URIs: `https://your-domain.netlify.app/api/auth/callback/google`
+2. Update `NEXTAUTH_URL` in your production environment variables to: `https://your-domain.netlify.app`
 
 **✅ CONFIGURATION COMPLETE!** Based on the screenshot, your Google Cloud Console is already properly configured with both development and production URLs.
 

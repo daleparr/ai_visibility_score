@@ -33,7 +33,7 @@ npm run dev
 
 1. **Update Netlify Environment Variables**:
    - Go to: https://app.netlify.com → Your Site → Site Settings → Environment Variables
-   - Update or add: `NEXTAUTH_URL=https://ai-discoverability-index.netlify.app`
+   - Update or add: `NEXTAUTH_URL=https://your-domain.netlify.app`
    - Save changes
 
 2. **Trigger a New Deployment**:
@@ -41,7 +41,7 @@ npm run dev
    - Or manually trigger a redeploy in Netlify dashboard
 
 3. **Test Production OAuth**:
-   - Go to: https://ai-discoverability-index.netlify.app/auth/signin
+   - Go to: https://your-domain.netlify.app/auth/signin
    - Click "Continue with Google"
    - Should work immediately after deployment
 
@@ -65,7 +65,7 @@ Let me check your current `.env.local` to see if you need any local changes:
 - `GOOGLE_CLIENT_SECRET` ✅ Present
 
 **For production, you'll need**:
-- `NEXTAUTH_URL=https://ai-discoverability-index.netlify.app`
+- `NEXTAUTH_URL=https://your-domain.netlify.app`
 
 ## 🚨 **Important Notes**
 
@@ -79,6 +79,6 @@ Let me check your current `.env.local` to see if you need any local changes:
 - [ ] Test local OAuth: `http://localhost:3000/auth/signin`
 - [ ] Update Netlify `NEXTAUTH_URL` environment variable
 - [ ] Redeploy to Netlify
-- [ ] Test production OAuth: `https://ai-discoverability-index.netlify.app/auth/signin`
+- [ ] Test production OAuth: `https://your-domain.netlify.app/auth/signin`
 
 **You can start testing locally right now!**

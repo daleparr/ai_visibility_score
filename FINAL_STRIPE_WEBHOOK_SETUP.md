@@ -7,7 +7,7 @@ Your live Stripe integration is now configured with:
 - ✅ **Live Publishable Key**: Configured
 - ✅ **Live Secret Key**: Configured  
 - ✅ **Price IDs**: Index Pro (£119) & Enterprise (£319)
-- ✅ **Production Domain**: https://ai-discoverability-index.netlify.app
+- ✅ **Production Domain**: https://your-domain.netlify.app
 - ✅ **Environment File**: `.env.production` created
 
 ## 🔧 Final Step: Webhook Setup
@@ -18,7 +18,7 @@ Your live Stripe integration is now configured with:
 2. **Click "Add endpoint"**
 3. **Endpoint URL**: 
    ```
-   https://ai-discoverability-index.netlify.app/api/stripe/webhook
+   https://your-domain.netlify.app/api/stripe/webhook
    ```
 4. **Select these events**:
    - ✅ `checkout.session.completed`
@@ -49,7 +49,7 @@ Your live Stripe integration is now configured with:
 
 ### Test the Payment Flow
 
-1. **Visit**: https://ai-discoverability-index.netlify.app/evaluate
+1. **Visit**: https://your-domain.netlify.app/evaluate
 2. **Click**: "Upgrade to AIDI Index Pro - £119"
 3. **Use Stripe test card**: 4242 4242 4242 4242
 4. **Verify**: Checkout completes successfully
