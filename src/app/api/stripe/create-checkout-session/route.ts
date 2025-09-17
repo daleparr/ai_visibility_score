@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate price ID format
-    if (!priceId.startsWith('price_')) {
+    if (!priceId || typeof priceId !== 'string' || !priceId.startsWith('price_')) {
       console.error('❌ Invalid price ID format:', priceId)
       return NextResponse.json({ error: 'Invalid price ID format' }, { status: 400 })
     }

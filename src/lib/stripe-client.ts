@@ -19,7 +19,7 @@ export async function createCheckoutSession(tier: 'professional' | 'enterprise')
 
     // Get price ID from environment variables
     let priceId = tier === 'professional'
-      ? process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_INDEX_PRO
+      ? process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PROFESSIONAL
       : process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ENTERPRISE
 
     // Check if price ID is configured
