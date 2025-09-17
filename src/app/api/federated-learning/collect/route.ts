@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { federatedLearning } from '@/lib/federated-learning/engine'
 import { getUserSubscription } from '@/lib/subscription-service'
+
+// Use dynamic import to prevent webpack bundling issues
+const getFederatedLearning = async () => {
+  const { federatedLearning } = await import('@/lib/federated-learning/engine')
+  return federatedLearning
+}
 
 /**
  * POST /api/federated-learning/collect
@@ -32,6 +37,7 @@ export async function POST(request: NextRequest) {
     const subscription = await getUserSubscription(session.user.email)
     
     // Collect federated learning data
+    const federatedLearning = await getFederatedLearning()
     const dataPoint = await federatedLearning.collectEvaluationData(
       evaluationId,
       (session.user as any).id,

@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { federatedLearning } from '@/lib/federated-learning/engine'
 import { getUserSubscription } from '@/lib/subscription-service'
 import { getUserProfile } from '@/lib/database'
+
+// Use dynamic import to prevent webpack bundling issues
+const getFederatedLearning = async () => {
+  const { federatedLearning } = await import('@/lib/federated-learning/engine')
+  return federatedLearning
+}
 
 /**
  * GET /api/federated-learning/insights
@@ -28,6 +33,7 @@ export async function GET(request: NextRequest) {
     const userIndustry = userProfile?.industry || 'technology'
 
     // Generate personalized insights
+    const federatedLearning = await getFederatedLearning()
     const insights = await federatedLearning.generatePersonalizedInsights(
       userId,
       userIndustry,
