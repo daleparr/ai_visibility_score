@@ -29,6 +29,19 @@ export async function createCheckoutSession(tier: 'professional' | 'enterprise')
       return
     }
 
+    // Validate price ID format (should start with 'price_', not 'prod_')
+    if (priceId.startsWith('prod_')) {
+      console.error(`❌ Invalid price ID format: ${priceId}. This appears to be a product ID, not a price ID. Price IDs should start with 'price_'.`)
+      alert(`Configuration error: Invalid price ID format. Please contact support - the system is configured with a product ID instead of a price ID.`)
+      return
+    }
+
+    if (!priceId.startsWith('price_')) {
+      console.error(`❌ Invalid price ID format: ${priceId}. Price IDs should start with 'price_'.`)
+      alert(`Configuration error: Invalid price ID format. Please contact support.`)
+      return
+    }
+
     console.log(`✅ Using price ID for ${tier}:`, priceId)
 
     const checkoutResponse = await fetch('/api/stripe/create-checkout-session', {
