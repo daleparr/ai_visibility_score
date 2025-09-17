@@ -63,13 +63,13 @@ export async function POST(request: NextRequest) {
       const recommendations = generateRecommendations(adiScore)
       
       // Convert ADI pillars to dimension scores for frontend compatibility
-      const dimensionScores = adiScore.pillars.flatMap((pillar: any) =>
-        pillar.dimensions?.map((dim: any) => ({
+      const dimensionScores = (adiScore.pillars || []).flatMap((pillar: any) =>
+        (pillar.dimensions || []).map((dim: any) => ({
           name: formatDimensionName(dim.dimension.toString()),
           score: dim.score,
           pillar: pillar.pillar,
-          confidence: dim.confidenceInterval
-        })) || []
+          confidence: dim.confidenceInterval || 0.8
+        }))
       )
       
       return NextResponse.json({
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
         dimensionScores,
         
         // Pillar breakdown from ADI scoring
-        pillarScores: adiScore.pillars.map((pillar: any) => ({
+        pillarScores: (adiScore.pillars || []).map((pillar: any) => ({
           pillar: pillar.pillar,
           score: pillar.score,
           weight: pillar.weight
@@ -91,11 +91,11 @@ export async function POST(request: NextRequest) {
         
         // Performance metrics from orchestration
         performance: {
-          executionTime: orchestrationResult.totalExecutionTime,
-          agentsExecuted: Object.keys(orchestrationResult.agentResults).length,
-          successRate: orchestrationResult.overallStatus === 'completed' ? 1.0 :
-                      Object.values(orchestrationResult.agentResults).filter((r: any) => r.status === 'completed').length /
-                      Object.values(orchestrationResult.agentResults).length
+          executionTime: orchestrationResult?.totalExecutionTime || 0,
+          agentsExecuted: Object.keys(orchestrationResult?.agentResults || {}).length,
+          successRate: orchestrationResult?.overallStatus === 'completed' ? 1.0 :
+                      Object.values(orchestrationResult?.agentResults || {}).filter((r: any) => r?.status === 'completed').length /
+                      Math.max(Object.values(orchestrationResult?.agentResults || {}).length, 1)
         },
         
         // Recommendations based on scoring
@@ -115,9 +115,9 @@ export async function POST(request: NextRequest) {
         agentTraces: evaluationTrace ? [evaluationTrace] : [],
         
         // Detailed agent results (first 5 for API response size)
-        agentResults: Object.entries(orchestrationResult.agentResults).slice(0, 5).map(([agentName, result]) => ({
+        agentResults: Object.entries(orchestrationResult?.agentResults || {}).slice(0, 5).map(([agentName, result]) => ({
           agentName,
-          status: (result as any).status,
+          status: (result as any)?.status || 'unknown',
           executionTime: (result as any).executionTime || 0,
           score: (result as any).results?.[0]?.normalizedScore || 0,
           insights: (result as any).results?.map((r: any) => r.evidence?.insight || '').filter(Boolean).slice(0, 2) || []
