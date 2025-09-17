@@ -252,24 +252,25 @@ export class ADIScoringEngine {
   private static extractDimensionScores(agentResults: Record<string, ADIAgentOutput>): ADIDimensionScore[] {
     const dimensionScores: ADIDimensionScore[] = []
 
-    // Map agent results to dimensions (updated with geo visibility)
-    const agentToDimensionMap: Record<string, ADIDimensionName> = {
-      'schema_agent': 'schema_structured_data',
-      'semantic_agent': 'semantic_clarity_ontology',
-      'knowledge_graph_agent': 'knowledge_graphs_entity_linking',
-      'conversational_copy_agent': 'llm_readability_conversational',
-      'geo_visibility_agent': 'geo_visibility_presence',
-      'llm_test_agent': 'ai_answer_quality_presence',
-      'citation_agent': 'citation_authority_freshness',
-      'sentiment_agent': 'reputation_signals',
-      'commerce_agent': 'hero_products_use_case'
+    // Map agent results to dimensions (updated with all dimensions)
+    const agentToDimensionMap: Record<string, ADIDimensionName[]> = {
+      'schema_agent': ['schema_structured_data'],
+      'semantic_agent': ['semantic_clarity_ontology'],
+      'knowledge_graph_agent': ['knowledge_graphs_entity_linking'],
+      'conversational_copy_agent': ['llm_readability_conversational'],
+      'geo_visibility_agent': ['geo_visibility_presence'],
+      'llm_test_agent': ['ai_answer_quality_presence'],
+      'citation_agent': ['citation_authority_freshness'],
+      'sentiment_agent': ['reputation_signals'],
+      'commerce_agent': ['hero_products_use_case', 'policies_logistics_clarity'], // Commerce agent handles both
+      'brand_heritage_agent': ['reputation_signals'] // Map to reputation signals
     }
 
     // Process each agent's results
     for (const [agentName, agentOutput] of Object.entries(agentResults)) {
-      const dimensionName = agentToDimensionMap[agentName]
+      const dimensionNames = agentToDimensionMap[agentName]
       
-      if (!dimensionName || agentOutput.status !== 'completed') {
+      if (!dimensionNames || agentOutput.status !== 'completed') {
         continue
       }
 
@@ -277,13 +278,16 @@ export class ADIScoringEngine {
       const aggregatedScore = this.aggregateAgentResults(agentOutput)
       
       if (aggregatedScore) {
-        dimensionScores.push({
-          dimension: dimensionName,
-          score: aggregatedScore.score,
-          confidenceInterval: aggregatedScore.confidence,
-          evidence: aggregatedScore.evidence,
-          agentContributions: { [agentName]: aggregatedScore.score }
-        })
+        // Handle agents that map to multiple dimensions
+        for (const dimensionName of dimensionNames) {
+          dimensionScores.push({
+            dimension: dimensionName,
+            score: aggregatedScore.score,
+            confidenceInterval: aggregatedScore.confidence,
+            evidence: aggregatedScore.evidence,
+            agentContributions: { [agentName]: aggregatedScore.score }
+          })
+        }
       }
     }
 

@@ -100,9 +100,16 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
       }
 
       const html = await response.text()
+      console.log(`📄 Crawled content length: ${html.length} characters from ${normalizedUrl}`)
       
       // OPTIMIZATION 5: Extract only essential data
       const essentialData = this.extractEssentialData(html)
+      console.log(`📊 Essential data extracted:`, {
+        qualityScore: essentialData.qualityScore,
+        structuredDataCount: essentialData.structuredData.length,
+        hasTitle: !!essentialData.metaData.title,
+        hasDescription: !!essentialData.metaData.description
+      })
       
       return this.createResult(
         'homepage_crawl_optimized',

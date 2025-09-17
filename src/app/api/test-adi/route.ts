@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     // Test brand data
     const testBrand = {
       brandId: 'test_brand_001',
-      websiteUrl: 'https://example-brand.com',
+      websiteUrl: 'https://www.nike.com',
       industryId: 'apparel',
       userId: 'test_user_001'
     }
