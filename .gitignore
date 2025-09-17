@@ -49,4 +49,4 @@ logs
 *.log
 
 # Supabase
-.supabase/
+.supabase/.env.production 
