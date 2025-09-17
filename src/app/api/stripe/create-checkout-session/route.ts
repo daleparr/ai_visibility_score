@@ -68,8 +68,8 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/evaluate`,
+      success_url: `${request.headers.get('origin') || 'https://ai-discoverability-index.netlify.app'}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${request.headers.get('origin') || 'https://ai-discoverability-index.netlify.app'}/evaluate`,
       metadata: {
         userId: user.id,
         tier: tier,
