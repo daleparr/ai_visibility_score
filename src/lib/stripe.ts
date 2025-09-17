@@ -63,12 +63,23 @@ export function getProductByTier(tier: AIDITier) {
 
 // Helper function to get tier by Stripe price ID
 export function getTierByPriceId(priceId: string): AIDITier | null {
-  // This will be populated once we create the products in Stripe
+  // Map of Stripe price IDs to tiers
   const priceToTierMap: Record<string, AIDITier> = {
-    // Will be filled with actual Stripe price IDs
+    'price_1QGqJhP8m2VlMJZnQJGqJhP8': 'professional', // Professional tier price ID
+    'price_1QGqJiP8m2VlMJZnQJGqJiP8': 'enterprise',   // Enterprise tier price ID
   }
   
   return priceToTierMap[priceId] || null
+}
+
+// Helper function to get price ID by tier
+export function getPriceIdByTier(tier: AIDITier): string | null {
+  const tierToPriceMap: Record<AIDITier, string> = {
+    'professional': process.env.STRIPE_PRICE_ID_PROFESSIONAL || 'price_1QGqJhP8m2VlMJZnQJGqJhP8',
+    'enterprise': process.env.STRIPE_PRICE_ID_ENTERPRISE || 'price_1QGqJiP8m2VlMJZnQJGqJiP8'
+  }
+  
+  return tierToPriceMap[tier] || null
 }
 
 // Stripe webhook event types we care about

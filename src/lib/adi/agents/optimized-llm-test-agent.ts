@@ -1,5 +1,5 @@
 import { BaseADIAgent } from './base-agent'
-import type { AIDIAgentConfig, AIDIAgentInput, AIDIAgentOutput } from '../../../types/adi'
+import type { ADIAgentConfig, ADIAgentInput, ADIAgentOutput } from '../../../types/adi'
 
 /**
  * Optimized LLM Test Agent - Fast AI visibility testing
@@ -11,7 +11,7 @@ export class OptimizedLLMTestAgent extends BaseADIAgent {
   private readonly MAX_MODELS = 1 // Test only 1 model for speed
 
   constructor() {
-    const config: AIDIAgentConfig = {
+    const config: ADIAgentConfig = {
       name: 'llm_test_agent',
       version: 'v2.0-optimized',
       description: 'Fast AI visibility testing with reduced queries and smart caching',
@@ -23,7 +23,7 @@ export class OptimizedLLMTestAgent extends BaseADIAgent {
     super(config)
   }
 
-  async execute(input: AIDIAgentInput): Promise<AIDIAgentOutput> {
+  async execute(input: ADIAgentInput): Promise<ADIAgentOutput> {
     const startTime = Date.now()
     
     try {

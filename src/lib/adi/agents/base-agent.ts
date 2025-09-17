@@ -1,36 +1,36 @@
 import type {
-  IAIDIAgent,
-  AIDIAgentConfig,
-  AIDIAgentInput,
-  AIDIAgentOutput,
+  IADIAgent,
+  ADIAgentConfig,
+  ADIAgentInput,
+  ADIAgentOutput,
   AgentStatus
 } from '@/types/adi'
 
 import {
   ADIError,
-  AIDIAgentError
+  ADIAgentError
 } from '@/types/adi'
 
 /**
- * Base class for all AIDI agents
+ * Base class for all ADI agents
  * Provides common functionality for execution, validation, and error handling
  */
-export abstract class BaseAIDIAgent implements IAIDIAgent {
-  public readonly config: AIDIAgentConfig
+export abstract class BaseADIAgent implements IADIAgent {
+  public readonly config: ADIAgentConfig
 
-  constructor(config: AIDIAgentConfig) {
+  constructor(config: ADIAgentConfig) {
     this.config = config
   }
 
   /**
    * Main execution method - must be implemented by each agent
    */
-  abstract execute(input: AIDIAgentInput): Promise<AIDIAgentOutput>
+  abstract execute(input: ADIAgentInput): Promise<ADIAgentOutput>
 
   /**
    * Validate agent output for consistency and completeness
    */
-  validate(output: AIDIAgentOutput): boolean {
+  validate(output: ADIAgentOutput): boolean {
     try {
       // Basic validation checks
       if (!output.agentName || output.agentName !== this.config.name) {
@@ -71,9 +71,9 @@ export abstract class BaseAIDIAgent implements IAIDIAgent {
   /**
    * Retry mechanism with exponential backoff
    */
-  async retry(input: AIDIAgentInput, attempt: number): Promise<AIDIAgentOutput> {
+  async retry(input: ADIAgentInput, attempt: number): Promise<ADIAgentOutput> {
     if (attempt > this.config.retryLimit) {
-      throw new AIDIAgentError(
+      throw new ADIAgentError(
         this.config.name,
         `Maximum retry attempts (${this.config.retryLimit}) exceeded`,
         this.config,
@@ -90,7 +90,7 @@ export abstract class BaseAIDIAgent implements IAIDIAgent {
       return await this.execute(input)
     } catch (error) {
       if (attempt === this.config.retryLimit) {
-        throw new AIDIAgentError(
+        throw new ADIAgentError(
           this.config.name,
           `Final retry failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
           this.config,
@@ -104,10 +104,10 @@ export abstract class BaseAIDIAgent implements IAIDIAgent {
   /**
    * Execute with timeout protection
    */
-  async executeWithTimeout(input: AIDIAgentInput): Promise<AIDIAgentOutput> {
+  async executeWithTimeout(input: ADIAgentInput): Promise<ADIAgentOutput> {
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => {
-        reject(new AIDIAgentError(
+        reject(new ADIAgentError(
           this.config.name,
           `Agent execution timed out after ${this.config.timeout}ms`,
           this.config
@@ -122,7 +122,7 @@ export abstract class BaseAIDIAgent implements IAIDIAgent {
       ])
 
       if (!this.validate(result)) {
-        throw new AIDIAgentError(
+        throw new ADIAgentError(
           this.config.name,
           'Agent output failed validation',
           this.config,
@@ -132,11 +132,11 @@ export abstract class BaseAIDIAgent implements IAIDIAgent {
 
       return result
     } catch (error) {
-      if (error instanceof AIDIAgentError) {
+      if (error instanceof ADIAgentError) {
         throw error
       }
       
-      throw new AIDIAgentError(
+      throw new ADIAgentError(
         this.config.name,
         `Execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         this.config,
@@ -150,11 +150,11 @@ export abstract class BaseAIDIAgent implements IAIDIAgent {
    */
   protected createOutput(
     status: AgentStatus,
-    results: AIDIAgentOutput['results'] = [],
+    results: ADIAgentOutput['results'] = [],
     executionTime: number = 0,
     errorMessage?: string,
     metadata: Record<string, any> = {}
-  ): AIDIAgentOutput {
+  ): ADIAgentOutput {
     return {
       agentName: this.config.name,
       status,
@@ -230,13 +230,13 @@ export abstract class BaseAIDIAgent implements IAIDIAgent {
  * Agent registry for managing all available agents
  */
 export class ADIAgentRegistry {
-  private static agents: Map<string, new () => IAIDIAgent> = new Map()
+  private static agents: Map<string, new () => IADIAgent> = new Map()
 
-  static register(name: string, agentClass: new () => IAIDIAgent) {
+  static register(name: string, agentClass: new () => IADIAgent) {
     this.agents.set(name, agentClass)
   }
 
-  static create(name: string): IAIDIAgent {
+  static create(name: string): IADIAgent {
     const AgentClass = this.agents.get(name)
     if (!AgentClass) {
       throw new ADIError(`Agent ${name} not found in registry`, 'AGENT_NOT_FOUND')

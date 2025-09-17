@@ -17,18 +17,19 @@ export async function createCheckoutSession(tier: 'professional' | 'enterprise')
     
     console.log('✅ User authenticated:', session.user.email)
 
-    // Get price ID from environment or use fallback for development
+    // Get price ID from environment variables
     let priceId = tier === 'professional'
-      ? process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PROFESSIONAL
+      ? process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_INDEX_PRO
       : process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ENTERPRISE
 
-    // Fallback price IDs for development/testing
+    // Check if price ID is configured
     if (!priceId) {
-      console.warn(`Price ID not configured for ${tier} tier, using fallback`)
-      priceId = tier === 'professional'
-        ? 'price_1QKqGJP7VqU7bNcLQXKqGJP7' // Fallback for professional
-        : 'price_1QKqGKP7VqU7bNcLQXKqGKP7' // Fallback for enterprise
+      console.error(`❌ Stripe price ID not configured for ${tier} tier`)
+      alert(`Stripe is not configured for ${tier} tier. Please contact support or try again later.`)
+      return
     }
+
+    console.log(`✅ Using price ID for ${tier}:`, priceId)
 
     const checkoutResponse = await fetch('/api/stripe/create-checkout-session', {
       method: 'POST',

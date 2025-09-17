@@ -25,6 +25,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    // Validate price ID format
+    if (!priceId.startsWith('price_')) {
+      console.error('❌ Invalid price ID format:', priceId)
+      return NextResponse.json({ error: 'Invalid price ID format' }, { status: 400 })
+    }
+
     // Get or create user in database
     let [user] = await db
       .select()

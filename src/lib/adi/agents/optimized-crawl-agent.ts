@@ -1,5 +1,5 @@
 import { BaseADIAgent } from './base-agent'
-import type { AIDIAgentConfig, AIDIAgentInput, AIDIAgentOutput } from '../../../types/adi'
+import type { ADIAgentConfig, ADIAgentInput, ADIAgentOutput } from '../../../types/adi'
 
 /**
  * Optimized Crawl Agent - Fast website content extraction
@@ -9,7 +9,7 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
   private cache: Map<string, any> = new Map()
 
   constructor() {
-    const config: AIDIAgentConfig = {
+    const config: ADIAgentConfig = {
       name: 'crawl_agent',
       version: 'v2.0-optimized',
       description: 'Fast website content extraction with smart caching and parallel processing',
@@ -21,7 +21,7 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
     super(config)
   }
 
-  async execute(input: AIDIAgentInput): Promise<AIDIAgentOutput> {
+  async execute(input: ADIAgentInput): Promise<ADIAgentOutput> {
     const startTime = Date.now()
     
     try {
