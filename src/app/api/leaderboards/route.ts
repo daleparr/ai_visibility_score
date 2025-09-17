@@ -6,8 +6,16 @@ import {
   LEADERBOARD_CATEGORIES,
   SectorHeatmap
 } from '@/types/leaderboards'
-import { BrandCategorizationService, LeaderboardCategoryFilter } from '@/lib/brand-categorization-service'
 import { BRAND_TAXONOMY, getAllCategories } from '@/lib/brand-taxonomy'
+
+// Use dynamic import to prevent webpack bundling issues
+const getBrandCategorizationService = async () => {
+  const { BrandCategorizationService } = await import('@/lib/brand-categorization-service')
+  return BrandCategorizationService
+}
+
+// Import types separately
+import type { LeaderboardCategoryFilter, BrandCategorizationService } from '@/lib/brand-categorization-service'
 
 /**
  * AI Discoverability Leaderboards API
@@ -47,7 +55,8 @@ export async function GET(request: NextRequest) {
  */
 async function generateLeaderboardData(filters: LeaderboardFilters): Promise<LeaderboardData> {
   const { leaderboardType, category } = filters
-  const categorizationService = BrandCategorizationService.getInstance()
+  const BrandCategorizationServiceClass = await getBrandCategorizationService()
+  const categorizationService = BrandCategorizationServiceClass.getInstance()
   
   // Determine which leaderboard to return
   let entries = []

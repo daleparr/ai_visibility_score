@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { traceLogger, EvaluationTrace, AgentTrace } from '@/lib/adi/trace-logger'
+
+// Use dynamic import to prevent webpack bundling issues
+const getTraceLogger = async () => {
+  const { traceLogger } = await import('@/lib/adi/trace-logger')
+  return traceLogger
+}
+
+// Import types separately
+import type { EvaluationTrace, AgentTrace } from '@/lib/adi/trace-logger'
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,6 +52,7 @@ export async function GET(request: NextRequest) {
             { status: 400 }
           )
         }
+        const traceLogger = await getTraceLogger()
         const evaluationTrace = traceLogger.getEvaluationTrace(evaluationId)
         return NextResponse.json({ trace: evaluationTrace })
       
@@ -54,15 +63,18 @@ export async function GET(request: NextRequest) {
             { status: 400 }
           )
         }
-        const agentTraces = traceLogger.getAgentTraces(agentName, limit)
+        const traceLogger2 = await getTraceLogger()
+        const agentTraces = traceLogger2.getAgentTraces(agentName, limit)
         return NextResponse.json({ traces: agentTraces })
       
       case 'all':
-        const allTraces = traceLogger.getAllTraces(limit)
+        const traceLogger3 = await getTraceLogger()
+        const allTraces = traceLogger3.getAllTraces(limit)
         return NextResponse.json({ traces: allTraces })
       
       case 'analytics':
-        const analytics = traceLogger.getTraceAnalytics()
+        const traceLogger4 = await getTraceLogger()
+        const analytics = traceLogger4.getTraceAnalytics()
         return NextResponse.json({ analytics })
       
       default:
