@@ -1,10 +1,24 @@
-import type { 
-  DimensionScore, 
-  EvaluationResult, 
-  GradeType,
-  ScoreBreakdown,
-  DimensionBreakdown 
-} from '@/types/supabase'
+import type { DimensionScore } from '@/lib/db/schema'
+import type { EvaluationResult } from '@/lib/ai-providers'
+
+// Define missing types locally
+export type GradeType = 'A' | 'B' | 'C' | 'D' | 'F'
+
+export interface ScoreBreakdown {
+  overall: number
+  infrastructure: number
+  perception: number
+  commerce: number
+  grade: GradeType
+}
+
+export interface DimensionBreakdown {
+  name: string
+  score: number
+  weight: number
+  explanation: string
+  recommendations: string[]
+}
 
 // Dimension weights as defined in the scoring methodology
 export const DIMENSION_WEIGHTS = {
@@ -76,7 +90,7 @@ export function calculateOverallScore(dimensionScores: DimensionScore[]): number
   let totalWeight = 0
 
   for (const dimension of dimensionScores) {
-    const weight = DIMENSION_WEIGHTS[dimension.dimension_name as keyof typeof DIMENSION_WEIGHTS]
+    const weight = DIMENSION_WEIGHTS[dimension.dimensionName as keyof typeof DIMENSION_WEIGHTS]
     if (weight) {
       totalWeightedScore += dimension.score * weight
       totalWeight += weight
@@ -101,8 +115,8 @@ export function calculatePillarScores(dimensionScores: DimensionScore[]): {
   }
 
   for (const dimension of dimensionScores) {
-    const pillar = DIMENSION_PILLARS[dimension.dimension_name as keyof typeof DIMENSION_PILLARS]
-    const weight = DIMENSION_WEIGHTS[dimension.dimension_name as keyof typeof DIMENSION_WEIGHTS]
+    const pillar = DIMENSION_PILLARS[dimension.dimensionName as keyof typeof DIMENSION_PILLARS]
+    const weight = DIMENSION_WEIGHTS[dimension.dimensionName as keyof typeof DIMENSION_WEIGHTS]
     
     if (pillar && weight) {
       pillarScores[pillar].totalScore += dimension.score * weight
@@ -169,15 +183,15 @@ export function identifyDimensionExtremes(dimensionScores: DimensionScore[]): {
 
   // Sort by score to find strongest and weakest
   const sortedByScore = [...dimensionScores].sort((a, b) => b.score - a.score)
-  const strongest = DIMENSION_NAMES[sortedByScore[0].dimension_name as keyof typeof DIMENSION_NAMES]
-  const weakest = DIMENSION_NAMES[sortedByScore[sortedByScore.length - 1].dimension_name as keyof typeof DIMENSION_NAMES]
+  const strongest = DIMENSION_NAMES[sortedByScore[0].dimensionName as keyof typeof DIMENSION_NAMES]
+  const weakest = DIMENSION_NAMES[sortedByScore[sortedByScore.length - 1].dimensionName as keyof typeof DIMENSION_NAMES]
 
   // Find biggest opportunity (lowest score with highest weight)
   const opportunityScores = dimensionScores.map(d => ({
-    dimension: d.dimension_name,
+    dimension: d.dimensionName,
     score: d.score,
-    weight: DIMENSION_WEIGHTS[d.dimension_name as keyof typeof DIMENSION_WEIGHTS] || 0,
-    opportunity: (100 - d.score) * (DIMENSION_WEIGHTS[d.dimension_name as keyof typeof DIMENSION_WEIGHTS] || 0)
+    weight: DIMENSION_WEIGHTS[d.dimensionName as keyof typeof DIMENSION_WEIGHTS] || 0,
+    opportunity: (100 - d.score) * (DIMENSION_WEIGHTS[d.dimensionName as keyof typeof DIMENSION_WEIGHTS] || 0)
   }))
 
   const biggestOpportunityDimension = opportunityScores.reduce((max, current) => 
@@ -218,9 +232,11 @@ export function createScoreBreakdown(
  */
 export function createDimensionBreakdowns(dimensionScores: DimensionScore[]): DimensionBreakdown[] {
   return dimensionScores.map(dimension => ({
-    name: DIMENSION_NAMES[dimension.dimension_name as keyof typeof DIMENSION_NAMES] || dimension.dimension_name,
+    name: DIMENSION_NAMES[dimension.dimensionName as keyof typeof DIMENSION_NAMES] || dimension.dimensionName,
+    dimension: dimension.dimensionName,
     score: dimension.score,
-    weight: DIMENSION_WEIGHTS[dimension.dimension_name as keyof typeof DIMENSION_WEIGHTS] || 0,
+    weight: DIMENSION_WEIGHTS[dimension.dimensionName as keyof typeof DIMENSION_WEIGHTS] || 0,
+    description: dimension.explanation || '',
     explanation: dimension.explanation || '',
     recommendations: dimension.recommendations || []
   }))
@@ -309,7 +325,7 @@ export function generateRecommendations(
   const sortedDimensions = [...dimensionScores].sort((a, b) => a.score - b.score)
 
   for (const dimension of sortedDimensions.slice(0, 6)) { // Top 6 improvement areas
-    const dimensionName = dimension.dimension_name
+    const dimensionName = dimension.dimensionName
     const score = dimension.score
 
     if (score < 70) { // Only recommend improvements for scores below 70

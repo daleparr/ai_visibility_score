@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// In-memory storage for demo purposes
-// In production, this would be stored in a database
+// In-memory storage for evaluation logs
+// TODO: Replace with database storage for production persistence
 let evaluationLogs: any[] = []
 
 export async function POST(request: NextRequest) {

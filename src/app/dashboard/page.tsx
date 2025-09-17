@@ -1,31 +1,36 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useSession } from 'next-auth/react'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Plus, 
-  TrendingUp, 
-  Building2, 
-  BarChart3, 
-  Clock, 
+import {
+  Plus,
+  TrendingUp,
+  Building2,
+  BarChart3,
+  Clock,
   CheckCircle,
   AlertCircle,
   ArrowRight
 } from 'lucide-react'
-import { getBrands, getEvaluations } from '@/lib/database'
+import { getBrands, getEvaluations, getUserProfile } from '@/lib/database'
+import { getUserSubscription } from '@/lib/subscription-service'
 import { formatDateTime, getGradeColor, formatScore } from '@/lib/utils'
-import { getOrCreateSessionUser } from '@/lib/session-manager'
-import type { SessionUser } from '@/lib/session-manager'
+import { FederatedInsightsCard } from '@/components/dashboard/FederatedInsightsCard'
+import { IndustryBenchmarkCard } from '@/components/dashboard/IndustryBenchmarkCard'
 import type { Brand, Evaluation } from '@/lib/db/schema'
 
 export default function DashboardPage() {
+  const { data: session, status } = useSession()
   const [brands, setBrands] = useState<Brand[]>([])
   const [recentEvaluations, setRecentEvaluations] = useState<Evaluation[]>([])
   const [loading, setLoading] = useState(true)
-  const [sessionUser, setSessionUser] = useState<SessionUser | null>(null)
+  const [userProfile, setUserProfile] = useState<any>(null)
+  const [subscription, setSubscription] = useState<any>(null)
   const [stats, setStats] = useState({
     totalBrands: 0,
     totalEvaluations: 0,
@@ -33,17 +38,34 @@ export default function DashboardPage() {
     completedEvaluations: 0
   })
 
+  // Type assertion for session user with id
+  const sessionUser = session?.user as { id?: string; name?: string; email?: string; image?: string } | undefined
+
+  // Redirect to sign in if not authenticated
+  useEffect(() => {
+    if (status === 'loading') return // Still loading
+    if (!session) {
+      redirect('/auth/signin')
+      return
+    }
+  }, [session, status])
+
   useEffect(() => {
     const loadDashboardData = async () => {
-      try {
-        // Get or create session user for OAuth-free operation
-        const user = getOrCreateSessionUser()
-        setSessionUser(user)
-        
-        const [brandsData] = await Promise.all([
-          getBrands(user.id)
-        ])
+      if (!sessionUser?.id || !session?.user?.email) return
 
+      try {
+        // Load user profile and subscription
+        const [profileData, subscriptionData] = await Promise.all([
+          getUserProfile(sessionUser.id),
+          getUserSubscription(session.user.email)
+        ])
+        
+        setUserProfile(profileData)
+        setSubscription(subscriptionData)
+
+        // Load brands from database
+        const brandsData = await getBrands(sessionUser.id)
         setBrands(brandsData)
 
         // Calculate stats
@@ -85,8 +107,26 @@ export default function DashboardPage() {
       }
     }
 
-    loadDashboardData()
-  }, [])
+    if (sessionUser?.id && session?.user?.email) {
+      loadDashboardData()
+    }
+  }, [sessionUser, session])
+
+  // Show loading while checking authentication
+  if (status === 'loading' || !session) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -329,6 +369,23 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* Federated Learning Insights */}
+      {sessionUser?.id && subscription && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <FederatedInsightsCard
+            userId={sessionUser.id}
+            userIndustry={userProfile?.industry || 'technology'}
+            subscriptionTier={subscription.tier}
+          />
+          
+          <IndustryBenchmarkCard
+            userIndustry={userProfile?.industry || 'technology'}
+            userScore={stats.averageScore}
+            subscriptionTier={subscription.tier}
+          />
+        </div>
+      )}
+
       {/* Quick Actions */}
       {brands.length > 0 && (
         <Card>
@@ -341,7 +398,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Button variant="outline" className="h-auto p-4 flex flex-col items-start" asChild>
-                <Link href="/dashboard/evaluations/new">
+                <Link href="/dashboard/new-evaluation">
                   <BarChart3 className="h-5 w-5 mb-2" />
                   <span className="font-medium">Start New Evaluation</span>
                   <span className="text-xs text-muted-foreground mt-1">
@@ -361,11 +418,11 @@ export default function DashboardPage() {
               </Button>
               
               <Button variant="outline" className="h-auto p-4 flex flex-col items-start" asChild>
-                <Link href="/dashboard/settings">
+                <Link href="/leaderboards">
                   <TrendingUp className="h-5 w-5 mb-2" />
-                  <span className="font-medium">Configure AI Providers</span>
+                  <span className="font-medium">View Leaderboards</span>
                   <span className="text-xs text-muted-foreground mt-1">
-                    Set up API keys for evaluations
+                    Compare with industry leaders
                   </span>
                 </Link>
               </Button>

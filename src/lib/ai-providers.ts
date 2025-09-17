@@ -1,7 +1,20 @@
 import OpenAI from 'openai'
 import Anthropic from '@anthropic-ai/sdk'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import type { AIProviderName, EvaluationResult } from '@/types/supabase'
+// Define AI provider types locally since we removed Supabase dependencies
+export type AIProviderName = 'openai' | 'anthropic' | 'google' | 'mistral' | 'llama'
+
+export interface EvaluationResult {
+  provider: AIProviderName
+  provider_name: AIProviderName
+  model: string
+  score: number
+  score_contribution: number | null
+  confidence: number
+  response: string
+  response_received: string
+  metadata?: Record<string, any>
+}
 
 // AI Provider configurations
 export const AI_PROVIDERS: Record<AIProviderName, {

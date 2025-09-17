@@ -1,6 +1,5 @@
 import { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
-import { isAuthEnabled } from './demo-mode'
 
 // Build providers array based on available configuration
 const buildProviders = () => {
@@ -48,8 +47,7 @@ export const authOptions: NextAuthOptions = {
 
 // Helper function to check if authentication is properly configured
 export const isAuthConfigured = () => {
-  return isAuthEnabled() && 
-         process.env.NEXTAUTH_SECRET && 
+  return process.env.NEXTAUTH_SECRET &&
          process.env.NEXTAUTH_URL &&
          buildProviders().length > 0
 }

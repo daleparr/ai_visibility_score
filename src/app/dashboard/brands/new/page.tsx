@@ -22,8 +22,8 @@ import {
 } from 'lucide-react'
 import { createBrand } from '@/lib/database'
 import { validateUrl, extractDomain } from '@/lib/utils'
-import { getOrCreateSessionUser } from '@/lib/session-manager'
-import type { SessionUser } from '@/lib/session-manager'
+import { useSession } from 'next-auth/react'
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
 const industries = [
@@ -49,7 +49,7 @@ export default function NewBrandPage() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [sessionUser, setSessionUser] = useState<SessionUser | null>(null)
+  const { data: session, status } = useSession()
   const [formData, setFormData] = useState({
     name: '',
     websiteUrl: '',
@@ -62,9 +62,12 @@ export default function NewBrandPage() {
 
   // Initialize session user on component mount
   useEffect(() => {
-    const user = getOrCreateSessionUser()
-    setSessionUser(user)
-  }, [])
+    if (status === 'loading') return
+    if (!session) {
+      redirect('/auth/signin')
+      return
+    }
+  }, [session, status])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -177,7 +180,7 @@ export default function NewBrandPage() {
         industry: formData.industry,
         description: formData.description.trim() || null,
         competitors: validCompetitors.length > 0 ? validCompetitors : null,
-        userId: sessionUser?.id || 'fallback-user-id' // Use session-based user ID
+        userId: (session?.user as any)?.id || 'fallback-user-id' // Use NextAuth session user ID
       }
 
       const newBrand = await createBrand(brandData)

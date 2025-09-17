@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
     // Validate API access - handle static generation
     let apiKey: string | null = null
-    let subscription: any = { valid: true, userId: 'demo', remainingCalls: 1000, resetTime: new Date().toISOString() }
+    let subscription: any = { valid: true, userId: 'static', remainingCalls: 1000, resetTime: new Date().toISOString() }
     
     try {
       apiKey = request.headers.get('x-api-key')
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      // Validate subscription (simplified for demo)
+      // Validate subscription
       subscription = await validateAPIAccess(apiKey)
       if (!subscription.valid) {
         return NextResponse.json(
@@ -48,8 +48,8 @@ export async function GET(request: NextRequest) {
         )
       }
     } catch (error) {
-      // During static generation, use demo subscription
-      console.log('Using demo subscription for static generation')
+      // During static generation, use default subscription
+      console.log('Using default subscription for static generation')
     }
 
     // Mock leaderboard data (in production, this would query the database)

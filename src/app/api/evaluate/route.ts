@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { EvaluationEngine } from '@/lib/evaluation-engine'
-import { isDemoMode } from '@/lib/demo-mode'
-import type { AIProviderName, Brand } from '@/types/supabase'
+import type { Brand } from '@/lib/db/schema'
+import type { AIProviderName } from '@/lib/ai-providers'
 
 // API route for brand evaluation - Real AI Integration
 
@@ -29,22 +29,22 @@ export async function POST(request: NextRequest) {
       competitorUrls: tier !== 'free' ? [] : undefined
     }
 
-    // Check if we're in demo mode - use mock data for demo
-    if (isDemoMode()) {
-      return await generateDemoResponse(url, tier)
-    }
-
     // Create temporary brand object for evaluation
     const tempBrand: Brand = {
       id: config.brandId,
       name: extractBrandNameFromUrl(url),
-      website_url: url,
-      user_id: config.userId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      websiteUrl: url,
+      userId: config.userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       description: null,
       industry: null,
-      competitors: null
+      competitors: null,
+      adiIndustryId: null,
+      adiEnabled: false,
+      annualRevenueRange: null,
+      employeeCountRange: null,
+      primaryMarketRegions: null
     }
 
     // Initialize and run real AI evaluation
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       // to return complete results. For this implementation, we'll use the
       // evaluation data we have and supplement with calculated values.
 
-      const overallScore = evaluation.overall_score || 0
+      const overallScore = evaluation.overallScore || 0
       
       // Generate dimension scores from evaluation (simplified for now)
       const dimensionScores = [
@@ -171,7 +171,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         url,
         tier,
-        isDemo: false,
         overallScore,
         pillarScores,
         dimensionScores,
@@ -184,8 +183,11 @@ export async function POST(request: NextRequest) {
       })
 
     } catch (error) {
-      console.error('Real AI evaluation failed, falling back to demo mode:', error)
-      return await generateDemoResponse(url, tier)
+      console.error('AI evaluation failed:', error)
+      return NextResponse.json(
+        { error: 'Evaluation failed. Please try again later.' },
+        { status: 500 }
+      )
     }
 
   } catch (error) {
@@ -197,78 +199,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Helper function to generate demo response (fallback)
-async function generateDemoResponse(url: string, tier: string) {
-  const urlHash = url.split('').reduce((a: number, b: string) => {
-    a = ((a << 5) - a) + b.charCodeAt(0)
-    return a & a
-  }, 0)
-  
-  const baseScores = [85, 78, 92, 88, 76, 82, 79, 85, 91, 87, 83, 74]
-  const urlSpecificScores = baseScores.map(score => {
-    const variation = (Math.abs(urlHash) % 20) - 10
-    return Math.max(60, Math.min(100, score + variation))
-  })
-
-  const dimensionScores = [
-    { name: 'Schema & Structured Data', score: urlSpecificScores[0], description: 'Structured data implementation analysis', pillar: 'infrastructure' },
-    { name: 'Semantic Clarity', score: urlSpecificScores[1], description: 'Content organization and clarity', pillar: 'infrastructure' },
-    { name: 'Knowledge Graph Presence', score: urlSpecificScores[2], description: 'Knowledge graph signals detected', pillar: 'infrastructure' },
-    { name: 'LLM Readability', score: urlSpecificScores[3], description: 'AI parsing optimization level', pillar: 'infrastructure' },
-    { name: 'Geographic Visibility', score: urlSpecificScores[4], description: 'Regional visibility coverage', pillar: 'perception' },
-    { name: 'Citation Strength', score: urlSpecificScores[5], description: 'Citation network analysis', pillar: 'perception' },
-    { name: 'AI Response Quality', score: urlSpecificScores[6], description: 'GPT-4 response accuracy', pillar: 'perception' },
-    { name: 'Brand Heritage', score: urlSpecificScores[7], description: 'Brand story recognition', pillar: 'perception' },
-    { name: 'Product Identification', score: urlSpecificScores[8], description: 'Product catalog clarity', pillar: 'commerce' },
-    { name: 'Recommendation Accuracy', score: urlSpecificScores[9], description: 'AI recommendation quality', pillar: 'commerce' },
-    { name: 'Transaction Clarity', score: urlSpecificScores[10], description: 'Purchase process clarity', pillar: 'commerce' },
-    { name: 'Competitive Positioning', score: urlSpecificScores[11], description: 'Competitive differentiation', pillar: 'commerce' }
-  ]
-
-  const pillarScores = {
-    infrastructure: Math.round(urlSpecificScores.slice(0, 4).reduce((sum, score) => sum + score, 0) / 4),
-    perception: Math.round(urlSpecificScores.slice(4, 8).reduce((sum, score) => sum + score, 0) / 4),
-    commerce: Math.round(urlSpecificScores.slice(8, 12).reduce((sum, score) => sum + score, 0) / 4)
-  }
-
-  const overallScore = Math.round(urlSpecificScores.reduce((sum, score) => sum + score, 0) / urlSpecificScores.length)
-
-  const sortedDimensions = dimensionScores.sort((a, b) => a.score - b.score)
-  const recommendations = [
-    {
-      priority: 'high',
-      title: `Improve ${sortedDimensions[0].name}`,
-      score: sortedDimensions[0].score,
-      description: `Analysis shows ${sortedDimensions[0].description.toLowerCase()}`
-    },
-    {
-      priority: 'medium',
-      title: `Enhance ${sortedDimensions[1].name}`,
-      score: sortedDimensions[1].score,
-      description: `Optimization needed for ${sortedDimensions[1].description.toLowerCase()}`
-    },
-    {
-      priority: 'low',
-      title: `Optimize ${sortedDimensions[2].name}`,
-      score: sortedDimensions[2].score,
-      description: `Minor improvements in ${sortedDimensions[2].description.toLowerCase()}`
-    }
-  ]
-
-  return NextResponse.json({
-    url,
-    tier,
-    isDemo: true,
-    overallScore,
-    pillarScores,
-    dimensionScores,
-    aiProviders: tier === 'free' ? ['openai'] : ['openai', 'anthropic', 'google', 'mistral', 'llama'],
-    defaultModel: 'gpt-4',
-    recommendations,
-    analysisMethod: tier === 'free' ? 'GPT-4 Single Model Analysis' : 'Multi-Model Comparison',
-    upgradeMessage: tier === 'free' ? 'Upgrade to compare across 5+ AI models and get detailed optimization guides' : null
-  })
-}
 
 // Helper functions for real AI evaluation
 function extractBrandNameFromUrl(url: string): string {

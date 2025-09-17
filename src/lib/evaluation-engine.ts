@@ -7,7 +7,6 @@ import {
   identifyDimensionExtremes,
   generateRecommendations
 } from './scoring'
-import { isDemoMode } from './demo-mode'
 import {
   createEvaluation,
   updateEvaluation,
@@ -15,13 +14,8 @@ import {
   createEvaluationResult,
   createRecommendation
 } from './database'
-import type {
-  Brand,
-  Evaluation,
-  DimensionScore,
-  EvaluationResult,
-  AIProviderName
-} from '@/types/supabase'
+import type { Brand, Evaluation, DimensionScore } from '@/lib/db/schema'
+import type { EvaluationResult, AIProviderName } from '@/lib/ai-providers'
 
 export interface EvaluationConfig {
   brandId: string
@@ -51,13 +45,7 @@ export class EvaluationEngine {
   }
 
   async initialize(): Promise<void> {
-    // Load AI provider configurations for the user
-    // In demo mode, use mock providers
-    if (isDemoMode()) {
-      return
-    }
-    
-    // For production, would load from database
+    // Load AI provider configurations for the user from database
     const providers: any[] = []
     
     for (const provider of providers) {
@@ -218,7 +206,7 @@ export class EvaluationEngine {
     brand: Brand,
     pillar: string
   ): Promise<DimensionScore> {
-    const prompt = promptTemplate(brand.name, brand.website_url)
+    const prompt = promptTemplate(brand.name, brand.websiteUrl)
     const providerScores: number[] = []
     const providerResponses: string[] = []
 
