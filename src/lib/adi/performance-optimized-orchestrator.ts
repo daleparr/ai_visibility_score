@@ -1,10 +1,10 @@
 import type {
-  AIDIOrchestrationPlan,
+  ADIOrchestrationPlan,
   ADIOrchestrationResult,
-  IAIDIAgent,
+  IADIAgent,
   ADIEvaluationContext,
-  AIDIAgentInput,
-  AIDIAgentOutput,
+  ADIAgentInput,
+  ADIAgentOutput,
   AgentStatus
 } from '../../types/adi'
 
@@ -19,8 +19,8 @@ import type {
  * 5. Early termination strategies
  */
 export class PerformanceOptimizedADIOrchestrator {
-  private agents: Map<string, IAIDIAgent> = new Map()
-  private executionPlan: AIDIOrchestrationPlan | null = null
+  private agents: Map<string, IADIAgent> = new Map()
+  private executionPlan: ADIOrchestrationPlan | null = null
   private cache: Map<string, any> = new Map()
   private readonly TARGET_EXECUTION_TIME = 8000 // 8 seconds target
 
@@ -38,7 +38,7 @@ export class PerformanceOptimizedADIOrchestrator {
   /**
    * Register an agent with the orchestrator
    */
-  registerAgent(agent: IAIDIAgent) {
+  registerAgent(agent: IADIAgent) {
     this.agents.set(agent.config.name, agent)
     console.log(`Registered agent: ${agent.config.name}`)
   }
@@ -46,7 +46,7 @@ export class PerformanceOptimizedADIOrchestrator {
   /**
    * Create optimized execution plan for sub-10-second execution
    */
-  createOptimizedExecutionPlan(): AIDIOrchestrationPlan {
+  createOptimizedExecutionPlan(): ADIOrchestrationPlan {
     const agentNames = Array.from(this.agents.keys())
     
     // OPTIMIZATION 1: Aggressive parallelization - most agents can run in parallel
@@ -125,7 +125,7 @@ export class PerformanceOptimizedADIOrchestrator {
   async executeOptimizedEvaluation(context: ADIEvaluationContext): Promise<ADIOrchestrationResult> {
     const startTime = Date.now()
     const plan = this.executionPlan || this.createOptimizedExecutionPlan()
-    const agentResults: Record<string, AIDIAgentOutput> = {}
+    const agentResults: Record<string, ADIAgentOutput> = {}
     const errors: string[] = []
     const warnings: string[] = []
 
@@ -210,9 +210,9 @@ export class PerformanceOptimizedADIOrchestrator {
    * Execute phases with aggressive optimization
    */
   private async executeOptimizedPhases(
-    plan: AIDIOrchestrationPlan,
+    plan: ADIOrchestrationPlan,
     context: ADIEvaluationContext,
-    agentResults: Record<string, AIDIAgentOutput>,
+    agentResults: Record<string, ADIAgentOutput>,
     errors: string[],
     warnings: string[]
   ): Promise<void> {
@@ -273,8 +273,8 @@ export class PerformanceOptimizedADIOrchestrator {
   private async executeOptimizedParallelPhase(
     agentNames: string[], 
     context: ADIEvaluationContext,
-    previousResults: Record<string, AIDIAgentOutput>
-  ): Promise<Record<string, AIDIAgentOutput>> {
+    previousResults: Record<string, ADIAgentOutput>
+  ): Promise<Record<string, ADIAgentOutput>> {
     // OPTIMIZATION 7: Individual agent timeouts based on complexity
     const agentTimeouts: Record<string, number> = {
       'crawl_agent': 4000,        // Reduced from 15000ms
@@ -296,7 +296,7 @@ export class PerformanceOptimizedADIOrchestrator {
       
       return Promise.race([
         this.executeOptimizedAgent(agentName, context, previousResults),
-        new Promise<AIDIAgentOutput>((_, reject) => {
+        new Promise<ADIAgentOutput>((_, reject) => {
           setTimeout(() => reject(new Error(`Agent ${agentName} timeout after ${timeout}ms`)), timeout)
         })
       ])
@@ -312,7 +312,7 @@ export class PerformanceOptimizedADIOrchestrator {
     return results.reduce((acc, { agentName, result }) => {
       acc[agentName] = result
       return acc
-    }, {} as Record<string, AIDIAgentOutput>)
+    }, {} as Record<string, ADIAgentOutput>)
   }
 
   /**
@@ -321,8 +321,8 @@ export class PerformanceOptimizedADIOrchestrator {
   private async executeOptimizedAgent(
     agentName: string,
     context: ADIEvaluationContext,
-    previousResults: Record<string, AIDIAgentOutput>
-  ): Promise<AIDIAgentOutput> {
+    previousResults: Record<string, ADIAgentOutput>
+  ): Promise<ADIAgentOutput> {
     const agent = this.agents.get(agentName)
     
     if (!agent) {
@@ -330,7 +330,7 @@ export class PerformanceOptimizedADIOrchestrator {
     }
 
     // OPTIMIZATION 8: Lightweight agent input
-    const input: AIDIAgentInput = {
+    const input: ADIAgentInput = {
       context: {
         ...context,
         optimized: true, // Signal to agents to use optimized mode
@@ -364,7 +364,7 @@ export class PerformanceOptimizedADIOrchestrator {
   /**
    * Create optimized failed output
    */
-  private createOptimizedFailedOutput(agentName: string, error: any, timeout: number): AIDIAgentOutput {
+  private createOptimizedFailedOutput(agentName: string, error: any, timeout: number): ADIAgentOutput {
     return {
       agentName,
       status: 'failed',
@@ -428,7 +428,7 @@ export class PerformanceOptimizedADIOrchestrator {
    * Determine overall evaluation status
    */
   private determineOverallStatus(
-    agentResults: Record<string, AIDIAgentOutput>,
+    agentResults: Record<string, ADIAgentOutput>,
     errors: string[]
   ): 'completed' | 'partial' | 'failed' {
     const totalAgents = Object.keys(agentResults).length

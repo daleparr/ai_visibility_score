@@ -26,14 +26,29 @@ export async function POST(request: NextRequest) {
     }
 
     // Get or create user in database
-    const [user] = await db
+    let [user] = await db
       .select()
       .from(users)
       .where(eq(users.email, session.user.email))
       .limit(1)
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      console.log('🔄 Creating new user in database:', session.user.email)
+      // Create user if they don't exist
+      const [newUser] = await db
+        .insert(users)
+        .values({
+          email: session.user.email,
+          name: session.user.name || '',
+          image: session.user.image || null,
+          emailVerified: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning()
+      
+      user = newUser
+      console.log('✅ User created successfully:', user.id)
     }
 
     // Create or get Stripe customer
