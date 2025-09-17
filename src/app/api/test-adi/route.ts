@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { adiService } from '../../../lib/adi/adi-service'
+
+// Use dynamic import to prevent webpack bundling issues
+const getADIService = async () => {
+  const { adiService } = await import('../../../lib/adi/adi-service')
+  return adiService
+}
 
 /**
  * ADI Integration Test API
@@ -18,6 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Initialize and test the service
+    const adiService = await getADIService()
     await adiService.initialize()
     console.log('✅ ADI Service initialized')
 
