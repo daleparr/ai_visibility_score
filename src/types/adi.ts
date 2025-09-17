@@ -155,6 +155,9 @@ export interface ADIEvaluationContext {
   queryCanon: ADIQueryCanon[]
   crawlArtifacts: ADICrawlArtifact[]
   metadata: Record<string, any>
+  // Performance optimization flags
+  optimized?: boolean
+  maxExecutionTime?: number
 }
 
 export interface AIDIAgentInput {
@@ -201,6 +204,13 @@ export interface ADIOrchestrationResult {
   totalExecutionTime: number
   errors: string[]
   warnings: string[]
+  // Performance optimization metadata
+  optimizations?: {
+    cacheUsed: boolean
+    parallelPhases: number
+    totalAgents: number
+    performanceGain: string
+  }
 }
 
 // AIDI Scoring Types

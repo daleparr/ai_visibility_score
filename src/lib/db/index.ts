@@ -22,12 +22,83 @@ if (connectionString) {
   }
 }
 
-// Create a mock database for when no connection is available
+// Create a comprehensive mock database for when no connection is available
 const mockDb = {
-  select: () => ({ from: () => ({ where: () => Promise.resolve([]) }) }),
-  insert: () => ({ values: () => Promise.resolve({ insertId: 'mock' }) }),
-  update: () => ({ set: () => ({ where: () => Promise.resolve() }) }),
-  delete: () => ({ where: () => Promise.resolve() })
+  select: (fields?: any) => ({
+    from: (table: any) => ({
+      where: (condition: any) => ({
+        orderBy: (order: any) => Promise.resolve([]),
+        limit: (count: number) => Promise.resolve([]),
+        then: (resolve: any) => Promise.resolve([]).then(resolve)
+      }),
+      leftJoin: (table: any, condition: any) => ({
+        where: (condition: any) => ({
+          orderBy: (order: any) => Promise.resolve([]),
+          limit: (count: number) => Promise.resolve([]),
+          then: (resolve: any) => Promise.resolve([]).then(resolve)
+        }),
+        limit: (count: number) => Promise.resolve([]),
+        then: (resolve: any) => Promise.resolve([]).then(resolve)
+      }),
+      orderBy: (order: any) => Promise.resolve([]),
+      limit: (count: number) => Promise.resolve([]),
+      then: (resolve: any) => Promise.resolve([]).then(resolve)
+    }),
+    then: (resolve: any) => Promise.resolve([]).then(resolve)
+  }),
+  insert: (table: any) => ({
+    values: (data: any) => ({
+      returning: () => Promise.resolve([{
+        id: `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...data
+      }]),
+      then: (resolve: any) => Promise.resolve([{
+        id: `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...data
+      }]).then(resolve)
+    }),
+    then: (resolve: any) => Promise.resolve([{
+      id: `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }]).then(resolve)
+  }),
+  update: (table: any) => ({
+    set: (data: any) => ({
+      where: (condition: any) => ({
+        returning: () => Promise.resolve([{
+          id: `mock_${Date.now()}`,
+          updatedAt: new Date(),
+          ...data
+        }]),
+        then: (resolve: any) => Promise.resolve([{
+          id: `mock_${Date.now()}`,
+          updatedAt: new Date(),
+          ...data
+        }]).then(resolve)
+      }),
+      then: (resolve: any) => Promise.resolve([{
+        id: `mock_${Date.now()}`,
+        updatedAt: new Date(),
+        ...data
+      }]).then(resolve)
+    }),
+    then: (resolve: any) => Promise.resolve([{
+      id: `mock_${Date.now()}`,
+      updatedAt: new Date()
+    }]).then(resolve)
+  }),
+  delete: (table: any) => ({
+    where: (condition: any) => ({
+      returning: () => Promise.resolve([]),
+      then: (resolve: any) => Promise.resolve([]).then(resolve)
+    }),
+    then: (resolve: any) => Promise.resolve([]).then(resolve)
+  })
 }
 
 // Export the database instance (real or mock)

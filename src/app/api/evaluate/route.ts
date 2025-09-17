@@ -28,6 +28,9 @@ export async function POST(request: NextRequest) {
     const evaluationId = `eval_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     const brandId = `brand_${Date.now()}`
     
+    // Set timeout for Netlify serverless function limits (8 seconds to be safe)
+    const EVALUATION_TIMEOUT = 8000
+    
     try {
       // Initialize ADI Service
       console.log('Initializing ADI Service...')
@@ -35,14 +38,21 @@ export async function POST(request: NextRequest) {
       await adiService.initialize()
       console.log('✅ ADI Service initialized')
 
-      // Run ADI evaluation using the multi-agent orchestrator
+      // Run ADI evaluation with timeout
       console.log('Starting ADI evaluation for brand', extractBrandNameFromUrl(normalizedUrl))
-      const adiResult = await adiService.evaluateBrand(
+      
+      const evaluationPromise = adiService.evaluateBrand(
         brandId,
         normalizedUrl,
         undefined, // industryId - let the system auto-detect
         'guest-user'
       )
+      
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Evaluation timeout')), EVALUATION_TIMEOUT)
+      })
+      
+      const adiResult = await Promise.race([evaluationPromise, timeoutPromise]) as any
       
       console.log('✅ ADI evaluation completed successfully')
       
@@ -53,8 +63,8 @@ export async function POST(request: NextRequest) {
       const recommendations = generateRecommendations(adiScore)
       
       // Convert ADI pillars to dimension scores for frontend compatibility
-      const dimensionScores = adiScore.pillars.flatMap(pillar =>
-        pillar.dimensions?.map(dim => ({
+      const dimensionScores = adiScore.pillars.flatMap((pillar: any) =>
+        pillar.dimensions?.map((dim: any) => ({
           name: formatDimensionName(dim.dimension.toString()),
           score: dim.score,
           pillar: pillar.pillar,
@@ -73,7 +83,7 @@ export async function POST(request: NextRequest) {
         dimensionScores,
         
         // Pillar breakdown from ADI scoring
-        pillarScores: adiScore.pillars.map(pillar => ({
+        pillarScores: adiScore.pillars.map((pillar: any) => ({
           pillar: pillar.pillar,
           score: pillar.score,
           weight: pillar.weight
@@ -84,7 +94,7 @@ export async function POST(request: NextRequest) {
           executionTime: orchestrationResult.totalExecutionTime,
           agentsExecuted: Object.keys(orchestrationResult.agentResults).length,
           successRate: orchestrationResult.overallStatus === 'completed' ? 1.0 :
-                      Object.values(orchestrationResult.agentResults).filter(r => r.status === 'completed').length /
+                      Object.values(orchestrationResult.agentResults).filter((r: any) => r.status === 'completed').length /
                       Object.values(orchestrationResult.agentResults).length
         },
         
@@ -107,10 +117,10 @@ export async function POST(request: NextRequest) {
         // Detailed agent results (first 5 for API response size)
         agentResults: Object.entries(orchestrationResult.agentResults).slice(0, 5).map(([agentName, result]) => ({
           agentName,
-          status: result.status,
-          executionTime: result.executionTime || 0,
-          score: result.results?.[0]?.normalizedScore || 0,
-          insights: result.results?.map(r => r.evidence?.insight || '').filter(Boolean).slice(0, 2) || []
+          status: (result as any).status,
+          executionTime: (result as any).executionTime || 0,
+          score: (result as any).results?.[0]?.normalizedScore || 0,
+          insights: (result as any).results?.map((r: any) => r.evidence?.insight || '').filter(Boolean).slice(0, 2) || []
         }))
       })
 

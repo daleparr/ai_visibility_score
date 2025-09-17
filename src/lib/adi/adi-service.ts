@@ -1,13 +1,13 @@
-import { ADIOrchestrator } from './orchestrator'
+import { PerformanceOptimizedADIOrchestrator } from './performance-optimized-orchestrator'
 import { ADIScoringEngine } from './scoring'
 import { ADIBenchmarkingEngine } from './benchmarking-engine'
-import { CrawlAgent } from './agents/crawl-agent'
+import { OptimizedCrawlAgent } from './agents/optimized-crawl-agent'
+import { OptimizedLLMTestAgent } from './agents/optimized-llm-test-agent'
 import { SchemaAgent } from './agents/schema-agent'
 import { SemanticAgent } from './agents/semantic-agent'
 import { KnowledgeGraphAgent } from './agents/knowledge-graph-agent'
 import { ConversationalCopyAgent } from './agents/conversational-copy-agent'
 import { GeoVisibilityAgent } from './agents/geo-visibility-agent'
-import { LLMTestAgent } from './agents/llm-test-agent'
 import { CitationAgent } from './agents/citation-agent'
 import { SentimentAgent } from './agents/sentiment-agent'
 import { BrandHeritageAgent } from './agents/brand-heritage-agent'
@@ -28,11 +28,11 @@ import type {
  * Coordinates evaluation, scoring, benchmarking, and reporting
  */
 export class ADIService {
-  private orchestrator: ADIOrchestrator
+  private orchestrator: PerformanceOptimizedADIOrchestrator
   private initialized: boolean = false
 
   constructor() {
-    this.orchestrator = new ADIOrchestrator()
+    this.orchestrator = new PerformanceOptimizedADIOrchestrator()
   }
 
   /**
@@ -43,22 +43,22 @@ export class ADIService {
 
     console.log('Initializing ADI Service...')
 
-    // Register all agents in dependency order
-    this.orchestrator.registerAgent(new CrawlAgent())
+    // Register optimized agents for performance
+    this.orchestrator.registerAgent(new OptimizedCrawlAgent())
+    this.orchestrator.registerAgent(new OptimizedLLMTestAgent())
     this.orchestrator.registerAgent(new SchemaAgent())
     this.orchestrator.registerAgent(new SemanticAgent())
     this.orchestrator.registerAgent(new KnowledgeGraphAgent())
     this.orchestrator.registerAgent(new ConversationalCopyAgent())
     this.orchestrator.registerAgent(new GeoVisibilityAgent())
-    this.orchestrator.registerAgent(new LLMTestAgent())
     this.orchestrator.registerAgent(new CitationAgent())
     this.orchestrator.registerAgent(new SentimentAgent())
     this.orchestrator.registerAgent(new BrandHeritageAgent())
     this.orchestrator.registerAgent(new CommerceAgent())
     this.orchestrator.registerAgent(new ScoreAggregatorAgent())
 
-    // Create execution plan
-    this.orchestrator.createExecutionPlan()
+    // Create optimized execution plan
+    this.orchestrator.createOptimizedExecutionPlan()
 
     this.initialized = true
     console.log('ADI Service initialized successfully')
