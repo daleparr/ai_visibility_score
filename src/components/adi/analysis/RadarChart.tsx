@@ -71,7 +71,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({
 
   // Custom tooltip component
   const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
+    if (active && payload && Array.isArray(payload) && payload.length > 0) {
       const data = payload[0].payload;
       return (
         <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">

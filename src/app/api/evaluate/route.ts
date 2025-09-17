@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { ADIService } from '@/lib/adi/adi-service'
-import { ADIScoringEngine } from '@/lib/adi/scoring'
 import type { Brand } from '@/lib/db/schema'
+
+// Use dynamic imports to prevent webpack bundling issues
+const getADIService = async () => {
+  const { ADIService } = await import('@/lib/adi/adi-service')
+  return ADIService
+}
+
+const getADIScoringEngine = async () => {
+  const { ADIScoringEngine } = await import('@/lib/adi/scoring')
+  return ADIScoringEngine
+}
 
 // API route for brand evaluation - Real ADI Multi-Agent System
 
@@ -34,7 +43,8 @@ export async function POST(request: NextRequest) {
     try {
       // Initialize ADI Service
       console.log('Initializing ADI Service...')
-      const adiService = new ADIService()
+      const ADIServiceClass = await getADIService()
+      const adiService = new ADIServiceClass()
       await adiService.initialize()
       console.log('✅ ADI Service initialized')
 

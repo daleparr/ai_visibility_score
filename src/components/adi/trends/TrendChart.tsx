@@ -50,7 +50,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
 
   // Custom tooltip
   const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
+    if (active && payload && Array.isArray(payload) && payload.length > 0) {
       const data = payload[0].payload;
       return (
         <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
@@ -120,10 +120,14 @@ export const TrendChart: React.FC<TrendChartProps> = ({
 
   // Calculate trend
   const calculateTrend = () => {
-    if (data.length < 2) return { direction: 'stable', change: 0 };
+    if (!data || !Array.isArray(data) || data.length < 2) return { direction: 'stable', change: 0 };
     
-    const recent = data[data.length - 1].score;
-    const previous = data[data.length - 2].score;
+    const recent = data[data.length - 1]?.score;
+    const previous = data[data.length - 2]?.score;
+    
+    if (typeof recent !== 'number' || typeof previous !== 'number') {
+      return { direction: 'stable', change: 0 };
+    }
     const change = recent - previous;
     
     return {
