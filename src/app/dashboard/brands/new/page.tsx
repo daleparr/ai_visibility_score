@@ -49,7 +49,9 @@ export default function NewBrandPage() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const { data: session, status } = useSession()
+  const sessionResult = useSession()
+  const session = sessionResult?.data
+  const status = sessionResult?.status || 'loading'
   const [formData, setFormData] = useState({
     name: '',
     websiteUrl: '',

@@ -9,7 +9,9 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { data: session, status } = useSession()
+  const sessionResult = useSession()
+  const session = sessionResult?.data
+  const status = sessionResult?.status || 'loading'
   const router = useRouter()
   const pathname = usePathname()
 
