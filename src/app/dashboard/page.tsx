@@ -54,20 +54,38 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const loadDashboardData = async () => {
-      if (!sessionUser?.id || !session?.user?.email) return
+      if (!sessionUser?.id || !session?.user?.email) {
+        setLoading(false)
+        return
+      }
 
       try {
-        // Load user profile and subscription
-        const [profileData, subscriptionData] = await Promise.all([
-          getUserProfile(sessionUser.id),
-          getUserSubscription(session.user.email)
-        ])
+        console.log('Loading dashboard data for user:', sessionUser.id)
+        
+        // Load user profile and subscription with error handling
+        let profileData = null
+        let subscriptionData = null
+        
+        try {
+          profileData = await getUserProfile(sessionUser.id)
+          console.log('Profile data loaded:', profileData)
+        } catch (error) {
+          console.warn('Failed to load user profile:', error)
+        }
+        
+        try {
+          subscriptionData = await getUserSubscription(session.user.email)
+          console.log('Subscription data loaded:', subscriptionData)
+        } catch (error) {
+          console.warn('Failed to load subscription:', error)
+        }
         
         setUserProfile(profileData)
         setSubscription(subscriptionData)
 
         // Load brands from database
         const brandsData = await getBrands(sessionUser.id)
+        console.log('Brands loaded:', brandsData.length)
         setBrands(brandsData)
 
         // Calculate stats
@@ -79,19 +97,23 @@ export default function DashboardPage() {
         // Get evaluations for each brand
         const allEvaluations: Evaluation[] = []
         for (const brand of brandsData) {
-          const evaluations = await getEvaluations(brand.id)
-          allEvaluations.push(...evaluations)
-          totalEvaluations += evaluations.length
-          
-          const completed = evaluations.filter(e => e.status === 'completed')
-          completedEvaluations += completed.length
-          
-          const scores = completed
-            .filter(e => e.overallScore !== null)
-            .map(e => e.overallScore!)
-          
-          if (scores.length > 0) {
-            totalScore += scores.reduce((sum, score) => sum + score, 0)
+          try {
+            const evaluations = await getEvaluations(brand.id)
+            allEvaluations.push(...evaluations)
+            totalEvaluations += evaluations.length
+            
+            const completed = evaluations.filter(e => e.status === 'completed')
+            completedEvaluations += completed.length
+            
+            const scores = completed
+              .filter(e => e.overallScore !== null)
+              .map(e => e.overallScore!)
+            
+            if (scores.length > 0) {
+              totalScore += scores.reduce((sum, score) => sum + score, 0)
+            }
+          } catch (error) {
+            console.warn(`Failed to load evaluations for brand ${brand.id}:`, error)
           }
         }
 
@@ -102,6 +124,8 @@ export default function DashboardPage() {
           averageScore: completedEvaluations > 0 ? Math.round(totalScore / completedEvaluations) : 0,
           completedEvaluations
         })
+        
+        console.log('Dashboard data loaded successfully')
       } catch (error) {
         console.error('Error loading dashboard data:', error)
       } finally {
@@ -111,8 +135,10 @@ export default function DashboardPage() {
 
     if (sessionUser?.id && session?.user?.email) {
       loadDashboardData()
+    } else if (status !== 'loading') {
+      setLoading(false)
     }
-  }, [sessionUser, session])
+  }, [sessionUser, session, status])
 
   // Show loading while checking authentication
   if (status === 'loading' || !session) {
@@ -371,8 +397,8 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Federated Learning Insights */}
-      {sessionUser?.id && subscription && (
+      {/* Federated Learning Insights - Temporarily disabled for debugging */}
+      {sessionUser?.id && subscription && false && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <FederatedInsightsCard
             userId={sessionUser.id}
