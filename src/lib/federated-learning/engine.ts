@@ -47,7 +47,7 @@ export class FederatedLearningEngine {
       if (!evaluation.length) return null
 
       const evalData = evaluation[0]
-      const dimensionData = evaluation.filter(e => e.dimensions).map(e => e.dimensions!)
+      const dimensionData = evaluation.filter((e: any) => e.dimensions).map((e: any) => e.dimensions!)
 
       // Get agent performance traces
       const agentTraces = traceLogger.getEvaluationTrace(evaluationId)

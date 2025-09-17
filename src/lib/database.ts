@@ -18,36 +18,70 @@ import type {
 
 // Brand operations
 export const getBrands = async (userId: string): Promise<Brand[]> => {
-  return await db.select().from(brands).where(eq(brands.userId, userId)).orderBy(desc(brands.createdAt))
+  try {
+    return await db.select().from(brands).where(eq(brands.userId, userId)).orderBy(desc(brands.createdAt))
+  } catch (error) {
+    console.error('Error fetching brands:', error)
+    return []
+  }
 }
 
 export const getBrand = async (brandId: string): Promise<Brand | undefined> => {
-  const result = await db.select().from(brands).where(eq(brands.id, brandId)).limit(1)
-  return result[0]
+  try {
+    const result = await db.select().from(brands).where(eq(brands.id, brandId)).limit(1)
+    return result[0]
+  } catch (error) {
+    console.error('Error fetching brand:', error)
+    return undefined
+  }
 }
 
-export const createBrand = async (brand: NewBrand): Promise<Brand> => {
-  const result = await db.insert(brands).values(brand).returning()
-  return result[0]
+export const createBrand = async (brand: NewBrand): Promise<Brand | null> => {
+  try {
+    const result = await db.insert(brands).values(brand).returning()
+    return result[0]
+  } catch (error) {
+    console.error('Error creating brand:', error)
+    return null
+  }
 }
 
 export const updateBrand = async (brandId: string, updates: Partial<NewBrand>): Promise<Brand | undefined> => {
-  const result = await db.update(brands).set(updates).where(eq(brands.id, brandId)).returning()
-  return result[0]
+  try {
+    const result = await db.update(brands).set(updates).where(eq(brands.id, brandId)).returning()
+    return result[0]
+  } catch (error) {
+    console.error('Error updating brand:', error)
+    return undefined
+  }
 }
 
 export const deleteBrand = async (brandId: string): Promise<void> => {
-  await db.delete(brands).where(eq(brands.id, brandId))
+  try {
+    await db.delete(brands).where(eq(brands.id, brandId))
+  } catch (error) {
+    console.error('Error deleting brand:', error)
+  }
 }
 
 // Evaluation operations
 export const getEvaluations = async (brandId: string): Promise<Evaluation[]> => {
-  return await db.select().from(evaluations).where(eq(evaluations.brandId, brandId)).orderBy(desc(evaluations.createdAt))
+  try {
+    return await db.select().from(evaluations).where(eq(evaluations.brandId, brandId)).orderBy(desc(evaluations.createdAt))
+  } catch (error) {
+    console.error('Error fetching evaluations:', error)
+    return []
+  }
 }
 
 export const getEvaluation = async (evaluationId: string): Promise<Evaluation | undefined> => {
-  const result = await db.select().from(evaluations).where(eq(evaluations.id, evaluationId)).limit(1)
-  return result[0]
+  try {
+    const result = await db.select().from(evaluations).where(eq(evaluations.id, evaluationId)).limit(1)
+    return result[0]
+  } catch (error) {
+    console.error('Error fetching evaluation:', error)
+    return undefined
+  }
 }
 
 export const getEvaluationWithDetails = async (evaluationId: string) => {

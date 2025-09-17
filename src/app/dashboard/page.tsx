@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { redirect } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,6 +25,7 @@ import { IndustryBenchmarkCard } from '@/components/dashboard/IndustryBenchmarkC
 import type { Brand, Evaluation } from '@/lib/db/schema'
 
 export default function DashboardPage() {
+  const router = useRouter()
   const sessionResult = useSession()
   const session = sessionResult?.data
   const status = sessionResult?.status || 'loading'
@@ -46,8 +47,9 @@ export default function DashboardPage() {
   // Redirect to sign in if not authenticated
   useEffect(() => {
     if (status === 'loading') return // Still loading
-    if (!session) {
-      redirect('/auth/signin')
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin')
+      return
       return
     }
   }, [session, status])

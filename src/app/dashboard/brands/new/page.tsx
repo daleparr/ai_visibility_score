@@ -188,7 +188,11 @@ export default function NewBrandPage() {
       const newBrand = await createBrand(brandData)
       
       // Redirect to the brand detail page
-      router.push(`/dashboard/brands/${newBrand.id}`)
+      if (newBrand?.id) {
+        router.push(`/dashboard/brands/${newBrand.id}`)
+      } else {
+        router.push('/dashboard')
+      }
     } catch (error: any) {
       setError(error.message || 'Failed to create brand')
     } finally {
