@@ -1,17 +1,26 @@
-import type { 
+import type {
   ADIDimensionScore,
   ADIPillarScore,
   ADIScore,
   ADIDimensionName,
   ADIAgentOutput,
-  ADIOrchestrationResult
+  ADIOrchestrationResult,
+  AIDIHybridScore,
+  AIDIOptimizationAreaScore,
+  AIDISubDimensionBreakdown,
+  AIDIPrimaryDimensionName,
+  AIDIOptimizationAreaName
 } from '../../types/adi'
 
-import { 
+import {
   ADI_DIMENSION_WEIGHTS,
   ADI_PILLAR_WEIGHTS,
   ADI_DIMENSION_PILLARS,
-  ADI_DIMENSION_NAMES
+  ADI_DIMENSION_NAMES,
+  AIDI_PRIMARY_TO_OPTIMIZATION_MAPPING,
+  AIDI_OPTIMIZATION_TO_PRIMARY_MAPPING,
+  AIDI_OPTIMIZATION_AREA_WEIGHTS,
+  AIDI_OPTIMIZATION_AREA_NAMES
 } from '../../types/adi'
 
 /**
@@ -52,6 +61,189 @@ export class ADIScoringEngine {
       pillars,
       methodologyVersion: 'ADI-v1.0'
     }
+  }
+
+  /**
+   * Calculate hybrid ADI score with both primary dimensions and optimization areas
+   */
+  static calculateHybridADIScore(orchestrationResult: ADIOrchestrationResult): AIDIHybridScore {
+    const { agentResults } = orchestrationResult
+    
+    // Calculate standard ADI score first
+    const standardScore = this.calculateADIScore(orchestrationResult)
+    
+    // Extract optimization area scores
+    const optimizationAreaScores = this.extractOptimizationAreaScores(agentResults)
+    
+    // Create sub-dimension breakdowns
+    const subDimensionBreakdowns = this.createSubDimensionBreakdowns(agentResults, optimizationAreaScores)
+    
+    // Identify quick wins and critical areas
+    const criticalAreas = optimizationAreaScores.filter(area => area.score < 50).length
+    const quickWins = optimizationAreaScores
+      .filter(area => area.score >= 60 && area.score < 80 && area.effort === 'low')
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+    
+    return {
+      ...standardScore,
+      primaryDimensions: {
+        scores: this.extractPrimaryDimensionScores(agentResults),
+        pillars: standardScore.pillars.map(pillar => ({
+          ...pillar,
+          optimizationAreas: optimizationAreaScores.filter(area =>
+            AIDI_OPTIMIZATION_TO_PRIMARY_MAPPING[area.optimizationArea] &&
+            standardScore.pillars.find(p => p.dimensions.some(d => d.dimension === AIDI_OPTIMIZATION_TO_PRIMARY_MAPPING[area.optimizationArea]))
+          ),
+          subDimensionBreakdowns: subDimensionBreakdowns.filter(breakdown =>
+            pillar.dimensions.some(d => d.dimension === breakdown.primaryDimension)
+          )
+        }))
+      },
+      optimizationAreas: {
+        scores: optimizationAreaScores.reduce((acc, area) => {
+          acc[area.optimizationArea] = area
+          return acc
+        }, {} as Record<AIDIOptimizationAreaName, AIDIOptimizationAreaScore>),
+        totalAreas: optimizationAreaScores.length,
+        criticalAreas,
+        quickWins
+      },
+      subDimensionBreakdowns,
+      methodologyVersion: 'ADI-Hybrid-v1.0'
+    }
+  }
+
+  /**
+   * Extract optimization area scores from agent results
+   */
+  private static extractOptimizationAreaScores(agentResults: Record<string, ADIAgentOutput>): AIDIOptimizationAreaScore[] {
+    const optimizationAreaScores: AIDIOptimizationAreaScore[] = []
+    
+    // Enhanced agent to optimization area mapping
+    const agentToOptimizationMap: Record<string, AIDIOptimizationAreaName[]> = {
+      'schema_agent': ['schema_structured_data'],
+      'semantic_agent': ['semantic_clarity', 'ontologies_taxonomy'],
+      'knowledge_graph_agent': ['knowledge_graphs_entity_linking'],
+      'conversational_copy_agent': ['conversational_copy'],
+      'llm_test_agent': ['llm_readability', 'ai_answer_quality_presence'],
+      'geo_visibility_agent': ['geo_visibility_presence'],
+      'citation_agent': ['citation_authority_freshness'],
+      'sentiment_agent': ['sentiment_trust'],
+      'brand_heritage_agent': ['brand_heritage'],
+      'commerce_agent': ['hero_products_use_case', 'policies_logistics_clarity']
+    }
+    
+    // Process each agent's results
+    for (const [agentName, agentOutput] of Object.entries(agentResults)) {
+      const optimizationAreas = agentToOptimizationMap[agentName] || []
+      
+      if (agentOutput.status !== 'completed' || optimizationAreas.length === 0) {
+        continue
+      }
+      
+      // For agents that map to multiple optimization areas, split the results
+      if (optimizationAreas.length === 1) {
+        const optimizationArea = optimizationAreas[0]
+        const aggregatedScore = this.aggregateAgentResults(agentOutput)
+        
+        if (aggregatedScore) {
+          optimizationAreaScores.push({
+            optimizationArea,
+            score: aggregatedScore.score,
+            confidenceInterval: aggregatedScore.confidence,
+            evidence: aggregatedScore.evidence,
+            agentContributions: { [agentName]: aggregatedScore.score },
+            recommendations: this.generateOptimizationRecommendations(optimizationArea, aggregatedScore.score),
+            priority: this.determinePriority(aggregatedScore.score),
+            effort: this.determineEffort(optimizationArea),
+            timeToImpact: this.determineTimeToImpact(optimizationArea, aggregatedScore.score)
+          })
+        }
+      } else {
+        // Split results for agents with multiple optimization areas
+        for (const optimizationArea of optimizationAreas) {
+          const relevantResults = this.filterResultsForOptimizationArea(agentOutput, optimizationArea)
+          const score = this.calculateOptimizationAreaScore(relevantResults, optimizationArea)
+          
+          optimizationAreaScores.push({
+            optimizationArea,
+            score,
+            confidenceInterval: 0.8, // Default confidence for derived scores
+            evidence: { derivedFrom: agentName, relevantResults },
+            agentContributions: { [agentName]: score },
+            recommendations: this.generateOptimizationRecommendations(optimizationArea, score),
+            priority: this.determinePriority(score),
+            effort: this.determineEffort(optimizationArea),
+            timeToImpact: this.determineTimeToImpact(optimizationArea, score)
+          })
+        }
+      }
+    }
+    
+    return optimizationAreaScores
+  }
+
+  /**
+   * Create sub-dimension breakdowns showing how primary dimensions split into optimization areas
+   */
+  private static createSubDimensionBreakdowns(
+    agentResults: Record<string, ADIAgentOutput>,
+    optimizationAreaScores: AIDIOptimizationAreaScore[]
+  ): AIDISubDimensionBreakdown[] {
+    const breakdowns: AIDISubDimensionBreakdown[] = []
+    
+    for (const [primaryDimension, optimizationAreas] of Object.entries(AIDI_PRIMARY_TO_OPTIMIZATION_MAPPING)) {
+      const primaryDimensionName = primaryDimension as AIDIPrimaryDimensionName
+      
+      // Calculate primary dimension score as weighted average of optimization areas
+      let totalWeightedScore = 0
+      let totalWeight = 0
+      const subDimensions: Record<string, any> = {}
+      
+      for (const optimizationArea of optimizationAreas) {
+        const areaScore = optimizationAreaScores.find(score => score.optimizationArea === optimizationArea)
+        const weight = AIDI_OPTIMIZATION_AREA_WEIGHTS[optimizationArea] || 0.05
+        
+        if (areaScore) {
+          totalWeightedScore += areaScore.score * weight
+          totalWeight += weight
+          
+          subDimensions[optimizationArea] = {
+            score: areaScore.score,
+            weight,
+            optimizationAreas: [optimizationArea]
+          }
+        }
+      }
+      
+      const primaryScore = totalWeight > 0 ? Math.round(totalWeightedScore / totalWeight) : 0
+      
+      breakdowns.push({
+        primaryDimension: primaryDimensionName,
+        primaryScore,
+        subDimensions
+      })
+    }
+    
+    return breakdowns
+  }
+
+  /**
+   * Extract primary dimension scores for dashboard display
+   */
+  private static extractPrimaryDimensionScores(agentResults: Record<string, ADIAgentOutput>): Record<AIDIPrimaryDimensionName, number> {
+    const scores: Record<AIDIPrimaryDimensionName, number> = {} as Record<AIDIPrimaryDimensionName, number>
+    
+    // Use existing dimension extraction logic but map to primary dimensions
+    const dimensionScores = this.extractDimensionScores(agentResults)
+    
+    for (const dimensionScore of dimensionScores) {
+      const primaryDimension = dimensionScore.dimension as AIDIPrimaryDimensionName
+      scores[primaryDimension] = dimensionScore.score
+    }
+    
+    return scores
   }
 
   /**
@@ -569,5 +761,147 @@ export class ADIScoringEngine {
     }
 
     return effortLevels[dimension] || 'medium'
+  }
+
+  /**
+   * Filter agent results for specific optimization area
+   */
+  private static filterResultsForOptimizationArea(agentOutput: ADIAgentOutput, optimizationArea: AIDIOptimizationAreaName): any[] {
+    if (!agentOutput.results) return []
+    
+    const areaKeywords: Record<AIDIOptimizationAreaName, string[]> = {
+      'schema_structured_data': ['schema', 'structured', 'markup'],
+      'semantic_clarity': ['semantic', 'clarity', 'terminology'],
+      'ontologies_taxonomy': ['ontology', 'taxonomy', 'hierarchy', 'category'],
+      'knowledge_graphs_entity_linking': ['knowledge', 'graph', 'entity', 'linking'],
+      'llm_readability': ['readability', 'structure', 'accessibility'],
+      'conversational_copy': ['conversational', 'copy', 'natural', 'tone'],
+      'geo_visibility_presence': ['geo', 'geographic', 'location', 'presence'],
+      'ai_answer_quality_presence': ['answer', 'quality', 'response', 'accuracy'],
+      'citation_authority_freshness': ['citation', 'authority', 'freshness', 'media'],
+      'sentiment_trust': ['sentiment', 'trust', 'reputation'],
+      'brand_heritage': ['heritage', 'story', 'history', 'values', 'founder'],
+      'hero_products_use_case': ['hero', 'products', 'use-case', 'recommendation'],
+      'policies_logistics_clarity': ['policies', 'logistics', 'shipping', 'clarity']
+    }
+    
+    const keywords = areaKeywords[optimizationArea] || []
+    
+    return agentOutput.results.filter(result => {
+      const resultType = result.resultType.toLowerCase()
+      return keywords.some(keyword => resultType.includes(keyword))
+    })
+  }
+
+  /**
+   * Calculate optimization area score from filtered results
+   */
+  private static calculateOptimizationAreaScore(results: any[], optimizationArea: AIDIOptimizationAreaName): number {
+    if (results.length === 0) {
+      // Return default score based on optimization area criticality
+      const criticalAreas = ['schema_structured_data', 'ai_answer_quality_presence', 'hero_products_use_case']
+      return criticalAreas.includes(optimizationArea) ? 40 : 50
+    }
+    
+    const totalScore = results.reduce((sum, result) => sum + (result.normalizedScore || 0), 0)
+    return Math.round(totalScore / results.length)
+  }
+
+  /**
+   * Generate optimization recommendations based on area and score
+   */
+  private static generateOptimizationRecommendations(area: AIDIOptimizationAreaName, score: number): string[] {
+    const recommendationMap: Partial<Record<AIDIOptimizationAreaName, Record<string, string[]>>> = {
+      'schema_structured_data': {
+        low: ['Implement basic Schema.org markup', 'Add Product and Organization schemas', 'Validate markup with Google tools'],
+        medium: ['Enhance existing schemas with more properties', 'Add FAQ and Review schemas', 'Optimize schema for rich snippets'],
+        high: ['Implement advanced schema types', 'Create automated schema generation', 'Monitor schema performance']
+      },
+      'semantic_clarity': {
+        low: ['Standardize product terminology', 'Create clear category names', 'Improve content disambiguation'],
+        medium: ['Enhance semantic consistency', 'Optimize content hierarchy', 'Implement semantic markup'],
+        high: ['Develop semantic content strategy', 'Create industry-specific vocabulary', 'Maintain semantic excellence']
+      },
+      'conversational_copy': {
+        low: ['Rewrite product descriptions naturally', 'Add conversational FAQ content', 'Use natural language patterns'],
+        medium: ['Enhance conversational tone', 'Add use-case driven copy', 'Optimize for voice search'],
+        high: ['Create conversational content templates', 'Implement dynamic conversational elements', 'Lead conversational AI optimization']
+      },
+      'brand_heritage': {
+        low: ['Create brand story content', 'Add founder biography', 'Document company history'],
+        medium: ['Enhance brand narrative', 'Expand heritage timeline', 'Connect values to story'],
+        high: ['Optimize heritage for AI understanding', 'Create heritage-driven content', 'Leverage story for differentiation']
+      }
+      // Add more areas as needed
+    }
+    
+    const scoreCategory = score < 50 ? 'low' : score < 80 ? 'medium' : 'high'
+    return recommendationMap[area]?.[scoreCategory] || [
+      'Analyze current performance gaps',
+      'Implement industry best practices',
+      'Monitor and optimize continuously'
+    ]
+  }
+
+  /**
+   * Determine priority based on score
+   */
+  private static determinePriority(score: number): 'critical' | 'high' | 'medium' | 'low' {
+    if (score < 40) return 'critical'
+    if (score < 60) return 'high'
+    if (score < 80) return 'medium'
+    return 'low'
+  }
+
+  /**
+   * Determine effort level for optimization area
+   */
+  private static determineEffort(area: AIDIOptimizationAreaName): 'low' | 'medium' | 'high' {
+    const effortMap: Record<AIDIOptimizationAreaName, 'low' | 'medium' | 'high'> = {
+      'schema_structured_data': 'medium',
+      'semantic_clarity': 'high',
+      'ontologies_taxonomy': 'high',
+      'knowledge_graphs_entity_linking': 'high',
+      'llm_readability': 'medium',
+      'conversational_copy': 'medium',
+      'geo_visibility_presence': 'medium',
+      'ai_answer_quality_presence': 'low',
+      'citation_authority_freshness': 'high',
+      'sentiment_trust': 'medium',
+      'brand_heritage': 'medium',
+      'hero_products_use_case': 'low',
+      'policies_logistics_clarity': 'low'
+    }
+    
+    return effortMap[area] || 'medium'
+  }
+
+  /**
+   * Determine time to impact for optimization area
+   */
+  private static determineTimeToImpact(area: AIDIOptimizationAreaName, score: number): string {
+    const baseTimeMap: Record<AIDIOptimizationAreaName, string> = {
+      'schema_structured_data': '2-4 weeks',
+      'semantic_clarity': '1-3 months',
+      'ontologies_taxonomy': '2-4 months',
+      'knowledge_graphs_entity_linking': '3-6 months',
+      'llm_readability': '3-6 weeks',
+      'conversational_copy': '4-8 weeks',
+      'geo_visibility_presence': '6-12 weeks',
+      'ai_answer_quality_presence': '2-4 weeks',
+      'citation_authority_freshness': '3-6 months',
+      'sentiment_trust': '2-4 months',
+      'brand_heritage': '4-8 weeks',
+      'hero_products_use_case': '2-4 weeks',
+      'policies_logistics_clarity': '1-2 weeks'
+    }
+    
+    // Adjust based on current score - lower scores may take longer
+    const baseTime = baseTimeMap[area] || '4-8 weeks'
+    if (score < 30) {
+      return baseTime.replace(/(\d+)-(\d+)/, (match, start, end) => `${parseInt(start) + 2}-${parseInt(end) + 4}`)
+    }
+    
+    return baseTime
   }
 }

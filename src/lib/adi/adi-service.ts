@@ -10,6 +10,7 @@ import { GeoVisibilityAgent } from './agents/geo-visibility-agent'
 import { LLMTestAgent } from './agents/llm-test-agent'
 import { CitationAgent } from './agents/citation-agent'
 import { SentimentAgent } from './agents/sentiment-agent'
+import { BrandHeritageAgent } from './agents/brand-heritage-agent'
 import { CommerceAgent } from './agents/commerce-agent'
 import { ScoreAggregatorAgent } from './agents/score-aggregator-agent'
 import { traceLogger, EvaluationTrace } from './trace-logger'
@@ -52,6 +53,7 @@ export class ADIService {
     this.orchestrator.registerAgent(new LLMTestAgent())
     this.orchestrator.registerAgent(new CitationAgent())
     this.orchestrator.registerAgent(new SentimentAgent())
+    this.orchestrator.registerAgent(new BrandHeritageAgent())
     this.orchestrator.registerAgent(new CommerceAgent())
     this.orchestrator.registerAgent(new ScoreAggregatorAgent())
 

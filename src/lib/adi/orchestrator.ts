@@ -51,13 +51,14 @@ export class ADIOrchestrator {
       'knowledge_graph_agent': ['crawl_agent', 'semantic_agent'],
       'conversational_copy_agent': ['crawl_agent'],
       'llm_test_agent': ['crawl_agent'],
-      'geo_visibility_agent': ['crawl_agent', 'llm_test_agent'], // NEW
+      'geo_visibility_agent': ['crawl_agent', 'llm_test_agent'],
       'citation_agent': [], // Can run in parallel with crawl
       'sentiment_agent': ['citation_agent'],
+      'brand_heritage_agent': ['crawl_agent'], // NEW: Brand heritage analysis
       'commerce_agent': ['crawl_agent', 'llm_test_agent'],
       'score_aggregator': ['schema_agent', 'semantic_agent', 'knowledge_graph_agent',
                           'conversational_copy_agent', 'llm_test_agent', 'geo_visibility_agent',
-                          'citation_agent', 'sentiment_agent', 'commerce_agent']
+                          'citation_agent', 'sentiment_agent', 'brand_heritage_agent', 'commerce_agent']
     }
 
     // Calculate execution phases
