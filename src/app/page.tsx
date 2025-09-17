@@ -223,7 +223,7 @@ export default function HomePage() {
               </div>
               <div className="flex items-center">
                 <BarChart3 className="h-4 w-4 mr-1" />
-                10 Dimensions
+                12 Dimensions
               </div>
               <div className="flex items-center">
                 <Shield className="h-4 w-4 mr-1" />
