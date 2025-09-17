@@ -5,8 +5,23 @@ import * as schema from './schema'
 // Database connection with fallback handling
 const connectionString = process.env.DATABASE_URL
 
+// Enhanced diagnostic logging
+console.log('=== DATABASE CONNECTION DIAGNOSTICS ===')
+console.log('NODE_ENV:', process.env.NODE_ENV)
+console.log('DEMO_MODE:', process.env.DEMO_MODE)
+console.log('DATABASE_URL exists:', !!connectionString)
+console.log('DATABASE_URL length:', connectionString?.length || 0)
+console.log('DATABASE_URL starts with postgresql:', connectionString?.startsWith('postgresql://') || false)
+console.log('DATABASE_URL contains neon.tech:', connectionString?.includes('neon.tech') || false)
+console.log('All environment variables starting with DATABASE:',
+  Object.keys(process.env).filter(key => key.startsWith('DATABASE')))
+console.log('All environment variables starting with NEON:',
+  Object.keys(process.env).filter(key => key.startsWith('NEON')))
+console.log('==========================================')
+
 if (!connectionString) {
   console.warn('DATABASE_URL not found. Database operations will be disabled.')
+  console.warn('Available environment variables:', Object.keys(process.env).sort())
 }
 
 // Create the connection only if we have a connection string
@@ -15,11 +30,16 @@ let db: any = null
 
 if (connectionString) {
   try {
+    console.log('Attempting to connect to Neon database...')
     sql = neon(connectionString)
     db = drizzle(sql, { schema })
+    console.log('✅ Database connection initialized successfully')
   } catch (error) {
-    console.error('Failed to initialize database connection:', error)
+    console.error('❌ Failed to initialize database connection:', error)
+    console.error('Connection string format:', connectionString?.substring(0, 20) + '...')
   }
+} else {
+  console.warn('⚠️ No DATABASE_URL found, using mock database')
 }
 
 // Create a comprehensive mock database for when no connection is available
