@@ -1,0 +1,16 @@
+{
+  "name": "AI Visibility Score",
+  "short_name": "AI Visibility",
+  "description": "Evaluate how your brand appears in AI-powered search and recommendation systems",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0ea5e9",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    }
+  ]
+}
