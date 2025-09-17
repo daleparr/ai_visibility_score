@@ -101,7 +101,7 @@ export function ExecutiveSummary({ overallScore, url, tier, pillarScores }: Exec
             <div className="bg-white rounded-lg p-4 border">
               <div className="flex items-center mb-2">
                 <Badge variant="outline" className="text-xs">
-                  {tier === 'professional' ? 'PROFESSIONAL ANALYSIS' : 'FREE ANALYSIS'}
+                  {tier === 'professional' ? 'INDEX PRO ANALYSIS' : 'FREE ANALYSIS'}
                 </Badge>
               </div>
               <p className="text-sm text-gray-600">

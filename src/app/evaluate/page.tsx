@@ -130,7 +130,7 @@ export default function EvaluatePage() {
 **Overall AIDI Score:** ${evaluationData.overallScore.toFixed(2)}/100
 
 ## Executive Summary
-${evaluationData.tier === 'professional' ? 'Professional multi-model analysis' : 'Standard GPT-4 analysis'} conducted on ${evaluationData.url}.
+${evaluationData.tier === 'professional' ? 'Index Pro multi-model analysis' : 'Standard GPT-4 analysis'} conducted on ${evaluationData.url}.
 Overall AI Discoverability Index (AIDI) score of ${evaluationData.overallScore.toFixed(2)}/100 indicates ${evaluationData.overallScore >= 80 ? 'strong' : evaluationData.overallScore >= 60 ? 'moderate' : 'weak'} AI visibility.
 
 ## Pillar Breakdown
