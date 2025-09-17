@@ -644,7 +644,7 @@ ${evaluationData.certification ? `
                           <Shield className="h-4 w-4 mr-2" />
                           AI Readiness: {evaluationData.insights.aiReadiness}
                         </h4>
-                        {evaluationData.insights.riskFactors.length > 0 && (
+                        {evaluationData?.insights?.riskFactors?.length > 0 && (
                           <div className="mb-4">
                             <div className="text-sm font-medium text-red-600 mb-2">Risk Factors:</div>
                             <ul className="text-sm text-gray-600 space-y-1">
@@ -754,7 +754,7 @@ ${evaluationData.certification ? `
           </div>
 
           {/* AI Interaction Example */}
-          {evaluationData.dimensionScores.length > 0 && (
+          {evaluationData?.dimensionScores?.length > 0 && (
             <div className="mb-8">
               <AIInteractionExample
                 dimensionName={evaluationData.dimensionScores[0].name}
@@ -812,7 +812,7 @@ ${evaluationData.certification ? `
                   </li>
                   <li className="flex items-center">
                     <BarChart3 className="h-4 w-4 mr-2" />
-                    Multi-model comparison ({evaluationData.aiProviders.length > 1 ? 'Active' : 'Available'})
+                    Multi-model comparison ({(evaluationData?.aiProviders?.length || 0) > 1 ? 'Active' : 'Available'})
                   </li>
                 </ul>
                 <Button
