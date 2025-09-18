@@ -1,14 +1,14 @@
 import { v4 as uuidv4 } from 'uuid'
 import { db } from '@/lib/db'
-import { evaluations, brands, dimensionScores } from '@/lib/db/schema'
+import { evaluations, brands, dimensionScores, adiAgentResults } from '@/lib/db/schema'
 import { eq, and, gte, desc, sql } from 'drizzle-orm'
 import { traceLogger } from '@/lib/adi/trace-logger'
-import type { 
-  FederatedDataPoint, 
-  IndustryBenchmark, 
-  PredictiveModel, 
+import type {
+  FederatedDataPoint,
+  IndustryBenchmark,
+  PredictiveModel,
   PersonalizedInsights,
-  FederatedLearningConfig 
+  FederatedLearningConfig
 } from './types'
 
 export class FederatedLearningEngine {
@@ -359,15 +359,194 @@ export class FederatedLearningEngine {
   }
 
   private async extractWebsiteMetrics(url: string): Promise<FederatedDataPoint['websiteMetrics']> {
-    // Placeholder - would implement actual website analysis
-    return {
-      structureComplexity: Math.floor(Math.random() * 10),
-      contentQuality: Math.floor(Math.random() * 10),
-      technicalStack: ['react', 'nextjs'],
-      industryKeywords: ['ai', 'technology'],
-      pageCount: Math.floor(Math.random() * 100),
-      loadTime: Math.random() * 3000
+    try {
+      // Get crawl data from agent results if available
+      const crawlData = await this.getCrawlDataFromDatabase(url)
+      
+      if (crawlData) {
+        return {
+          structureComplexity: this.calculateStructureComplexity(crawlData),
+          contentQuality: this.calculateContentQuality(crawlData),
+          technicalStack: this.detectTechnicalStack(crawlData),
+          industryKeywords: this.extractIndustryKeywords(crawlData),
+          pageCount: crawlData.pageCount || 1,
+          loadTime: crawlData.loadTime || 0
+        }
+      }
+      
+      // Fallback to basic analysis if no crawl data available
+      return {
+        structureComplexity: 5,
+        contentQuality: 5,
+        technicalStack: ['unknown'],
+        industryKeywords: ['general'],
+        pageCount: 1,
+        loadTime: 0
+      }
+    } catch (error) {
+      console.warn('Failed to extract website metrics from crawl data:', error)
+      // Return safe defaults
+      return {
+        structureComplexity: 5,
+        contentQuality: 5,
+        technicalStack: ['unknown'],
+        industryKeywords: ['general'],
+        pageCount: 1,
+        loadTime: 0
+      }
     }
+  }
+
+  /**
+   * Get crawl data from recent agent executions
+   */
+  private async getCrawlDataFromDatabase(url: string): Promise<any> {
+    try {
+      const { db } = await import('../db/index')
+      const { adiAgentResults } = await import('../db/schema')
+      
+      // Look for recent crawl agent results for this URL
+      const crawlResults = await db
+        .select()
+        .from(adiAgentResults)
+        .where(
+          and(
+            eq(adiAgentResults.agentId, 'crawl_agent'),
+            sql`${adiAgentResults.evidence}->>'url' = ${url}`
+          )
+        )
+        .orderBy(desc(adiAgentResults.createdAt))
+        .limit(1)
+      
+      if (crawlResults.length > 0) {
+        const result = crawlResults[0]
+        return {
+          content: result.evidence?.content || '',
+          contentSize: result.evidence?.contentSize || 0,
+          structuredData: result.evidence?.structuredData || [],
+          metaData: result.evidence?.metaData || {},
+          contentMetrics: result.evidence?.contentMetrics || {},
+          pageCount: 1,
+          loadTime: result.evidence?.loadTime || 0
+        }
+      }
+      
+      return null
+    } catch (error) {
+      console.warn('Failed to get crawl data from database:', error)
+      return null
+    }
+  }
+
+  /**
+   * Calculate structure complexity from crawl data
+   */
+  private calculateStructureComplexity(crawlData: any): number {
+    const content = crawlData.content || ''
+    const structuredData = crawlData.structuredData || []
+    
+    let complexity = 0
+    
+    // Base complexity from content size
+    if (content.length > 100000) complexity += 3
+    else if (content.length > 50000) complexity += 2
+    else complexity += 1
+    
+    // Structured data complexity
+    complexity += Math.min(structuredData.length, 3)
+    
+    // HTML structure complexity
+    const headingCount = (content.match(/<h[1-6]/gi) || []).length
+    complexity += Math.min(Math.floor(headingCount / 5), 2)
+    
+    // Navigation complexity
+    const navElements = (content.match(/<nav|<menu/gi) || []).length
+    complexity += Math.min(navElements, 2)
+    
+    return Math.min(complexity, 10)
+  }
+
+  /**
+   * Calculate content quality from crawl data
+   */
+  private calculateContentQuality(crawlData: any): number {
+    const content = crawlData.content || ''
+    const metaData = crawlData.metaData || {}
+    
+    let quality = 0
+    
+    // Meta data quality
+    if (metaData.title && metaData.title.length > 10) quality += 2
+    if (metaData.description && metaData.description.length > 50) quality += 2
+    
+    // Content richness
+    const wordCount = content.split(/\s+/).length
+    if (wordCount > 5000) quality += 2
+    else if (wordCount > 1000) quality += 1
+    
+    // Structured content
+    const structuredData = crawlData.structuredData || []
+    quality += Math.min(structuredData.length, 2)
+    
+    // Image content
+    const imageCount = (content.match(/<img/gi) || []).length
+    quality += Math.min(Math.floor(imageCount / 10), 2)
+    
+    return Math.min(quality, 10)
+  }
+
+  /**
+   * Detect technical stack from crawl data
+   */
+  private detectTechnicalStack(crawlData: any): string[] {
+    const content = crawlData.content || ''
+    const stack: string[] = []
+    
+    // Framework detection
+    if (content.includes('_next') || content.includes('Next.js')) stack.push('nextjs')
+    if (content.includes('react') || content.includes('React')) stack.push('react')
+    if (content.includes('vue') || content.includes('Vue')) stack.push('vue')
+    if (content.includes('angular') || content.includes('Angular')) stack.push('angular')
+    
+    // CMS detection
+    if (content.includes('wp-content') || content.includes('WordPress')) stack.push('wordpress')
+    if (content.includes('shopify')) stack.push('shopify')
+    if (content.includes('wix')) stack.push('wix')
+    
+    // Analytics detection
+    if (content.includes('google-analytics') || content.includes('gtag')) stack.push('google-analytics')
+    if (content.includes('facebook.net')) stack.push('facebook-pixel')
+    
+    return stack.length > 0 ? stack : ['unknown']
+  }
+
+  /**
+   * Extract industry keywords from crawl data
+   */
+  private extractIndustryKeywords(crawlData: any): string[] {
+    const content = crawlData.content?.toLowerCase() || ''
+    const keywords: string[] = []
+    
+    // Industry keyword patterns
+    const industryPatterns = {
+      'fashion': ['fashion', 'clothing', 'apparel', 'style', 'wear'],
+      'technology': ['technology', 'software', 'digital', 'tech', 'innovation'],
+      'beauty': ['beauty', 'cosmetics', 'skincare', 'makeup', 'fragrance'],
+      'sports': ['sports', 'athletic', 'fitness', 'performance', 'training'],
+      'food': ['food', 'restaurant', 'cuisine', 'dining', 'culinary'],
+      'automotive': ['automotive', 'car', 'vehicle', 'driving', 'transportation'],
+      'health': ['health', 'medical', 'wellness', 'healthcare', 'medicine'],
+      'finance': ['finance', 'banking', 'investment', 'financial', 'money']
+    }
+    
+    for (const [industry, terms] of Object.entries(industryPatterns)) {
+      const matches = terms.filter(term => content.includes(term))
+      if (matches.length > 0) {
+        keywords.push(industry)
+      }
+    }
+    
+    return keywords.length > 0 ? keywords : ['general']
   }
 
   private inferRegion(): string {

@@ -14,7 +14,7 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
       version: 'v2.0-optimized',
       description: 'Fast website content extraction with smart caching and parallel processing',
       dependencies: [],
-      timeout: 4000, // Reduced from 45s to 4s
+      timeout: 6000, // Increased from 4s to 6s for better crawl reliability
       retryLimit: 1, // Reduced retries for speed
       parallelizable: false
     }
@@ -92,8 +92,8 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
     try {
       const normalizedUrl = this.normalizeUrl(url)
       
-      // OPTIMIZATION 4: Reduced timeout and essential content only
-      const response = await this.fetchWithTimeout(normalizedUrl, 3000) // 3s timeout
+      // OPTIMIZATION 4: Balanced timeout for reliable content extraction
+      const response = await this.fetchWithTimeout(normalizedUrl, 5000) // 5s timeout
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`)

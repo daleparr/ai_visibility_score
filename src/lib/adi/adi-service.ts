@@ -14,6 +14,7 @@ import { BrandHeritageAgent } from './agents/brand-heritage-agent'
 import { CommerceAgent } from './agents/commerce-agent'
 import { ScoreAggregatorAgent } from './agents/score-aggregator-agent'
 import { traceLogger, EvaluationTrace } from './trace-logger'
+import { eq } from 'drizzle-orm'
 import type {
   ADIEvaluationContext,
   ADIOrchestrationResult,
@@ -105,6 +106,9 @@ export class ADIService {
 
     // Run orchestrated evaluation
     const orchestrationResult = await this.orchestrator.executeEvaluation(context)
+    
+    // Save agent results to database for federated learning
+    await this.saveAgentResultsToDatabase(context.evaluationId, orchestrationResult)
 
     if (orchestrationResult.overallStatus === 'failed') {
       throw new Error(`ADI evaluation failed: ${orchestrationResult.errors.join(', ')}`)
@@ -540,12 +544,37 @@ All scores include confidence intervals and reliability metrics.
   }
 
   private async saveBenchmarkToDatabase(benchmark: any): Promise<void> {
-    // In production, this would save to adi_benchmarks table
-    console.log(`Saving benchmark for industry ${benchmark.industry.id}:`, {
-      totalBrands: benchmark.totalBrands,
-      median: benchmark.scoreDistribution.median,
-      topPerformer: benchmark.scoreDistribution.topPerformer
-    })
+    try {
+      const { db } = await import('../db/index')
+      const { adiBenchmarks } = await import('../db/schema')
+      
+      // Save to real Neon database
+      await db.insert(adiBenchmarks).values({
+        industryId: benchmark.industry.id,
+        benchmarkDate: new Date(benchmark.benchmarkDate),
+        totalBrandsEvaluated: benchmark.totalBrands,
+        medianScore: benchmark.scoreDistribution.median,
+        p25Score: benchmark.scoreDistribution.p25,
+        p75Score: benchmark.scoreDistribution.p75,
+        p90Score: benchmark.scoreDistribution.p90,
+        topPerformerScore: benchmark.scoreDistribution.topPerformer,
+        dimensionMedians: benchmark.dimensionMedians,
+        trends: benchmark.trends
+      })
+      
+      console.log(`✅ Saved benchmark to Neon DB for industry ${benchmark.industry.id}:`, {
+        totalBrands: benchmark.totalBrands,
+        median: benchmark.scoreDistribution.median,
+        topPerformer: benchmark.scoreDistribution.topPerformer
+      })
+    } catch (error) {
+      console.warn('⚠️ Failed to save to Neon DB, using mock:', error)
+      console.log(`Saving benchmark for industry ${benchmark.industry.id}:`, {
+        totalBrands: benchmark.totalBrands,
+        median: benchmark.scoreDistribution.median,
+        topPerformer: benchmark.scoreDistribution.topPerformer
+      })
+    }
   }
 
   private async updateIndustryLeaderboardWithEngine(industryId: string): Promise<void> {
@@ -626,8 +655,65 @@ All scores include confidence intervals and reliability metrics.
   }
 
   private async saveLeaderboardToDatabase(scope: string, leaderboard: any[]): Promise<void> {
-    // In production, this would save to adi_leaderboards table
-    console.log(`Saving ${scope} leaderboard: ${leaderboard.length} entries`)
+    try {
+      const { db } = await import('../db/index')
+      const { adiLeaderboards } = await import('../db/schema')
+      
+      // Insert new leaderboard entries (simplified - no scope field in schema)
+      if (leaderboard.length > 0) {
+        const leaderboardEntries = leaderboard.map((entry, index) => ({
+          brandId: entry.brandId,
+          evaluationId: entry.evaluationId || `eval_${Date.now()}_${index}`,
+          industryId: entry.industryId,
+          rankGlobal: scope === 'global' ? index + 1 : null,
+          rankIndustry: scope !== 'global' ? index + 1 : null,
+          adiScore: entry.adiScore,
+          scoreChange30d: entry.scoreChange30d || 0,
+          leaderboardDate: new Date()
+        }))
+        
+        await db.insert(adiLeaderboards).values(leaderboardEntries)
+      }
+      
+      console.log(`✅ Saved ${scope} leaderboard to Neon DB: ${leaderboard.length} entries`)
+    } catch (error) {
+      console.warn('⚠️ Failed to save leaderboard to Neon DB, using mock:', error)
+      console.log(`Saving ${scope} leaderboard: ${leaderboard.length} entries`)
+    }
+  }
+
+  /**
+   * Save agent results to database for federated learning access
+   */
+  private async saveAgentResultsToDatabase(evaluationId: string, orchestrationResult: any): Promise<void> {
+    try {
+      const { db } = await import('../db/index')
+      const { adiAgentResults } = await import('../db/schema')
+      
+      const agentResults = Object.entries(orchestrationResult.agentResults || {})
+      
+      for (const [agentName, result] of agentResults) {
+        const agentResult = result as any
+        
+        if (agentResult.results && agentResult.results.length > 0) {
+          for (const agentOutput of agentResult.results) {
+            await db.insert(adiAgentResults).values({
+              evaluationId,
+              agentId: agentName,
+              resultType: agentOutput.resultType || agentName,
+              rawValue: agentOutput.rawValue || agentOutput.normalizedScore || 0,
+              normalizedScore: agentOutput.normalizedScore || 0,
+              confidenceLevel: agentOutput.confidenceLevel || 0,
+              evidence: agentOutput.evidence || {}
+            })
+          }
+        }
+      }
+      
+      console.log(`✅ Saved agent results to database for evaluation ${evaluationId}`)
+    } catch (error) {
+      console.warn('⚠️ Failed to save agent results to database:', error)
+    }
   }
 
   // Legacy mock methods for backward compatibility

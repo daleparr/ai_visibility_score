@@ -16,7 +16,7 @@ export class OptimizedLLMTestAgent extends BaseADIAgent {
       version: 'v2.0-optimized',
       description: 'Fast AI visibility testing with reduced queries and smart caching',
       dependencies: ['crawl_agent'],
-      timeout: 3000, // Reduced from 45s to 3s
+      timeout: 8000, // Increased from 3s to 8s for frontier model reasoning
       retryLimit: 1,
       parallelizable: true
     }
@@ -149,8 +149,8 @@ export class OptimizedLLMTestAgent extends BaseADIAgent {
             
             const response = await Promise.race([
               this.queryModel(model.name, query),
-              new Promise<string>((_, reject) => 
-                setTimeout(() => reject(new Error('Query timeout')), 1500)
+              new Promise<string>((_, reject) =>
+                setTimeout(() => reject(new Error('Query timeout')), 5000)
               )
             ])
             
