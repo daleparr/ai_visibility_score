@@ -17,8 +17,7 @@ import {
   AlertCircle,
   ArrowRight
 } from 'lucide-react'
-import { getBrands, getEvaluations, getUserProfile } from '@/lib/database'
-import { getUserSubscription } from '@/lib/subscription-service'
+// Removed direct database imports - now using API routes
 import { formatDateTime, getGradeColor, formatScore } from '@/lib/utils'
 import { FederatedInsightsCard } from '@/components/dashboard/FederatedInsightsCard'
 import { IndustryBenchmarkCard } from '@/components/dashboard/IndustryBenchmarkCard'
@@ -64,68 +63,65 @@ export default function DashboardPage() {
       try {
         console.log('Loading dashboard data for user:', sessionUser.id)
         
-        // Load user profile and subscription with error handling
-        let profileData = null
-        let subscriptionData = null
-        
+        // Load user profile and subscription via API
         try {
-          profileData = await getUserProfile(sessionUser.id)
-          console.log('Profile data loaded:', profileData)
-        } catch (error) {
-          console.warn('Failed to load user profile:', error)
-        }
-        
-        try {
-          subscriptionData = await getUserSubscription(session.user.email)
-          console.log('Subscription data loaded:', subscriptionData)
-        } catch (error) {
-          console.warn('Failed to load subscription:', error)
-        }
-        
-        setUserProfile(profileData)
-        setSubscription(subscriptionData)
-
-        // Load brands from database
-        const brandsData = await getBrands(sessionUser.id)
-        console.log('Brands loaded:', brandsData.length)
-        setBrands(brandsData)
-
-        // Calculate stats
-        const totalBrands = brandsData.length
-        let totalEvaluations = 0
-        let completedEvaluations = 0
-        let totalScore = 0
-
-        // Get evaluations for each brand
-        const allEvaluations: Evaluation[] = []
-        for (const brand of brandsData) {
-          try {
-            const evaluations = await getEvaluations(brand.id)
-            allEvaluations.push(...evaluations)
-            totalEvaluations += evaluations.length
-            
-            const completed = evaluations.filter(e => e.status === 'completed')
-            completedEvaluations += completed.length
-            
-            const scores = completed
-              .filter(e => e.overallScore !== null)
-              .map(e => e.overallScore!)
-            
-            if (scores.length > 0) {
-              totalScore += scores.reduce((sum, score) => sum + score, 0)
-            }
-          } catch (error) {
-            console.warn(`Failed to load evaluations for brand ${brand.id}:`, error)
+          const profileResponse = await fetch('/api/dashboard/profile')
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json()
+            setUserProfile(profileData.profile)
+            setSubscription(profileData.subscription)
+            console.log('Profile data loaded:', profileData)
           }
+        } catch (error) {
+          console.warn('Failed to load profile data:', error)
         }
 
-        setRecentEvaluations(allEvaluations.slice(0, 5))
-        setStats({
-          totalBrands,
-          totalEvaluations,
-          averageScore: completedEvaluations > 0 ? Math.round(totalScore / completedEvaluations) : 0,
-          completedEvaluations
-        })
+        // Load brands via API
+        try {
+          const brandsResponse = await fetch('/api/dashboard/brands')
+          if (brandsResponse.ok) {
+            const brandsData = await brandsResponse.json()
+            setBrands(brandsData.brands)
+            console.log('Brands loaded:', brandsData.brands.length)
+            
+            // Calculate stats from brands
+            const totalBrands = brandsData.brands.length
+            setStats(prev => ({ ...prev, totalBrands }))
+          }
+        } catch (error) {
+          console.warn('Failed to load brands:', error)
+        }
+
+        // Load evaluations via API
+        try {
+          const evaluationsResponse = await fetch('/api/dashboard/evaluations')
+          if (evaluationsResponse.ok) {
+            const evaluationsData = await evaluationsResponse.json()
+            const allEvaluations = evaluationsData.evaluations
+            
+            setRecentEvaluations(allEvaluations.slice(0, 5))
+            
+            // Calculate evaluation stats
+            const totalEvaluations = allEvaluations.length
+            const completedEvaluations = allEvaluations.filter((e: Evaluation) => e.status === 'completed').length
+            const scores = allEvaluations
+              .filter((e: Evaluation) => e.status === 'completed' && e.overallScore !== null)
+              .map((e: Evaluation) => e.overallScore!)
+            
+            const averageScore = scores.length > 0 ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length) : 0
+            
+            setStats(prev => ({
+              ...prev,
+              totalEvaluations,
+              completedEvaluations,
+              averageScore
+            }))
+            
+            console.log('Evaluations loaded:', allEvaluations.length)
+          }
+        } catch (error) {
+          console.warn('Failed to load evaluations:', error)
+        }
         
         console.log('Dashboard data loaded successfully')
       } catch (error) {
