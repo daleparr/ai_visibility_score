@@ -108,7 +108,7 @@ export default function DashboardPage() {
               .filter((e: Evaluation) => e.status === 'completed' && e.overallScore !== null)
               .map((e: Evaluation) => e.overallScore!)
             
-            const averageScore = scores.length > 0 ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length) : 0
+            const averageScore = scores.length > 0 ? Math.round(scores.reduce((sum: number, score: number) => sum + score, 0) / scores.length) : 0
             
             setStats(prev => ({
               ...prev,
