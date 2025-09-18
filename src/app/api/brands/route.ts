@@ -12,6 +12,14 @@ export async function POST(request: NextRequest) {
   const client = new Client({ connectionString: process.env.DATABASE_URL })
   
   try {
+    // Production debugging - check environment in Netlify
+    console.log('=== PRODUCTION DATABASE DEBUG ===')
+    console.log('NODE_ENV:', process.env.NODE_ENV)
+    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
+    console.log('DATABASE_URL length:', process.env.DATABASE_URL?.length || 0)
+    console.log('DATABASE_URL starts with:', process.env.DATABASE_URL?.substring(0, 20) || 'undefined')
+    console.log('All env keys:', Object.keys(process.env).filter(k => k.includes('DATABASE')))
+    
     const session = await getServerSession(authOptions)
     const sessionUser = session?.user as { id?: string; name?: string; email?: string; image?: string } | undefined
     
