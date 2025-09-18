@@ -1,0 +1,7 @@
+DEPLOY NOW - COMMIT 5d44d06
+
+Final fix for foreign key constraint issue.
+User creation added to brands API.
+All Neon database issues resolved.
+
+Timestamp: 2025-09-18T17:47:54.528Z
