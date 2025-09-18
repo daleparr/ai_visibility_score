@@ -4,15 +4,14 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { brands } from '@/lib/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { Client } from 'pg'
+
+const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 
 export async function POST(request: NextRequest) {
+  const client = new Client({ connectionString: process.env.DATABASE_URL })
+  
   try {
-    console.log('=== BRAND CREATION API DEBUG ===')
-    console.log('DATABASE_URL available:', !!process.env.DATABASE_URL)
-    
     const session = await getServerSession(authOptions)
     const sessionUser = session?.user as { id?: string; name?: string; email?: string; image?: string } | undefined
     
@@ -27,39 +26,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'name and websiteUrl required' }, { status: 400 })
     }
 
-    // Normalize industry to match database expectations
+    // Normalize industry to prevent constraint violations
     const industryNorm = String(industry || '').toLowerCase().replace(/[^a-z]/g, '')
-    console.log('Creating brand:', { name, websiteUrl, industry: industryNorm, userId: sessionUser.id })
-
-    // Check if brand already exists for this user
-    const existing = await db.select().from(brands)
-      .where(and(eq(brands.name, name), eq(brands.userId, sessionUser.id)))
-      .limit(1)
+    const slug = slugify(name)
     
-    if (existing.length > 0) {
-      console.log('Brand already exists, returning existing:', existing[0].id)
-      return NextResponse.json({ brand: existing[0] })
-    }
 
-    // Create new brand with normalized industry
-    const brandData = {
-      name,
-      websiteUrl,
-      industry: industryNorm,
-      description,
-      competitors,
-      userId: sessionUser.id
-    }
-
-    const result = await db.insert(brands).values(brandData).returning()
+    await client.connect()
     
-    if (result && result.length > 0) {
-      console.log('✅ Brand created successfully:', result[0].id)
-      return NextResponse.json({ brand: result[0] })
+    // Insert brand into database
+    const { rows } = await client.query(
+      `INSERT INTO brands (id, name, website_url, description, industry, competitors, user_id, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, NOW(), NOW())
+       RETURNING id, name, website_url`,
+      [name, websiteUrl, description || null, industryNorm || null, JSON.stringify(competitors || []), sessionUser.id]
+    )
+
+    if (rows[0]) {
+      console.log('✅ Brand created/updated successfully:', rows[0].id)
+      return NextResponse.json({ brand: rows[0] })
     }
 
-    console.log('❌ Insert returned empty result')
-    return NextResponse.json({ error: 'Failed to create brand - insert returned empty' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to create brand - no rows returned' }, { status: 500 })
 
   } catch (error: any) {
     console.error('❌ Error creating brand:', error)
@@ -71,5 +58,7 @@ export async function POST(request: NextRequest) {
       details: error.message,
       code: error.code || error.name
     }, { status: error.code === '23505' ? 409 : 500 })
+  } finally {
+    await client.end()
   }
 }

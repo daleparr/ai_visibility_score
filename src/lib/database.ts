@@ -38,11 +38,43 @@ export const getBrand = async (brandId: string): Promise<Brand | undefined> => {
 
 export const createBrand = async (brand: NewBrand): Promise<Brand | null> => {
   try {
+    console.log('Creating brand with data:', { name: brand.name, websiteUrl: brand.websiteUrl, userId: brand.userId })
+    
+    // First try to insert the brand
     const result = await db.insert(brands).values(brand).returning()
-    return result[0]
-  } catch (error) {
-    console.error('Error creating brand:', error)
-    return null
+    
+    if (result && result.length > 0) {
+      console.log('✅ Brand created successfully:', result[0].id)
+      return result[0]
+    } else {
+      console.log('❌ Insert returned empty result')
+      return null
+    }
+  } catch (error: any) {
+    console.error('❌ Error creating brand:', error)
+    console.error('Error code:', error.code)
+    console.error('Error message:', error.message)
+    
+    // If it's a unique constraint violation, try to find the existing brand
+    if (error.code === '23505') { // PostgreSQL unique violation
+      console.log('Unique constraint violation - checking for existing brand')
+      try {
+        // Try to find existing brand by name and userId
+        const existing = await db.select().from(brands)
+          .where(and(eq(brands.name, brand.name), eq(brands.userId, brand.userId)))
+          .limit(1)
+        
+        if (existing.length > 0) {
+          console.log('Found existing brand:', existing[0].id)
+          return existing[0]
+        }
+      } catch (findError) {
+        console.error('Error finding existing brand:', findError)
+      }
+    }
+    
+    // Re-throw the error so the API route can handle it properly
+    throw error
   }
 }
 
