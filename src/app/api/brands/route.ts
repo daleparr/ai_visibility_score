@@ -10,6 +10,10 @@ const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').repla
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('=== BRAND API DEBUG ===')
+    console.log('Environment:', process.env.NODE_ENV)
+    console.log('NETLIFY_DATABASE_URL exists:', !!process.env.NETLIFY_DATABASE_URL)
+    
     const session = await getServerSession(authOptions)
     const sessionUser = session?.user as { id?: string; name?: string; email?: string; image?: string } | undefined
     
@@ -33,7 +37,7 @@ export async function POST(request: NextRequest) {
     
     // Check if we're in Netlify environment (production)
     if (process.env.NETLIFY_DATABASE_URL || process.env.CONTEXT === 'production') {
-      console.log('Using Netlify Neon extension')
+      console.log('✅ Using Netlify Neon extension')
       // Use Netlify Neon extension - automatically uses NETLIFY_DATABASE_URL
       const sql = neon()
       
