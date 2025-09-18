@@ -4,7 +4,8 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db, brands } from '@/lib/db'
+import { db } from '@/lib/db'
+import { brands } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 
 export async function POST(request: NextRequest) {
@@ -26,7 +27,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'name and websiteUrl required' }, { status: 400 })
     }
 
-    console.log('Creating brand:', { name, websiteUrl, userId: sessionUser.id })
+    // Normalize industry to match database expectations
+    const industryNorm = String(industry || '').toLowerCase().replace(/[^a-z]/g, '')
+    console.log('Creating brand:', { name, websiteUrl, industry: industryNorm, userId: sessionUser.id })
 
     // Check if brand already exists for this user
     const existing = await db.select().from(brands)
@@ -38,11 +41,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ brand: existing[0] })
     }
 
-    // Create new brand
+    // Create new brand with normalized industry
     const brandData = {
       name,
       websiteUrl,
-      industry,
+      industry: industryNorm,
       description,
       competitors,
       userId: sessionUser.id
