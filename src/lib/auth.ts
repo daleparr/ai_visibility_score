@@ -23,15 +23,15 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, token }) {
       if (session.user && token.sub) {
-        // Add user ID to session - use crypto.randomUUID() for proper UUID format
+        // Add user ID to session - ensure it's a proper UUID
         (session.user as any).id = token.sub
       }
       return session
     },
-    async jwt({ token, user }) {
-      if (user) {
-        // Generate proper UUID for new users
-        token.sub = user.id || crypto.randomUUID()
+    async jwt({ token, user, account }) {
+      if (user && account) {
+        // Generate proper UUID for new users instead of using provider ID
+        token.sub = crypto.randomUUID()
       }
       return token
     },

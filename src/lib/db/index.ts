@@ -2,24 +2,22 @@ import { drizzle } from 'drizzle-orm/neon-http'
 import { neon } from '@neondatabase/serverless'
 import * as schema from './schema'
 
-// Database connection with Netlify Neon support
-const connectionString = process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL
-
-if (!connectionString) {
-  console.warn('No database URL found. Database operations will be disabled.')
-}
-
-// Create the connection only if we have a connection string
+// Database connection with Netlify Neon support - server-side only
 let sql: any = null
 let db: any = null
 
-if (connectionString) {
-  try {
-    sql = neon(connectionString)
-    db = drizzle(sql, { schema })
-    console.log('✅ Database connection initialized successfully')
-  } catch (error) {
-    console.error('❌ Failed to initialize database connection:', error)
+// Only initialize database connection server-side
+if (typeof window === 'undefined') {
+  const connectionString = process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL
+  
+  if (connectionString) {
+    try {
+      sql = neon(connectionString)
+      db = drizzle(sql, { schema })
+      console.log('✅ Database connection initialized successfully')
+    } catch (error) {
+      console.error('❌ Failed to initialize database connection:', error)
+    }
   }
 }
 
