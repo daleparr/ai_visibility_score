@@ -1,18 +1,18 @@
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { createBrand } from '@/lib/database'
+import { db, brands } from '@/lib/db'
+import { eq, and } from 'drizzle-orm'
 
 export async function POST(request: NextRequest) {
   try {
     console.log('=== BRAND CREATION API DEBUG ===')
     console.log('DATABASE_URL available:', !!process.env.DATABASE_URL)
-    console.log('DATABASE_URL length:', process.env.DATABASE_URL?.length || 0)
     
     const session = await getServerSession(authOptions)
-    console.log('Session user ID:', session?.user ? 'found' : 'missing')
-    
-    // Type assertion for session user with id (added by auth callback)
     const sessionUser = session?.user as { id?: string; name?: string; email?: string; image?: string } | undefined
     
     if (!sessionUser?.id) {
@@ -20,35 +20,53 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const brandData = await request.json()
-    console.log('Brand data received:', { name: brandData.name, websiteUrl: brandData.websiteUrl })
+    const { name, websiteUrl, description, industry, competitors } = await request.json()
     
-    // Ensure the brand is associated with the authenticated user
-    const brandWithUserId = {
-      ...brandData,
+    if (!name || !websiteUrl) {
+      return NextResponse.json({ error: 'name and websiteUrl required' }, { status: 400 })
+    }
+
+    console.log('Creating brand:', { name, websiteUrl, userId: sessionUser.id })
+
+    // Check if brand already exists for this user
+    const existing = await db.select().from(brands)
+      .where(and(eq(brands.name, name), eq(brands.userId, sessionUser.id)))
+      .limit(1)
+    
+    if (existing.length > 0) {
+      console.log('Brand already exists, returning existing:', existing[0].id)
+      return NextResponse.json({ brand: existing[0] })
+    }
+
+    // Create new brand
+    const brandData = {
+      name,
+      websiteUrl,
+      industry,
+      description,
+      competitors,
       userId: sessionUser.id
     }
 
-    console.log('Attempting to create brand in database...')
-    const newBrand = await createBrand(brandWithUserId)
-    console.log('Brand creation result:', newBrand ? 'success' : 'failed')
+    const result = await db.insert(brands).values(brandData).returning()
     
-    if (!newBrand) {
-      return NextResponse.json({ error: 'Failed to create brand - database returned null' }, { status: 500 })
+    if (result && result.length > 0) {
+      console.log('✅ Brand created successfully:', result[0].id)
+      return NextResponse.json({ brand: result[0] })
     }
 
-    console.log('✅ Brand created successfully:', newBrand.id)
-    return NextResponse.json({ brand: newBrand })
+    console.log('❌ Insert returned empty result')
+    return NextResponse.json({ error: 'Failed to create brand - insert returned empty' }, { status: 500 })
+
   } catch (error: any) {
     console.error('❌ Error creating brand:', error)
-    console.error('Error name:', error.name)
-    console.error('Error message:', error.message)
     console.error('Error code:', error.code)
-    console.error('Error stack:', error.stack)
-    return NextResponse.json({
-      error: 'Failed to create brand',
+    console.error('Error message:', error.message)
+    
+    return NextResponse.json({ 
+      error: 'Failed to create brand', 
       details: error.message,
       code: error.code || error.name
-    }, { status: 500 })
+    }, { status: error.code === '23505' ? 409 : 500 })
   }
 }
