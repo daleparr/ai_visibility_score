@@ -2,11 +2,11 @@ import { drizzle } from 'drizzle-orm/neon-http'
 import { neon } from '@neondatabase/serverless'
 import * as schema from './schema'
 
-// Database connection with fallback handling
-const connectionString = process.env.DATABASE_URL
+// Database connection with Netlify Neon support
+const connectionString = process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL
 
 if (!connectionString) {
-  console.warn('DATABASE_URL not found. Database operations will be disabled.')
+  console.warn('No database URL found. Database operations will be disabled.')
 }
 
 // Create the connection only if we have a connection string
