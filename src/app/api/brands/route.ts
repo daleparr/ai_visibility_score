@@ -10,12 +10,13 @@ const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').repla
 
 export async function POST(request: NextRequest) {
   try {
-    // Production debugging - check Netlify environment
-    console.log('=== NETLIFY NEON DEBUG ===')
+    // Production debugging - check Netlify environment v2
+    console.log('=== NETLIFY NEON DEBUG v2 ===')
     console.log('NODE_ENV:', process.env.NODE_ENV)
     console.log('NETLIFY_DATABASE_URL exists:', !!process.env.NETLIFY_DATABASE_URL)
     console.log('NETLIFY_DATABASE_URL_UNPOOLED exists:', !!process.env.NETLIFY_DATABASE_URL_UNPOOLED)
     console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
+    console.log('CONTEXT:', process.env.CONTEXT)
     
     const session = await getServerSession(authOptions)
     const sessionUser = session?.user as { id?: string; name?: string; email?: string; image?: string } | undefined
