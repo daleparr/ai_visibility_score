@@ -195,23 +195,42 @@ export class OptimizedLLMTestAgent extends BaseADIAgent {
    * Generate heuristic score based on brand characteristics
    */
   private generateHeuristicScore(brandName: string): number {
-    // Simple heuristic based on brand name characteristics
-    let score = 50 // Base score
+    // Data-driven heuristic based on actual brand characteristics
+    const brandLower = brandName.toLowerCase()
+    let score = 40 // Conservative base score
     
-    // Longer brand names might be more established
-    if (brandName.length > 8) score += 10
+    // Well-known global brands get higher scores
+    const globalBrands = ['nike', 'apple', 'microsoft', 'google', 'amazon', 'meta', 'tesla', 'adidas', 'coca-cola']
+    const establishedBrands = ['walmart', 'target', 'best buy', 'home depot', 'cvs', 'mcdonald', 'starbucks']
+    const luxuryBrands = ['louis vuitton', 'gucci', 'prada', 'hermès', 'chanel', 'rolex', 'tiffany']
+    const techBrands = ['microsoft', 'apple', 'google', 'meta', 'tesla', 'nvidia', 'intel', 'adobe']
     
-    // Common TLDs might indicate more established brands
-    if (brandName.toLowerCase().includes('com') || 
-        brandName.toLowerCase().includes('org') ||
-        brandName.toLowerCase().includes('net')) {
-      score += 15
+    // Brand recognition scoring
+    if (globalBrands.some(brand => brandLower.includes(brand))) {
+      score = 75 // Global brands have strong AI visibility
+    } else if (luxuryBrands.some(brand => brandLower.includes(brand))) {
+      score = 65 // Luxury brands have selective but strong presence
+    } else if (establishedBrands.some(brand => brandLower.includes(brand))) {
+      score = 60 // Established brands have good recognition
+    } else if (techBrands.some(brand => brandLower.includes(brand))) {
+      score = 70 // Tech brands often have strong AI presence
     }
     
-    // Add some randomness to simulate real variation
-    score += Math.floor(Math.random() * 20) - 10
+    // Brand name quality indicators
+    if (brandName.length > 12) score -= 5 // Very long names are harder to remember
+    if (brandName.length < 4) score -= 10 // Very short names may be ambiguous
+    if (brandName.includes('-') || brandName.includes('_')) score -= 5 // Hyphens/underscores reduce clarity
     
-    return Math.max(30, Math.min(85, score))
+    // Domain quality indicators (if brand name suggests domain)
+    if (brandLower.includes('.com')) score += 10 // Established web presence
+    if (brandLower.includes('.org')) score += 5 // Organizational presence
+    
+    // Industry context adjustments
+    if (brandLower.includes('tech') || brandLower.includes('digital')) score += 8 // Tech-forward brands
+    if (brandLower.includes('luxury') || brandLower.includes('premium')) score += 5 // Premium positioning
+    if (brandLower.includes('local') || brandLower.includes('regional')) score -= 10 // Limited geographic scope
+    
+    return Math.max(25, Math.min(85, score))
   }
 
   /**
@@ -299,14 +318,23 @@ export class OptimizedLLMTestAgent extends BaseADIAgent {
    * Generate fast mock response
    */
   private generateMockResponse(query: string): string {
-    const responses = [
-      `Based on available information, this appears to be a legitimate business entity.`,
-      `This brand has some online presence and appears to offer products/services.`,
-      `Limited information available, but the brand seems to have basic web presence.`,
-      `This appears to be an established brand with online visibility.`
-    ]
+    // Generate contextual response based on query content
+    const queryLower = query.toLowerCase()
     
-    return responses[Math.floor(Math.random() * responses.length)]
+    if (queryLower.includes('what can you tell me about')) {
+      return `This appears to be a business entity with an online presence. Based on the website structure and content, it seems to offer products or services to customers. More detailed analysis would require access to current AI model responses.`
+    }
+    
+    if (queryLower.includes('compare')) {
+      return `Comparative analysis requires real-time AI model access. Based on available data, this brand appears to have its own market position and offerings that would need detailed comparison analysis.`
+    }
+    
+    if (queryLower.includes('recommend')) {
+      return `Recommendation analysis requires current AI model evaluation. The brand appears to have products/services that could be relevant depending on specific customer needs and preferences.`
+    }
+    
+    // Default contextual response
+    return `Analysis of this brand requires real-time AI model access for accurate assessment. Based on available website data, it appears to be an active business entity with online presence.`
   }
 
   /**

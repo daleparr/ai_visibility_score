@@ -120,7 +120,9 @@ export class SchemaAgent extends BaseADIAgent {
         totalPages,
         pagesWithSchema,
         coveragePercentage: coverage,
-        schemaTypesFound: Array.from(schemaTypes)
+        schemaTypesFound: Array.from(schemaTypes),
+        specificRecommendations: this.generateSchemaRecommendations(coverage, Array.from(schemaTypes)),
+        implementationSteps: this.getSchemaImplementationSteps(coverage, Array.from(schemaTypes))
       }
     )
   }
@@ -384,5 +386,73 @@ export class SchemaAgent extends BaseADIAgent {
     }
     
     return Array.from(schemaTypes)
+  }
+
+  /**
+   * Generate specific schema recommendations based on actual findings
+   */
+  private generateSchemaRecommendations(coverage: number, schemaTypes: string[]): string[] {
+    const recommendations: string[] = []
+    
+    if (coverage === 0) {
+      recommendations.push("CRITICAL: No structured data found. Implement basic Schema.org markup immediately.")
+      recommendations.push("Start with Organization schema on your homepage - this is essential for AI recognition.")
+      recommendations.push("Add Product schema to all product pages with name, price, availability, and description.")
+    } else if (coverage < 30) {
+      recommendations.push("LOW COVERAGE: Expand structured data to more pages for better AI visibility.")
+      recommendations.push("Focus on product pages first - these drive the most AI recommendations.")
+    } else if (coverage < 70) {
+      recommendations.push("MODERATE COVERAGE: Good start, but expand to achieve comprehensive AI visibility.")
+    }
+    
+    // Specific schema type recommendations
+    if (!schemaTypes.includes('Organization')) {
+      recommendations.push("MISSING: Add Organization schema to establish your brand identity for AI systems.")
+    }
+    
+    if (!schemaTypes.includes('Product')) {
+      recommendations.push("MISSING: Add Product schema - critical for AI product recommendations.")
+    }
+    
+    if (!schemaTypes.includes('Review') && !schemaTypes.includes('AggregateRating')) {
+      recommendations.push("OPPORTUNITY: Add Review/Rating schema to boost credibility in AI responses.")
+    }
+    
+    if (!schemaTypes.includes('FAQPage')) {
+      recommendations.push("OPPORTUNITY: Add FAQ schema to help AI answer customer questions about your brand.")
+    }
+    
+    return recommendations
+  }
+
+  /**
+   * Get specific implementation steps based on current schema state
+   */
+  private getSchemaImplementationSteps(coverage: number, schemaTypes: string[]): string[] {
+    const steps: string[] = []
+    
+    if (coverage === 0) {
+      steps.push("1. Install a Schema.org plugin or add manual JSON-LD scripts")
+      steps.push("2. Add Organization schema to your homepage with name, url, logo, and description")
+      steps.push("3. Implement Product schema on your top 5 product pages")
+      steps.push("4. Test your markup using Google's Rich Results Test tool")
+      steps.push("5. Monitor Google Search Console for structured data errors")
+    } else {
+      if (!schemaTypes.includes('Organization')) {
+        steps.push("1. Add Organization schema to establish brand identity")
+      }
+      if (!schemaTypes.includes('Product')) {
+        steps.push("2. Implement Product schema with pricing and availability data")
+      }
+      if (!schemaTypes.includes('Review')) {
+        steps.push("3. Add Review/Rating schema to showcase customer feedback")
+      }
+      if (!schemaTypes.includes('FAQPage')) {
+        steps.push("4. Create FAQ schema to help AI answer customer questions")
+      }
+      steps.push("5. Validate all markup and fix any errors found")
+    }
+    
+    return steps
   }
 }
