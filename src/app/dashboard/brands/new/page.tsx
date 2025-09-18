@@ -20,7 +20,7 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react'
-import { createBrand } from '@/lib/database'
+// Removed direct database import - now using API route
 import { validateUrl, extractDomain } from '@/lib/utils'
 import { useSession } from 'next-auth/react'
 import { redirect } from 'next/navigation'
@@ -181,11 +181,24 @@ export default function NewBrandPage() {
         websiteUrl: formData.websiteUrl.trim(),
         industry: formData.industry,
         description: formData.description.trim() || null,
-        competitors: validCompetitors.length > 0 ? validCompetitors : null,
-        userId: (session?.user as any)?.id || 'fallback-user-id' // Use NextAuth session user ID
+        competitors: validCompetitors.length > 0 ? validCompetitors : null
       }
 
-      const newBrand = await createBrand(brandData)
+      // Call API route instead of direct database function
+      const response = await fetch('/api/brands', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(brandData)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create brand')
+      }
+
+      const { brand: newBrand } = await response.json()
       
       // Redirect to the brand detail page
       if (newBrand?.id) {
