@@ -41,6 +41,13 @@ export async function POST(request: NextRequest) {
       // Use Netlify Neon extension - automatically uses NETLIFY_DATABASE_URL
       const sql = neon()
       
+      // Ensure user exists in database (for JWT strategy)
+      await sql`
+        INSERT INTO users (id, email, name, created_at, updated_at)
+        VALUES (${sessionUser.id}, ${sessionUser.email || 'unknown@example.com'}, ${sessionUser.name || 'Unknown User'}, NOW(), NOW())
+        ON CONFLICT (id) DO NOTHING
+      `
+      
       rows = await sql`
         INSERT INTO brands (id, name, website_url, description, industry, competitors, user_id, created_at, updated_at)
         VALUES (gen_random_uuid(), ${name}, ${websiteUrl}, ${description || null}, ${industryNorm || null}, ${JSON.stringify(competitors || [])}, ${sessionUser.id}, NOW(), NOW())
