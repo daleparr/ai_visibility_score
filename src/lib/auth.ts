@@ -1,5 +1,7 @@
 import { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
+import { DrizzleAdapter } from '@auth/drizzle-adapter'
+import { db } from './db'
 
 // Build providers array based on available configuration
 const buildProviders = () => {
@@ -19,20 +21,15 @@ const buildProviders = () => {
 }
 
 export const authOptions: NextAuthOptions = {
+  adapter: DrizzleAdapter(db),
   providers: buildProviders(),
   callbacks: {
-    async session({ session, token }) {
-      if (session.user && token.sub) {
-        // Add user ID to session
-        (session.user as any).id = token.sub
+    async session({ session, user }) {
+      if (session.user && user) {
+        // Add user ID to session from database user
+        (session.user as any).id = user.id
       }
       return session
-    },
-    async jwt({ token, user }) {
-      if (user) {
-        token.sub = user.id
-      }
-      return token
     },
   },
   pages: {
@@ -40,7 +37,7 @@ export const authOptions: NextAuthOptions = {
     error: '/auth/error',
   },
   session: {
-    strategy: 'jwt',
+    strategy: 'database',
   },
   secret: process.env.NEXTAUTH_SECRET,
 }
