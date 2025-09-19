@@ -38,7 +38,7 @@ async function checkBrandInDatabase(brandName: string) {
     
     if (nicheSelection.length > 0) {
       console.log(`✅ Found in niche selection (${nicheSelection.length} entries):`)
-      nicheSelection.forEach(entry => {
+      nicheSelection.forEach((entry: any) => {
         console.log(`  • ${entry.brandName} - ${entry.websiteUrl} (${entry.nicheCategory})`)
       })
     } else {
@@ -47,7 +47,7 @@ async function checkBrandInDatabase(brandName: string) {
 
     if (queueEntries.length > 0) {
       console.log(`✅ Found in evaluation queue (${queueEntries.length} entries):`)
-      queueEntries.forEach(entry => {
+      queueEntries.forEach((entry: any) => {
         console.log(`  • ${entry.brandName} - ${entry.websiteUrl} (${entry.status})`)
       })
     } else {
@@ -56,7 +56,7 @@ async function checkBrandInDatabase(brandName: string) {
 
     if (cacheEntries.length > 0) {
       console.log(`✅ Found in leaderboard cache (${cacheEntries.length} entries):`)
-      cacheEntries.forEach(entry => {
+      cacheEntries.forEach((entry: any) => {
         console.log(`  • ${entry.brandName} - ${entry.websiteUrl} (Score: ${entry.adiScore})`)
       })
     } else {
