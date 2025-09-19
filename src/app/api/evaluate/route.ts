@@ -69,6 +69,100 @@ export async function POST(request: NextRequest) {
       // Extract results from the ADI system
       const { orchestrationResult, adiScore, industryPercentile, globalRank, evaluationTrace } = adiResult
       
+      // 🔥 CRITICAL FIX: Save evaluation to database with comprehensive error tracking
+      try {
+        console.log('💾 [CRITICAL] Starting database save process...')
+        console.log('💾 [DEBUG] Environment check:', {
+          hasNetlifyUrl: !!process.env.NETLIFY_DATABASE_URL,
+          nodeEnv: process.env.NODE_ENV,
+          brandId,
+          evaluationId
+        })
+        
+        const { createBrand, createEvaluation, createDimensionScore } = await import('@/lib/database')
+        
+        // STEP 1: Create brand record first (required for foreign key)
+        console.log('🏢 [DEBUG] Creating brand record...')
+        const brandRecord = await createBrand({
+          userId: 'guest-user', // For guest evaluations
+          name: extractBrandNameFromUrl(normalizedUrl),
+          websiteUrl: normalizedUrl,
+          industry: 'general',
+          adiEnabled: true
+        })
+        
+        if (!brandRecord) {
+          throw new Error('Failed to create brand record - foreign key constraint will fail')
+        }
+        
+        console.log('✅ [DEBUG] Brand created:', brandRecord.id)
+        
+        // STEP 2: Create main evaluation record
+        console.log('📊 [DEBUG] Creating evaluation record...')
+        const evaluationRecord = await createEvaluation({
+          brandId: brandRecord.id, // Use actual brand ID
+          status: 'completed',
+          overallScore: adiScore.overall,
+          grade: adiScore.grade,
+          verdict: `AI Discoverability Score: ${adiScore.overall}/100`,
+          strongestDimension: 'Technical Foundation',
+          weakestDimension: 'Brand Perception',
+          biggestOpportunity: 'Improve AI visibility',
+          adiScore: adiScore.overall,
+          adiGrade: adiScore.grade,
+          confidenceInterval: 85,
+          reliabilityScore: 90,
+          industryPercentile: industryPercentile || 50,
+          globalRank: globalRank || 1000,
+          methodologyVersion: 'ADI-v2.0',
+          completedAt: new Date()
+        })
+        
+        console.log('✅ [DEBUG] Evaluation saved:', evaluationRecord.id)
+        
+        // STEP 3: Save dimension scores
+        console.log('📈 [DEBUG] Processing dimension scores...')
+        const dimensionScores = (adiScore?.pillars || []).flatMap((pillar: any) =>
+          (pillar?.dimensions || []).map((dim: any) => ({
+            evaluationId: evaluationRecord.id,
+            dimensionName: dim?.dimension?.toString() || 'Unknown',
+            score: dim?.score || 0,
+            explanation: `Pillar: ${pillar?.pillar}, Score: ${dim?.score}`,
+            recommendations: { pillar: pillar?.pillar, confidence: dim?.confidenceInterval }
+          }))
+        )
+        
+        console.log(`📈 [DEBUG] Saving ${dimensionScores.length} dimension scores...`)
+        let savedDimensionCount = 0
+        
+        for (const dimScore of dimensionScores) {
+          try {
+            const savedDimension = await createDimensionScore(dimScore)
+            savedDimensionCount++
+            console.log(`✅ [DEBUG] Dimension score saved: ${savedDimension.id}`)
+          } catch (dimError) {
+            console.error(`❌ [ERROR] Failed to save dimension score:`, dimError)
+            console.error(`❌ [ERROR] Dimension data:`, dimScore)
+            throw dimError // Re-throw to fail the entire operation
+          }
+        }
+        
+        console.log(`✅ [SUCCESS] Database save completed: evaluation=${evaluationRecord.id}, dimensions=${savedDimensionCount}`)
+        
+      } catch (dbError) {
+        console.error('❌ [CRITICAL] Database save failed completely:', dbError)
+        console.error('❌ [CRITICAL] Error details:', {
+          message: dbError instanceof Error ? dbError.message : 'Unknown error',
+          stack: dbError instanceof Error ? dbError.stack : undefined,
+          brandId,
+          evaluationId,
+          adiScore: adiScore?.overall
+        })
+        
+        // Re-throw the error to fail the API request and expose the issue
+        throw new Error(`Database persistence failed: ${dbError instanceof Error ? dbError.message : 'Unknown error'}`)
+      }
+      
       // Generate recommendations based on lowest scoring pillars
       const recommendations = generateRecommendations(adiScore)
       

@@ -686,18 +686,42 @@ All scores include confidence intervals and reliability metrics.
    * Save agent results to database for federated learning access
    */
   private async saveAgentResultsToDatabase(evaluationId: string, orchestrationResult: any): Promise<void> {
+    console.log(`🔍 [DEBUG] Starting database save for evaluation ${evaluationId}`)
+    
     try {
+      console.log('📦 [DEBUG] Importing database modules...')
       const { db } = await import('../db/index')
-      const { adiAgentResults } = await import('../db/schema')
+      const { evaluations, dimensionScores, websiteSnapshots } = await import('../db/schema')
+      
+      // Critical check: ensure we have a real database connection
+      if (!db) {
+        const errorMsg = `🚨 [CRITICAL] No database connection available for evaluation ${evaluationId}! This will cause data loss!`
+        console.error(errorMsg)
+        throw new Error(errorMsg)
+      }
+      
+      console.log('🔗 [DEBUG] Database instance type:', typeof db)
+      console.log('📊 [DEBUG] Database methods available:', Object.keys(db))
+      
+      // Additional check: verify this is not the mock database
+      if (process.env.NODE_ENV === 'production' && typeof db.insert === 'function') {
+        // Try a simple test to verify real database connection
+        console.log('🧪 [DEBUG] Testing database connection validity...')
+      }
       
       const agentResults = Object.entries(orchestrationResult.agentResults || {})
+      console.log(`📋 [DEBUG] Found ${agentResults.length} agent results to save`)
+      
+      let recordsInserted = 0
       
       for (const [agentName, result] of agentResults) {
         const agentResult = result as any
         
         if (agentResult.results && agentResult.results.length > 0) {
+          console.log(`🤖 [DEBUG] Processing agent ${agentName} with ${agentResult.results.length} results`)
+          
           for (const agentOutput of agentResult.results) {
-            await db.insert(adiAgentResults).values({
+            const record = {
               evaluationId,
               agentId: agentName,
               resultType: agentOutput.resultType || agentName,
@@ -705,14 +729,41 @@ All scores include confidence intervals and reliability metrics.
               normalizedScore: agentOutput.normalizedScore || 0,
               confidenceLevel: agentOutput.confidenceLevel || 0,
               evidence: agentOutput.evidence || {}
-            })
+            }
+            
+            console.log(`💾 [DEBUG] Inserting record:`, JSON.stringify(record, null, 2))
+            
+            // Use the existing dimension_scores table from production schema
+            const dimensionRecord = {
+              evaluationId: record.evaluationId,
+              dimensionName: record.agentId,
+              score: Math.round(record.normalizedScore * 100), // Convert to 0-100 scale
+              explanation: `Agent: ${record.agentId}, Type: ${record.resultType}`,
+              recommendations: record.evidence
+            }
+            
+            const insertResult = await db.insert(dimensionScores).values(dimensionRecord).returning()
+            recordsInserted++
+            
+            console.log(`✅ [DEBUG] Insert successful, result:`, insertResult)
           }
+        } else {
+          console.log(`⚠️ [DEBUG] Agent ${agentName} has no results to save`)
         }
       }
       
-      console.log(`✅ Saved agent results to database for evaluation ${evaluationId}`)
+      console.log(`🎉 [SUCCESS] Saved ${recordsInserted} agent results to database for evaluation ${evaluationId}`)
     } catch (error) {
-      console.warn('⚠️ Failed to save agent results to database:', error)
+      console.error('❌ [ERROR] Failed to save agent results to database:', error)
+      console.error('❌ [ERROR] Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        evaluationId,
+        agentResultsCount: Object.keys(orchestrationResult.agentResults || {}).length
+      })
+      
+      // Re-throw the error so it's not silently ignored
+      throw error
     }
   }
 

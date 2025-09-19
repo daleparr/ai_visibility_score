@@ -1,6 +1,6 @@
 [build]
   publish = ".next"
-  command = "npm run build"
+  command = "npm run build:production"
 
 [build.environment]
   NODE_VERSION = "18"
@@ -27,6 +27,10 @@
 # Environment variables (these will be set in Netlify dashboard)
 [context.production.environment]
   NODE_ENV = "production"
+
+# Production build with database migration
+[context.production]
+  command = "npm run migrate:production && npm run build"
 
 [context.deploy-preview.environment]
   NODE_ENV = "development"

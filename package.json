@@ -13,6 +13,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "dotenv -e .env.local -- drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
+    "migrate:production": "psql \"$NETLIFY_DATABASE_URL\" -f PRODUCTION_SCHEMA_COMPLETE_MIGRATION.sql",
+    "build:production": "npm run migrate:production && npm run build",
     "db:seed": "tsx scripts/seed.ts",
     "leaderboard:seed": "tsx scripts/seed-leaderboard-brands.ts",
     "leaderboard:process": "tsx scripts/process-leaderboard-queue.ts",

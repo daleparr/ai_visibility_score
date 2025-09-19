@@ -1,5 +1,8 @@
-import { pgTable, uuid, varchar, text, integer, boolean, timestamp, pgEnum, jsonb, serial } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, varchar, text, integer, boolean, timestamp, pgEnum, jsonb, serial, pgSchema } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
+
+// Define production schema for enhanced tables
+export const productionSchema = pgSchema('production')
 
 // Enums
 export const evaluationStatusEnum = pgEnum('evaluation_status', ['pending', 'running', 'completed', 'failed'])
@@ -36,7 +39,7 @@ export const competitiveEvaluationStatusEnum = pgEnum('competitive_evaluation_st
 export const selectionTypeEnum = pgEnum('selection_type', ['market_leader', 'emerging', 'geographic_mix', 'price_coverage'])
 
 // Core tables
-export const users = pgTable('users', {
+export const users = productionSchema.table('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 255 }).notNull().unique(),
   emailVerified: timestamp('email_verified'),
@@ -47,7 +50,7 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at').defaultNow()
 })
 
-export const accounts = pgTable('accounts', {
+export const accounts = productionSchema.table('accounts', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   type: varchar('type', { length: 255 }).notNull(),
@@ -64,7 +67,7 @@ export const accounts = pgTable('accounts', {
   updatedAt: timestamp('updated_at').defaultNow()
 })
 
-export const sessions = pgTable('sessions', {
+export const sessions = productionSchema.table('sessions', {
   id: uuid('id').primaryKey().defaultRandom(),
   sessionToken: varchar('session_token', { length: 255 }).notNull().unique(),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -73,7 +76,7 @@ export const sessions = pgTable('sessions', {
   updatedAt: timestamp('updated_at').defaultNow()
 })
 
-export const userProfiles = pgTable('user_profiles', {
+export const userProfiles = productionSchema.table('user_profiles', {
   id: uuid('id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
   fullName: varchar('full_name', { length: 255 }),
   companyName: varchar('company_name', { length: 255 }),
@@ -83,7 +86,7 @@ export const userProfiles = pgTable('user_profiles', {
   updatedAt: timestamp('updated_at').defaultNow()
 })
 
-export const brands = pgTable('brands', {
+export const brands = productionSchema.table('brands', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   name: varchar('name', { length: 255 }).notNull(),
@@ -100,7 +103,7 @@ export const brands = pgTable('brands', {
   updatedAt: timestamp('updated_at').defaultNow()
 })
 
-export const evaluations = pgTable('evaluations', {
+export const evaluations = productionSchema.table('evaluations', {
   id: uuid('id').primaryKey().defaultRandom(),
   brandId: uuid('brand_id').notNull().references(() => brands.id, { onDelete: 'cascade' }),
   status: evaluationStatusEnum('status').default('pending'),
@@ -123,7 +126,7 @@ export const evaluations = pgTable('evaluations', {
   updatedAt: timestamp('updated_at').defaultNow()
 })
 
-export const dimensionScores = pgTable('dimension_scores', {
+export const dimensionScores = productionSchema.table('dimension_scores', {
   id: uuid('id').primaryKey().defaultRandom(),
   evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
   dimensionName: varchar('dimension_name', { length: 100 }).notNull(),
@@ -133,7 +136,7 @@ export const dimensionScores = pgTable('dimension_scores', {
   createdAt: timestamp('created_at').defaultNow()
 })
 
-export const aiProviders = pgTable('ai_providers', {
+export const aiProviders = productionSchema.table('ai_providers', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   providerName: varchar('provider_name', { length: 50 }).notNull(),
@@ -143,7 +146,7 @@ export const aiProviders = pgTable('ai_providers', {
   updatedAt: timestamp('updated_at').defaultNow()
 })
 
-export const evaluationResults = pgTable('evaluation_results', {
+export const evaluationResults = productionSchema.table('evaluation_results', {
   id: uuid('id').primaryKey().defaultRandom(),
   evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
   providerName: varchar('provider_name', { length: 50 }).notNull(),
@@ -154,7 +157,7 @@ export const evaluationResults = pgTable('evaluation_results', {
   createdAt: timestamp('created_at').defaultNow()
 })
 
-export const recommendations = pgTable('recommendations', {
+export const recommendations = productionSchema.table('recommendations', {
   id: uuid('id').primaryKey().defaultRandom(),
   evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
   priority: recommendationPriorityEnum('priority').notNull(),
@@ -166,7 +169,7 @@ export const recommendations = pgTable('recommendations', {
   createdAt: timestamp('created_at').defaultNow()
 })
 
-export const competitorBenchmarks = pgTable('competitor_benchmarks', {
+export const competitorBenchmarks = productionSchema.table('competitor_benchmarks', {
   id: uuid('id').primaryKey().defaultRandom(),
   evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
   competitorUrl: varchar('competitor_url', { length: 500 }).notNull(),
@@ -177,7 +180,7 @@ export const competitorBenchmarks = pgTable('competitor_benchmarks', {
 })
 
 // AIDI Subscription Management
-export const subscriptions = pgTable('subscriptions', {
+export const subscriptions = productionSchema.table('subscriptions', {
   id: serial('id').primaryKey(),
   userId: varchar('user_id').references(() => users.id),
   stripeCustomerId: varchar('stripe_customer_id').unique(),
@@ -191,7 +194,7 @@ export const subscriptions = pgTable('subscriptions', {
   updatedAt: timestamp('updated_at').defaultNow()
 })
 
-export const payments = pgTable('payments', {
+export const payments = productionSchema.table('payments', {
   id: serial('id').primaryKey(),
   userId: varchar('user_id').references(() => users.id),
   subscriptionId: integer('subscription_id').references(() => subscriptions.id),
@@ -205,7 +208,7 @@ export const payments = pgTable('payments', {
 })
 
 // AIDI Premium tables (legacy - keeping for compatibility)
-export const adiSubscriptions = pgTable('adi_subscriptions', {
+export const adiSubscriptions = productionSchema.table('adi_subscriptions', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   tier: adiSubscriptionTierEnum('tier').notNull().default('free'),
@@ -221,7 +224,7 @@ export const adiSubscriptions = pgTable('adi_subscriptions', {
   updatedAt: timestamp('updated_at').defaultNow()
 })
 
-export const adiIndustries = pgTable('adi_industries', {
+export const adiIndustries = productionSchema.table('adi_industries', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 255 }).notNull().unique(),
   category: adiIndustryCategoryEnum('category').notNull(),
@@ -232,7 +235,7 @@ export const adiIndustries = pgTable('adi_industries', {
   updatedAt: timestamp('updated_at').defaultNow()
 })
 
-export const adiAgents = pgTable('adi_agents', {
+export const adiAgents = productionSchema.table('adi_agents', {
   id: uuid('id').primaryKey().defaultRandom(),
   evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
   agentName: varchar('agent_name', { length: 100 }).notNull(),
@@ -248,7 +251,7 @@ export const adiAgents = pgTable('adi_agents', {
   createdAt: timestamp('created_at').defaultNow()
 })
 
-export const adiAgentResults = pgTable('adi_agent_results', {
+export const adiAgentResults = productionSchema.table('adi_agent_results', {
   id: uuid('id').primaryKey().defaultRandom(),
   agentId: uuid('agent_id').notNull().references(() => adiAgents.id, { onDelete: 'cascade' }),
   resultType: varchar('result_type', { length: 100 }).notNull(),
@@ -259,7 +262,7 @@ export const adiAgentResults = pgTable('adi_agent_results', {
   createdAt: timestamp('created_at').defaultNow()
 })
 
-export const adiBenchmarks = pgTable('adi_benchmarks', {
+export const adiBenchmarks = productionSchema.table('adi_benchmarks', {
   id: uuid('id').primaryKey().defaultRandom(),
   industryId: uuid('industry_id').references(() => adiIndustries.id),
   benchmarkDate: timestamp('benchmark_date').notNull(),
@@ -274,7 +277,7 @@ export const adiBenchmarks = pgTable('adi_benchmarks', {
   createdAt: timestamp('created_at').defaultNow()
 })
 
-export const adiLeaderboards = pgTable('adi_leaderboards', {
+export const adiLeaderboards = productionSchema.table('adi_leaderboards', {
   id: uuid('id').primaryKey().defaultRandom(),
   brandId: uuid('brand_id').notNull().references(() => brands.id, { onDelete: 'cascade' }),
   evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
@@ -292,7 +295,7 @@ export const adiLeaderboards = pgTable('adi_leaderboards', {
 })
 
 // Leaderboard Data System Tables
-export const evaluationQueue = pgTable('evaluation_queue', {
+export const evaluationQueue = productionSchema.table('evaluation_queue', {
   id: uuid('id').primaryKey().defaultRandom(),
   brandName: varchar('brand_name', { length: 255 }).notNull(),
   websiteUrl: varchar('website_url', { length: 500 }).notNull(),
@@ -309,7 +312,7 @@ export const evaluationQueue = pgTable('evaluation_queue', {
   updatedAt: timestamp('updated_at').defaultNow()
 })
 
-export const leaderboardCache = pgTable('leaderboard_cache', {
+export const leaderboardCache = productionSchema.table('leaderboard_cache', {
   id: uuid('id').primaryKey().defaultRandom(),
   nicheCategory: varchar('niche_category', { length: 100 }).notNull(),
   brandName: varchar('brand_name', { length: 255 }).notNull(),
@@ -333,7 +336,7 @@ export const leaderboardCache = pgTable('leaderboard_cache', {
   updatedAt: timestamp('updated_at').defaultNow()
 })
 
-export const competitiveTriggers = pgTable('competitive_triggers', {
+export const competitiveTriggers = productionSchema.table('competitive_triggers', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').references(() => users.id),
   brandId: uuid('brand_id').references(() => brands.id),
@@ -346,7 +349,7 @@ export const competitiveTriggers = pgTable('competitive_triggers', {
   processedAt: timestamp('processed_at')
 })
 
-export const nicheBrandSelection = pgTable('niche_brand_selection', {
+export const nicheBrandSelection = productionSchema.table('niche_brand_selection', {
   id: uuid('id').primaryKey().defaultRandom(),
   nicheCategory: varchar('niche_category', { length: 100 }).notNull(),
   brandName: varchar('brand_name', { length: 255 }).notNull(),
@@ -359,7 +362,7 @@ export const nicheBrandSelection = pgTable('niche_brand_selection', {
   lastEvaluated: timestamp('last_evaluated')
 })
 
-export const leaderboardStats = pgTable('leaderboard_stats', {
+export const leaderboardStats = productionSchema.table('leaderboard_stats', {
   id: uuid('id').primaryKey().defaultRandom(),
   nicheCategory: varchar('niche_category', { length: 100 }).notNull(),
   totalBrands: integer('total_brands').notNull(),

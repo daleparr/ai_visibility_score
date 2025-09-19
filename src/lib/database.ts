@@ -38,26 +38,43 @@ export const getBrand = async (brandId: string): Promise<Brand | undefined> => {
 
 export const createBrand = async (brand: NewBrand): Promise<Brand | null> => {
   try {
-    console.log('Creating brand with data:', { name: brand.name, websiteUrl: brand.websiteUrl, userId: brand.userId })
+    console.log('🔍 [DB] Creating brand with data:', {
+      name: brand.name,
+      websiteUrl: brand.websiteUrl,
+      userId: brand.userId,
+      industry: brand.industry
+    })
+    
+    console.log('🔍 [DB] Database connection check:', {
+      dbExists: !!db,
+      dbType: typeof db,
+      isProduction: process.env.NODE_ENV === 'production'
+    })
+    
+    // Verify database connection before attempting insert
+    if (!db) {
+      throw new Error('No database connection available - cannot create brand')
+    }
     
     // First try to insert the brand
     const result = await db.insert(brands).values(brand).returning()
     
     if (result && result.length > 0) {
-      console.log('✅ Brand created successfully:', result[0].id)
+      console.log('✅ [DB] Brand created successfully:', result[0].id)
       return result[0]
     } else {
-      console.log('❌ Insert returned empty result')
-      return null
+      console.log('❌ [DB] Insert returned empty result')
+      throw new Error('Brand insert returned empty result')
     }
   } catch (error: any) {
-    console.error('❌ Error creating brand:', error)
-    console.error('Error code:', error.code)
-    console.error('Error message:', error.message)
+    console.error('❌ [DB] Error creating brand:', error)
+    console.error('❌ [DB] Error code:', error.code)
+    console.error('❌ [DB] Error message:', error.message)
+    console.error('❌ [DB] Brand data:', brand)
     
     // If it's a unique constraint violation, try to find the existing brand
     if (error.code === '23505') { // PostgreSQL unique violation
-      console.log('Unique constraint violation - checking for existing brand')
+      console.log('🔄 [DB] Unique constraint violation - checking for existing brand')
       try {
         // Try to find existing brand by name and userId
         const existing = await db.select().from(brands)
@@ -65,11 +82,11 @@ export const createBrand = async (brand: NewBrand): Promise<Brand | null> => {
           .limit(1)
         
         if (existing.length > 0) {
-          console.log('Found existing brand:', existing[0].id)
+          console.log('✅ [DB] Found existing brand:', existing[0].id)
           return existing[0]
         }
       } catch (findError) {
-        console.error('Error finding existing brand:', findError)
+        console.error('❌ [DB] Error finding existing brand:', findError)
       }
     }
     
@@ -133,8 +150,29 @@ export const getEvaluationWithDetails = async (evaluationId: string) => {
 }
 
 export const createEvaluation = async (evaluation: NewEvaluation): Promise<Evaluation> => {
-  const result = await db.insert(evaluations).values(evaluation).returning()
-  return result[0]
+  console.log('🔍 [DB] Creating evaluation with data:', {
+    brandId: evaluation.brandId,
+    status: evaluation.status,
+    overallScore: evaluation.overallScore,
+    grade: evaluation.grade
+  })
+  
+  try {
+    const result = await db.insert(evaluations).values(evaluation).returning()
+    
+    if (!result || result.length === 0) {
+      throw new Error('Insert returned empty result - database operation failed')
+    }
+    
+    console.log('✅ [DB] Evaluation created successfully:', result[0].id)
+    return result[0]
+  } catch (error) {
+    console.error('❌ [DB] Failed to create evaluation:', error)
+    console.error('❌ [DB] Evaluation data:', evaluation)
+    console.error('❌ [DB] Database instance type:', typeof db)
+    console.error('❌ [DB] Database methods:', db ? Object.keys(db) : 'null')
+    throw error
+  }
 }
 
 export const updateEvaluation = async (evaluationId: string, updates: Partial<NewEvaluation>): Promise<Evaluation | undefined> => {
@@ -152,8 +190,26 @@ export const getDimensionScores = async (evaluationId: string): Promise<Dimensio
 }
 
 export const createDimensionScore = async (score: NewDimensionScore): Promise<DimensionScore> => {
-  const result = await db.insert(dimensionScores).values(score).returning()
-  return result[0]
+  console.log('🔍 [DB] Creating dimension score:', {
+    evaluationId: score.evaluationId,
+    dimensionName: score.dimensionName,
+    score: score.score
+  })
+  
+  try {
+    const result = await db.insert(dimensionScores).values(score).returning()
+    
+    if (!result || result.length === 0) {
+      throw new Error('Insert returned empty result - dimension score save failed')
+    }
+    
+    console.log('✅ [DB] Dimension score created:', result[0].id)
+    return result[0]
+  } catch (error) {
+    console.error('❌ [DB] Failed to create dimension score:', error)
+    console.error('❌ [DB] Score data:', score)
+    throw error
+  }
 }
 
 // Recommendations operations
