@@ -1,39 +1,11 @@
-[build]
+﻿[build]
+  command = "pnpm build"
   publish = ".next"
-  command = "npm run build"
-
-[build.environment]
-  NODE_VERSION = "18"
-  NPM_FLAGS = "--production=false"
-  NEXT_TELEMETRY_DISABLED = "1"
-  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_APP_URL,NEXTAUTH_URL"
-  SECRETS_SCAN_OMIT_PATHS = ".next/**,.netlify/**,*.md,docs/**,guides/**"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
 [functions]
+  directory = "netlify/functions"
   node_bundler = "esbuild"
-
-[[headers]]
-  for = "/api/*"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, x-api-key"
-
-# Removed manual API redirect - let @netlify/plugin-nextjs handle API routes automatically
-
-# Environment variables (these will be set in Netlify dashboard)
-[context.production.environment]
-  NODE_ENV = "production"
-
-# Production build (migration handled separately)
-[context.production]
-  command = "npm run build"
-
-[context.deploy-preview.environment]
-  NODE_ENV = "development"
-
-[context.branch-deploy.environment]
-  NODE_ENV = "development"
+  external_node_modules = ["pg","drizzle-orm"]
