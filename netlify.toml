@@ -1,6 +1,6 @@
 [build]
   publish = ".next"
-  command = "npm run build:production"
+  command = "npm run build"
 
 [build.environment]
   NODE_VERSION = "18"
@@ -28,9 +28,9 @@
 [context.production.environment]
   NODE_ENV = "production"
 
-# Production build with database migration
+# Production build (migration handled separately)
 [context.production]
-  command = "npm run migrate:production && npm run build"
+  command = "npm run build"
 
 [context.deploy-preview.environment]
   NODE_ENV = "development"
