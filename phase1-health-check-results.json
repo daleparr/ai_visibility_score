@@ -1,0 +1,182 @@
+{
+  "summary": {
+    "timestamp": "2025-09-19T06:33:32.405Z",
+    "totalTests": 15,
+    "passedTests": 12,
+    "failedTests": 3,
+    "successRate": 80,
+    "duration": 29971
+  },
+  "performance": {
+    "averageResponseTime": 4515.909090909091,
+    "maxResponseTime": 5068,
+    "minResponseTime": 55,
+    "responseTimes": [
+      55,
+      5043,
+      5033,
+      5036,
+      4553,
+      5038,
+      4772,
+      4964,
+      5053,
+      5060,
+      5068
+    ]
+  },
+  "detailedResults": [
+    {
+      "test": "Health Endpoint",
+      "status": "PASS",
+      "timestamp": "2025-09-19T06:33:02.492Z",
+      "details": {
+        "responseTime": 55,
+        "statusCode": 200
+      }
+    },
+    {
+      "test": "Database Connection",
+      "status": "FAIL",
+      "timestamp": "2025-09-19T06:33:02.510Z",
+      "details": {
+        "error": "Database not connected"
+      }
+    },
+    {
+      "test": "Authentication Configuration",
+      "status": "FAIL",
+      "timestamp": "2025-09-19T06:33:02.609Z",
+      "details": {
+        "error": "No auth providers configured"
+      }
+    },
+    {
+      "test": "Stripe Configuration",
+      "status": "FAIL",
+      "timestamp": "2025-09-19T06:33:02.631Z",
+      "details": {
+        "error": "Missing Stripe configuration"
+      }
+    },
+    {
+      "test": "Brand Evaluation: https://apple.com",
+      "status": "PASS",
+      "timestamp": "2025-09-19T06:33:07.674Z",
+      "details": {
+        "responseTime": 5043,
+        "score": 34,
+        "grade": "F",
+        "agentsExecuted": 12
+      }
+    },
+    {
+      "test": "Brand Evaluation: https://nike.com",
+      "status": "PASS",
+      "timestamp": "2025-09-19T06:33:12.708Z",
+      "details": {
+        "responseTime": 5033,
+        "score": 33,
+        "grade": "F",
+        "agentsExecuted": 12
+      }
+    },
+    {
+      "test": "Brand Evaluation: https://tesla.com",
+      "status": "PASS",
+      "timestamp": "2025-09-19T06:33:17.744Z",
+      "details": {
+        "responseTime": 5036,
+        "score": 26,
+        "grade": "F",
+        "agentsExecuted": 12
+      }
+    },
+    {
+      "test": "Brand Evaluation: https://shopify.com",
+      "status": "PASS",
+      "timestamp": "2025-09-19T06:33:22.297Z",
+      "details": {
+        "responseTime": 4553,
+        "score": 34,
+        "grade": "F",
+        "agentsExecuted": 12
+      }
+    },
+    {
+      "test": "Brand Evaluation: https://stripe.com",
+      "status": "PASS",
+      "timestamp": "2025-09-19T06:33:27.335Z",
+      "details": {
+        "responseTime": 5038,
+        "score": 29,
+        "grade": "F",
+        "agentsExecuted": 12
+      }
+    },
+    {
+      "test": "Brand Evaluation: https://example.com",
+      "status": "PASS",
+      "timestamp": "2025-09-19T06:33:32.107Z",
+      "details": {
+        "responseTime": 4772,
+        "score": 33,
+        "grade": "F",
+        "agentsExecuted": 12
+      }
+    },
+    {
+      "test": "Brand Evaluation: https://example.com",
+      "status": "PASS",
+      "timestamp": "2025-09-19T06:33:32.300Z",
+      "details": {
+        "responseTime": 4964,
+        "score": 33,
+        "grade": "F",
+        "agentsExecuted": 12
+      }
+    },
+    {
+      "test": "Brand Evaluation: https://example.com",
+      "status": "PASS",
+      "timestamp": "2025-09-19T06:33:32.389Z",
+      "details": {
+        "responseTime": 5053,
+        "score": 29,
+        "grade": "F",
+        "agentsExecuted": 12
+      }
+    },
+    {
+      "test": "Brand Evaluation: https://example.com",
+      "status": "PASS",
+      "timestamp": "2025-09-19T06:33:32.396Z",
+      "details": {
+        "responseTime": 5060,
+        "score": 29,
+        "grade": "F",
+        "agentsExecuted": 12
+      }
+    },
+    {
+      "test": "Brand Evaluation: https://example.com",
+      "status": "PASS",
+      "timestamp": "2025-09-19T06:33:32.405Z",
+      "details": {
+        "responseTime": 5068,
+        "score": 29,
+        "grade": "F",
+        "agentsExecuted": 12
+      }
+    },
+    {
+      "test": "Concurrent Load Test",
+      "status": "PASS",
+      "timestamp": "2025-09-19T06:33:32.405Z",
+      "details": {
+        "concurrentUsers": 5,
+        "testBrand": "https://example.com"
+      }
+    }
+  ]
+}

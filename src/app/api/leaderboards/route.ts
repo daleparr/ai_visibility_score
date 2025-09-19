@@ -7,6 +7,7 @@ import {
   SectorHeatmap
 } from '@/types/leaderboards'
 import { BRAND_TAXONOMY, getAllCategories } from '@/lib/brand-taxonomy'
+import { LeaderboardPopulationService } from '@/lib/leaderboard-population-service'
 
 // Use dynamic import to prevent webpack bundling issues
 const getBrandCategorizationService = async () => {
@@ -57,41 +58,75 @@ async function generateLeaderboardData(filters: LeaderboardFilters): Promise<Lea
   const { leaderboardType, category } = filters
   const BrandCategorizationServiceClass = await getBrandCategorizationService()
   const categorizationService = BrandCategorizationServiceClass.getInstance()
+  const populationService = LeaderboardPopulationService.getInstance()
   
   // Determine which leaderboard to return
   let entries = []
   let title = ''
   let description = ''
   
-  switch (leaderboardType) {
-    case 'global':
-      entries = await generateDynamicGlobalLeaderboard(categorizationService)
-      title = 'Global AI Discoverability Leaderboard'
-      description = 'Top brands across all sectors ranked by AI visibility'
-      break
-      
-    case 'sector':
-      entries = await generateDynamicSectorLeaderboard(categorizationService, category || 'Fashion & Apparel')
-      title = `${category || 'Fashion & Apparel'} Sector Leaderboard`
-      description = `Top brands in ${category || 'Fashion & Apparel'} ranked by AI discoverability`
-      break
-      
-    case 'industry':
-      entries = await generateDynamicIndustryLeaderboard(categorizationService, category || 'Luxury Fashion')
-      title = `${category || 'Luxury Fashion'} Industry Leaderboard`
-      description = `Leading brands in ${category || 'Luxury Fashion'} by AI visibility`
-      break
-      
-    case 'niche':
-      entries = await generateDynamicNicheLeaderboard(categorizationService, category || 'Luxury Fashion Houses')
-      title = `${category || 'Luxury Fashion Houses'} Niche Leaderboard`
-      description = `Top ${category || 'Luxury Fashion Houses'} brands by AI discoverability`
-      break
-      
-    default:
-      entries = await generateDynamicGlobalLeaderboard(categorizationService)
-      title = 'Global AI Discoverability Leaderboard'
-      description = 'Top brands across all sectors'
+  // Try to get real data first, fallback to generated data
+  try {
+    switch (leaderboardType) {
+      case 'global':
+        // For global, we'll aggregate across all niches
+        entries = await generateDynamicGlobalLeaderboard(categorizationService)
+        title = 'Global AI Discoverability Leaderboard'
+        description = 'Top brands across all sectors ranked by AI visibility'
+        break
+        
+      case 'sector':
+        entries = await generateDynamicSectorLeaderboard(categorizationService, category || 'Fashion & Apparel')
+        title = `${category || 'Fashion & Apparel'} Sector Leaderboard`
+        description = `Top brands in ${category || 'Fashion & Apparel'} ranked by AI discoverability`
+        break
+        
+      case 'industry':
+        entries = await generateDynamicIndustryLeaderboard(categorizationService, category || 'Luxury Fashion')
+        title = `${category || 'Luxury Fashion'} Industry Leaderboard`
+        description = `Leading brands in ${category || 'Luxury Fashion'} by AI visibility`
+        break
+        
+      case 'niche':
+        // Try to get real data for this niche
+        const realData = await populationService.getLeaderboardData(category || 'Luxury Fashion Houses')
+        if (realData.length > 0) {
+          entries = realData.map((item, index) => ({
+            rank: item.rankNiche,
+            brand: item.brandName,
+            domain: item.websiteUrl,
+            overallScore: item.adiScore,
+            grade: item.grade,
+            pillarScores: item.pillarScores,
+            dimensionScores: [],
+            strengthHighlight: item.strengthHighlight,
+            gapHighlight: item.gapHighlight,
+            lastUpdated: new Date().toISOString().split('T')[0],
+            trend: item.trendData
+          }))
+        } else {
+          // Fallback to generated data
+          entries = await generateDynamicNicheLeaderboard(categorizationService, category || 'Luxury Fashion Houses')
+        }
+        title = `${category || 'Luxury Fashion Houses'} Niche Leaderboard`
+        description = `Top ${category || 'Luxury Fashion Houses'} brands by AI discoverability`
+        break
+        
+      default:
+        entries = await generateDynamicGlobalLeaderboard(categorizationService)
+        title = 'Global AI Discoverability Leaderboard'
+        description = 'Top brands across all sectors'
+    }
+  } catch (error) {
+    console.error('Error fetching real leaderboard data, falling back to generated:', error)
+    // Fallback to original generated data logic
+    switch (leaderboardType) {
+      case 'niche':
+        entries = await generateDynamicNicheLeaderboard(categorizationService, category || 'Luxury Fashion Houses')
+        break
+      default:
+        entries = await generateDynamicGlobalLeaderboard(categorizationService)
+    }
   }
 
   // Apply filters

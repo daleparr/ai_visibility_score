@@ -13,6 +13,28 @@ export const adiIndustryCategoryEnum = pgEnum('adi_industry_category', [
 ])
 export const agentStatusEnum = pgEnum('agent_status', ['pending', 'running', 'completed', 'failed', 'skipped'])
 
+// Enhanced Evaluation System Enums
+export const federatedSessionTypeEnum = pgEnum('federated_session_type', ['evaluation_feedback', 'ui_interaction', 'search_behavior', 'comparison_analysis'])
+export const privacyLevelEnum = pgEnum('privacy_level', ['anonymized', 'pseudonymized', 'aggregated'])
+export const improvementTypeEnum = pgEnum('improvement_type', ['scoring_accuracy', 'dimension_weights', 'agent_performance', 'user_satisfaction'])
+export const validationStatusEnum = pgEnum('validation_status', ['pending', 'validated', 'deployed', 'rolled_back'])
+export const pageTypeEnum = pgEnum('page_type', ['homepage', 'product', 'about', 'contact', 'blog', 'search_results'])
+export const changeTypeEnum = pgEnum('change_type', ['content_update', 'structure_change', 'new_feature', 'removal', 'performance_change'])
+export const cacheTypeEnum = pgEnum('cache_type', ['evaluation_result', 'dimension_score', 'benchmark_data', 'competitor_analysis'])
+export const trendTypeEnum = pgEnum('trend_type', ['score_trajectory', 'dimension_improvement', 'competitive_position', 'market_share'])
+export const timePeriodEnum = pgEnum('time_period', ['7d', '30d', '90d', '1y'])
+export const trendDirectionEnum = pgEnum('trend_direction', ['up', 'down', 'stable', 'volatile'])
+export const insightTypeEnum = pgEnum('insight_type', ['score_forecast', 'risk_assessment', 'opportunity_detection', 'competitive_threat'])
+export const predictionHorizonEnum = pgEnum('prediction_horizon', ['1m', '3m', '6m', '1y'])
+export const analysisTypeEnum = pgEnum('analysis_type', ['head_to_head', 'gap_analysis', 'strength_comparison', 'market_positioning'])
+export const threatLevelEnum = pgEnum('threat_level', ['low', 'medium', 'high', 'critical'])
+export const engagementTypeEnum = pgEnum('engagement_type', ['evaluation_request', 'leaderboard_view', 'comparison_analysis', 'report_download', 'dashboard_interaction'])
+export const metricTypeEnum = pgEnum('metric_type', ['evaluation_time', 'api_response', 'database_query', 'agent_execution', 'cache_performance'])
+export const evaluationQueueStatusEnum = pgEnum('evaluation_queue_status', ['pending', 'running', 'completed', 'failed', 'skipped'])
+export const triggerTypeEnum = pgEnum('trigger_type', ['user_added', 'auto_detected', 'leaderboard_gap'])
+export const competitiveEvaluationStatusEnum = pgEnum('competitive_evaluation_status', ['pending', 'queued', 'completed', 'failed'])
+export const selectionTypeEnum = pgEnum('selection_type', ['market_leader', 'emerging', 'geographic_mix', 'price_coverage'])
+
 // Core tables
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -269,6 +291,88 @@ export const adiLeaderboards = pgTable('adi_leaderboards', {
   createdAt: timestamp('created_at').defaultNow()
 })
 
+// Leaderboard Data System Tables
+export const evaluationQueue = pgTable('evaluation_queue', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  brandName: varchar('brand_name', { length: 255 }).notNull(),
+  websiteUrl: varchar('website_url', { length: 500 }).notNull(),
+  nicheCategory: varchar('niche_category', { length: 100 }).notNull(),
+  priority: integer('priority').default(5),
+  status: evaluationQueueStatusEnum('status').default('pending'),
+  scheduledAt: timestamp('scheduled_at').defaultNow(),
+  startedAt: timestamp('started_at'),
+  completedAt: timestamp('completed_at'),
+  retryCount: integer('retry_count').default(0),
+  errorMessage: text('error_message'),
+  metadata: jsonb('metadata').default('{}'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+})
+
+export const leaderboardCache = pgTable('leaderboard_cache', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  nicheCategory: varchar('niche_category', { length: 100 }).notNull(),
+  brandName: varchar('brand_name', { length: 255 }).notNull(),
+  websiteUrl: varchar('website_url', { length: 500 }).notNull(),
+  evaluationId: uuid('evaluation_id').references(() => evaluations.id),
+  adiScore: integer('adi_score').notNull(),
+  grade: varchar('grade', { length: 5 }).notNull(),
+  pillarScores: jsonb('pillar_scores').notNull(),
+  dimensionScores: jsonb('dimension_scores').notNull(),
+  strengthHighlight: jsonb('strength_highlight').notNull(),
+  gapHighlight: jsonb('gap_highlight').notNull(),
+  rankGlobal: integer('rank_global'),
+  rankSector: integer('rank_sector'),
+  rankIndustry: integer('rank_industry'),
+  rankNiche: integer('rank_niche'),
+  trendData: jsonb('trend_data'),
+  lastEvaluated: timestamp('last_evaluated').notNull(),
+  cacheExpires: timestamp('cache_expires').notNull(),
+  isPublic: boolean('is_public').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+})
+
+export const competitiveTriggers = pgTable('competitive_triggers', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id),
+  brandId: uuid('brand_id').references(() => brands.id),
+  competitorUrl: varchar('competitor_url', { length: 500 }).notNull(),
+  competitorName: varchar('competitor_name', { length: 255 }),
+  triggerType: triggerTypeEnum('trigger_type').notNull(),
+  evaluationStatus: competitiveEvaluationStatusEnum('evaluation_status').default('pending'),
+  evaluationId: uuid('evaluation_id').references(() => evaluations.id),
+  triggeredAt: timestamp('triggered_at').defaultNow(),
+  processedAt: timestamp('processed_at')
+})
+
+export const nicheBrandSelection = pgTable('niche_brand_selection', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  nicheCategory: varchar('niche_category', { length: 100 }).notNull(),
+  brandName: varchar('brand_name', { length: 255 }).notNull(),
+  websiteUrl: varchar('website_url', { length: 500 }).notNull(),
+  selectionType: selectionTypeEnum('selection_type').notNull(),
+  priority: integer('priority').default(5),
+  evaluationStatus: varchar('evaluation_status', { length: 50 }).default('pending'),
+  evaluationId: uuid('evaluation_id').references(() => evaluations.id),
+  addedAt: timestamp('added_at').defaultNow(),
+  lastEvaluated: timestamp('last_evaluated')
+})
+
+export const leaderboardStats = pgTable('leaderboard_stats', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  nicheCategory: varchar('niche_category', { length: 100 }).notNull(),
+  totalBrands: integer('total_brands').notNull(),
+  evaluatedBrands: integer('evaluated_brands').notNull(),
+  averageScore: integer('average_score').notNull(),
+  medianScore: integer('median_score').notNull(),
+  topPerformer: varchar('top_performer', { length: 255 }),
+  topScore: integer('top_score'),
+  lastUpdated: timestamp('last_updated').notNull(),
+  createdAt: timestamp('created_at').defaultNow()
+
+})
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
@@ -367,3 +471,15 @@ export type EvaluationResult = typeof evaluationResults.$inferSelect
 export type NewEvaluationResult = typeof evaluationResults.$inferInsert
 export type Recommendation = typeof recommendations.$inferSelect
 export type NewRecommendation = typeof recommendations.$inferInsert
+
+// Leaderboard Data System Types
+export type EvaluationQueue = typeof evaluationQueue.$inferSelect
+export type NewEvaluationQueue = typeof evaluationQueue.$inferInsert
+export type LeaderboardCache = typeof leaderboardCache.$inferSelect
+export type NewLeaderboardCache = typeof leaderboardCache.$inferInsert
+export type CompetitiveTrigger = typeof competitiveTriggers.$inferSelect
+export type NewCompetitiveTrigger = typeof competitiveTriggers.$inferInsert
+export type NicheBrandSelection = typeof nicheBrandSelection.$inferSelect
+export type NewNicheBrandSelection = typeof nicheBrandSelection.$inferInsert
+export type LeaderboardStats = typeof leaderboardStats.$inferSelect
+export type NewLeaderboardStats = typeof leaderboardStats.$inferInsert
