@@ -31,14 +31,17 @@ if (typeof window === 'undefined') {
         logger: process.env.NODE_ENV === 'development'
       })
       
-      // Note: Schema path will be set per query as needed
-      // Cannot use await in module initialization context
+      // Set search path to production schema for all queries
+      console.log('🔧 [DB] Setting search path to production schema...')
       
-      // Test the connection immediately
+      // Test the connection and set search path
       console.log('🧪 [DB] Testing database connection...')
       
-      // Force a simple query to verify connection works
-      sql('SELECT 1 as test').then(() => {
+      // Force a simple query to verify connection works and set search path
+      sql('SET search_path TO production, public').then(() => {
+        console.log('✅ [DB] Search path set to production schema')
+        return sql('SELECT 1 as test')
+      }).then(() => {
         console.log('✅ [DB] Database connection test successful')
       }).catch((testError: any) => {
         console.error('❌ [DB] Database connection test failed:', testError)
@@ -46,7 +49,7 @@ if (typeof window === 'undefined') {
         db = null
       })
       
-      console.log('✅ [DB] Database connection initialized')
+      console.log('✅ [DB] Database connection initialized with production schema')
     } catch (error) {
       console.error('❌ [DB] Failed to initialize database connection:', error)
       console.error('❌ [DB] Connection string available:', !!connectionString)
@@ -184,9 +187,11 @@ export const validateDatabaseConnection = async (): Promise<boolean> => {
   }
   
   try {
-    console.log('🧪 [DB] Testing database connection...')
+    console.log('🧪 [DB] Testing database connection with production schema...')
+    // Set search path and test connection
+    await sql('SET search_path TO production, public')
     await sql('SELECT 1 as connection_test')
-    console.log('✅ [DB] Database connection test successful')
+    console.log('✅ [DB] Database connection test successful with production schema')
     return true
   } catch (error) {
     console.error('❌ [DB] Database connection test failed:', error)

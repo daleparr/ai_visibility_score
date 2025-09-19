@@ -376,6 +376,36 @@ export const leaderboardStats = productionSchema.table('leaderboard_stats', {
 
 })
 
+// Website Snapshots for Crawl Data
+export const websiteSnapshots = productionSchema.table('website_snapshots', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  brandId: uuid('brand_id').references(() => brands.id),
+  evaluationId: uuid('evaluation_id').references(() => evaluations.id),
+  url: varchar('url', { length: 500 }).notNull(),
+  pageType: pageTypeEnum('page_type').notNull(),
+  contentHash: varchar('content_hash', { length: 64 }).notNull(),
+  rawHtml: text('raw_html'),
+  structuredContent: jsonb('structured_content'),
+  metadata: jsonb('metadata'),
+  screenshotUrl: varchar('screenshot_url', { length: 500 }),
+  crawlTimestamp: timestamp('crawl_timestamp').defaultNow(),
+  contentSizeBytes: integer('content_size_bytes'),
+  loadTimeMs: integer('load_time_ms'),
+  statusCode: integer('status_code').default(200),
+  createdAt: timestamp('created_at').defaultNow()
+})
+
+// Content Changes Detection
+export const contentChanges = productionSchema.table('content_changes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  websiteSnapshotId: uuid('website_snapshot_id').references(() => websiteSnapshots.id),
+  changeType: changeTypeEnum('change_type').notNull(),
+  changeDescription: text('change_description'),
+  impactScore: integer('impact_score'),
+  detectedAt: timestamp('detected_at').defaultNow(),
+  previousSnapshotId: uuid('previous_snapshot_id').references(() => websiteSnapshots.id)
+})
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
