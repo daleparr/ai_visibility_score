@@ -62,8 +62,14 @@ export async function POST(request: NextRequest) {
               current_setting('search_path') as search_path,
               (SELECT COUNT(*)::int FROM production.evaluations WHERE id = ${evaluationId}) as eval_row,
               (SELECT COUNT(*)::int FROM production.dimension_scores WHERE evaluation_id = ${evaluationId}) as dim_rows,
+              (SELECT COUNT(*)::int FROM production.website_snapshots WHERE evaluation_id = ${evaluationId}) as snap_rows,
+              (SELECT COUNT(*)::int FROM production.crawl_site_signals WHERE evaluation_id = ${evaluationId}) as signal_rows,
+              (SELECT COUNT(*)::int FROM production.evaluation_features_flat WHERE evaluation_id = ${evaluationId}) as feat_rows,
               (SELECT COUNT(*)::int FROM production.evaluations) as eval_total,
-              (SELECT COUNT(*)::int FROM production.dimension_scores) as dim_total
+              (SELECT COUNT(*)::int FROM production.dimension_scores) as dim_total,
+              (SELECT COUNT(*)::int FROM production.website_snapshots) as snap_total,
+              (SELECT COUNT(*)::int FROM production.crawl_site_signals) as signal_total,
+              (SELECT COUNT(*)::int FROM production.evaluation_features_flat) as feat_total
           `
           const r: any = rows?.[0] || {}
           return {
@@ -71,8 +77,14 @@ export async function POST(request: NextRequest) {
             searchPath: r?.search_path ?? null,
             evalRow: r?.eval_row ?? 0,
             dimRowsForEval: r?.dim_rows ?? 0,
+            snapRowsForEval: r?.snap_rows ?? 0,
+            signalRowsForEval: r?.signal_rows ?? 0,
+            featRowsForEval: r?.feat_rows ?? 0,
             evalTotal: r?.eval_total ?? 0,
-            dimTotal: r?.dim_total ?? 0
+            dimTotal: r?.dim_total ?? 0,
+            snapTotal: r?.snap_total ?? 0,
+            signalTotal: r?.signal_total ?? 0,
+            featTotal: r?.feat_total ?? 0
           }
         }
 
@@ -84,8 +96,14 @@ export async function POST(request: NextRequest) {
               current_setting('search_path') as search_path,
               (SELECT COUNT(*)::int FROM production.evaluations WHERE id = ${evaluationId}) as eval_row,
               (SELECT COUNT(*)::int FROM production.dimension_scores WHERE evaluation_id = ${evaluationId}) as dim_rows,
+              (SELECT COUNT(*)::int FROM production.website_snapshots WHERE evaluation_id = ${evaluationId}) as snap_rows,
+              (SELECT COUNT(*)::int FROM production.crawl_site_signals WHERE evaluation_id = ${evaluationId}) as signal_rows,
+              (SELECT COUNT(*)::int FROM production.evaluation_features_flat WHERE evaluation_id = ${evaluationId}) as feat_rows,
               (SELECT COUNT(*)::int FROM production.evaluations) as eval_total,
-              (SELECT COUNT(*)::int FROM production.dimension_scores) as dim_total
+              (SELECT COUNT(*)::int FROM production.dimension_scores) as dim_total,
+              (SELECT COUNT(*)::int FROM production.website_snapshots) as snap_total,
+              (SELECT COUNT(*)::int FROM production.crawl_site_signals) as signal_total,
+              (SELECT COUNT(*)::int FROM production.evaluation_features_flat) as feat_total
           `)
           const r: any = Array.isArray(res) ? res[0] : (res?.rows?.[0] || {})
           return {
@@ -93,14 +111,20 @@ export async function POST(request: NextRequest) {
             searchPath: r?.search_path ?? null,
             evalRow: r?.eval_row ?? 0,
             dimRowsForEval: r?.dim_rows ?? 0,
+            snapRowsForEval: r?.snap_rows ?? 0,
+            signalRowsForEval: r?.signal_rows ?? 0,
+            featRowsForEval: r?.feat_rows ?? 0,
             evalTotal: r?.eval_total ?? 0,
-            dimTotal: r?.dim_total ?? 0
+            dimTotal: r?.dim_total ?? 0,
+            snapTotal: r?.snap_total ?? 0,
+            signalTotal: r?.signal_total ?? 0,
+            featTotal: r?.feat_total ?? 0
           }
         }
 
         // 3) Last resort (dev/mock): approximate counts via ORM
         if (db) {
-          const { evaluations, dimensionScores } = await import('@/lib/db/schema')
+          const { evaluations, dimensionScores, websiteSnapshots, crawlSiteSignals, evaluationFeaturesFlat } = await import('@/lib/db/schema')
           const { eq } = await import('drizzle-orm')
 
           const evRowArr = await db
@@ -114,16 +138,40 @@ export async function POST(request: NextRequest) {
             .from(dimensionScores)
             .where(eq(dimensionScores.evaluationId, evaluationId))
 
+          const snapRowsArr = await db
+            .select({ id: websiteSnapshots.id })
+            .from(websiteSnapshots)
+            .where(eq(websiteSnapshots.evaluationId as any, evaluationId))
+
+          const signalRowsArr = await db
+            .select({ id: crawlSiteSignals.id })
+            .from(crawlSiteSignals)
+            .where(eq(crawlSiteSignals.evaluationId, evaluationId))
+
+          const featRowsArr = await db
+            .select({ id: evaluationFeaturesFlat.id })
+            .from(evaluationFeaturesFlat)
+            .where(eq(evaluationFeaturesFlat.evaluationId, evaluationId))
+
           const evTotalArr = await db.select({ id: evaluations.id }).from(evaluations)
           const dimTotalArr = await db.select({ id: dimensionScores.id }).from(dimensionScores)
+          const snapTotalArr = await db.select({ id: websiteSnapshots.id }).from(websiteSnapshots)
+          const signalTotalArr = await db.select({ id: crawlSiteSignals.id }).from(crawlSiteSignals)
+          const featTotalArr = await db.select({ id: evaluationFeaturesFlat.id }).from(evaluationFeaturesFlat)
 
           return {
             hasDb: !!db,
             searchPath: null,
             evalRow: evRowArr?.length || 0,
             dimRowsForEval: dimRowsArr?.length || 0,
+            snapRowsForEval: snapRowsArr?.length || 0,
+            signalRowsForEval: signalRowsArr?.length || 0,
+            featRowsForEval: featRowsArr?.length || 0,
             evalTotal: evTotalArr?.length || 0,
-            dimTotal: dimTotalArr?.length || 0
+            dimTotal: dimTotalArr?.length || 0,
+            snapTotal: snapTotalArr?.length || 0,
+            signalTotal: signalTotalArr?.length || 0,
+            featTotal: featTotalArr?.length || 0
           }
         }
 
