@@ -382,7 +382,8 @@ export const websiteSnapshots = productionSchema.table('website_snapshots', {
   brandId: uuid('brand_id').references(() => brands.id),
   evaluationId: uuid('evaluation_id').references(() => evaluations.id),
   url: varchar('url', { length: 500 }).notNull(),
-  pageType: pageTypeEnum('page_type').notNull(),
+  // Use varchar to match production schema (avoid Postgres enum mismatch)
+  pageType: varchar('page_type', { length: 50 }).notNull(),
   contentHash: varchar('content_hash', { length: 64 }).notNull(),
   rawHtml: text('raw_html'),
   structuredContent: jsonb('structured_content'),

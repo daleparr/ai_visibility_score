@@ -1,5 +1,5 @@
 import { eq, desc, and } from 'drizzle-orm'
-import { db, brands, evaluations, dimensionScores, aiProviders, evaluationResults, recommendations, competitorBenchmarks, users, userProfiles, websiteSnapshots, crawlSiteSignals, evaluationFeaturesFlat } from './db'
+import { db, sql, brands, evaluations, dimensionScores, aiProviders, evaluationResults, recommendations, competitorBenchmarks, users, userProfiles, websiteSnapshots, crawlSiteSignals, evaluationFeaturesFlat } from './db'
 import type {
   Brand,
   NewBrand,
@@ -308,10 +308,55 @@ export const createWebsiteSnapshot = async (snapshot: NewWebsiteSnapshot): Promi
     if (!result || result.length === 0) throw new Error('Insert returned empty result - website snapshot save failed')
     console.log('✅ [DB] Website snapshot created:', result[0].id)
     return result[0]
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ [DB] Failed to create website snapshot:', error)
     console.error('❌ [DB] Snapshot data keys:', Object.keys(snapshot || {}))
-    throw error
+
+    // Fallback: try a minimal raw insert via Neon SQL to isolate/mitigate failures (e.g., enum/JSON/undefined issues)
+    try {
+      const pageType = (snapshot as any).pageType ?? 'homepage'
+      const statusCode = (snapshot as any).statusCode ?? 200
+
+      // Ensure JSON values are serialized properly
+      const structured = Array.isArray((snapshot as any).structuredContent) ? (snapshot as any).structuredContent : []
+      const metadata = (snapshot as any).metadata && typeof (snapshot as any).metadata === 'object' ? (snapshot as any).metadata : {}
+
+      const rows = await sql<any>`
+        INSERT INTO production.website_snapshots
+          (brand_id, evaluation_id, url, page_type, content_hash, raw_html, structured_content, metadata, status_code, content_size_bytes, title, meta_description, has_title, has_meta_description, has_structured_data, structured_data_types_count, crawl_timestamp)
+        VALUES
+          (${
+            (snapshot as any).brandId || null
+          }, ${snapshot.evaluationId}, ${snapshot.url}, ${String(pageType)}, ${snapshot.contentHash},
+           ${ (snapshot as any).rawHtml ?? ''}, ${JSON.stringify(structured)}::jsonb, ${JSON.stringify(metadata)}::jsonb, ${statusCode},
+           ${ (snapshot as any).contentSizeBytes ?? null}, ${ (snapshot as any).title ?? null}, ${ (snapshot as any).metaDescription ?? null},
+           ${ (snapshot as any).hasTitle ?? null}, ${ (snapshot as any).hasMetaDescription ?? null}, ${ (snapshot as any).hasStructuredData ?? null},
+           ${ (snapshot as any).structuredDataTypesCount ?? null}, ${ (snapshot as any).crawlTimestamp ?? new Date()}
+          )
+        RETURNING id, evaluation_id, url
+      `
+      const row = rows?.[0]
+      if (!row) throw new Error('Raw insert returned no rows for website_snapshots')
+      console.log('✅ [DB] Website snapshot created via raw SQL fallback:', row.id)
+
+      // Return a compatible object shape (conservative merge of input + returned id)
+      return {
+        ...(snapshot as any),
+        id: row.id,
+      } as any
+    } catch (fallbackErr: any) {
+      console.error('❌ [DB] Raw SQL fallback for website snapshot also failed:', fallbackErr)
+      const code = error?.code || fallbackErr?.code
+      const detail = error?.detail || fallbackErr?.detail
+      const constraint = error?.constraint || fallbackErr?.constraint
+      const msg = error?.message || String(error)
+      const fallbackMsg = fallbackErr?.message || String(fallbackErr)
+      const combined = new Error(\`[website_snapshots] primary insert failed: \${msg} | fallback failed: \${fallbackMsg}\`)
+      ;(combined as any).code = code
+      ;(combined as any).detail = detail
+      ;(combined as any).constraint = constraint
+      throw combined
+    }
   }
 }
 
