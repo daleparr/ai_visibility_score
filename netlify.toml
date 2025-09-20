@@ -10,3 +10,8 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
   external_node_modules = ["pg","drizzle-orm"]
+
+
+# Scheduled function to process the leaderboard evaluation queue every 30 minutes
+[functions."scheduled-leaderboard-queue"]
+  schedule = "*/30 * * * *"

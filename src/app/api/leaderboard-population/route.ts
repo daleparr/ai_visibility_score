@@ -42,10 +42,24 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication for admin actions
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Allow scheduled/cron runs via secret header or Bearer token
+    const headers = request.headers
+    const authHeader = headers.get('authorization') || ''
+    const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
+    const cronSecretHeader = headers.get('x-cron-secret') || ''
+    const incomingSecret = bearer || cronSecretHeader
+    const isCronAuthorized = Boolean(
+      incomingSecret &&
+      process.env.LEADERBOARD_CRON_SECRET &&
+      incomingSecret === process.env.LEADERBOARD_CRON_SECRET
+    )
+
+    if (!isCronAuthorized) {
+      // Check authentication for admin actions
+      const session = await getServerSession(authOptions)
+      if (!session?.user?.email) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
     }
 
     const body = await request.json()

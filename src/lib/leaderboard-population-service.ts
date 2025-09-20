@@ -508,12 +508,13 @@ export class LeaderboardPopulationService {
       commerce: Math.floor(Math.random() * 40) + 60
     }
 
-    const cacheEntry: NewLeaderboardCache = {
-      nicheCategory: queueItem.nicheCategory,
-      brandName: queueItem.brandName,
-      websiteUrl: queueItem.websiteUrl,
-      evaluationId: evaluationResult.evaluationId,
-      adiScore: score,
+   const canonicalUrl = this.canonicalizeUrl(queueItem.websiteUrl)
+   const cacheEntry: NewLeaderboardCache = {
+     nicheCategory: queueItem.nicheCategory,
+     brandName: queueItem.brandName,
+     websiteUrl: canonicalUrl,
+     evaluationId: evaluationResult.evaluationId,
+     adiScore: score,
       grade,
       pillarScores,
       dimensionScores: [],
@@ -632,11 +633,12 @@ export class LeaderboardPopulationService {
     competitorUrl: string, 
     competitorName?: string
   ): Promise<void> {
-    // Check if competitor already exists in cache
+    // Check if competitor already exists in cache (canonicalized URL key)
+    const urlKey = this.canonicalizeUrl(competitorUrl)
     const existingCache = await db
       .select()
       .from(leaderboardCache)
-      .where(eq(leaderboardCache.websiteUrl, competitorUrl))
+      .where(eq(leaderboardCache.websiteUrl, urlKey))
       .limit(1)
 
     const needsEvaluation = existingCache.length === 0 || 
@@ -662,7 +664,7 @@ export class LeaderboardPopulationService {
       // Add to evaluation queue with high priority
       await this.addToEvaluationQueue([{
         brandName: competitorName || this.extractBrandFromUrl(competitorUrl),
-        websiteUrl: competitorUrl,
+        websiteUrl: urlKey,
         nicheCategory,
         priority: 2, // High priority for user-triggered evaluations
         triggerType: 'competitor_added',
@@ -692,10 +694,27 @@ export class LeaderboardPopulationService {
     return 'Category Specialists'
   }
 
-  /**
-   * Extract brand name from URL
-   */
-  private extractBrandFromUrl(url: string): string {
+ /**
+  * Canonicalize a URL to a consistent host key (lowercase, no scheme, no www)
+  */
+ private canonicalizeUrl(url: string): string {
+   try {
+     const full = url?.startsWith('http') ? url : `https://${url}`
+     const parsed = new URL(full)
+     return parsed.hostname.toLowerCase().replace(/^www\./, '')
+   } catch {
+     return String(url || '')
+       .toLowerCase()
+       .replace(/^https?:\/\//, '')
+       .replace(/^www\./, '')
+       .replace(/\/+$/, '')
+   }
+ }
+
+ /**
+  * Extract brand name from URL
+  */
+ private extractBrandFromUrl(url: string): string {
     try {
       const domain = new URL(url).hostname.replace('www.', '')
       return domain.split('.')[0]

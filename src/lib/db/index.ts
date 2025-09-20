@@ -38,16 +38,21 @@ if (typeof window === 'undefined') {
       console.log('🧪 [DB] Testing database connection...')
       
       // Force a simple query to verify connection works and set search path
-      sql`SET search_path TO production, public`.then(() => {
-        console.log('✅ [DB] Search path set to production schema')
-        return sql`SELECT 1 as test`
-      }).then(() => {
-        console.log('✅ [DB] Database connection test successful')
-      }).catch((testError: any) => {
-        console.error('❌ [DB] Database connection test failed:', testError)
-        console.error('❌ [DB] Falling back to mock database')
-        db = null
-      })
+      ;(async () => {
+        try {
+          await sql`SET search_path TO production, public`
+          console.log('✅ [DB] Search path set to production schema')
+        } catch (spErr: any) {
+          console.warn('⚠️ [DB] Failed to set search_path; continuing with schema-qualified tables', spErr)
+        }
+        try {
+          await sql`SELECT 1 as test`
+          console.log('✅ [DB] Database connection test successful')
+        } catch (testError: any) {
+          console.error('❌ [DB] Database connection test failed:', testError)
+          // Do NOT nullify db here. Keep the real connection; tables are schema-qualified.
+        }
+      })()
       
       console.log('✅ [DB] Database connection initialized with production schema')
     } catch (error) {
