@@ -13,7 +13,8 @@ import type {
   NewEvaluationResult,
   Recommendation,
   NewRecommendation,
-  User
+  User,
+  NewUser
 } from './db/schema'
 
 // Brand operations
@@ -257,6 +258,28 @@ export const getUser = async (userId: string): Promise<User | undefined> => {
   return result[0]
 }
 
+/**
+ * Ensure a guest user exists for anonymous evaluations.
+ * Returns the existing guest user or creates one if missing.
+ */
+export const ensureGuestUser = async (): Promise<User> => {
+  const guestEmail = 'guest@ai-visibility-score.app'
+  try {
+    const existing = await db.select().from(users).where(eq(users.email as any, guestEmail as any)).limit(1)
+    if (existing.length > 0) {
+      return existing[0]
+    }
+    const inserted = await db.insert(users).values({
+      email: guestEmail,
+      name: 'Guest User'
+    } as any).returning()
+    return inserted[0]
+  } catch (error) {
+    console.error('❌ [DB] Failed to ensure guest user exists:', error)
+    throw error
+  }
+}
+ 
 export const getUserProfile = async (userId: string) => {
   const result = await db.select().from(userProfiles).where(eq(userProfiles.id, userId)).limit(1)
   return result[0]

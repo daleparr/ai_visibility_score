@@ -24,51 +24,51 @@ export async function GET(request: NextRequest) {
     }
     
     // Test 1: Basic connection using sql directly
-    const connectionTest = await sql('SELECT 1 as test, current_user, current_database(), inet_server_addr() as server_ip')
+    const connectionTest = await sql`SELECT 1 as test, current_user, current_database(), inet_server_addr() as server_ip`
     console.log('✅ [PRODUCTION-DB-TEST] Database connection successful')
     
     // Test 2: Check production schema exists
-    const schemaTest = await sql(`
+    const schemaTest = await sql`
       SELECT schema_name
       FROM information_schema.schemata
       WHERE schema_name = 'production'
-    `)
+    `
     
     // Test 3: Check critical tables exist in production schema
-    const tablesTest = await sql(`
+    const tablesTest = await sql`
       SELECT table_name
       FROM information_schema.tables
       WHERE table_schema = 'production'
       AND table_name IN ('evaluations', 'dimension_scores', 'brands', 'users', 'adi_agent_results')
       ORDER BY table_name
-    `)
+    `
     
     // Test 4: Check table structure for evaluations
-    const evaluationsStructure = await sql(`
+    const evaluationsStructure = await sql`
       SELECT column_name, data_type, is_nullable
       FROM information_schema.columns
       WHERE table_schema = 'production'
       AND table_name = 'evaluations'
       ORDER BY ordinal_position
-    `)
+    `
     
     // Test 5: Check table structure for dimension_scores
-    const dimensionScoresStructure = await sql(`
+    const dimensionScoresStructure = await sql`
       SELECT column_name, data_type, is_nullable
       FROM information_schema.columns
       WHERE table_schema = 'production'
       AND table_name = 'dimension_scores'
       ORDER BY ordinal_position
-    `)
+    `
     
     // Test 6: Count existing records
-    const recordCounts = await sql(`
+    const recordCounts = await sql`
       SELECT
         (SELECT COUNT(*) FROM production.evaluations) as evaluations_count,
         (SELECT COUNT(*) FROM production.dimension_scores) as dimension_scores_count,
         (SELECT COUNT(*) FROM production.brands) as brands_count,
         (SELECT COUNT(*) FROM production.adi_agent_results) as adi_agent_results_count
-    `)
+    `
     
     // Test 7: Environment variables check
     const envCheck = {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, sql } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,14 +11,19 @@ export async function GET(request: NextRequest) {
     
     try {
       const dbStartTime = Date.now();
-      // Test database connection using Drizzle ORM
-      if (db && typeof db.select === 'function') {
-        // Try a simple select query
-        await db.select().from({ dummy: 'information_schema.tables' }).limit(1);
+      if (sql) {
+        // Use raw tagged SQL to avoid invalid identifier parameterization
+        await sql`SET search_path TO production, public`;
+        await sql`SELECT 1 as test`;
+        dbResponseTime = Date.now() - dbStartTime;
+        dbStatus = 'connected';
+      } else if (db && typeof db.select === 'function') {
+        // Fallback simple ORM query if sql is not available
+        const { evaluations } = await import('@/lib/db/schema');
+        await db.select().from(evaluations).limit(1);
         dbResponseTime = Date.now() - dbStartTime;
         dbStatus = 'connected';
       } else {
-        // Mock database - still functional
         dbResponseTime = Date.now() - dbStartTime;
         dbStatus = 'mock_connected';
       }
@@ -57,7 +62,6 @@ export async function GET(request: NextRequest) {
       }
     };
     
-    // Return 503 if critical services are down
     const isHealthy = dbStatus === 'connected' && totalResponseTime < 5000;
     const statusCode = isHealthy ? 200 : 503;
     

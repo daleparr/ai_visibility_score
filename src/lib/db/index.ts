@@ -189,8 +189,8 @@ export const validateDatabaseConnection = async (): Promise<boolean> => {
   try {
     console.log('🧪 [DB] Testing database connection with production schema...')
     // Set search path and test connection
-    await sql('SET search_path TO production, public')
-    await sql('SELECT 1 as connection_test')
+    await sql`SET search_path TO production, public`
+    await sql`SELECT 1 as connection_test`
     console.log('✅ [DB] Database connection test successful with production schema')
     return true
   } catch (error) {

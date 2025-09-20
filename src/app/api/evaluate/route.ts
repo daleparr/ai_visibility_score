@@ -56,7 +56,8 @@ export async function POST(request: NextRequest) {
         brandId,
         normalizedUrl,
         undefined, // industryId - let the system auto-detect
-        'guest-user'
+        'guest-user',
+        { persistToDb: false, evaluationId }
       )
       
       const timeoutPromise = new Promise((_, reject) => {
@@ -69,6 +70,14 @@ export async function POST(request: NextRequest) {
       
       // Extract results from the ADI system
       const { orchestrationResult, adiScore, industryPercentile, globalRank, evaluationTrace } = adiResult
+
+      // Normalize grade to enum ['A','B','C','D','F'] with proper typing, for DB and response usage
+      const gradeEnum = ['A','B','C','D','F'] as const
+      type GradeLetter = typeof gradeEnum[number]
+      let coarseGrade: GradeLetter = (String(adiScore?.grade ?? 'C').charAt(0).toUpperCase() as GradeLetter)
+      if (!gradeEnum.includes(coarseGrade)) {
+        coarseGrade = 'C'
+      }
       
       // 🔥 CRITICAL FIX: Save evaluation to database with comprehensive error tracking
       try {
@@ -80,12 +89,15 @@ export async function POST(request: NextRequest) {
           evaluationId
         })
         
-        const { createBrand, createEvaluation, createDimensionScore } = await import('@/lib/database')
+        const { createBrand, createEvaluation, createDimensionScore, ensureGuestUser } = await import('@/lib/database')
+        
+        // Ensure a guest user exists for anonymous evaluations
+        const guestUser = await ensureGuestUser()
         
         // STEP 1: Create brand record first (required for foreign key)
         console.log('🏢 [DEBUG] Creating brand record...')
         const brandRecord = await createBrand({
-          userId: 'guest-user', // For guest evaluations
+          userId: guestUser.id, // Link brand to ensured guest user
           name: extractBrandNameFromUrl(normalizedUrl),
           websiteUrl: normalizedUrl,
           industry: 'general',
@@ -98,19 +110,20 @@ export async function POST(request: NextRequest) {
         
         console.log('✅ [DEBUG] Brand created:', brandRecord.id)
         
-        // STEP 2: Create main evaluation record
+        // STEP 2: Create main evaluation record (force ID to match ADI context)
         console.log('📊 [DEBUG] Creating evaluation record...')
         const evaluationRecord = await createEvaluation({
+          id: evaluationId,
           brandId: brandRecord.id, // Use actual brand ID
           status: 'completed',
           overallScore: adiScore.overall,
-          grade: adiScore.grade,
+          grade: coarseGrade,
           verdict: `AI Discoverability Score: ${adiScore.overall}/100`,
           strongestDimension: 'Technical Foundation',
           weakestDimension: 'Brand Perception',
           biggestOpportunity: 'Improve AI visibility',
           adiScore: adiScore.overall,
-          adiGrade: adiScore.grade,
+          adiGrade: coarseGrade,
           confidenceInterval: 85,
           reliabilityScore: 90,
           industryPercentile: industryPercentile || 50,
@@ -178,11 +191,11 @@ export async function POST(request: NextRequest) {
       )
       
       return NextResponse.json({
-        evaluationId,
+        evaluationId: evaluationId,
         brandName: extractBrandNameFromUrl(normalizedUrl),
         websiteUrl: normalizedUrl,
         overallScore: adiScore.overall,
-        grade: adiScore.grade,
+        grade: coarseGrade,
         
         // Primary dimensions from ADI scoring
         dimensionScores,
