@@ -222,25 +222,32 @@ export async function POST(request: NextRequest) {
             // Use deterministic 64-char hash surrogate (no crypto dependency in edge/serverless)
             const contentHash = (evaluationId.replace(/-/g, '') + '0'.repeat(64)).slice(0, 64)
 
+            // Sanitize potentially long strings for varchar columns to prevent SQL errors
+            const safe = {
+              url: typeof ev.url === 'string' ? String(ev.url).slice(0, 500) : normalizedUrl,
+              title: typeof meta.title === 'string' ? String(meta.title).slice(0, 255) : null,
+              metaDescription: typeof meta.description === 'string' ? String(meta.description).slice(0, 255) : null
+            }
+
             // 1) website_snapshots
             const snapshot = await createWebsiteSnapshot({
               brandId: brandId as any,
               evaluationId,
-              url: ev.url || normalizedUrl,
+              url: safe.url,
               pageType: 'homepage' as any,
               contentHash,
               rawHtml,
               structuredContent: structured as any,
               metadata: { ...meta, contentMetrics, optimized: ev.optimized, cacheSize: ev.cacheSize } as any,
-              screenshotUrl: undefined as any,
+              screenshotUrl: null as any,
               crawlTimestamp: new Date(),
               contentSizeBytes: Number(rawHtml?.length || 0),
               loadTimeMs: undefined as any,
               statusCode: 200,
-              title: meta.title || null,
-              metaDescription: meta.description || null,
-              hasTitle: !!(contentMetrics.hasTitle || meta.title),
-              hasMetaDescription: !!(contentMetrics.hasMetaDescription || meta.description),
+              title: safe.title,
+              metaDescription: safe.metaDescription,
+              hasTitle: !!(contentMetrics.hasTitle || safe.title),
+              hasMetaDescription: !!(contentMetrics.hasMetaDescription || safe.metaDescription),
               hasStructuredData: !!(contentMetrics.hasStructuredData || (structured?.length > 0)),
               structuredDataTypesCount: Array.isArray(structured) ? structured.length : 0,
               qualityScore: Number(contentMetrics.qualityScore ?? homepageRes.normalizedScore ?? 0),
@@ -299,6 +306,7 @@ export async function POST(request: NextRequest) {
           }
         } catch (artifactErr) {
           console.warn('⚠️ [CRAWL] Failed to persist crawl artifacts:', artifactErr)
+          verification.artifacts = { error: artifactErr instanceof Error ? artifactErr.message : String(artifactErr) }
         }
         console.log('💾 [DEBUG] Environment check:', {
           hasNetlifyUrl: !!process.env.NETLIFY_DATABASE_URL,
