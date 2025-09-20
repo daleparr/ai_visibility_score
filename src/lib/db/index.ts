@@ -38,9 +38,9 @@ if (typeof window === 'undefined') {
       console.log('🧪 [DB] Testing database connection...')
       
       // Force a simple query to verify connection works and set search path
-      sql('SET search_path TO production, public').then(() => {
+      sql`SET search_path TO production, public`.then(() => {
         console.log('✅ [DB] Search path set to production schema')
-        return sql('SELECT 1 as test')
+        return sql`SELECT 1 as test`
       }).then(() => {
         console.log('✅ [DB] Database connection test successful')
       }).catch((testError: any) => {

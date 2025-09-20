@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'
 import { PerformanceOptimizedADIOrchestrator } from './performance-optimized-orchestrator'
 import { ADIScoringEngine } from './scoring'
 import { ADIBenchmarkingEngine } from './benchmarking-engine'
@@ -86,7 +87,7 @@ export class ADIService {
 
     // Create evaluation context
     const context: ADIEvaluationContext = {
-      evaluationId: `eval_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      evaluationId: uuidv4(),
       brandId,
       websiteUrl,
       industryId,

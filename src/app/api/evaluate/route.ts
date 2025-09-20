@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { v4 as uuidv4 } from 'uuid'
 import type { Brand } from '@/lib/db/schema'
 
 // Use dynamic imports to prevent webpack bundling issues
@@ -34,8 +35,8 @@ export async function POST(request: NextRequest) {
     console.log('🚀 Starting ADI Multi-Agent Evaluation for:', normalizedUrl)
 
     // Create evaluation ID and brand ID
-    const evaluationId = `eval_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    const brandId = `brand_${Date.now()}`
+    const evaluationId = uuidv4()
+    const brandId = uuidv4()
     
     // Set timeout for Netlify serverless function limits (8 seconds to be safe)
     const EVALUATION_TIMEOUT = 8000
