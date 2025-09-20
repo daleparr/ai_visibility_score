@@ -93,7 +93,7 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
       const normalizedUrl = this.normalizeUrl(url)
       
       // OPTIMIZATION 4: Balanced timeout for reliable content extraction
-      const response = await this.fetchWithTimeout(normalizedUrl, 5000) // 5s timeout
+      const response = await this.fetchWithTimeout(normalizedUrl, 7500) // 7.5s timeout
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`)
@@ -140,7 +140,7 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
   private async quickSitemapCheck(baseUrl: string): Promise<any | null> {
     try {
       const sitemapUrl = new URL('/sitemap.xml', baseUrl).toString()
-      const response = await this.fetchWithTimeout(sitemapUrl, 2000) // 2s timeout
+      const response = await this.fetchWithTimeout(sitemapUrl, 4000) // 4s timeout
       
       if (response.ok) {
         const sitemapContent = await response.text()
@@ -181,7 +181,7 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
   private async quickRobotsCheck(baseUrl: string): Promise<any | null> {
     try {
       const robotsUrl = new URL('/robots.txt', baseUrl).toString()
-      const response = await this.fetchWithTimeout(robotsUrl, 1500) // 1.5s timeout
+      const response = await this.fetchWithTimeout(robotsUrl, 3000) // 3s timeout
       
       if (response.ok) {
         const robotsContent = await response.text()

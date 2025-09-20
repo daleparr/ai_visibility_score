@@ -250,6 +250,11 @@ export async function POST(request: NextRequest) {
       try {
         console.log('💾 [CRITICAL] Starting database save process...')
         // Persist crawl artifacts (website_snapshots, crawl_site_signals, evaluation_features_flat)
+
+        // Debug: capture counts before attempting artifact persistence
+        verification.beforeArtifacts = await verifyDbState()
+        console.log('🔎 [VERIFY] Counts before artifact persistence:', verification.beforeArtifacts)
+
         try {
           const { createWebsiteSnapshot, createCrawlSiteSignals, createEvaluationFeaturesFlat } = await import('@/lib/database')
           const agentResults = orchestrationResult?.agentResults || {}
@@ -351,6 +356,10 @@ export async function POST(request: NextRequest) {
             }
           } else {
             console.log('ℹ️ [CRAWL] No homepage crawl evidence found; skipping artifact persistence')
+            // Record artifact skip reason and capture verification snapshot
+            verification.artifacts = { skipped: true, reason: 'no_homepage_evidence' }
+            verification.afterArtifacts = await verifyDbState()
+            console.log('🔎 [VERIFY] Counts after artifact bypass:', verification.afterArtifacts)
           }
         } catch (artifactErr) {
           console.warn('⚠️ [CRAWL] Failed to persist crawl artifacts:', artifactErr)
