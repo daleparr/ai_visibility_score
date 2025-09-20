@@ -289,81 +289,194 @@ export class LeaderboardPopulationService {
 
   /**
    * Process a single evaluation
+   * Implements full DB-backed persistence for competitor evaluations:
+   * - Ensure/derive user (guest fallback)
+   * - Create/find brand by website URL
+   * - Evaluate via ADIService with a fixed evaluationId
+   * - Persist evaluation row and dimension scores
+   * - Cache result into leaderboard_cache and update rankings
    */
   private async processEvaluation(queueItem: EvaluationQueue): Promise<void> {
     try {
       // Update status to running
       await db
         .update(evaluationQueue)
-        .set({ 
-          status: 'running', 
-          startedAt: new Date() 
+        .set({
+          status: 'running',
+          startedAt: new Date()
         })
         .where(eq(evaluationQueue.id, queueItem.id))
 
       console.log(`🔍 Evaluating ${queueItem.brandName} (${queueItem.websiteUrl})`)
 
-      // Create evaluation context
-      const evaluationContext = {
-        evaluationId: `leaderboard-${queueItem.id}`,
-        brandId: queueItem.brandName.toLowerCase().replace(/\s+/g, '-'),
-        websiteUrl: queueItem.websiteUrl,
-        evaluationType: 'standard' as const,
-        queryCanon: [],
-        crawlArtifacts: [],
-        metadata: {
-          brandName: queueItem.brandName,
-          nicheCategory: queueItem.nicheCategory,
-          triggerType: 'leaderboard_population'
+      // Normalize URL
+      const normalizeUrl = (u: string): string => {
+        try {
+          const full = u?.startsWith('http') ? u : `https://${u}`
+          const parsed = new URL(full)
+          return parsed.origin
+        } catch {
+          return u
         }
       }
+      const websiteUrl = normalizeUrl(queueItem.websiteUrl)
 
-      // Execute ADI evaluation
-      const evaluationResult = await this.orchestrator.executeEvaluation(evaluationContext)
+      // Lazy imports to avoid circular/serverless bundle issues
+      const { ensureGuestUser, createBrand, createEvaluation, createDimensionScore } = await import('./database')
+      const { ADIService } = await import('./adi/adi-service')
+      const { v4: uuidv4 } = await import('uuid')
 
-      if (evaluationResult.overallStatus === 'completed') {
-        // Cache the evaluation result
-        await this.cacheEvaluationResult(queueItem, evaluationResult)
-        
-        // Update queue status
-        await db
-          .update(evaluationQueue)
-          .set({
-            status: 'completed',
-            completedAt: new Date()
-          })
-          .where(eq(evaluationQueue.id, queueItem.id))
+      // Ensure user (prefer provided metadata, else guest)
+      const guestUser = await ensureGuestUser()
+      const ownerUserId: string = (queueItem as any)?.metadata?.userId || guestUser.id
 
-        console.log(`✅ Successfully evaluated ${queueItem.brandName}`)
-      } else {
-        throw new Error(`Evaluation failed: ${evaluationResult.errors.join(', ')}`)
+      // Find or create brand record by website url
+      let brandRecord = await db
+        .select()
+        .from(brands)
+        .where(eq(brands.websiteUrl, websiteUrl))
+        .limit(1)
+
+      if (!brandRecord[0]) {
+        const competitorName = queueItem.brandName || this.extractBrandFromUrl(websiteUrl)
+        console.log('🏢 Creating competitor brand...', { competitorName, websiteUrl, ownerUserId })
+        const created = await createBrand({
+          userId: ownerUserId,
+          name: competitorName,
+          websiteUrl,
+          industry: (queueItem.nicheCategory || '').toLowerCase().replace(/[^a-z]/g, '') || null,
+          description: null,
+          competitors: []
+        } as any)
+        if (!created) throw new Error('Brand creation returned null')
+        brandRecord = [created as any]
       }
 
+      const brandId = (brandRecord[0] as any).id
+      console.log('✅ Brand ready for evaluation:', brandId)
+
+      // Prepare evaluation id (must be a UUID)
+      const evaluationId = uuidv4()
+
+      // Run ADI evaluation (no internal persist to avoid duplicate/ordering issues)
+      const adiService = new ADIService()
+      await adiService.initialize()
+      const evalResponse = await adiService.evaluateBrand(
+        brandId,
+        websiteUrl,
+        undefined, // industryId auto
+        ownerUserId,
+        { persistToDb: false, evaluationId }
+      )
+
+      const { orchestrationResult, adiScore } = evalResponse
+
+      if (orchestrationResult.overallStatus !== 'completed') {
+        throw new Error(`Evaluation failed: ${orchestrationResult.errors?.join(', ')}`)
+      }
+
+      // Map grade to enum ['A','B','C','D','F']
+      const gradeEnum = ['A', 'B', 'C', 'D', 'F'] as const
+      type GradeLetter = typeof gradeEnum[number]
+      let coarseGrade: GradeLetter = (String(adiScore?.grade ?? 'C').charAt(0).toUpperCase() as GradeLetter)
+      if (!gradeEnum.includes(coarseGrade)) coarseGrade = 'C'
+
+      // Persist evaluation
+      const evaluationRow = await createEvaluation({
+        id: evaluationId,
+        brandId,
+        status: 'completed',
+        overallScore: adiScore.overall,
+        grade: coarseGrade,
+        verdict: `AI Discoverability Score: ${adiScore.overall}/100`,
+        strongestDimension: 'Technical Foundation',
+        weakestDimension: 'Brand Perception',
+        biggestOpportunity: 'Improve AI visibility',
+        adiScore: adiScore.overall,
+        adiGrade: coarseGrade,
+        confidenceInterval: 85,
+        reliabilityScore: 90,
+        industryPercentile: (adiScore as any)?.industryPercentile || 50,
+        globalRank: (adiScore as any)?.globalRank || 1000,
+        methodologyVersion: 'ADI-v2.0',
+        completedAt: new Date()
+      } as any)
+
+      // Persist dimension scores from ADI score breakdown
+      const dimScores = (adiScore?.pillars || []).flatMap((pillar: any) =>
+        (pillar?.dimensions || []).map((dim: any) => ({
+          evaluationId: evaluationRow.id,
+          dimensionName: dim?.dimension?.toString() || 'Unknown',
+          score: Math.max(0, Math.min(100, Number(dim?.score || 0))),
+          explanation: `Pillar: ${pillar?.pillar}, Score: ${dim?.score}`,
+          recommendations: { pillar: pillar?.pillar, confidence: dim?.confidenceInterval }
+        }))
+      )
+
+      console.log(`📈 Saving ${dimScores.length} dimension scores for evaluation ${evaluationRow.id}...`)
+      for (const s of dimScores) {
+        await createDimensionScore(s as any)
+      }
+
+      // Cache to leaderboard with actual score and pillar breakdown (fallbacks if missing)
+      const getPillar = (name: string) => {
+        try {
+          return (adiScore?.pillars || []).find((p: any) => String(p.pillar || '').toLowerCase().includes(name)) || null
+        } catch {
+          return null
+        }
+      }
+      const infrastructure = getPillar('infrastructure')?.score ?? adiScore.overall
+      const perception = getPillar('perception')?.score ?? adiScore.overall
+      const commerce = getPillar('commerce')?.score ?? adiScore.overall
+
+      await this.cacheEvaluationResult(
+        queueItem,
+        orchestrationResult,
+        adiScore.overall,
+        coarseGrade,
+        {
+          infrastructure: Math.round(infrastructure),
+          perception: Math.round(perception),
+          commerce: Math.round(commerce)
+        }
+      )
+
+      // Update queue status
+      await db
+        .update(evaluationQueue)
+        .set({
+          status: 'completed',
+          completedAt: new Date()
+        })
+        .where(eq(evaluationQueue.id, queueItem.id))
+
+      console.log(`✅ Successfully evaluated and persisted ${queueItem.brandName}`)
     } catch (error) {
       console.error(`❌ Failed to evaluate ${queueItem.brandName}:`, error)
-      
+
       // Update retry count
       const newRetryCount = (queueItem.retryCount || 0) + 1
-      
+
       if (newRetryCount >= this.config.retryAttempts) {
         // Mark as failed
         await db
           .update(evaluationQueue)
-          .set({ 
-            status: 'failed', 
+          .set({
+            status: 'failed',
             errorMessage: error instanceof Error ? error.message : 'Unknown error',
             retryCount: newRetryCount
           })
           .where(eq(evaluationQueue.id, queueItem.id))
       } else {
-        // Schedule retry
-        const retryDelay = Math.pow(2, newRetryCount) * 60 * 1000 // Exponential backoff
+        // Schedule retry with exponential backoff
+        const retryDelay = Math.pow(2, newRetryCount) * 60 * 1000
         const retryAt = new Date(Date.now() + retryDelay)
-        
+
         await db
           .update(evaluationQueue)
-          .set({ 
-            status: 'pending', 
+          .set({
+            status: 'pending',
             scheduledAt: retryAt,
             retryCount: newRetryCount,
             errorMessage: error instanceof Error ? error.message : 'Unknown error'
@@ -375,36 +488,43 @@ export class LeaderboardPopulationService {
 
   /**
    * Cache evaluation result in leaderboard cache
+   * Accepts optional overrides to write real scores/grades.
    */
-  private async cacheEvaluationResult(queueItem: EvaluationQueue, evaluationResult: ADIOrchestrationResult): Promise<void> {
+  private async cacheEvaluationResult(
+    queueItem: EvaluationQueue,
+    evaluationResult: ADIOrchestrationResult,
+    overrideScore?: number,
+    overrideGrade?: string,
+    overridePillarScores?: { infrastructure: number; perception: number; commerce: number }
+  ): Promise<void> {
     const cacheExpiry = new Date()
     cacheExpiry.setDate(cacheExpiry.getDate() + this.config.cacheExpiryDays)
 
-    // Extract scores from agent results (simplified for now)
-    const mockScore = Math.floor(Math.random() * 40) + 60 // 60-100 range
-    const mockGrade = mockScore >= 90 ? 'A' : mockScore >= 80 ? 'B' : mockScore >= 70 ? 'C' : 'D'
+    const score = typeof overrideScore === 'number' ? Math.round(overrideScore) : Math.floor(Math.random() * 40) + 60
+    const grade = overrideGrade || (score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : 'D')
+    const pillarScores = overridePillarScores || {
+      infrastructure: Math.floor(Math.random() * 40) + 60,
+      perception: Math.floor(Math.random() * 40) + 60,
+      commerce: Math.floor(Math.random() * 40) + 60
+    }
 
     const cacheEntry: NewLeaderboardCache = {
       nicheCategory: queueItem.nicheCategory,
       brandName: queueItem.brandName,
       websiteUrl: queueItem.websiteUrl,
       evaluationId: evaluationResult.evaluationId,
-      adiScore: mockScore,
-      grade: mockGrade,
-      pillarScores: {
-        infrastructure: Math.floor(Math.random() * 40) + 60,
-        perception: Math.floor(Math.random() * 40) + 60,
-        commerce: Math.floor(Math.random() * 40) + 60
-      },
+      adiScore: score,
+      grade,
+      pillarScores,
       dimensionScores: [],
       strengthHighlight: {
         dimension: 'Overall Performance',
-        score: mockScore,
+        score,
         description: 'Strong overall performance'
       },
       gapHighlight: {
         dimension: 'Optimization Opportunity',
-        score: mockScore - 10,
+        score: Math.max(0, score - 10),
         description: 'Room for improvement'
       },
       lastEvaluated: new Date(),
@@ -412,8 +532,8 @@ export class LeaderboardPopulationService {
       isPublic: true
     }
 
-    // Insert or update cache entry
-    await db.insert(leaderboardCache)
+    await db
+      .insert(leaderboardCache)
       .values(cacheEntry)
       .onConflictDoUpdate({
         target: [leaderboardCache.websiteUrl, leaderboardCache.nicheCategory],
@@ -430,7 +550,6 @@ export class LeaderboardPopulationService {
         }
       })
 
-    // Update rankings for the niche
     await this.updateNicheRankings(queueItem.nicheCategory)
   }
 

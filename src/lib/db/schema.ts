@@ -392,19 +392,81 @@ export const websiteSnapshots = productionSchema.table('website_snapshots', {
   contentSizeBytes: integer('content_size_bytes'),
   loadTimeMs: integer('load_time_ms'),
   statusCode: integer('status_code').default(200),
+
+  // Atomic analytics-friendly columns (avoid nested JSON on query paths)
+  title: varchar('title', { length: 255 }),
+  metaDescription: varchar('meta_description', { length: 255 }),
+  hasTitle: boolean('has_title'),
+  hasMetaDescription: boolean('has_meta_description'),
+  hasStructuredData: boolean('has_structured_data'),
+  structuredDataTypesCount: integer('structured_data_types_count'),
+  qualityScore: integer('quality_score'),
+
   createdAt: timestamp('created_at').defaultNow()
 })
 
-// Content Changes Detection
-export const contentChanges = productionSchema.table('content_changes', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  websiteSnapshotId: uuid('website_snapshot_id').references(() => websiteSnapshots.id),
-  changeType: changeTypeEnum('change_type').notNull(),
-  changeDescription: text('change_description'),
-  impactScore: integer('impact_score'),
-  detectedAt: timestamp('detected_at').defaultNow(),
-  previousSnapshotId: uuid('previous_snapshot_id').references(() => websiteSnapshots.id)
-})
+ // Content Changes Detection
+ export const contentChanges = productionSchema.table('content_changes', {
+   id: uuid('id').primaryKey().defaultRandom(),
+   websiteSnapshotId: uuid('website_snapshot_id').references(() => websiteSnapshots.id),
+   changeType: changeTypeEnum('change_type').notNull(),
+   changeDescription: text('change_description'),
+   impactScore: integer('impact_score'),
+   detectedAt: timestamp('detected_at').defaultNow(),
+   previousSnapshotId: uuid('previous_snapshot_id').references(() => websiteSnapshots.id)
+ })
+
+ // Site-level Crawl Signals (one row per evaluation)
+ export const crawlSiteSignals = productionSchema.table('crawl_site_signals', {
+   id: uuid('id').primaryKey().defaultRandom(),
+   evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
+   brandId: uuid('brand_id').references(() => brands.id, { onDelete: 'cascade' }),
+   domain: varchar('domain', { length: 255 }).notNull(),
+
+   // Homepage signals
+   homepageTitlePresent: boolean('homepage_title_present'),
+   homepageDescriptionPresent: boolean('homepage_description_present'),
+   homepageStructuredDataPresent: boolean('homepage_structured_data_present'),
+   homepageStructuredDataTypesCount: integer('homepage_structured_data_types_count'),
+   homepageQualityScore: integer('homepage_quality_score'),
+   homepageContentSizeBytes: integer('homepage_content_size_bytes'),
+
+   // Sitemap/robots signals
+   sitemapPresent: boolean('sitemap_present'),
+   sitemapUrl: varchar('sitemap_url', { length: 500 }),
+   sitemapUrlCount: integer('sitemap_url_count'),
+   robotsPresent: boolean('robots_present'),
+   robotsUrl: varchar('robots_url', { length: 500 }),
+   robotsHasSitemap: boolean('robots_has_sitemap'),
+
+   // Crawl scope
+   pagesCrawled: integer('pages_crawled'),
+   pagesDiscovered: integer('pages_discovered'),
+
+   crawlTimestamp: timestamp('crawl_timestamp').defaultNow(),
+   createdAt: timestamp('created_at').defaultNow()
+ })
+
+ // Flat feature vector for federated learning (one row per evaluation)
+ export const evaluationFeaturesFlat = productionSchema.table('evaluation_features_flat', {
+   id: uuid('id').primaryKey().defaultRandom(),
+   evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
+   brandId: uuid('brand_id').references(() => brands.id, { onDelete: 'cascade' }),
+
+   // Stable, curated features
+   fHomepageQualityScore: integer('f_homepage_quality_score'),
+   fHasStructuredData: boolean('f_has_structured_data'),
+   fStructuredDataTypesCount: integer('f_structured_data_types_count'),
+   fHasRobotsTxt: boolean('f_has_robots_txt'),
+   fHasSitemap: boolean('f_has_sitemap'),
+   fSitemapUrlCount: integer('f_sitemap_url_count'),
+   fHomepageTitlePresent: boolean('f_homepage_title_present'),
+   fHomepageDescriptionPresent: boolean('f_homepage_description_present'),
+   fPagesCrawled: integer('f_pages_crawled'),
+   fPagesDiscovered: integer('f_pages_discovered'),
+
+   createdAt: timestamp('created_at').defaultNow()
+ })
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
@@ -504,6 +566,14 @@ export type EvaluationResult = typeof evaluationResults.$inferSelect
 export type NewEvaluationResult = typeof evaluationResults.$inferInsert
 export type Recommendation = typeof recommendations.$inferSelect
 export type NewRecommendation = typeof recommendations.$inferInsert
+
+// Crawl data types
+export type WebsiteSnapshot = typeof websiteSnapshots.$inferSelect
+export type NewWebsiteSnapshot = typeof websiteSnapshots.$inferInsert
+export type CrawlSiteSignals = typeof crawlSiteSignals.$inferSelect
+export type NewCrawlSiteSignals = typeof crawlSiteSignals.$inferInsert
+export type EvaluationFeaturesFlat = typeof evaluationFeaturesFlat.$inferSelect
+export type NewEvaluationFeaturesFlat = typeof evaluationFeaturesFlat.$inferInsert
 
 // Leaderboard Data System Types
 export type EvaluationQueue = typeof evaluationQueue.$inferSelect

@@ -1,5 +1,5 @@
 import { eq, desc, and } from 'drizzle-orm'
-import { db, brands, evaluations, dimensionScores, aiProviders, evaluationResults, recommendations, competitorBenchmarks, users, userProfiles } from './db'
+import { db, brands, evaluations, dimensionScores, aiProviders, evaluationResults, recommendations, competitorBenchmarks, users, userProfiles, websiteSnapshots, crawlSiteSignals, evaluationFeaturesFlat } from './db'
 import type {
   Brand,
   NewBrand,
@@ -14,7 +14,13 @@ import type {
   Recommendation,
   NewRecommendation,
   User,
-  NewUser
+  NewUser,
+  WebsiteSnapshot,
+  NewWebsiteSnapshot,
+  CrawlSiteSignals,
+  NewCrawlSiteSignals,
+  EvaluationFeaturesFlat,
+  NewEvaluationFeaturesFlat
 } from './db/schema'
 
 // Brand operations
@@ -293,4 +299,44 @@ export const createUserProfile = async (profile: any) => {
 export const updateUserProfile = async (userId: string, updates: any) => {
   const result = await db.update(userProfiles).set(updates).where(eq(userProfiles.id, userId)).returning()
   return result[0]
+}
+
+// Crawl data persistence helpers
+export const createWebsiteSnapshot = async (snapshot: NewWebsiteSnapshot): Promise<WebsiteSnapshot> => {
+  try {
+    const result = await db.insert(websiteSnapshots).values(snapshot).returning()
+    if (!result || result.length === 0) throw new Error('Insert returned empty result - website snapshot save failed')
+    console.log('✅ [DB] Website snapshot created:', result[0].id)
+    return result[0]
+  } catch (error) {
+    console.error('❌ [DB] Failed to create website snapshot:', error)
+    console.error('❌ [DB] Snapshot data keys:', Object.keys(snapshot || {}))
+    throw error
+  }
+}
+
+export const createCrawlSiteSignals = async (signals: NewCrawlSiteSignals): Promise<CrawlSiteSignals> => {
+  try {
+    const result = await db.insert(crawlSiteSignals).values(signals).returning()
+    if (!result || result.length === 0) throw new Error('Insert returned empty result - crawl site signals save failed')
+    console.log('✅ [DB] Crawl site signals created:', result[0].id)
+    return result[0]
+  } catch (error) {
+    console.error('❌ [DB] Failed to create crawl site signals:', error)
+    console.error('❌ [DB] Signals data keys:', Object.keys(signals || {}))
+    throw error
+  }
+}
+
+export const createEvaluationFeaturesFlat = async (features: NewEvaluationFeaturesFlat): Promise<EvaluationFeaturesFlat> => {
+  try {
+    const result = await db.insert(evaluationFeaturesFlat).values(features).returning()
+    if (!result || result.length === 0) throw new Error('Insert returned empty result - features flat save failed')
+    console.log('✅ [DB] Evaluation features flat created:', result[0].evaluationId)
+    return result[0]
+  } catch (error) {
+    console.error('❌ [DB] Failed to create evaluation features flat:', error)
+    console.error('❌ [DB] Feature data keys:', Object.keys(features || {}))
+    throw error
+  }
 }
