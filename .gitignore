@@ -50,3 +50,6 @@ logs
 
 # Supabase
 .supabase/.env.production 
+
+# Local Netlify folder
+.netlify

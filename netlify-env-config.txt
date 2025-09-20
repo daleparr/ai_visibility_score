@@ -1,0 +1,36 @@
+# =============================================================================
+# NETLIFY ENVIRONMENT VARIABLES CONFIGURATION
+# =============================================================================
+# Copy these environment variables to your Netlify Dashboard:
+# Site Settings → Environment Variables → Add new variable
+# =============================================================================
+
+# CRITICAL: Database Connection (Required for data persistence)
+NETLIFY_DATABASE_URL=postgresql://neondb_owner:npg_Wn45TPwKdbkF@ep-little-silence-adftn0q3-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+
+# Backup Database URL (fallback)
+DATABASE_URL=postgresql://neondb_owner:npg_Wn45TPwKdbkF@ep-little-silence-adftn0q3-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+
+# Application Environment
+NODE_ENV=production
+
+# Application URL (update with your actual Netlify URL)
+NEXT_PUBLIC_APP_URL=https://your-site-name.netlify.app
+
+# =============================================================================
+# INSTRUCTIONS:
+# 1. Go to Netlify Dashboard → Your Site → Site Settings → Environment Variables
+# 2. Click "Add new variable" for each variable above
+# 3. Copy the exact variable name and value
+# 4. Click "Save" after adding all variables
+# 5. Trigger a new deployment to apply the changes
+# =============================================================================
+
+# VERIFICATION COMMANDS (run after deployment):
+# Test database connection:
+# curl -X POST https://your-site-name.netlify.app/api/debug-database
+
+# Test evaluation flow:
+# curl -X POST https://your-site-name.netlify.app/api/evaluate \
+#   -H "Content-Type: application/json" \
+#   -d '{"url": "https://example.com"}'
