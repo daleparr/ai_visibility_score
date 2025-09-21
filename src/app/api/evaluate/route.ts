@@ -354,10 +354,14 @@ export async function POST(request: NextRequest) {
               signalsCreated: !!signals,
               featuresCreated: !!features
             }
+            verification.afterArtifacts = await verifyDbState()
+            console.log('🔎 [VERIFY] Counts after artifact persistence:', verification.afterArtifacts)
           } else {
             console.log('ℹ️ [CRAWL] No homepage crawl evidence found; skipping artifact persistence')
             // Record artifact skip reason and capture verification snapshot
             verification.artifacts = { skipped: true, reason: 'no_homepage_evidence' }
+            verification.afterArtifacts = await verifyDbState()
+            console.log('🔎 [VERIFY] Counts after artifact skip:', verification.afterArtifacts)
             verification.afterArtifacts = await verifyDbState()
             console.log('🔎 [VERIFY] Counts after artifact bypass:', verification.afterArtifacts)
           }
