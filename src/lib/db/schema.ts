@@ -471,125 +471,6 @@ export const websiteSnapshots = productionSchema.table('website_snapshots', {
    createdAt: timestamp('created_at').defaultNow()
  })
 
-// Relations
-export const usersRelations = relations(users, ({ many }) => ({
-  accounts: many(accounts),
-  sessions: many(sessions),
-  brands: many(brands),
-  aiProviders: many(aiProviders),
-  adiSubscriptions: many(adiSubscriptions)
-}))
-
-export const brandsRelations = relations(brands, ({ one, many }) => ({
-  user: one(users, {
-    fields: [brands.userId],
-    references: [users.id]
-  }),
-  evaluations: many(evaluations),
-  adiIndustry: one(adiIndustries, {
-    fields: [brands.adiIndustryId],
-    references: [adiIndustries.id]
-  })
-}))
-
-export const evaluationsRelations = relations(evaluations, ({ one, many }) => ({
-  brand: one(brands, {
-    fields: [evaluations.brandId],
-    references: [brands.id]
-  }),
-  dimensionScores: many(dimensionScores),
-  evaluationResults: many(evaluationResults),
-  recommendations: many(recommendations),
-  competitorBenchmarks: many(competitorBenchmarks),
-  adiAgents: many(adiAgents)
-}))
-
-export const dimensionScoresRelations = relations(dimensionScores, ({ one }) => ({
-  evaluation: one(evaluations, {
-    fields: [dimensionScores.evaluationId],
-    references: [evaluations.id]
-  })
-}))
-
-export const aiProvidersRelations = relations(aiProviders, ({ one }) => ({
-  user: one(users, {
-    fields: [aiProviders.userId],
-    references: [users.id]
-  })
-}))
-
-export const evaluationResultsRelations = relations(evaluationResults, ({ one }) => ({
-  evaluation: one(evaluations, {
-    fields: [evaluationResults.evaluationId],
-    references: [evaluations.id]
-  })
-}))
-
-export const recommendationsRelations = relations(recommendations, ({ one }) => ({
-  evaluation: one(evaluations, {
-    fields: [recommendations.evaluationId],
-    references: [evaluations.id]
-  })
-}))
-
-export const competitorBenchmarksRelations = relations(competitorBenchmarks, ({ one }) => ({
-  evaluation: one(evaluations, {
-    fields: [competitorBenchmarks.evaluationId],
-    references: [evaluations.id]
-  })
-}))
-
-export const adiAgentsRelations = relations(adiAgents, ({ one, many }) => ({
-  evaluation: one(evaluations, {
-    fields: [adiAgents.evaluationId],
-    references: [evaluations.id]
-  }),
-  results: many(adiAgentResults)
-}))
-
-export const adiAgentResultsRelations = relations(adiAgentResults, ({ one }) => ({
-  agent: one(adiAgents, {
-    fields: [adiAgentResults.agentId],
-    references: [adiAgents.id]
-  })
-}))
-
-// Export types
-export type User = typeof users.$inferSelect
-export type NewUser = typeof users.$inferInsert
-export type Brand = typeof brands.$inferSelect
-export type NewBrand = typeof brands.$inferInsert
-export type Evaluation = typeof evaluations.$inferSelect
-export type NewEvaluation = typeof evaluations.$inferInsert
-export type DimensionScore = typeof dimensionScores.$inferSelect
-export type NewDimensionScore = typeof dimensionScores.$inferInsert
-export type AIProvider = typeof aiProviders.$inferSelect
-export type NewAIProvider = typeof aiProviders.$inferInsert
-export type EvaluationResult = typeof evaluationResults.$inferSelect
-export type NewEvaluationResult = typeof evaluationResults.$inferInsert
-export type Recommendation = typeof recommendations.$inferSelect
-export type NewRecommendation = typeof recommendations.$inferInsert
-
-// Crawl data types
-export type WebsiteSnapshot = typeof websiteSnapshots.$inferSelect
-export type NewWebsiteSnapshot = typeof websiteSnapshots.$inferInsert
-export type CrawlSiteSignals = typeof crawlSiteSignals.$inferSelect
-export type NewCrawlSiteSignals = typeof crawlSiteSignals.$inferInsert
-export type EvaluationFeaturesFlat = typeof evaluationFeaturesFlat.$inferSelect
-export type NewEvaluationFeaturesFlat = typeof evaluationFeaturesFlat.$inferInsert
-
-// Leaderboard Data System Types
-export type EvaluationQueue = typeof evaluationQueue.$inferSelect
-export type NewEvaluationQueue = typeof evaluationQueue.$inferInsert
-export type LeaderboardCache = typeof leaderboardCache.$inferSelect
-export type NewLeaderboardCache = typeof leaderboardCache.$inferInsert
-export type CompetitiveTrigger = typeof competitiveTriggers.$inferSelect
-export type NewCompetitiveTrigger = typeof competitiveTriggers.$inferInsert
-export type NicheBrandSelection = typeof nicheBrandSelection.$inferSelect
-export type NewNicheBrandSelection = typeof nicheBrandSelection.$inferInsert
-export type LeaderboardStats = typeof leaderboardStats.$inferSelect
-export type NewLeaderboardStats = typeof leaderboardStats.$inferInsert
-
 // =====================================================
 // ADVANCED ANALYTICS & FEDERATED LEARNING
 // Definitions for tables created in COMPREHENSIVE_PRODUCTION_SCHEMA.sql
@@ -661,6 +542,88 @@ export const userEngagementMetrics = productionSchema.table('user_engagement_met
   timestamp: timestamp('timestamp').defaultNow()
 });
 
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  accounts: many(accounts),
+  sessions: many(sessions),
+  brands: many(brands),
+  aiProviders: many(aiProviders),
+  adiSubscriptions: many(adiSubscriptions)
+}))
+
+export const brandsRelations = relations(brands, ({ one, many }) => ({
+  user: one(users, {
+    fields: [brands.userId],
+    references: [users.id]
+  }),
+  evaluations: many(evaluations),
+  adiIndustry: one(adiIndustries, {
+    fields: [brands.adiIndustryId],
+    references: [adiIndustries.id]
+  })
+}))
+
+export const evaluationsRelations = relations(evaluations, ({ one, many }) => ({
+  brand: one(brands, {
+    fields: [evaluations.brandId],
+    references: [brands.id]
+  }),
+  dimensionScores: many(dimensionScores),
+  recommendations: many(recommendations),
+  competitorBenchmarks: many(competitorBenchmarks),
+  adiAgents: many(adiAgents)
+}))
+
+export const dimensionScoresRelations = relations(dimensionScores, ({ one }) => ({
+  evaluation: one(evaluations, {
+    fields: [dimensionScores.evaluationId],
+    references: [evaluations.id]
+  })
+}))
+
+export const aiProvidersRelations = relations(aiProviders, ({ one }) => ({
+  user: one(users, {
+    fields: [aiProviders.userId],
+    references: [users.id]
+  })
+}))
+
+export const evaluationResultsRelations = relations(evaluationResults, ({ one }) => ({
+  evaluation: one(evaluations, {
+    fields: [evaluationResults.evaluationId],
+    references: [evaluations.id]
+  })
+}))
+
+export const recommendationsRelations = relations(recommendations, ({ one }) => ({
+  evaluation: one(evaluations, {
+    fields: [recommendations.evaluationId],
+    references: [evaluations.id]
+  })
+}))
+
+export const competitorBenchmarksRelations = relations(competitorBenchmarks, ({ one }) => ({
+  evaluation: one(evaluations, {
+    fields: [competitorBenchmarks.evaluationId],
+    references: [evaluations.id]
+  })
+}))
+
+export const adiAgentsRelations = relations(adiAgents, ({ one, many }) => ({
+  evaluation: one(evaluations, {
+    fields: [adiAgents.evaluationId],
+    references: [evaluations.id]
+  }),
+  adiAgentResults: many(adiAgentResults)
+}))
+
+export const adiAgentResultsRelations = relations(adiAgentResults, ({ one }) => ({
+  adiAgent: one(adiAgents, {
+    fields: [adiAgentResults.agentId],
+    references: [adiAgents.id]
+  })
+}))
+
 // Relations for new tables
 export const federatedLearningSessionsRelations = relations(federatedLearningSessions, ({ one }) => ({
   user: one(users, {
@@ -699,6 +662,42 @@ export const userEngagementMetricsRelations = relations(userEngagementMetrics, (
     references: [users.id]
   })
 }));
+
+// Export types
+export type User = typeof users.$inferSelect
+export type NewUser = typeof users.$inferInsert
+export type Brand = typeof brands.$inferSelect
+export type NewBrand = typeof brands.$inferInsert
+export type Evaluation = typeof evaluations.$inferSelect
+export type NewEvaluation = typeof evaluations.$inferInsert
+export type DimensionScore = typeof dimensionScores.$inferSelect
+export type NewDimensionScore = typeof dimensionScores.$inferInsert
+export type AIProvider = typeof aiProviders.$inferSelect
+export type NewAIProvider = typeof aiProviders.$inferInsert
+export type EvaluationResult = typeof evaluationResults.$inferSelect
+export type NewEvaluationResult = typeof evaluationResults.$inferInsert
+export type Recommendation = typeof recommendations.$inferSelect
+export type NewRecommendation = typeof recommendations.$inferInsert
+
+// Crawl data types
+export type WebsiteSnapshot = typeof websiteSnapshots.$inferSelect
+export type NewWebsiteSnapshot = typeof websiteSnapshots.$inferInsert
+export type CrawlSiteSignals = typeof crawlSiteSignals.$inferSelect
+export type NewCrawlSiteSignals = typeof crawlSiteSignals.$inferInsert
+export type EvaluationFeaturesFlat = typeof evaluationFeaturesFlat.$inferSelect
+export type NewEvaluationFeaturesFlat = typeof evaluationFeaturesFlat.$inferInsert
+
+// Leaderboard Data System Types
+export type EvaluationQueue = typeof evaluationQueue.$inferSelect
+export type NewEvaluationQueue = typeof evaluationQueue.$inferInsert
+export type LeaderboardCache = typeof leaderboardCache.$inferSelect
+export type NewLeaderboardCache = typeof leaderboardCache.$inferInsert
+export type CompetitiveTrigger = typeof competitiveTriggers.$inferSelect
+export type NewCompetitiveTrigger = typeof competitiveTriggers.$inferInsert
+export type NicheBrandSelection = typeof nicheBrandSelection.$inferSelect
+export type NewNicheBrandSelection = typeof nicheBrandSelection.$inferInsert
+export type LeaderboardStats = typeof leaderboardStats.$inferSelect
+export type NewLeaderboardStats = typeof leaderboardStats.$inferInsert
 
 // Export types for new tables
 export type FederatedLearningSession = typeof federatedLearningSessions.$inferSelect;
