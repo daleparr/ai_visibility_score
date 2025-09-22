@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AIDI Brand Playbook",
+  "description": "A machine-readable brand playbook for AI models.",
+  "type": "object",
+  "required": [
+    "spec_version",
+    "brand_name",
+    "last_updated",
+    "license"
+  ],
+  "properties": {
+    "spec_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "brand_name": { "type": "string", "minLength": 1 },
+    "legal_entity": { "type": "string" },
+    "founding_year": { "type": "integer", "minimum": 1000, "maximum": 3000 },
+    "wikidata_id": { "type": "string", "pattern": "^Q\\d+$" },
+    "sameAs": {
+      "type": "array",
+      "items": { "type": "string", "format": "uri" }
+    },
+    "logo": { "type": "string", "format": "uri" },
+    "pressRoom": { "type": "string", "format": "uri" },
+    "heritage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "year": { "type": "integer" },
+          "event": { "type": "string" },
+          "source": { "type": "string", "format": "uri" }
+        },
+        "required": ["year", "event"]
+      }
+    },
+    "positioning": {
+      "type": "object",
+      "properties": {
+        "pillars": { "type": "array", "items": { "type": "string" } },
+        "value_props": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "why": { "type": "string" }
+            },
+            "required": ["name", "why"]
+          }
+        }
+      }
+    },
+    "tone_of_voice": {
+      "type": "object",
+      "properties": {
+        "style": { "type": "string" },
+        "preferred_terms": { "type": "array", "items": { "type": "string" } },
+        "avoid_terms": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "disambiguation": { "type": "array", "items": { "type": "string" } },
+    "sustainability": {
+      "type": "object",
+      "properties": {
+        "summary": { "type": "string" },
+        "policies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "url": { "type": "string", "format": "uri" }
+            },
+            "required": ["name", "url"]
+          }
+        }
+      }
+    },
+    "hero_products": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "collection": { "type": "string" },
+          "reason": { "type": "string" },
+          "queries": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "taxonomy": {
+      "type": "object",
+      "properties": {
+        "canonical": { "type": "object" },
+        "synonyms": { "type": "object" },
+        "attributes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "license": { "type": "string" },
+    "version": { "type": "string" },
+    "last_updated": { "type": "string", "format": "date" }
+  }
+}

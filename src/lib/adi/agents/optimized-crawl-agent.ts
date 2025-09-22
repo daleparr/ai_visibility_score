@@ -93,13 +93,11 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
       const normalizedUrl = this.normalizeUrl(url)
       
       // OPTIMIZATION 4: Balanced timeout for reliable content extraction
-      const response = await this.fetchWithTimeout(normalizedUrl, 7500) // 7.5s timeout
+      const { content: html, statusCode } = await this.fetchWithPuppeteer(normalizedUrl, 15000); // 15s timeout for full rendering
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
+      if (statusCode < 200 || statusCode >= 300) {
+        throw new Error(`HTTP ${statusCode}`);
       }
-
-      const html = await response.text()
       console.log(`📄 Crawled content length: ${html.length} characters from ${normalizedUrl}`)
       
       // OPTIMIZATION 5: Extract only essential data
@@ -138,82 +136,48 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
    * Quick sitemap check with minimal processing
    */
   private async quickSitemapCheck(baseUrl: string): Promise<any | null> {
-    try {
-      const sitemapUrl = new URL('/sitemap.xml', baseUrl).toString()
-      const response = await this.fetchWithTimeout(sitemapUrl, 4000) // 4s timeout
-      
-      if (response.ok) {
-        const sitemapContent = await response.text()
-        const urlCount = (sitemapContent.match(/<loc>/g) || []).length
-        
-        return this.createResult(
-          'sitemap_analysis_fast',
-          urlCount > 0 ? 100 : 0,
-          urlCount > 0 ? 100 : 0,
-          0.9,
-          {
-            sitemapUrl,
-            urlCount,
-            hasSitemap: true,
-            optimized: true
-          }
-        )
-      }
-    } catch (error) {
-      // Fail silently for speed
+    const sitemapUrl = new URL('/sitemap.xml', baseUrl).toString();
+    const response = await fetch(sitemapUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' },
+    });
+
+    if (response.ok) {
+      const sitemapContent = await response.text();
+      const urlCount = (sitemapContent.match(/<loc>/g) || []).length;
+
+      return this.createResult('sitemap_analysis', urlCount > 0 ? 100 : 0, urlCount > 0 ? 100 : 0, 0.9, {
+        sitemapUrl,
+        urlCount,
+        hasSitemap: true,
+      });
     }
 
-    return this.createResult(
-      'sitemap_analysis_fast',
-      0,
-      0,
-      0.8,
-      {
-        hasSitemap: false,
-        optimized: true
-      }
-    )
+    // Return a null result if the check fails, but do not fail silently. The caller will handle the null.
+    return null;
   }
 
   /**
    * Quick robots.txt check
    */
   private async quickRobotsCheck(baseUrl: string): Promise<any | null> {
-    try {
-      const robotsUrl = new URL('/robots.txt', baseUrl).toString()
-      const response = await this.fetchWithTimeout(robotsUrl, 3000) // 3s timeout
-      
-      if (response.ok) {
-        const robotsContent = await response.text()
-        const hasSitemap = /sitemap:/i.test(robotsContent)
-        
-        return this.createResult(
-          'robots_txt_analysis_fast',
-          hasSitemap ? 100 : 50,
-          hasSitemap ? 100 : 50,
-          0.9,
-          {
-            robotsUrl,
-            hasRobotsTxt: true,
-            hasSitemap,
-            optimized: true
-          }
-        )
-      }
-    } catch (error) {
-      // Fail silently for speed
+    const robotsUrl = new URL('/robots.txt', baseUrl).toString();
+    const response = await fetch(robotsUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' },
+    });
+
+    if (response.ok) {
+      const robotsContent = await response.text();
+      const hasSitemap = /sitemap:/i.test(robotsContent);
+
+      return this.createResult('robots_txt_analysis', hasSitemap ? 100 : 50, hasSitemap ? 100 : 50, 0.9, {
+        robotsUrl,
+        hasRobotsTxt: true,
+        hasSitemap,
+      });
     }
 
-    return this.createResult(
-      'robots_txt_analysis_fast',
-      25,
-      25,
-      0.8,
-      {
-        hasRobotsTxt: false,
-        optimized: true
-      }
-    )
+    // Return a null result if the check fails, but do not fail silently. The caller will handle the null.
+    return null;
   }
 
   /**
@@ -339,23 +303,33 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
   /**
    * Fast fetch with timeout
    */
-  private async fetchWithTimeout(url: string, timeout: number = 3000): Promise<Response> {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), timeout)
-    
+  private async fetchWithPuppeteer(url: string, timeout: number = 15000): Promise<{ content: string; statusCode: number }> {
+    // Dynamically import puppeteer to keep cold starts fast
+    const puppeteer = (await import('puppeteer')).default;
+    let browser = null;
     try {
-      const response = await fetch(url, {
-        signal: controller.signal,
-        headers: {
-          'User-Agent': 'ADI-Crawler/2.0-Optimized',
-          'Accept': 'text/html,application/xhtml+xml'
-        }
-      })
-      clearTimeout(timeoutId)
-      return response
-    } catch (error) {
-      clearTimeout(timeoutId)
-      throw error
+      browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+      const page = await browser.newPage();
+      await page.setUserAgent(
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      );
+      
+      const response = await page.goto(url, {
+        waitUntil: 'networkidle2', // Wait for network to be idle
+        timeout: timeout,
+      });
+      
+      const content = await page.content();
+      const statusCode = response?.status() || 200;
+
+      return { content, statusCode };
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
     }
   }
 

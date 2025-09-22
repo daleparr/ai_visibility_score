@@ -1,0 +1,8 @@
+﻿Invoke-RestMethod : Unable to connect to the remote server
+At C:\Users\mrdpa\AI Visibility Score\scripts\run-eval-debug.ps1:35 char:11
++   $resp = Invoke-RestMethod -Method Post -Uri "$ApiBase/api/evaluate" ...
++           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Invoke-RestMethod], WebException
+    + FullyQualifiedErrorId : System.Net.WebException,Microsoft.PowerShell.Commands.InvokeRestMethodCommand
+ 
+

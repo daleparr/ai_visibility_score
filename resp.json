@@ -1,0 +1,213 @@
+﻿{
+    "evaluationId":  "b42e3664-4f41-4150-8e41-385b228b5f80",
+    "brandName":  "Example",
+    "websiteUrl":  "https://www.example.com",
+    "overallScore":  29,
+    "grade":  "F",
+    "dimensionScores":  [
+                            {
+                                "name":  "Schema Structured Data",
+                                "score":  15,
+                                "pillar":  "infrastructure",
+                                "confidence":  0.5216666666666666
+                            },
+                            {
+                                "name":  "Semantic Clarity Ontology",
+                                "score":  51,
+                                "pillar":  "infrastructure",
+                                "confidence":  0.6199999999999999
+                            },
+                            {
+                                "name":  "Knowledge Graphs Entity Linking",
+                                "score":  4,
+                                "pillar":  "infrastructure",
+                                "confidence":  0.8
+                            },
+                            {
+                                "name":  "Llm Readability Conversational",
+                                "score":  40,
+                                "pillar":  "infrastructure",
+                                "confidence":  0.8300000000000001
+                            },
+                            {
+                                "name":  "Geo Visibility Presence",
+                                "score":  14,
+                                "pillar":  "perception",
+                                "confidence":  0.74
+                            },
+                            {
+                                "name":  "Reputation Signals",
+                                "score":  35,
+                                "pillar":  "perception",
+                                "confidence":  0.8
+                            },
+                            {
+                                "name":  "Hero Products Use Case",
+                                "score":  27,
+                                "pillar":  "commerce",
+                                "confidence":  0.2771428571428572
+                            },
+                            {
+                                "name":  "Policies Logistics Clarity",
+                                "score":  27,
+                                "pillar":  "commerce",
+                                "confidence":  0.2771428571428572
+                            },
+                            {
+                                "name":  "Policies Logistics Clarity",
+                                "score":  33,
+                                "pillar":  "commerce",
+                                "confidence":  0.29500000000000004
+                            }
+                        ],
+    "pillarScores":  [
+                         {
+                             "pillar":  "infrastructure",
+                             "score":  28,
+                             "weight":  0.4
+                         },
+                         {
+                             "pillar":  "perception",
+                             "score":  25,
+                             "weight":  0.47
+                         },
+                         {
+                             "pillar":  "commerce",
+                             "score":  29,
+                             "weight":  0.2
+                         }
+                     ],
+    "performance":  {
+                        "executionTime":  5046,
+                        "agentsExecuted":  12,
+                        "successRate":  1
+                    },
+    "recommendations":  [
+                            {
+                                "priority":  "high",
+                                "title":  "Optimize AI Discoverability",
+                                "description":  "Focus on improving structured data, content clarity, and brand visibility across AI platforms"
+                            }
+                        ],
+    "globalRank":  1001,
+    "timestamp":  "2025-09-21T17:53:29.268Z",
+    "status":  "completed",
+    "tier":  "free",
+    "adiVersion":  "2.0",
+    "framework":  "hybrid-10-13",
+    "agentTraces":  [
+
+                    ],
+    "verification":  {
+                         "env":  {
+                                     "hasNetlifyUrl":  true,
+                                     "nodeEnv":  "production"
+                                 },
+                         "scaffold":  {
+                                          "hasDb":  true,
+                                          "searchPath":  "\"$user\", public",
+                                          "evalRow":  1,
+                                          "dimRowsForEval":  0,
+                                          "snapRowsForEval":  0,
+                                          "signalRowsForEval":  0,
+                                          "featRowsForEval":  0,
+                                          "evalTotal":  576,
+                                          "dimTotal":  5229,
+                                          "snapTotal":  6,
+                                          "signalTotal":  5,
+                                          "featTotal":  5
+                                      },
+                         "beforeArtifacts":  {
+                                                 "hasDb":  true,
+                                                 "searchPath":  "\"$user\", public",
+                                                 "evalRow":  1,
+                                                 "dimRowsForEval":  0,
+                                                 "snapRowsForEval":  0,
+                                                 "signalRowsForEval":  0,
+                                                 "featRowsForEval":  0,
+                                                 "evalTotal":  576,
+                                                 "dimTotal":  5229,
+                                                 "snapTotal":  6,
+                                                 "signalTotal":  5,
+                                                 "featTotal":  5
+                                             },
+                         "artifacts":  {
+                                           "error":  "[website_snapshots] primary insert failed: Failed query: insert into \"production\".\"website_snapshots\" (\"id\", \"brand_id\", \"evaluation_id\", \"url\", \"page_type\", \"content_hash\", \"raw_html\", \"structured_content\", \"metadata\", \"screenshot_url\", \"crawl_timestamp\", \"content_size_bytes\", \"load_time_ms\", \"status_code\", \"title\", \"meta_description\", \"has_title\", \"has_meta_description\", \"has_structured_data\", \"structured_data_types_count\", \"quality_score\", \"created_at\") values (default, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, default, $12, $13, $14, $15, $16, $17, $18, $19, default) returning \"id\", \"brand_id\", \"evaluation_id\", \"url\", \"page_type\", \"content_hash\", \"raw_html\", \"structured_content\", \"metadata\", \"screenshot_url\", \"crawl_timestamp\", \"content_size_bytes\", \"load_time_ms\", \"status_code\", \"title\", \"meta_description\", \"has_title\", \"has_meta_description\", \"has_structured_data\", \"structured_data_types_count\", \"quality_score\", \"created_at\"\nparams: 999cf57a-0bf5-4209-8135-1bca775c34d9,b42e3664-4f41-4150-8e41-385b228b5f80,https://www.example.com/,homepage,b42e36644f4141508e41385b228b5f8000000000000000000000000000000000,\u003c!doctype html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n    \u003ctitle\u003eExample Domain\u003c/title\u003e\n\n    \u003cmeta charset=\"utf-8\" /\u003e\n    \u003cmeta http-equiv=\"Content-type\" content=\"text/html; charset=utf-8\" /\u003e\n    \u003cmeta name=\"viewport\" content=\"width=device-width, initial-scale=1\" /\u003e\n    \u003cstyle type=\"text/css\"\u003e\n    body {\n        background-color: #f0f0f2;\n        margin: 0;\n        padding: 0;\n        font-family: -apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n        \n    }\n    div {\n        width: 600px;\n        margin: 5em auto;\n        padding: 2em;\n        background-color: #fdfdff;\n        border-radius: 0.5em;\n        box-shadow: 2px 3px 7px 2px rgba(0,0,0,0.02);\n    }\n    a:link, a:visited {\n        color: #38488f;\n        text-decoration: none;\n    }\n    @media (max-width: 700px) {\n        div {\n            margin: 0 auto;\n            width: auto;\n        }\n    }\n    \u003c/style\u003e    \n\u003c/head\u003e\n\n\u003cbody\u003e\n\u003cdiv\u003e\n    \u003ch1\u003eExample Domain\u003c/h1\u003e\n    \u003cp\u003eThis domain is for use in illustrative examples in documents. You may use this\n    domain in literature without prior coordination or asking for permission.\u003c/p\u003e\n    \u003cp\u003e\u003ca href=\"https://www.iana.org/domains/example\"\u003eMore information...\u003c/a\u003e\u003c/p\u003e\n\u003c/div\u003e\n\u003c/body\u003e\n\u003c/html\u003e\n,[],{\"title\":\"Example Domain\",\"contentMetrics\":{\"qualityScore\":33,\"hasTitle\":true,\"hasMetaDescription\":false,\"hasStructuredData\":false,\"optimized\":true},\"optimized\":true},,2025-09-21T17:53:29.102Z,1256,200,Example Domain,,true,false,false,0,33 | fallback failed: column \"title\" of relation \"website_snapshots\" does not exist"
+                                       },
+                         "afterUpdate":  {
+                                             "hasDb":  true,
+                                             "searchPath":  "production, public",
+                                             "evalRow":  1,
+                                             "dimRowsForEval":  0,
+                                             "snapRowsForEval":  0,
+                                             "signalRowsForEval":  0,
+                                             "featRowsForEval":  0,
+                                             "evalTotal":  576,
+                                             "dimTotal":  5229,
+                                             "snapTotal":  6,
+                                             "signalTotal":  5,
+                                             "featTotal":  5
+                                         },
+                         "afterDimensions":  {
+                                                 "hasDb":  true,
+                                                 "searchPath":  "production, public",
+                                                 "evalRow":  1,
+                                                 "dimRowsForEval":  9,
+                                                 "snapRowsForEval":  0,
+                                                 "signalRowsForEval":  0,
+                                                 "featRowsForEval":  0,
+                                                 "evalTotal":  576,
+                                                 "dimTotal":  5238,
+                                                 "snapTotal":  6,
+                                                 "signalTotal":  5,
+                                                 "featTotal":  5
+                                             }
+                     },
+    "agentResults":  [
+                         {
+                             "agentName":  "crawl_agent",
+                             "status":  "completed",
+                             "executionTime":  971,
+                             "score":  30,
+                             "insights":  [
+
+                                          ]
+                         },
+                         {
+                             "agentName":  "citation_agent",
+                             "status":  "failed",
+                             "executionTime":  2000,
+                             "score":  0,
+                             "insights":  [
+
+                                          ]
+                         },
+                         {
+                             "agentName":  "brand_heritage_agent",
+                             "status":  "skipped",
+                             "executionTime":  0,
+                             "score":  0,
+                             "insights":  [
+
+                                          ]
+                         },
+                         {
+                             "agentName":  "llm_test_agent",
+                             "status":  "failed",
+                             "executionTime":  3000,
+                             "score":  0,
+                             "insights":  [
+
+                                          ]
+                         },
+                         {
+                             "agentName":  "schema_agent",
+                             "status":  "completed",
+                             "executionTime":  18,
+                             "score":  10,
+                             "insights":  [
+
+                                          ]
+                         }
+                     ]
+}

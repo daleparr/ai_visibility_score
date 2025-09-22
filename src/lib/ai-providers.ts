@@ -65,47 +65,47 @@ export const AI_PROVIDERS: Record<AIProviderName, {
 export const EVALUATION_PROMPTS = {
   // Infrastructure & Machine Readability Tests
   infrastructure: {
-    schema_structured_data: (brandName: string, websiteUrl: string) => 
-      `Analyze the website ${websiteUrl} for ${brandName}. Evaluate the presence and quality of structured data markup (Schema.org, JSON-LD, microdata). Consider: 1) Coverage across key page types, 2) Completeness of product/organization schema, 3) Accuracy of markup, 4) GS1 standard alignment. Provide a score from 0-100 and explain your reasoning.`,
+    schema_structured_data: (brandName: string, websiteUrl: string, playbook: any) =>
+      `Analyze the website ${websiteUrl} for ${brandName}. Evaluate the presence and quality of structured data markup (Schema.org, JSON-LD, microdata). Consider: 1) Coverage across key page types, 2) Completeness of product/organization schema, 3) Accuracy of markup, 4) GS1 standard alignment. ${playbook ? `Here is the brand playbook for context: ${JSON.stringify(playbook)}` : ''} Provide a score from 0-100 and explain your reasoning.`,
     
-    semantic_clarity: (brandName: string, websiteUrl: string) => 
-      `Evaluate the semantic clarity of ${brandName} (${websiteUrl}). Assess: 1) Brand name disambiguation, 2) Product terminology consistency, 3) Category vocabulary alignment, 4) Content hierarchy logic, 5) Cross-page semantic consistency. Score from 0-100 with detailed explanation.`,
+    semantic_clarity: (brandName: string, websiteUrl: string, playbook: any) =>
+      `Evaluate the semantic clarity of ${brandName} (${websiteUrl}). Assess: 1) Brand name disambiguation, 2) Product terminology consistency, 3) Category vocabulary alignment, 4) Content hierarchy logic, 5) Cross-page semantic consistency. ${playbook ? `Here is the brand playbook for context: ${JSON.stringify(playbook)}` : ''} Score from 0-100 with detailed explanation.`,
     
-    ontologies_taxonomy: (brandName: string, websiteUrl: string) => 
-      `Analyze the taxonomical structure of ${brandName} (${websiteUrl}). Evaluate: 1) Logical product/service categorization, 2) Hierarchical navigation structure, 3) Cross-linking between related concepts, 4) Taxonomy stability, 5) Industry standard alignment. Provide 0-100 score with reasoning.`,
+    ontologies_taxonomy: (brandName: string, websiteUrl: string, playbook: any) =>
+      `Analyze the taxonomical structure of ${brandName} (${websiteUrl}). Evaluate: 1) Logical product/service categorization, 2) Hierarchical navigation structure, 3) Cross-linking between related concepts, 4) Taxonomy stability, 5) Industry standard alignment. ${playbook ? `Here is the brand playbook for context: ${JSON.stringify(playbook)}` : ''} Provide 0-100 score with reasoning.`,
     
-    knowledge_graphs: (brandName: string, websiteUrl: string) => 
-      `Assess ${brandName}'s presence in knowledge graphs. Check: 1) Google Knowledge Graph presence, 2) Wikidata entries, 3) Internal entity linking, 4) Relationship mapping between concepts, 5) Entity disambiguation quality. Score 0-100 with explanation.`,
+    knowledge_graphs: (brandName: string, websiteUrl: string, playbook: any) =>
+      `Assess ${brandName}'s presence in knowledge graphs. Check: 1) Google Knowledge Graph presence, 2) Wikidata entries, 3) Internal entity linking, 4) Relationship mapping between concepts, 5) Entity disambiguation quality. ${playbook ? `Here is the brand playbook for context: ${JSON.stringify(playbook)}` : ''} Score 0-100 with explanation.`,
     
-    llm_readability: (brandName: string, websiteUrl: string) =>
-      `Evaluate how well ${brandName} (${websiteUrl}) is structured for LLM comprehension. Consider: 1) Content chunking and structure, 2) Alt text completeness, 3) Accessibility markup (ARIA), 4) Narrative flow coherence, 5) Machine-readable formatting. Score 0-100 with details.`,
+    llm_readability: (brandName: string, websiteUrl: string, playbook: any) =>
+      `Evaluate how well ${brandName} (${websiteUrl}) is structured for LLM comprehension. Consider: 1) Content chunking and structure, 2) Alt text completeness, 3) Accessibility markup (ARIA), 4) Narrative flow coherence, 5) Machine-readable formatting. ${playbook ? `Here is the brand playbook for context: ${JSON.stringify(playbook)}` : ''} Score 0-100 with details.`,
     
-    conversational_copy: (brandName: string, websiteUrl: string) =>
-      `Analyze the conversational copy quality of ${brandName} (${websiteUrl}). Evaluate how well their content teaches AI why the brand matters through natural language. Assess: 1) Coverage - Rich conversational copy across products vs flat descriptions (0-25 pts), 2) Quality & Use-Case Framing - Distinct, application-driven language like "Perfect under a blazer" vs generic phrasing (0-25 pts), 3) Query Alignment - Content that mirrors natural queries like "Best T-shirt for layering" vs no Q&A style (0-25 pts), 4) Semantic Enrichment - Integration of brand values, attributes, and ontologies vs no brand integration (0-25 pts). Provide detailed scoring breakdown and overall 0-100 score with specific examples from their content.`
+    conversational_copy: (brandName: string, websiteUrl: string, playbook: any) =>
+      `Analyze the conversational copy quality of ${brandName} (${websiteUrl}). Evaluate how well their content teaches AI why the brand matters through natural language. Assess: 1) Coverage - Rich conversational copy across products vs flat descriptions (0-25 pts), 2) Quality & Use-Case Framing - Distinct, application-driven language like "Perfect under a blazer" vs generic phrasing (0-25 pts), 3) Query Alignment - Content that mirrors natural queries like "Best T-shirt for layering" vs no Q&A style (0-25 pts), 4) Semantic Enrichment - Integration of brand values, attributes, and ontologies vs no brand integration (0-25 pts). ${playbook ? `Here is the brand playbook for context: ${JSON.stringify(playbook)}` : ''} Provide detailed scoring breakdown and overall 0-100 score with specific examples from their content.`
   },
 
   // Perception & Reputation Tests
   perception: {
-    geo_visibility: (brandName: string, websiteUrl: string) => 
-      `Test ${brandName}'s geographic visibility in AI responses. Evaluate: 1) Presence in location-based queries, 2) Geographic coverage accuracy, 3) Local business information completeness, 4) Regional brand recognition. Provide 0-100 score with geographic analysis.`,
+    geo_visibility: (brandName: string, websiteUrl: string, playbook: any) =>
+      `Test ${brandName}'s geographic visibility in AI responses. Evaluate: 1) Presence in location-based queries, 2) Geographic coverage accuracy, 3) Local business information completeness, 4) Regional brand recognition. ${playbook ? `Here is the brand playbook for context: ${JSON.stringify(playbook)}` : ''} Provide 0-100 score with geographic analysis.`,
     
-    citation_strength: (brandName: string, websiteUrl: string) => 
-      `Analyze citation strength for ${brandName}. Assess: 1) Premium media mentions, 2) Industry publication presence, 3) Academic/research citations, 4) Authority domain backlinks, 5) Citation context quality. Score 0-100 with citation analysis.`,
+    citation_strength: (brandName: string, websiteUrl: string, playbook: any) =>
+      `Analyze citation strength for ${brandName}. Assess: 1) Premium media mentions, 2) Industry publication presence, 3) Academic/research citations, 4) Authority domain backlinks, 5) Citation context quality. ${playbook ? `Here is the brand playbook for context: ${JSON.stringify(playbook)}` : ''} Score 0-100 with citation analysis.`,
     
-    answer_quality: (brandName: string, websiteUrl: string) => 
-      `Evaluate the quality of AI responses about ${brandName}. Test: 1) Response completeness, 2) Factual accuracy, 3) Relevance of details, 4) Consistency across queries, 5) Depth of information. Provide 0-100 score with quality assessment.`,
+    answer_quality: (brandName: string, websiteUrl: string, playbook: any) =>
+      `Evaluate the quality of AI responses about ${brandName}. Test: 1) Response completeness, 2) Factual accuracy, 3) Relevance of details, 4) Consistency across queries, 5) Depth of information. ${playbook ? `Here is the brand playbook for context: ${JSON.stringify(playbook)}` : ''} Provide 0-100 score with quality assessment.`,
     
-    sentiment_trust: (brandName: string, websiteUrl: string) => 
-      `Assess sentiment and trust signals for ${brandName}. Analyze: 1) Overall sentiment in AI responses, 2) Trust indicators present, 3) Customer review sentiment, 4) Crisis/negative event handling, 5) Reputation consistency. Score 0-100 with sentiment analysis.`
+    sentiment_trust: (brandName: string, websiteUrl: string, playbook: any) =>
+      `Assess sentiment and trust signals for ${brandName}. Analyze: 1) Overall sentiment in AI responses, 2) Trust indicators present, 3) Customer review sentiment, 4) Crisis/negative event handling, 5) Reputation consistency. ${playbook ? `Here is the brand playbook for context: ${JSON.stringify(playbook)}` : ''} Score 0-100 with sentiment analysis.`
   },
 
   // Commerce & Customer Experience Tests
   commerce: {
-    hero_products: (brandName: string, websiteUrl: string) => 
-      `Evaluate ${brandName}'s product visibility in AI recommendations. Test: 1) Best-seller identification accuracy, 2) Product recommendation quality, 3) Feature/benefit articulation, 4) Competitive positioning understanding, 5) Value proposition clarity. Score 0-100 with product analysis.`,
+    hero_products: (brandName: string, websiteUrl: string, playbook: any) =>
+      `Evaluate ${brandName}'s product visibility in AI recommendations. Test: 1) Best-seller identification accuracy, 2) Product recommendation quality, 3) Feature/benefit articulation, 4) Competitive positioning understanding, 5) Value proposition clarity. ${playbook ? `Here is the brand playbook for context: ${JSON.stringify(playbook)}` : ''} Score 0-100 with product analysis.`,
     
-    shipping_freight: (brandName: string, websiteUrl: string) => 
-      `Analyze shipping and delivery information for ${brandName}. Assess: 1) Shipping cost transparency, 2) Delivery timeframe clarity, 3) Geographic coverage accuracy, 4) Return policy accessibility, 5) Fulfillment option completeness. Provide 0-100 score with logistics evaluation.`
+    shipping_freight: (brandName: string, websiteUrl: string, playbook: any) =>
+      `Analyze shipping and delivery information for ${brandName}. Assess: 1) Shipping cost transparency, 2) Delivery timeframe clarity, 3) Geographic coverage accuracy, 4) Return policy accessibility, 5) Fulfillment option completeness. ${playbook ? `Here is the brand playbook for context: ${JSON.stringify(playbook)}` : ''} Provide 0-100 score with logistics evaluation.`
   }
 }
 

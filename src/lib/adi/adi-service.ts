@@ -110,7 +110,8 @@ export class ADIService {
     const orchestrationResult = await this.orchestrator.executeEvaluation(context)
     
     // Conditionally persist internal agent results (disabled by default to avoid FK issues)
-    const internalPersist = (options?.persistToDb === true) || (process.env.ADI_ENABLE_INTERNAL_PERSIST === '1')
+    // Default to persisting results unless explicitly disabled. This ensures we always try to save and will see any errors.
+    const internalPersist = (options?.persistToDb !== false) && (process.env.ADI_ENABLE_INTERNAL_PERSIST !== '0')
     if (internalPersist) {
       await this.saveAgentResultsToDatabase(context.evaluationId, orchestrationResult)
     } else {
@@ -723,6 +724,14 @@ All scores include confidence intervals and reliability metrics.
       console.log(`📋 [DEBUG] Found ${agentResults.length} agent results to save`)
 
       let recordsInserted = 0
+      let recordsSkipped = 0
+
+      // Helpers for sanitization
+      const num = (x: any, fb = 0) => {
+        const n = Number(x)
+        return Number.isFinite(n) ? n : fb
+      }
+      const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n))
 
       for (const [agentName, result] of agentResults) {
         const agentResult = result as any
@@ -731,38 +740,66 @@ All scores include confidence intervals and reliability metrics.
           console.log(`🤖 [DEBUG] Processing agent ${agentName} with ${agentResult.results.length} results`)
 
           for (const agentOutput of agentResult.results) {
-            const record = {
+            const sanitized = {
               evaluationId,
-              agentId: agentName,
-              resultType: agentOutput.resultType || agentName,
-              rawValue: agentOutput.rawValue ?? agentOutput.normalizedScore ?? 0,
-              normalizedScore: agentOutput.normalizedScore ?? 0,
-              confidenceLevel: agentOutput.confidenceLevel ?? 0,
-              evidence: agentOutput.evidence || {}
+              agentId: String(agentName || '').slice(0, 120) || 'unknown_agent',
+              resultType: String(agentOutput?.resultType ?? agentName ?? 'unknown').slice(0, 160),
+              rawValue: num(agentOutput?.rawValue, num(agentOutput?.normalizedScore, 0)),
+              normalizedScore: num(agentOutput?.normalizedScore, 0),
+              confidenceLevel: clamp(num(agentOutput?.confidenceLevel, 0), 0, 1),
+              evidence: agentOutput?.evidence || {}
             }
 
-            // Normalize score to 0–100 with clamping
-            const s = Number(record.normalizedScore ?? 0)
-            const score = s <= 1 ? Math.round(Math.max(0, Math.min(1, s)) * 100) : Math.round(Math.max(0, Math.min(100, s)))
+            // Normalize score to integer 0–100 with clamping, supporting both 0–1 and 0–100 inputs
+            const s = sanitized.normalizedScore
+            const score = s <= 1 ? Math.round(clamp(s, 0, 1) * 100) : Math.round(clamp(s, 0, 100))
+
+            // Guard against any residual NaN
+            const safeScore = Number.isFinite(score) ? score : 0
 
             const dimensionRecord = {
-              evaluationId: record.evaluationId,
-              dimensionName: record.agentId,
-              score,
-              explanation: `Agent: ${record.agentId}, Type: ${record.resultType}`,
-              recommendations: record.evidence
+              evaluationId: sanitized.evaluationId,
+              dimensionName: sanitized.agentId,
+              score: safeScore,
+              explanation: `Agent: ${sanitized.agentId}, Type: ${sanitized.resultType}`,
+              recommendations: sanitized.evidence
             }
 
-            const insertResult = await db.insert(dimensionScores).values(dimensionRecord).returning()
-            recordsInserted++
-            console.log(`✅ [DEBUG] Inserted dimension score id=${insertResult?.[0]?.id} score=${score}`)
+            try {
+              // UPSERT logic: Insert a new dimension score, or update it if it already exists.
+              const upsertResult = await db.insert(dimensionScores)
+                .values(dimensionRecord)
+                .onConflictDoUpdate({
+                  target: [dimensionScores.evaluationId, dimensionScores.dimensionName],
+                  set: {
+                    score: dimensionRecord.score,
+                    explanation: dimensionRecord.explanation,
+                    recommendations: dimensionRecord.recommendations,
+                    // Note: 'updatedAt' would be useful here if added to the schema
+                  },
+                })
+                .returning();
+
+              recordsInserted++;
+              console.log(`✅ [DEBUG] Upserted dimension score id=${upsertResult?.[0]?.id} score=${safeScore}`);
+            } catch (upsertErr) {
+              recordsSkipped++;
+              console.error('❌ [ERROR] Failed to upsert dimension record.', {
+                agentName: sanitized.agentId,
+                resultType: sanitized.resultType,
+                score: safeScore,
+                err: upsertErr instanceof Error ? upsertErr.message : String(upsertErr),
+              });
+              // Re-throw the error to prevent silent failures and ensure visibility
+              throw upsertErr;
+            }
           }
         } else {
           console.log(`⚠️ [DEBUG] Agent ${agentName} has no results to save`)
         }
       }
 
-      console.log(`🎉 [SUCCESS] Saved ${recordsInserted} agent results to database for evaluation ${evaluationId}`)
+      console.log(`🎉 [SUCCESS] Saved ${recordsInserted} agent results to database for evaluation ${evaluationId}. Skipped: ${recordsSkipped}`)
     } catch (error) {
       console.error('❌ [ERROR] Failed to save agent results to database:', error)
       console.error('❌ [ERROR] Error details:', {

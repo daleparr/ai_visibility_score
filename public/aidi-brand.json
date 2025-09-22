@@ -1,0 +1,51 @@
+{
+  "spec_version": "1.0.0",
+  "brand_name": "Your Brand Name",
+  "legal_entity": "Your Company Inc.",
+  "founding_year": 2023,
+  "wikidata_id": "Q123456",
+  "sameAs": [
+    "https://www.instagram.com/yourbrand",
+    "https://www.linkedin.com/company/yourbrand"
+  ],
+  "logo": "https://www.yourbrand.com/logo.svg",
+  "pressRoom": "https://www.yourbrand.com/press",
+  "heritage": [
+    {"year": 2023, "event": "Founded", "source": "https://www.yourbrand.com/about"}
+  ],
+  "positioning": {
+    "pillars": ["Innovation", "Quality", "Customer Focus"],
+    "value_props": [
+      {"name": "Main Product", "why": "It solves problem X in a unique way."}
+    ]
+  },
+  "tone_of_voice": {
+    "style": "Clear, helpful, and optimistic.",
+    "preferred_terms": ["solution", "benefit", "community"],
+    "avoid_terms": ["cheap", "problem", "issue"]
+  },
+  "disambiguation": [
+    "Not: another company with a similar name"
+  ],
+  "sustainability": {
+    "summary": "We are committed to sustainable practices.",
+    "policies": [
+      {"name": "Our Sustainability Pledge", "url": "https://www.yourbrand.com/sustainability"}
+    ]
+  },
+  "hero_products": [
+    {
+      "collection": "Core Products",
+      "reason": "Our most popular and effective solutions.",
+      "queries": ["best solution for X", "top product for Y"]
+    }
+  ],
+  "taxonomy": {
+    "canonical": {"Main Product": ["Products > Core"]},
+    "synonyms": {"product": ["solution", "service"]},
+    "attributes": ["feature", "benefit"]
+  },
+  "license": "CC BY-NC-SA 4.0",
+  "version": "2025.01.01",
+  "last_updated": "2025-01-01"
+}

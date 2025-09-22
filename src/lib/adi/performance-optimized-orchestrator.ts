@@ -140,13 +140,20 @@ export class PerformanceOptimizedADIOrchestrator {
         return this.cache.get(cacheKey)
       }
 
-      // OPTIMIZATION 3: Execute with global timeout
+      // OPTIMIZATION 3: Execute with global timeout (ensure timer is cleared on success/failure)
       const evaluationPromise = this.executeOptimizedPhases(plan, context, agentResults, errors, warnings)
+      let timeoutId: ReturnType<typeof setTimeout> | null = null
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Evaluation timeout')), this.TARGET_EXECUTION_TIME)
+        timeoutId = setTimeout(() => reject(new Error('Evaluation timeout')), this.TARGET_EXECUTION_TIME)
       })
-
-      await Promise.race([evaluationPromise, timeoutPromise])
+      try {
+        await Promise.race([evaluationPromise, timeoutPromise])
+      } finally {
+        if (timeoutId) {
+          clearTimeout(timeoutId)
+          timeoutId = null
+        }
+      }
 
       const totalExecutionTime = Date.now() - startTime
       const overallStatus = this.determineOverallStatus(agentResults, errors)

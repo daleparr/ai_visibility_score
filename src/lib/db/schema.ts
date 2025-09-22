@@ -1,10 +1,11 @@
 import { pgTable, uuid, varchar, text, integer, boolean, timestamp, pgEnum, jsonb, serial, pgSchema } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
-// Define production schema for enhanced tables
+// Define production and public schemas
 export const productionSchema = pgSchema('production')
+export const publicSchema = pgSchema('public')
 
-// Enums
+// Enums (production schema)
 export const evaluationStatusEnum = pgEnum('evaluation_status', ['pending', 'running', 'completed', 'failed'])
 export const gradeTypeEnum = pgEnum('grade_type', ['A', 'B', 'C', 'D', 'F'])
 export const recommendationPriorityEnum = pgEnum('recommendation_priority', ['1', '2', '3'])
@@ -21,7 +22,8 @@ export const federatedSessionTypeEnum = pgEnum('federated_session_type', ['evalu
 export const privacyLevelEnum = pgEnum('privacy_level', ['anonymized', 'pseudonymized', 'aggregated'])
 export const improvementTypeEnum = pgEnum('improvement_type', ['scoring_accuracy', 'dimension_weights', 'agent_performance', 'user_satisfaction'])
 export const validationStatusEnum = pgEnum('validation_status', ['pending', 'validated', 'deployed', 'rolled_back'])
-export const pageTypeEnum = pgEnum('page_type', ['homepage', 'product', 'about', 'contact', 'blog', 'search_results'])
+// Enums (public schema - for shared types)
+export const pageTypeEnum = publicSchema.enum('page_type', ['homepage', 'product', 'about', 'contact', 'blog', 'search_results'])
 export const changeTypeEnum = pgEnum('change_type', ['content_update', 'structure_change', 'new_feature', 'removal', 'performance_change'])
 export const cacheTypeEnum = pgEnum('cache_type', ['evaluation_result', 'dimension_score', 'benchmark_data', 'competitor_analysis'])
 export const trendTypeEnum = pgEnum('trend_type', ['score_trajectory', 'dimension_improvement', 'competitive_position', 'market_share'])
@@ -383,7 +385,7 @@ export const websiteSnapshots = productionSchema.table('website_snapshots', {
   evaluationId: uuid('evaluation_id').references(() => evaluations.id),
   url: varchar('url', { length: 500 }).notNull(),
   // Use varchar to match production schema (avoid Postgres enum mismatch)
-  pageType: varchar('page_type', { length: 50 }).notNull(),
+  pageType: pageTypeEnum('page_type').notNull(),
   contentHash: varchar('content_hash', { length: 64 }).notNull(),
   rawHtml: text('raw_html'),
   structuredContent: jsonb('structured_content'),
@@ -587,3 +589,125 @@ export type NicheBrandSelection = typeof nicheBrandSelection.$inferSelect
 export type NewNicheBrandSelection = typeof nicheBrandSelection.$inferInsert
 export type LeaderboardStats = typeof leaderboardStats.$inferSelect
 export type NewLeaderboardStats = typeof leaderboardStats.$inferInsert
+
+// =====================================================
+// ADVANCED ANALYTICS & FEDERATED LEARNING
+// Definitions for tables created in COMPREHENSIVE_PRODUCTION_SCHEMA.sql
+// =====================================================
+
+// Federated Learning Sessions
+export const federatedLearningSessions = productionSchema.table('federated_learning_sessions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id),
+  sessionType: federatedSessionTypeEnum('session_type').notNull(),
+  interactionData: jsonb('interaction_data').notNull(),
+  modelVersion: varchar('model_version', { length: 20 }).default('v1.0'),
+  privacyLevel: privacyLevelEnum('privacy_level').default('anonymized'),
+  contributionScore: integer('contribution_score').default(0),
+  createdAt: timestamp('created_at').defaultNow()
+});
+
+// Model Improvements Tracking
+export const modelImprovements = productionSchema.table('model_improvements', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  improvementType: improvementTypeEnum('improvement_type').notNull(),
+  currentVersion: varchar('current_version', { length: 20 }).notNull(),
+  targetVersion: varchar('target_version', { length: 20 }).notNull(),
+  improvementData: jsonb('improvement_data').notNull(),
+  performanceMetrics: jsonb('performance_metrics'),
+  validationStatus: validationStatusEnum('validation_status').default('pending'),
+  deployedAt: timestamp('deployed_at'),
+  createdAt: timestamp('created_at').defaultNow()
+});
+
+// Predictive Insights
+export const predictiveInsights = productionSchema.table('predictive_insights', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  brandId: uuid('brand_id').references(() => brands.id),
+  insightType: insightTypeEnum('insight_type').notNull(),
+  predictionHorizon: predictionHorizonEnum('prediction_horizon').notNull(),
+  predictedValue: integer('predicted_value'),
+  confidenceInterval: jsonb('confidence_interval'),
+  probabilityScore: integer('probability_score').notNull(),
+  supportingEvidence: jsonb('supporting_evidence'),
+  modelVersion: varchar('model_version', { length: 20 }).notNull(),
+  generatedAt: timestamp('generated_at').defaultNow(),
+  expiresAt: timestamp('expires_at').notNull()
+});
+
+// Competitive Analysis
+export const competitiveAnalysis = productionSchema.table('competitive_analysis', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  primaryBrandId: uuid('primary_brand_id').references(() => brands.id),
+  competitorBrandId: uuid('competitor_brand_id').references(() => brands.id),
+  analysisType: analysisTypeEnum('analysis_type').notNull(),
+  comparisonData: jsonb('comparison_data').notNull(),
+  strengthsGaps: jsonb('strengths_gaps'),
+  actionableInsights: jsonb('actionable_insights'),
+  threatLevel: threatLevelEnum('threat_level'),
+  lastUpdated: timestamp('last_updated').defaultNow(),
+  createdAt: timestamp('created_at').defaultNow()
+});
+
+// User Engagement Metrics
+export const userEngagementMetrics = productionSchema.table('user_engagement_metrics', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id),
+  sessionId: varchar('session_id', { length: 255 }),
+  engagementType: engagementTypeEnum('engagement_type').notNull(),
+  interactionData: jsonb('interaction_data'),
+  duration: integer('duration'), // seconds
+  valueGenerated: integer('value_generated'), // business value score 0-100
+  timestamp: timestamp('timestamp').defaultNow()
+});
+
+// Relations for new tables
+export const federatedLearningSessionsRelations = relations(federatedLearningSessions, ({ one }) => ({
+  user: one(users, {
+    fields: [federatedLearningSessions.userId],
+    references: [users.id]
+  })
+}));
+
+export const modelImprovementsRelations = relations(modelImprovements, ({ one }) => ({
+  // No direct relations, this is a top-level tracking table
+}));
+
+export const predictiveInsightsRelations = relations(predictiveInsights, ({ one }) => ({
+  brand: one(brands, {
+    fields: [predictiveInsights.brandId],
+    references: [brands.id]
+  })
+}));
+
+export const competitiveAnalysisRelations = relations(competitiveAnalysis, ({ one }) => ({
+  primaryBrand: one(brands, {
+    fields: [competitiveAnalysis.primaryBrandId],
+    references: [brands.id],
+    relationName: 'primary_brand_analysis'
+  }),
+  competitorBrand: one(brands, {
+    fields: [competitiveAnalysis.competitorBrandId],
+    references: [brands.id],
+    relationName: 'competitor_brand_analysis'
+  })
+}));
+
+export const userEngagementMetricsRelations = relations(userEngagementMetrics, ({ one }) => ({
+  user: one(users, {
+    fields: [userEngagementMetrics.userId],
+    references: [users.id]
+  })
+}));
+
+// Export types for new tables
+export type FederatedLearningSession = typeof federatedLearningSessions.$inferSelect;
+export type NewFederatedLearningSession = typeof federatedLearningSessions.$inferInsert;
+export type ModelImprovement = typeof modelImprovements.$inferSelect;
+export type NewModelImprovement = typeof modelImprovements.$inferInsert;
+export type PredictiveInsight = typeof predictiveInsights.$inferSelect;
+export type NewPredictiveInsight = typeof predictiveInsights.$inferInsert;
+export type CompetitiveAnalysis = typeof competitiveAnalysis.$inferSelect;
+export type NewCompetitiveAnalysis = typeof competitiveAnalysis.$inferInsert;
+export type UserEngagementMetric = typeof userEngagementMetrics.$inferSelect;
+export type NewUserEngagementMetric = typeof userEngagementMetrics.$inferInsert;

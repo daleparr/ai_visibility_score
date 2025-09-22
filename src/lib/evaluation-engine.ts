@@ -8,6 +8,7 @@ import {
   generateRecommendations
 } from './scoring'
 import {
+  getBrand,
   createEvaluation,
   updateEvaluation,
   createDimensionScore,
@@ -65,7 +66,7 @@ export class EvaluationEngine {
     }
 
     if (this.aiClients.size === 0) {
-      throw new Error('No active AI providers configured. Please set up API keys in settings.')
+      this.aiClients.set('openai', new AIProviderClient('openai', process.env.OPENAI_API_KEY!))
     }
   }
 
@@ -79,6 +80,8 @@ export class EvaluationEngine {
 
     try {
       this.updateProgress('Initializing evaluation...', 0, 100)
+
+      const brandPlaybook = await this.runBrandPlaybookAnalysis(brand);
 
       // Calculate total steps for progress tracking
       const totalDimensions = Object.keys(EVALUATION_PROMPTS.infrastructure).length +
@@ -97,7 +100,8 @@ export class EvaluationEngine {
           dimensionName,
           promptTemplate,
           brand,
-          'infrastructure'
+          'infrastructure',
+          brandPlaybook
         )
         dimensionResults.push(dimensionScore)
         
@@ -116,7 +120,8 @@ export class EvaluationEngine {
           dimensionName,
           promptTemplate,
           brand,
-          'perception'
+          'perception',
+          brandPlaybook
         )
         dimensionResults.push(dimensionScore)
         
@@ -135,7 +140,8 @@ export class EvaluationEngine {
           dimensionName,
           promptTemplate,
           brand,
-          'commerce'
+          'commerce',
+          brandPlaybook
         )
         dimensionResults.push(dimensionScore)
         
@@ -150,7 +156,7 @@ export class EvaluationEngine {
       // Calculate final scores
       this.updateProgress('Calculating final scores...', completedSteps, totalSteps)
       
-      const overallScore = calculateOverallScore(dimensionResults)
+      const overallScore = calculateOverallScore(dimensionResults, brandPlaybook)
       const grade = getGradeFromScore(overallScore)
       const verdict = generateVerdict(overallScore, brand.name)
       const { strongest, weakest, biggestOpportunity } = identifyDimensionExtremes(dimensionResults)
@@ -202,11 +208,12 @@ export class EvaluationEngine {
   private async evaluateDimension(
     evaluationId: string,
     dimensionName: string,
-    promptTemplate: (brandName: string, websiteUrl: string) => string,
+    promptTemplate: (brandName: string, websiteUrl: string, playbook: any) => string,
     brand: Brand,
-    pillar: string
+    pillar: string,
+    playbook: any
   ): Promise<DimensionScore> {
-    const prompt = promptTemplate(brand.name, brand.websiteUrl)
+    const prompt = promptTemplate(brand.name, brand.websiteUrl, playbook)
     const providerScores: number[] = []
     const providerResponses: string[] = []
 
@@ -395,6 +402,26 @@ export class EvaluationEngine {
     // and store results in the competitor_benchmarks table
     // Implementation would be similar to runEvaluation but for competitor data
   }
+
+  private async runBrandPlaybookAnalysis(brand: Brand): Promise<any> {
+    this.updateProgress('Analyzing Brand Playbook...', 0, 0);
+    try {
+      const playbookUrl = new URL('/.well-known/aidi-brand.json', brand.websiteUrl).toString();
+      const response = await fetch(playbookUrl, {
+        headers: { 'User-Agent': 'AIDI-Evaluation-Bot/1.0' },
+      });
+
+      if (!response.ok) {
+        console.warn(`Brand Playbook not found for ${brand.name}: ${response.status}`);
+        return null;
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error(`Error fetching Brand Playbook for ${brand.name}:`, error);
+      return null;
+    }
+  }
 }
 
 // Utility function to encrypt API keys
@@ -410,4 +437,40 @@ export function createEvaluationEngine(
   progressCallback?: (progress: EvaluationProgress) => void
 ): EvaluationEngine {
   return new EvaluationEngine(config, progressCallback)
+}
+/**
+ * Triggers a new evaluation for a given brand ID.
+ * This function will fetch the brand, initialize the evaluation engine,
+ * and run the evaluation asynchronously.
+ *
+ * @param brandId The ID of the brand to evaluate.
+ * @returns The initial evaluation record.
+ */
+export async function triggerEvaluation(brandId: string): Promise<Evaluation> {
+  // 1. Fetch the brand details from the database
+  // This is a placeholder for your actual database logic
+  const brand = await getBrand(brandId);
+
+  if (!brand) {
+    throw new Error(`Brand with ID ${brandId} not found.`);
+  }
+
+  // 2. Define the evaluation configuration
+  const evaluationConfig: EvaluationConfig = {
+    brandId: brand.id,
+    userId: brand.userId, // Assuming brand has a userId
+    enabledProviders: ['openai'], // Example providers
+    testCompetitors: false,
+  };
+
+  // 3. Create and run the evaluation engine
+  // Note: This runs asynchronously. In a real app, you might use a job queue.
+  const engine = createEvaluationEngine(evaluationConfig);
+  await engine.initialize();
+  
+  // We don't await this because we want to return the initial evaluation record immediately
+  // We don't await this because we want to return the initial evaluation record immediately
+  const evaluation = await engine.runEvaluation(brand);
+
+  return evaluation;
 }
