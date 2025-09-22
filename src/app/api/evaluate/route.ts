@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
         normalizedUrl,
         undefined,
         guestUser?.id || 'guest-user',
-        { persistToDb: false, evaluationId }
+        { evaluationId }
       )
       const { orchestrationResult, adiScore, industryPercentile, globalRank, evaluationTrace } = adiResult
 

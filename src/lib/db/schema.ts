@@ -3,7 +3,6 @@ import { relations } from 'drizzle-orm'
 
 // Define production and public schemas
 export const productionSchema = pgSchema('production')
-export const publicSchema = pgSchema('public')
 
 // Enums (production schema)
 export const evaluationStatusEnum = pgEnum('evaluation_status', ['pending', 'running', 'completed', 'failed'])
@@ -23,7 +22,7 @@ export const privacyLevelEnum = pgEnum('privacy_level', ['anonymized', 'pseudony
 export const improvementTypeEnum = pgEnum('improvement_type', ['scoring_accuracy', 'dimension_weights', 'agent_performance', 'user_satisfaction'])
 export const validationStatusEnum = pgEnum('validation_status', ['pending', 'validated', 'deployed', 'rolled_back'])
 // Enums (public schema - for shared types)
-export const pageTypeEnum = publicSchema.enum('page_type', ['homepage', 'product', 'about', 'contact', 'blog', 'search_results'])
+export const pageTypeEnum = pgEnum('page_type', ['homepage', 'product', 'about', 'contact', 'blog', 'search_results'])
 export const changeTypeEnum = pgEnum('change_type', ['content_update', 'structure_change', 'new_feature', 'removal', 'performance_change'])
 export const cacheTypeEnum = pgEnum('cache_type', ['evaluation_result', 'dimension_score', 'benchmark_data', 'competitor_analysis'])
 export const trendTypeEnum = pgEnum('trend_type', ['score_trajectory', 'dimension_improvement', 'competitive_position', 'market_share'])

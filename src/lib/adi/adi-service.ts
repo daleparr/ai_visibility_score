@@ -694,124 +694,96 @@ All scores include confidence intervals and reliability metrics.
    * Save agent results to database for federated learning access
    */
   private async saveAgentResultsToDatabase(evaluationId: string, orchestrationResult: any): Promise<void> {
-    console.log(`🔍 [DEBUG] Starting database save for evaluation ${evaluationId}`)
-
+    console.log(`[DB_SAVE_START] evaluationId=${evaluationId}. Attempting to save agent results.`);
     try {
-      console.log('📦 [DEBUG] Importing database modules...')
-      const { db } = await import('../db/index')
-      const { evaluations, dimensionScores } = await import('../db/schema')
+        console.log('📦 [DEBUG] Importing database modules...')
+        const { db } = await import('../db/index');
+        const { evaluations, dimensionScores } = await import('../db/schema');
 
-      // Critical check: ensure we have a real database connection
-      if (!db) {
-        const errorMsg = `🚨 [CRITICAL] No database connection available for evaluation ${evaluationId}! This will cause data loss!`
-        console.error(errorMsg)
-        throw new Error(errorMsg)
-      }
-
-      // Ensure evaluation exists to satisfy FK constraint
-      const evalCheck = await db
-        .select({ id: evaluations.id })
-        .from(evaluations)
-        .where(eq(evaluations.id, evaluationId))
-        .limit(1)
-
-      if (!evalCheck || evalCheck.length === 0) {
-        console.warn(`⚠️ [WARN] Evaluation ${evaluationId} not found. Skipping agent-results persistence to avoid FK violation.`)
-        return
-      }
-
-      const agentResults = Object.entries(orchestrationResult.agentResults || {})
-      console.log(`📋 [DEBUG] Found ${agentResults.length} agent results to save`)
-
-      let recordsInserted = 0
-      let recordsSkipped = 0
-
-      // Helpers for sanitization
-      const num = (x: any, fb = 0) => {
-        const n = Number(x)
-        return Number.isFinite(n) ? n : fb
-      }
-      const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n))
-
-      for (const [agentName, result] of agentResults) {
-        const agentResult = result as any
-
-        if (agentResult.results && agentResult.results.length > 0) {
-          console.log(`🤖 [DEBUG] Processing agent ${agentName} with ${agentResult.results.length} results`)
-
-          for (const agentOutput of agentResult.results) {
-            const sanitized = {
-              evaluationId,
-              agentId: String(agentName || '').slice(0, 120) || 'unknown_agent',
-              resultType: String(agentOutput?.resultType ?? agentName ?? 'unknown').slice(0, 160),
-              rawValue: num(agentOutput?.rawValue, num(agentOutput?.normalizedScore, 0)),
-              normalizedScore: num(agentOutput?.normalizedScore, 0),
-              confidenceLevel: clamp(num(agentOutput?.confidenceLevel, 0), 0, 1),
-              evidence: agentOutput?.evidence || {}
-            }
-
-            // Normalize score to integer 0–100 with clamping, supporting both 0–1 and 0–100 inputs
-            const s = sanitized.normalizedScore
-            const score = s <= 1 ? Math.round(clamp(s, 0, 1) * 100) : Math.round(clamp(s, 0, 100))
-
-            // Guard against any residual NaN
-            const safeScore = Number.isFinite(score) ? score : 0
-
-            const dimensionRecord = {
-              evaluationId: sanitized.evaluationId,
-              dimensionName: sanitized.agentId,
-              score: safeScore,
-              explanation: `Agent: ${sanitized.agentId}, Type: ${sanitized.resultType}`,
-              recommendations: sanitized.evidence
-            }
-
-            try {
-              // UPSERT logic: Insert a new dimension score, or update it if it already exists.
-              const upsertResult = await db.insert(dimensionScores)
-                .values(dimensionRecord)
-                .onConflictDoUpdate({
-                  target: [dimensionScores.evaluationId, dimensionScores.dimensionName],
-                  set: {
-                    score: dimensionRecord.score,
-                    explanation: dimensionRecord.explanation,
-                    recommendations: dimensionRecord.recommendations,
-                    // Note: 'updatedAt' would be useful here if added to the schema
-                  },
-                })
-                .returning();
-
-              recordsInserted++;
-              console.log(`✅ [DEBUG] Upserted dimension score id=${upsertResult?.[0]?.id} score=${safeScore}`);
-            } catch (upsertErr) {
-              recordsSkipped++;
-              console.error('❌ [ERROR] Failed to upsert dimension record.', {
-                agentName: sanitized.agentId,
-                resultType: sanitized.resultType,
-                score: safeScore,
-                err: upsertErr instanceof Error ? upsertErr.message : String(upsertErr),
-              });
-              // Re-throw the error to prevent silent failures and ensure visibility
-              throw upsertErr;
-            }
-          }
-        } else {
-          console.log(`⚠️ [DEBUG] Agent ${agentName} has no results to save`)
+        if (!db) {
+            const errorMsg = `[DB_SAVE_CRITICAL] No database connection for evaluation ${evaluationId}!`;
+            console.error(errorMsg);
+            throw new Error(errorMsg);
         }
-      }
 
-      console.log(`🎉 [SUCCESS] Saved ${recordsInserted} agent results to database for evaluation ${evaluationId}. Skipped: ${recordsSkipped}`)
-    } catch (error) {
-      console.error('❌ [ERROR] Failed to save agent results to database:', error)
-      console.error('❌ [ERROR] Error details:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        evaluationId,
-        agentResultsCount: Object.keys(orchestrationResult.agentResults || {}).length
-      })
-      // Re-throw the error so it's not silently ignored
-      throw error
+        const evalCheck = await db.select({ id: evaluations.id }).from(evaluations).where(eq(evaluations.id, evaluationId)).limit(1);
+
+        if (!evalCheck || evalCheck.length === 0) {
+            console.warn(`[DB_SAVE_WARN] Evaluation ${evaluationId} not found, skipping persistence.`);
+            return;
+        }
+
+        const agentResults = Object.entries(orchestrationResult.agentResults || {});
+        console.log(`[DB_SAVE_INFO] Found ${agentResults.length} agent results for ${evaluationId}.`);
+
+        let recordsInserted = 0;
+        let recordsSkipped = 0;
+
+        const num = (x: any, fb = 0) => {
+            const n = Number(x);
+            return Number.isFinite(n) ? n : fb;
+        };
+        const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
+
+        for (const [agentName, result] of agentResults) {
+            const agentResult = result as any;
+
+            if (agentResult.results && agentResult.results.length > 0) {
+                console.log(`[DB_SAVE_PROCESSING] evaluationId=${evaluationId} agent=${agentName} results=${agentResult.results.length}`);
+                for (const agentOutput of agentResult.results) {
+                    const sanitized = {
+                        evaluationId,
+                        agentId: String(agentName || '').slice(0, 120) || 'unknown_agent',
+                        resultType: String(agentOutput?.resultType ?? agentName ?? 'unknown').slice(0, 160),
+                        rawValue: num(agentOutput?.rawValue, num(agentOutput?.normalizedScore, 0)),
+                        normalizedScore: num(agentOutput?.normalizedScore, 0),
+                        confidenceLevel: clamp(num(agentOutput?.confidenceLevel, 0), 0, 1),
+                        evidence: agentOutput?.evidence || {},
+                    };
+
+                    const s = sanitized.normalizedScore;
+                    const score = s <= 1 ? Math.round(clamp(s, 0, 1) * 100) : Math.round(clamp(s, 0, 100));
+                    const safeScore = Number.isFinite(score) ? score : 0;
+
+                    const dimensionRecord = {
+                        evaluationId: sanitized.evaluationId,
+                        dimensionName: sanitized.agentId,
+                        score: safeScore,
+                        explanation: `Agent: ${sanitized.agentId}, Type: ${sanitized.resultType}`,
+                        recommendations: sanitized.evidence,
+                    };
+
+                    try {
+                        console.log(`[DB_SAVE_UPSERTING] evaluationId=${evaluationId} dimension=${dimensionRecord.dimensionName} score=${dimensionRecord.score}`);
+                        await db.insert(dimensionScores).values(dimensionRecord).onConflictDoUpdate({
+                            target: [dimensionScores.evaluationId, dimensionScores.dimensionName],
+                            set: {
+                                score: dimensionRecord.score,
+                                explanation: dimensionRecord.explanation,
+                                recommendations: dimensionRecord.recommendations,
+                                updatedAt: new Date(),
+                            },
+                        });
+                        recordsInserted++;
+                    } catch (dbError: any) {
+                        console.error(`[DB_SAVE_ERROR] evaluationId=${evaluationId} agent=${agentName}. Details:`, {
+                            message: dbError.message,
+                            dimensionRecord: JSON.stringify(dimensionRecord),
+                        });
+                        recordsSkipped++;
+                    }
+                }
+            } else {
+                console.log(`[DB_SAVE_INFO] evaluationId=${evaluationId} agent=${agentName} had no results.`);
+            }
+        }
+
+        console.log(`[DB_SAVE_SUCCESS] evaluationId=${evaluationId}. Inserted: ${recordsInserted}, Skipped: ${recordsSkipped}.`);
+    } catch (error: any) {
+        console.error(`[DB_SAVE_CRITICAL] Unhandled error in saveAgentResultsToDatabase for ${evaluationId}. Details: ${error.message}`);
+        throw error;
     }
-  }
+}
 
   // Legacy mock methods for backward compatibility
   private async getIndustryEvaluations(industryId: string, days: number): Promise<any[]> {
