@@ -208,7 +208,11 @@ export class EvaluationEngine {
   private async evaluateDimension(
     evaluationId: string,
     dimensionName: string,
-    promptTemplate: (brandName: string, websiteUrl: string, playbook: any) => string,
+    promptTemplate: (
+      brandName: string,
+      websiteUrl: string,
+      playbook: any
+    ) => string,
     brand: Brand,
     pillar: string,
     playbook: any

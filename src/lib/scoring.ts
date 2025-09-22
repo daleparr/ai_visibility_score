@@ -85,19 +85,37 @@ export const DIMENSION_NAMES = {
 /**
  * Calculate overall score from dimension scores
  */
-export function calculateOverallScore(dimensionScores: DimensionScore[]): number {
-  let totalWeightedScore = 0
-  let totalWeight = 0
+export function calculateOverallScore(
+  dimensionScores: DimensionScore[],
+  brandPlaybook?: any
+): number {
+  let totalWeightedScore = 0;
+  let totalWeight = 0;
 
   for (const dimension of dimensionScores) {
-    const weight = DIMENSION_WEIGHTS[dimension.dimensionName as keyof typeof DIMENSION_WEIGHTS]
+    const weight =
+      DIMENSION_WEIGHTS[
+        dimension.dimensionName as keyof typeof DIMENSION_WEIGHTS
+      ];
     if (weight) {
-      totalWeightedScore += dimension.score * weight
-      totalWeight += weight
+      totalWeightedScore += dimension.score * weight;
+      totalWeight += weight;
     }
   }
 
-  return totalWeight > 0 ? Math.round(totalWeightedScore / totalWeight) : 0
+  let overallScore =
+    totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
+
+  // Apply Brand Playbook boost if available
+  if (brandPlaybook && typeof brandPlaybook.scoring_boost === "number") {
+    console.log(`Applying Brand Playbook boost: ${brandPlaybook.scoring_boost}`);
+    overallScore += brandPlaybook.scoring_boost;
+  }
+
+  // Ensure score is within 0-100 range
+  const finalScore = Math.max(0, Math.min(100, overallScore));
+
+  return Math.round(finalScore);
 }
 
 /**
