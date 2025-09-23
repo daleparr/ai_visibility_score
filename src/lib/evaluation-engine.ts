@@ -281,8 +281,7 @@ export class EvaluationEngine {
           await createProbeRun({
               evaluationId,
               probeName: result.probeName as any,
-              // For now, we just pick the first model's output
-              model: Object.keys(this.aiClients)[0] as any,
+              model: result.model as any, // The harness now guarantees a model
               outputJson: result.output,
               isValid: result.wasValid,
               citationsOk: result.isTrusted,

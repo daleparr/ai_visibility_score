@@ -137,8 +137,8 @@ export interface AIProviderResponse {
 }
 
 export class AIProviderClient {
-  private apiKey: string
   public provider: AIProviderName
+  private apiKey: string
   private baseUrl: string
   private defaultModel: string
 
@@ -498,34 +498,14 @@ function extractKeyContent(html: string, url: string): string {
     
     // Extract main content (simplified - remove scripts, styles, nav)
     let mainContent = html
-      .replace(/<script[^>]*>.*?<\/script>/gis, '')
-      .replace(/<style[^>]*>.*?<\/style>/gis, '')
-      .replace(/<nav[^>]*>.*?<\/nav>/gis, '')
-      .replace(/<header[^>]*>.*?<\/header>/gis, '')
-      .replace(/<footer[^>]*>.*?<\/footer>/gis, '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
+    mainContent = mainContent.replace(/<nav[^>]*>.*?<\/nav>/gis, '')
+    mainContent = mainContent.replace(/<script[^>]*>.*?<\/script>/gis, '')
+    mainContent = mainContent.replace(/<style[^>]*>.*?<\/style>/gis, '')
+    mainContent = mainContent.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
     
-    // Limit content length for AI processing
-    if (mainContent.length > 3000) {
-      mainContent = mainContent.substring(0, 3000) + '...'
-    }
-    
-    return `Website Analysis for: ${url}
-
-Title: ${title}
-
-Meta Description: ${metaDescription}
-
-Structured Data Found: ${structuredData.length > 0 ? JSON.stringify(structuredData, null, 2).substring(0, 1000) : 'None detected'}
-
-Main Content: ${mainContent}
-
-Please analyze this website content and provide a detailed evaluation with a numerical score from 0-100.`
-    
+    return `URL: ${url}\nTitle: ${title}\nMeta Description: ${metaDescription}\n\nMain Content:\n${mainContent.substring(0, 15000)}\n\nStructured Data:\n${JSON.stringify(structuredData, null, 2)}`
   } catch (error) {
-    console.error('Error extracting content:', error)
-    return `Basic website information for ${url}. Unable to extract detailed content for analysis.`
+    console.error('Error extracting key content:', error)
+    return `URL: ${url}\nError extracting content.`
   }
 }

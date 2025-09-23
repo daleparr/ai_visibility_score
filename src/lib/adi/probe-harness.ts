@@ -63,11 +63,12 @@ export class ProbeHarness {
         const confidence = validOutputs.length / modelsToRun.length;
 
         // In a real system, you would aggregate the outputs (e.g., majority vote, merge)
-        const finalOutput = validOutputs.length > 0 ? validOutputs[0] : { data: null, model: undefined };
+        // If all models fail, we default to the first model in the list for attribution.
+        const finalOutput = validOutputs.length > 0 ? validOutputs[0] : { ...outputs[0], success: false, data: null };
 
         return {
             probeName: probe.name,
-            model: finalOutput.model,
+            model: finalOutput.model, // This is now guaranteed to have a value.
             wasValid: validOutputs.length > 0,
             isTrusted: true, // Placeholder for citation checking
             confidence: Math.round(confidence * 100),
