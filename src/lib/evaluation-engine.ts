@@ -428,21 +428,33 @@ export class EvaluationEngine {
 
   private async runBrandPlaybookAnalysis(brand: Brand): Promise<any> {
     this.updateProgress('Analyzing Brand Playbook...', 0, 0);
+    const playbookUrl = new URL('/.well-known/aidi-brand.json', brand.websiteUrl).toString();
     try {
-      const playbookUrl = new URL('/.well-known/aidi-brand.json', brand.websiteUrl).toString();
-      const response = await fetch(playbookUrl, {
-        headers: { 'User-Agent': 'AIDI-Evaluation-Bot/1.0' },
-      });
+        const response = await fetch(playbookUrl, {
+            headers: { 'User-Agent': 'AIDI-Evaluation-Bot/1.0' },
+        });
 
-      if (!response.ok) {
-        console.warn(`Brand Playbook not found for ${brand.name}: ${response.status}`);
+        if (!response.ok) {
+            console.warn(`[Playbook] Not found for ${brand.name} (status: ${response.status}). Proceeding without it.`);
+            return null;
+        }
+
+        const text = await response.text();
+        // The text is likely HTML for a 404 page, not JSON.
+        if (text.trim().startsWith('<')) {
+            console.warn(`[Playbook] Expected JSON but received HTML for ${brand.name}.`);
+            return null;
+        }
+        
+        return JSON.parse(text);
+
+    } catch (error: any) {
+        if (error instanceof SyntaxError) {
+             console.warn(`[Playbook] Failed to parse JSON for ${brand.name}. Content is likely not a valid playbook.`);
+        } else {
+            console.error(`[Playbook] Unexpected error fetching for ${brand.name}:`, error);
+        }
         return null;
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error(`Error fetching Brand Playbook for ${brand.name}:`, error);
-      return null;
     }
   }
 }
