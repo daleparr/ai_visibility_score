@@ -162,17 +162,6 @@ export const recommendations = productionSchema.table('recommendations', {
   category: varchar('category', { length: 50 }),
   createdAt: timestamp('created_at').defaultNow()
 })
-export const recommendations = productionSchema.table('recommendations', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
-  priority: recommendationPriorityEnum('priority').notNull(),
-  title: varchar('title', { length: 255 }).notNull(),
-  description: text('description'),
-  impactLevel: varchar('impact_level', { length: 20 }),
-  effortLevel: varchar('effort_level', { length: 20 }),
-  category: varchar('category', { length: 50 }),
-  createdAt: timestamp('created_at').defaultNow()
-})
 
 export const competitorBenchmarks = productionSchema.table('competitor_benchmarks', {
   id: uuid('id').primaryKey().defaultRandom(),
