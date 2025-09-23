@@ -279,6 +279,7 @@ export class EvaluationEngine {
       // 3. Save probe results to the database
       this.updateProgress('Saving probe evidence...', 3, 4);
       for (const result of probeResults) {
+          console.log('[EVAL_ENGINE] Received probe result to save:', JSON.stringify(result, null, 2));
           await createProbeRun({
               evaluationId,
               probeName: result.probeName as any,

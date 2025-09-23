@@ -66,7 +66,7 @@ export class ProbeHarness {
         // If all models fail, we default to the first model in the list for attribution.
         const finalOutput = validOutputs.length > 0 ? validOutputs[0] : { ...outputs[0], success: false, data: null };
 
-        return {
+        const probeResult = {
             probeName: probe.name,
             model: finalOutput.model, // This is now guaranteed to have a value.
             wasValid: validOutputs.length > 0,
@@ -75,6 +75,8 @@ export class ProbeHarness {
             output: finalOutput.data,
             allOutputs: outputs.map(o => o.data),
         };
+        console.log('[PROBE_HARNESS] Returning probe result:', JSON.stringify(probeResult, null, 2));
+        return probeResult;
     }
 
     private async runOnModel(
