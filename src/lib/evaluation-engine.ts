@@ -101,6 +101,7 @@ export class EvaluationEngine {
 
       // Run infrastructure tests
       if (this.config.infraMode === 'hybrid') {
+       console.log('[DEBUG] infraMode is "hybrid", executing new path...');
        const hybridDimResults = await this.evaluateInfrastructureHybrid(evaluation.id, brand);
        dimensionResults.push(...hybridDimResults);
        // This step count is a rough estimate for now
@@ -108,6 +109,7 @@ export class EvaluationEngine {
        this.updateProgress('Completed Infrastructure Pillar (Hybrid)', completedSteps, totalSteps);
       } else {
        // Legacy crawl-based evaluation
+       console.log('[DEBUG] infraMode is NOT "hybrid", executing legacy path...');
        for (const [dimensionName, promptTemplate] of Object.entries(EVALUATION_PROMPTS.infrastructure)) {
          const dimensionScore = await this.evaluateDimension(
            evaluation.id,
