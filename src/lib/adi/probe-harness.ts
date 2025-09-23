@@ -63,19 +63,22 @@ export class ProbeHarness {
         const confidence = validOutputs.length / modelsToRun.length;
 
         // In a real system, you would aggregate the outputs (e.g., majority vote, merge)
-        // If all models fail, we default to the first model in the list for attribution.
-        const finalOutput = validOutputs.length > 0 ? validOutputs[0] : { ...outputs[0], success: false, data: null };
+        // Aggregate results. If all models fail, create a default failure response.
+        const finalOutput = validOutputs.length > 0
+            ? validOutputs[0]
+            : (outputs.length > 0
+                ? { ...outputs[0], success: false, data: null }
+                : { success: false, data: null, model: 'probe_failed_to_run' as AIProviderName });
 
-        const probeResult = {
+        const probeResult: ProbeResult = {
             probeName: probe.name,
-            model: finalOutput.model, // This is now guaranteed to have a value.
-            wasValid: validOutputs.length > 0,
+            model: finalOutput.model,
+            wasValid: finalOutput.success,
             isTrusted: true, // Placeholder for citation checking
             confidence: Math.round(confidence * 100),
             output: finalOutput.data,
             allOutputs: outputs.map(o => o.data),
         };
-        console.log('[PROBE_HARNESS] Returning probe result:', JSON.stringify(probeResult, null, 2));
         return probeResult;
     }
 
