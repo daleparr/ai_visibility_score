@@ -481,6 +481,9 @@ export const probeRuns = productionSchema.table('probe_runs', {
 export type NewPageBlob = typeof pageBlobs.$inferInsert;
 export type NewProbeRun = typeof probeRuns.$inferInsert;
 
+export type NewLeaderboardCache = typeof leaderboardCache.$inferInsert;
+export type NewCompetitiveTrigger = typeof competitiveTriggers.$inferInsert;
+export type NewNicheBrandSelection = typeof nicheBrandSelection.$inferInsert;
 // Relationships for Hybrid Schema
 export const pageBlobsRelations = relations(pageBlobs, ({ one }) => ({
   evaluation: one(evaluations, {
