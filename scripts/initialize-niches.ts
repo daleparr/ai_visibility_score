@@ -36,13 +36,8 @@ async function initializeAndEnqueue() {
       brandId: undefined,
     }))
 
-    console.log(`📝 Enqueuing ${requests.length} evaluations...`)
-    await service.addToEvaluationQueue(requests)
-
-    // Show queue stats
-    const stats = await service.getQueueStats()
-    console.log('📊 Queue stats after initialization:', stats)
-    console.log('✅ Initialization and enqueue complete')
+    console.log(`✅ Initialization complete. ${requests.length} brand selections are ready in the database.`)
+    console.log(`ℹ️ Evaluation queue has been deprecated. Evaluations should be triggered directly.`)
   } catch (err) {
     console.error('❌ Error initializing niches:', err)
     process.exitCode = 1
