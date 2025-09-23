@@ -22,6 +22,7 @@ import { ProbeHarness } from './adi/probe-harness'
 import { coreProbes } from './adi/probes'
 import { mapProbesToDimensionScores } from './adi/score-adapter'
 import { createPageBlob, createProbeRun } from './database'
+export const DEBUG_VERSION = "v1.0.0-final-fix";
 
 export interface EvaluationConfig {
   brandId: string
