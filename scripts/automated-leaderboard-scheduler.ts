@@ -1,6 +1,6 @@
 import { LeaderboardPopulationService } from '../src/lib/leaderboard-population-service'
 import { db } from '../src/lib/db'
-import { leaderboardCache, evaluationQueue } from '../src/lib/db/schema'
+import { leaderboardCache } from '../src/lib/db/schema'
 import { count, sql } from 'drizzle-orm'
 
 /**
@@ -113,69 +113,10 @@ class LeaderboardScheduler {
   }
 
   /**
-   * Run daily evaluation batch
+   * Run daily evaluation batch (DEPRECATED)
    */
   private async runDailyEvaluation(): Promise<void> {
-    if (this.status.isRunning) {
-      console.log('⚠️ Evaluation already running, skipping...')
-      return
-    }
-
-    this.status.isRunning = true
-    this.status.lastRunTime = new Date()
-    const startTime = Date.now()
-
-    try {
-      console.log('🚀 Starting daily leaderboard evaluation...')
-      
-      // Get initial stats
-      const initialStats = await this.service.getQueueStats()
-      console.log('📊 Initial queue stats:', initialStats)
-
-      // Process evaluation queue
-      await this.service.processEvaluationQueue()
-      
-      // Get final stats
-      const finalStats = await this.service.getQueueStats()
-      console.log('📊 Final queue stats:', finalStats)
-
-      const duration = Date.now() - startTime
-      const evaluationsProcessed = finalStats.completed - initialStats.completed
-
-      if (evaluationsProcessed > 0) {
-        this.status.lastRunStatus = 'success'
-        this.status.consecutiveFailures = 0
-        console.log(`✅ Daily evaluation completed successfully`)
-        console.log(`📈 Processed ${evaluationsProcessed} evaluations in ${duration}ms`)
-        
-        await this.sendNotification('success', {
-          evaluationsProcessed,
-          duration,
-          finalStats
-        })
-      } else {
-        this.status.lastRunStatus = 'partial'
-        console.log('⚠️ No evaluations processed - queue may be empty')
-      }
-
-    } catch (error: any) {
-      this.status.lastRunStatus = 'error'
-      this.status.consecutiveFailures++
-      
-      console.error('❌ Daily evaluation failed:', error)
-      
-      await this.sendNotification('error', {
-        error: error.message,
-        consecutiveFailures: this.status.consecutiveFailures,
-        lastRunTime: this.status.lastRunTime
-      })
-
-      if (this.status.consecutiveFailures >= 3) {
-        await this.sendCriticalAlert()
-      }
-    } finally {
-      this.status.isRunning = false
-    }
+    console.warn('runDailyEvaluation is deprecated and no longer processes a queue.');
   }
 
   /**
@@ -183,23 +124,12 @@ class LeaderboardScheduler {
    */
   private async performHealthCheck(): Promise<void> {
     try {
-      const stats = await this.service.getQueueStats()
       const cacheStats = await this.getCacheStats()
       
       console.log('🏥 Health check:', {
-        queueStats: stats,
         cacheStats,
         schedulerStatus: this.status
       })
-
-      // Check for issues
-      if (stats.failed > stats.completed * 0.1 && stats.completed > 0) {
-        console.warn('⚠️ High failure rate detected in evaluation queue')
-        await this.sendNotification('warning', {
-          issue: 'High failure rate',
-          stats
-        })
-      }
 
     } catch (error: any) {
       console.error('❌ Health check failed:', error)
