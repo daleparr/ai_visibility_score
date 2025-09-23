@@ -5,38 +5,9 @@ import { LeaderboardPopulationService } from '../src/lib/leaderboard-population-
  * This processes pending evaluations in the queue
  */
 async function processLeaderboardQueue() {
-  console.log('🔄 Starting leaderboard queue processing...')
-  
-  try {
-    const service = LeaderboardPopulationService.getInstance({
-      batchSize: 5,
-      dailyLimit: 20,
-      retryAttempts: 3,
-      cacheExpiryDays: 30
-    })
-
-    // Get current queue stats
-    const initialStats = await service.getQueueStats()
-    console.log('📊 Initial queue stats:', initialStats)
-
-    if (initialStats.pending === 0) {
-      console.log('✅ No pending evaluations in queue')
-      return
-    }
-
-    // Process the queue
-    await service.processEvaluationQueue()
-    
-    // Get updated stats
-    const finalStats = await service.getQueueStats()
-    console.log('📊 Final queue stats:', finalStats)
-    
-    console.log('✅ Queue processing completed!')
-    
-  } catch (error) {
-    console.error('❌ Error processing leaderboard queue:', error)
-    process.exit(1)
-  }
+  console.warn('⚠️ The evaluation queue system has been deprecated.')
+  console.warn('This script is now a no-op and will be removed in a future version.')
+  console.log('✅ Queue processing script finished.')
 }
 
 // Run the processing function
