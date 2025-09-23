@@ -16,10 +16,6 @@ export async function GET(request: NextRequest) {
     const service = LeaderboardPopulationService.getInstance()
 
     switch (action) {
-      case 'stats':
-        const stats = await service.getQueueStats()
-        return NextResponse.json({ stats })
-
       case 'leaderboard':
         const niche = searchParams.get('niche')
         if (!niche) {
@@ -71,10 +67,6 @@ export async function POST(request: NextRequest) {
       case 'initialize':
         await service.initializeNichePopulation()
         return NextResponse.json({ message: 'Niche population initialized' })
-
-      case 'process_queue':
-        await service.processEvaluationQueue()
-        return NextResponse.json({ message: 'Queue processing started' })
 
       case 'add_competitor':
         const { userId, brandId, competitorUrl, competitorName } = body
