@@ -16,11 +16,6 @@ export const adiIndustryCategoryEnum = pgEnum('adi_industry_category', [
 ])
 export const agentStatusEnum = pgEnum('agent_status', ['pending', 'running', 'completed', 'failed', 'skipped'])
 
-// Enhanced Evaluation System Enums
-export const federatedSessionTypeEnum = pgEnum('federated_session_type', ['evaluation_feedback', 'ui_interaction', 'search_behavior', 'comparison_analysis'])
-export const privacyLevelEnum = pgEnum('privacy_level', ['anonymized', 'pseudonymized', 'aggregated'])
-export const improvementTypeEnum = pgEnum('improvement_type', ['scoring_accuracy', 'dimension_weights', 'agent_performance', 'user_satisfaction'])
-export const validationStatusEnum = pgEnum('validation_status', ['pending', 'validated', 'deployed', 'rolled_back'])
 // Enums (public schema - for shared types)
 export const pageTypeEnum = pgEnum('page_type', ['homepage', 'product', 'about', 'contact', 'blog', 'search_results', 'faq'])
 export const changeTypeEnum = pgEnum('change_type', ['content_update', 'structure_change', 'new_feature', 'removal', 'performance_change'])
@@ -28,16 +23,14 @@ export const cacheTypeEnum = pgEnum('cache_type', ['evaluation_result', 'dimensi
 export const trendTypeEnum = pgEnum('trend_type', ['score_trajectory', 'dimension_improvement', 'competitive_position', 'market_share'])
 export const timePeriodEnum = pgEnum('time_period', ['7d', '30d', '90d', '1y'])
 export const trendDirectionEnum = pgEnum('trend_direction', ['up', 'down', 'stable', 'volatile'])
-export const insightTypeEnum = pgEnum('insight_type', ['score_forecast', 'risk_assessment', 'opportunity_detection', 'competitive_threat'])
-export const predictionHorizonEnum = pgEnum('prediction_horizon', ['1m', '3m', '6m', '1y'])
-export const analysisTypeEnum = pgEnum('analysis_type', ['head_to_head', 'gap_analysis', 'strength_comparison', 'market_positioning'])
-export const threatLevelEnum = pgEnum('threat_level', ['low', 'medium', 'high', 'critical'])
-export const engagementTypeEnum = pgEnum('engagement_type', ['evaluation_request', 'leaderboard_view', 'comparison_analysis', 'report_download', 'dashboard_interaction'])
-export const metricTypeEnum = pgEnum('metric_type', ['evaluation_time', 'api_response', 'database_query', 'agent_execution', 'cache_performance'])
 export const evaluationQueueStatusEnum = pgEnum('evaluation_queue_status', ['pending', 'running', 'completed', 'failed', 'skipped'])
 export const triggerTypeEnum = pgEnum('trigger_type', ['user_added', 'auto_detected', 'leaderboard_gap'])
 export const competitiveEvaluationStatusEnum = pgEnum('competitive_evaluation_status', ['pending', 'queued', 'completed', 'failed'])
 export const selectionTypeEnum = pgEnum('selection_type', ['market_leader', 'emerging', 'geographic_mix', 'price_coverage'])
+
+// Enums (Hybrid Evaluation)
+export const probeNameEnum = pgEnum('probe_name', ['schema_probe', 'policy_probe', 'kg_probe', 'semantics_probe']);
+export const modelIdEnum = pgEnum('model_id', ['gpt4o', 'claude35', 'gemini15']);
 
 // Core tables
 export const users = productionSchema.table('users', {
@@ -374,7 +367,6 @@ export const leaderboardStats = productionSchema.table('leaderboard_stats', {
   topScore: integer('top_score'),
   lastUpdated: timestamp('last_updated').notNull(),
   createdAt: timestamp('created_at').defaultNow()
-
 })
 
 // Website Snapshots for Crawl Data
@@ -383,7 +375,6 @@ export const websiteSnapshots = productionSchema.table('website_snapshots', {
   brandId: uuid('brand_id').references(() => brands.id),
   evaluationId: uuid('evaluation_id').references(() => evaluations.id),
   url: varchar('url', { length: 500 }).notNull(),
-  // Use varchar to match production schema (avoid Postgres enum mismatch)
   pageType: pageTypeEnum('page_type').notNull(),
   contentHash: varchar('content_hash', { length: 64 }).notNull(),
   rawHtml: text('raw_html'),
@@ -394,8 +385,6 @@ export const websiteSnapshots = productionSchema.table('website_snapshots', {
   contentSizeBytes: integer('content_size_bytes'),
   loadTimeMs: integer('load_time_ms'),
   statusCode: integer('status_code').default(200),
-
-  // Atomic analytics-friendly columns (avoid nested JSON on query paths)
   title: varchar('title', { length: 255 }),
   metaDescription: varchar('meta_description', { length: 255 }),
   hasTitle: boolean('has_title'),
@@ -403,316 +392,63 @@ export const websiteSnapshots = productionSchema.table('website_snapshots', {
   hasStructuredData: boolean('has_structured_data'),
   structuredDataTypesCount: integer('structured_data_types_count'),
   qualityScore: integer('quality_score'),
+  createdAt: timestamp('created_at').defaultNow()
+})
+ 
+// Content Changes Detection
+export const contentChanges = productionSchema.table('content_changes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  websiteSnapshotId: uuid('website_snapshot_id').references(() => websiteSnapshots.id),
+  changeType: changeTypeEnum('change_type').notNull(),
+  changeDescription: text('change_description'),
+  impactScore: integer('impact_score'),
+  detectedAt: timestamp('detected_at').defaultNow(),
+  previousSnapshotId: uuid('previous_snapshot_id').references(() => websiteSnapshots.id)
+})
 
+// Site-level Crawl Signals (one row per evaluation)
+export const crawlSiteSignals = productionSchema.table('crawl_site_signals', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
+  brandId: uuid('brand_id').references(() => brands.id, { onDelete: 'cascade' }),
+  domain: varchar('domain', { length: 255 }).notNull(),
+  homepageTitlePresent: boolean('homepage_title_present'),
+  homepageDescriptionPresent: boolean('homepage_description_present'),
+  homepageStructuredDataPresent: boolean('homepage_structured_data_present'),
+  homepageStructuredDataTypesCount: integer('homepage_structured_data_types_count'),
+  homepageQualityScore: integer('homepage_quality_score'),
+  homepageContentSizeBytes: integer('homepage_content_size_bytes'),
+  sitemapPresent: boolean('sitemap_present'),
+  sitemapUrl: varchar('sitemap_url', { length: 500 }),
+  sitemapUrlCount: integer('sitemap_url_count'),
+  robotsPresent: boolean('robots_present'),
+  robotsUrl: varchar('robots_url', { length: 500 }),
+  robotsHasSitemap: boolean('robots_has_sitemap'),
+  pagesCrawled: integer('pages_crawled'),
+  pagesDiscovered: integer('pages_discovered'),
+  crawlTimestamp: timestamp('crawl_timestamp').defaultNow(),
   createdAt: timestamp('created_at').defaultNow()
 })
 
- // Content Changes Detection
- export const contentChanges = productionSchema.table('content_changes', {
-   id: uuid('id').primaryKey().defaultRandom(),
-   websiteSnapshotId: uuid('website_snapshot_id').references(() => websiteSnapshots.id),
-   changeType: changeTypeEnum('change_type').notNull(),
-   changeDescription: text('change_description'),
-   impactScore: integer('impact_score'),
-   detectedAt: timestamp('detected_at').defaultNow(),
-   previousSnapshotId: uuid('previous_snapshot_id').references(() => websiteSnapshots.id)
- })
-
- // Site-level Crawl Signals (one row per evaluation)
- export const crawlSiteSignals = productionSchema.table('crawl_site_signals', {
-   id: uuid('id').primaryKey().defaultRandom(),
-   evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
-   brandId: uuid('brand_id').references(() => brands.id, { onDelete: 'cascade' }),
-   domain: varchar('domain', { length: 255 }).notNull(),
-
-   // Homepage signals
-   homepageTitlePresent: boolean('homepage_title_present'),
-   homepageDescriptionPresent: boolean('homepage_description_present'),
-   homepageStructuredDataPresent: boolean('homepage_structured_data_present'),
-   homepageStructuredDataTypesCount: integer('homepage_structured_data_types_count'),
-   homepageQualityScore: integer('homepage_quality_score'),
-   homepageContentSizeBytes: integer('homepage_content_size_bytes'),
-
-   // Sitemap/robots signals
-   sitemapPresent: boolean('sitemap_present'),
-   sitemapUrl: varchar('sitemap_url', { length: 500 }),
-   sitemapUrlCount: integer('sitemap_url_count'),
-   robotsPresent: boolean('robots_present'),
-   robotsUrl: varchar('robots_url', { length: 500 }),
-   robotsHasSitemap: boolean('robots_has_sitemap'),
-
-   // Crawl scope
-   pagesCrawled: integer('pages_crawled'),
-   pagesDiscovered: integer('pages_discovered'),
-
-   crawlTimestamp: timestamp('crawl_timestamp').defaultNow(),
-   createdAt: timestamp('created_at').defaultNow()
- })
-
- // Flat feature vector for federated learning (one row per evaluation)
- export const evaluationFeaturesFlat = productionSchema.table('evaluation_features_flat', {
-   id: uuid('id').primaryKey().defaultRandom(),
-   evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
-   brandId: uuid('brand_id').references(() => brands.id, { onDelete: 'cascade' }),
-
-   // Stable, curated features
-   fHomepageQualityScore: integer('f_homepage_quality_score'),
-   fHasStructuredData: boolean('f_has_structured_data'),
-   fStructuredDataTypesCount: integer('f_structured_data_types_count'),
-   fHasRobotsTxt: boolean('f_has_robots_txt'),
-   fHasSitemap: boolean('f_has_sitemap'),
-   fSitemapUrlCount: integer('f_sitemap_url_count'),
-   fHomepageTitlePresent: boolean('f_homepage_title_present'),
-   fHomepageDescriptionPresent: boolean('f_homepage_description_present'),
-   fPagesCrawled: integer('f_pages_crawled'),
-   fPagesDiscovered: integer('f_pages_discovered'),
-
-   createdAt: timestamp('created_at').defaultNow()
- })
-
-// =====================================================
-// ADVANCED ANALYTICS & FEDERATED LEARNING
-// Definitions for tables created in COMPREHENSIVE_PRODUCTION_SCHEMA.sql
-// =====================================================
-
-// Federated Learning Sessions
-export const federatedLearningSessions = productionSchema.table('federated_learning_sessions', {
+// Flat feature vector for federated learning (one row per evaluation)
+export const evaluationFeaturesFlat = productionSchema.table('evaluation_features_flat', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id),
-  sessionType: federatedSessionTypeEnum('session_type').notNull(),
-  interactionData: jsonb('interaction_data').notNull(),
-  modelVersion: varchar('model_version', { length: 20 }).default('v1.0'),
-  privacyLevel: privacyLevelEnum('privacy_level').default('anonymized'),
-  contributionScore: integer('contribution_score').default(0),
+  evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
+  brandId: uuid('brand_id').references(() => brands.id, { onDelete: 'cascade' }),
+  fHomepageQualityScore: integer('f_homepage_quality_score'),
+  fHasStructuredData: boolean('f_has_structured_data'),
+  fStructuredDataTypesCount: integer('f_structured_data_types_count'),
+  fHasRobotsTxt: boolean('f_has_robots_txt'),
+  fHasSitemap: boolean('f_has_sitemap'),
+  fSitemapUrlCount: integer('f_sitemap_url_count'),
+  fHomepageTitlePresent: boolean('f_homepage_title_present'),
+  fHomepageDescriptionPresent: boolean('f_homepage_description_present'),
+  fPagesCrawled: integer('f_pages_crawled'),
+  fPagesDiscovered: integer('f_pages_discovered'),
   createdAt: timestamp('created_at').defaultNow()
-});
+})
 
-// Model Improvements Tracking
-export const modelImprovements = productionSchema.table('model_improvements', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  improvementType: improvementTypeEnum('improvement_type').notNull(),
-  currentVersion: varchar('current_version', { length: 20 }).notNull(),
-  targetVersion: varchar('target_version', { length: 20 }).notNull(),
-  improvementData: jsonb('improvement_data').notNull(),
-  performanceMetrics: jsonb('performance_metrics'),
-  validationStatus: validationStatusEnum('validation_status').default('pending'),
-  deployedAt: timestamp('deployed_at'),
-  createdAt: timestamp('created_at').defaultNow()
-});
-
-// Predictive Insights
-export const predictiveInsights = productionSchema.table('predictive_insights', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  brandId: uuid('brand_id').references(() => brands.id),
-  insightType: insightTypeEnum('insight_type').notNull(),
-  predictionHorizon: predictionHorizonEnum('prediction_horizon').notNull(),
-  predictedValue: integer('predicted_value'),
-  confidenceInterval: jsonb('confidence_interval'),
-  probabilityScore: integer('probability_score').notNull(),
-  supportingEvidence: jsonb('supporting_evidence'),
-  modelVersion: varchar('model_version', { length: 20 }).notNull(),
-  generatedAt: timestamp('generated_at').defaultNow(),
-  expiresAt: timestamp('expires_at').notNull()
-});
-
-// Competitive Analysis
-export const competitiveAnalysis = productionSchema.table('competitive_analysis', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  primaryBrandId: uuid('primary_brand_id').references(() => brands.id),
-  competitorBrandId: uuid('competitor_brand_id').references(() => brands.id),
-  analysisType: analysisTypeEnum('analysis_type').notNull(),
-  comparisonData: jsonb('comparison_data').notNull(),
-  strengthsGaps: jsonb('strengths_gaps'),
-  actionableInsights: jsonb('actionable_insights'),
-  threatLevel: threatLevelEnum('threat_level'),
-  lastUpdated: timestamp('last_updated').defaultNow(),
-  createdAt: timestamp('created_at').defaultNow()
-});
-
-// User Engagement Metrics
-export const userEngagementMetrics = productionSchema.table('user_engagement_metrics', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id),
-  sessionId: varchar('session_id', { length: 255 }),
-  engagementType: engagementTypeEnum('engagement_type').notNull(),
-  interactionData: jsonb('interaction_data'),
-  duration: integer('duration'), // seconds
-  valueGenerated: integer('value_generated'), // business value score 0-100
-  timestamp: timestamp('timestamp').defaultNow()
-});
-
-// Relations
-export const usersRelations = relations(users, ({ many }) => ({
-  accounts: many(accounts),
-  sessions: many(sessions),
-  brands: many(brands),
-  aiProviders: many(aiProviders),
-  adiSubscriptions: many(adiSubscriptions)
-}))
-
-export const brandsRelations = relations(brands, ({ one, many }) => ({
-  user: one(users, {
-    fields: [brands.userId],
-    references: [users.id]
-  }),
-  evaluations: many(evaluations),
-  adiIndustry: one(adiIndustries, {
-    fields: [brands.adiIndustryId],
-    references: [adiIndustries.id]
-  })
-}))
-
-export const evaluationsRelations = relations(evaluations, ({ one, many }) => ({
-  brand: one(brands, {
-    fields: [evaluations.brandId],
-    references: [brands.id]
-  }),
-  dimensionScores: many(dimensionScores),
-  recommendations: many(recommendations),
-  competitorBenchmarks: many(competitorBenchmarks),
-  adiAgents: many(adiAgents)
-}))
-
-export const dimensionScoresRelations = relations(dimensionScores, ({ one }) => ({
-  evaluation: one(evaluations, {
-    fields: [dimensionScores.evaluationId],
-    references: [evaluations.id]
-  })
-}))
-
-export const aiProvidersRelations = relations(aiProviders, ({ one }) => ({
-  user: one(users, {
-    fields: [aiProviders.userId],
-    references: [users.id]
-  })
-}))
-
-export const evaluationResultsRelations = relations(evaluationResults, ({ one }) => ({
-  evaluation: one(evaluations, {
-    fields: [evaluationResults.evaluationId],
-    references: [evaluations.id]
-  })
-}))
-
-export const recommendationsRelations = relations(recommendations, ({ one }) => ({
-  evaluation: one(evaluations, {
-    fields: [recommendations.evaluationId],
-    references: [evaluations.id]
-  })
-}))
-
-export const competitorBenchmarksRelations = relations(competitorBenchmarks, ({ one }) => ({
-  evaluation: one(evaluations, {
-    fields: [competitorBenchmarks.evaluationId],
-    references: [evaluations.id]
-  })
-}))
-
-export const adiAgentsRelations = relations(adiAgents, ({ one, many }) => ({
-  evaluation: one(evaluations, {
-    fields: [adiAgents.evaluationId],
-    references: [evaluations.id]
-  }),
-  adiAgentResults: many(adiAgentResults)
-}))
-
-export const adiAgentResultsRelations = relations(adiAgentResults, ({ one }) => ({
-  adiAgent: one(adiAgents, {
-    fields: [adiAgentResults.agentId],
-    references: [adiAgents.id]
-  })
-}))
-
-// Relations for new tables
-export const federatedLearningSessionsRelations = relations(federatedLearningSessions, ({ one }) => ({
-  user: one(users, {
-    fields: [federatedLearningSessions.userId],
-    references: [users.id]
-  })
-}));
-
-export const modelImprovementsRelations = relations(modelImprovements, ({ one }) => ({
-  // No direct relations, this is a top-level tracking table
-}));
-
-export const predictiveInsightsRelations = relations(predictiveInsights, ({ one }) => ({
-  brand: one(brands, {
-    fields: [predictiveInsights.brandId],
-    references: [brands.id]
-  })
-}));
-
-export const competitiveAnalysisRelations = relations(competitiveAnalysis, ({ one }) => ({
-  primaryBrand: one(brands, {
-    fields: [competitiveAnalysis.primaryBrandId],
-    references: [brands.id],
-    relationName: 'primary_brand_analysis'
-  }),
-  competitorBrand: one(brands, {
-    fields: [competitiveAnalysis.competitorBrandId],
-    references: [brands.id],
-    relationName: 'competitor_brand_analysis'
-  })
-}));
-
-export const userEngagementMetricsRelations = relations(userEngagementMetrics, ({ one }) => ({
-  user: one(users, {
-    fields: [userEngagementMetrics.userId],
-    references: [users.id]
-  })
-}));
-
-// Export types
-export type User = typeof users.$inferSelect
-export type NewUser = typeof users.$inferInsert
-export type Brand = typeof brands.$inferSelect
-export type NewBrand = typeof brands.$inferInsert
-export type Evaluation = typeof evaluations.$inferSelect
-export type NewEvaluation = typeof evaluations.$inferInsert
-export type DimensionScore = typeof dimensionScores.$inferSelect
-export type NewDimensionScore = typeof dimensionScores.$inferInsert
-export type AIProvider = typeof aiProviders.$inferSelect
-export type NewAIProvider = typeof aiProviders.$inferInsert
-export type EvaluationResult = typeof evaluationResults.$inferSelect
-export type NewEvaluationResult = typeof evaluationResults.$inferInsert
-export type Recommendation = typeof recommendations.$inferSelect
-export type NewRecommendation = typeof recommendations.$inferInsert
-
-// Crawl data types
-export type WebsiteSnapshot = typeof websiteSnapshots.$inferSelect
-export type NewWebsiteSnapshot = typeof websiteSnapshots.$inferInsert
-export type CrawlSiteSignals = typeof crawlSiteSignals.$inferSelect
-export type NewCrawlSiteSignals = typeof crawlSiteSignals.$inferInsert
-export type EvaluationFeaturesFlat = typeof evaluationFeaturesFlat.$inferSelect
-export type NewEvaluationFeaturesFlat = typeof evaluationFeaturesFlat.$inferInsert
-
-// Leaderboard Data System Types
-export type EvaluationQueue = typeof evaluationQueue.$inferSelect
-export type NewEvaluationQueue = typeof evaluationQueue.$inferInsert
-export type LeaderboardCache = typeof leaderboardCache.$inferSelect
-export type NewLeaderboardCache = typeof leaderboardCache.$inferInsert
-export type CompetitiveTrigger = typeof competitiveTriggers.$inferSelect
-export type NewCompetitiveTrigger = typeof competitiveTriggers.$inferInsert
-export type NicheBrandSelection = typeof nicheBrandSelection.$inferSelect
-export type NewNicheBrandSelection = typeof nicheBrandSelection.$inferInsert
-export type LeaderboardStats = typeof leaderboardStats.$inferSelect
-export type NewLeaderboardStats = typeof leaderboardStats.$inferInsert
-
-// Export types for new tables
-export type FederatedLearningSession = typeof federatedLearningSessions.$inferSelect;
-export type NewFederatedLearningSession = typeof federatedLearningSessions.$inferInsert;
-export type ModelImprovement = typeof modelImprovements.$inferSelect;
-export type NewModelImprovement = typeof modelImprovements.$inferInsert;
-export type PredictiveInsight = typeof predictiveInsights.$inferSelect;
-export type NewPredictiveInsight = typeof predictiveInsights.$inferInsert;
-export type CompetitiveAnalysis = typeof competitiveAnalysis.$inferSelect;
-export type NewCompetitiveAnalysis = typeof competitiveAnalysis.$inferInsert;
-export type UserEngagementMetric = typeof userEngagementMetrics.$inferSelect;
-export type NewUserEngagementMetric = typeof userEngagementMetrics.$inferInsert;
 // HYBRID EVALUATION (PROBE-FIRST) SCHEMA
-export const probeNameEnum = pgEnum('probe_name', ['schema_probe', 'policy_probe', 'kg_probe', 'semantics_probe']);
-export const modelIdEnum = pgEnum('model_id', ['gpt4o', 'claude35', 'gemini15']);
-
 export const pageBlobs = productionSchema.table('page_blobs', {
   id: uuid('id').primaryKey().defaultRandom(),
   evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
@@ -759,3 +495,185 @@ export const probeRunsRelations = relations(probeRuns, ({ one }) => ({
     references: [evaluations.id],
   }),
 }));
+
+
+// Relationships
+export const usersRelations = relations(users, ({ many }) => ({
+  accounts: many(accounts),
+  sessions: many(sessions),
+  profiles: many(userProfiles),
+  brands: many(brands),
+  subscriptions: many(subscriptions)
+}))
+
+export const accountsRelations = relations(accounts, ({ one }) => ({
+	user: one(users, {
+		fields: [accounts.userId],
+		references: [users.id]
+	})
+}));
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+	user: one(users, {
+		fields: [sessions.userId],
+		references: [users.id]
+	})
+}));
+
+export const userProfilesRelations = relations(userProfiles, ({ one }) => ({
+	user: one(users, {
+		fields: [userProfiles.id],
+		references: [users.id]
+	})
+}));
+
+export const brandsRelations = relations(brands, ({ one, many }) => ({
+  user: one(users, {
+    fields: [brands.userId],
+    references: [users.id]
+  }),
+  evaluations: many(evaluations),
+  leaderboardEntries: many(adiLeaderboards),
+  industry: one(adiIndustries, {
+    fields: [brands.adiIndustryId],
+    references: [adiIndustries.id]
+  })
+}));
+
+export const evaluationsRelations = relations(evaluations, ({ one, many }) => ({
+  brand: one(brands, {
+    fields: [evaluations.brandId],
+    references: [brands.id]
+  }),
+  dimensionScores: many(dimensionScores),
+  results: many(evaluationResults),
+  recommendations: many(recommendations),
+  benchmarks: many(competitorBenchmarks),
+  agents: many(adiAgents),
+  leaderboardEntries: many(adiLeaderboards)
+}));
+
+export const dimensionScoresRelations = relations(dimensionScores, ({ one }) => ({
+  evaluation: one(evaluations, {
+    fields: [dimensionScores.evaluationId],
+    references: [evaluations.id]
+  })
+}));
+
+export const aiProvidersRelations = relations(aiProviders, ({ one }) => ({
+  user: one(users, {
+    fields: [aiProviders.userId],
+    references: [users.id]
+  })
+}));
+
+export const evaluationResultsRelations = relations(evaluationResults, ({ one }) => ({
+  evaluation: one(evaluations, {
+    fields: [evaluationResults.evaluationId],
+    references: [evaluations.id]
+  })
+}));
+
+export const recommendationsRelations = relations(recommendations, ({ one }) => ({
+  evaluation: one(evaluations, {
+    fields: [recommendations.evaluationId],
+    references: [evaluations.id]
+  })
+}));
+
+export const competitorBenchmarksRelations = relations(competitorBenchmarks, ({ one }) => ({
+  evaluation: one(evaluations, {
+    fields: [competitorBenchmarks.evaluationId],
+    references: [evaluations.id]
+  })
+}));
+
+export const adiSubscriptionsRelations = relations(adiSubscriptions, ({ one }) => ({
+  user: one(users, {
+    fields: [adiSubscriptions.userId],
+    references: [users.id]
+  })
+}));
+
+export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+  user: one(users, {
+    fields: [subscriptions.userId],
+    references: [users.id]
+  })
+}));
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  user: one(users, {
+    fields: [payments.userId],
+    references: [users.id]
+  }),
+  subscription: one(subscriptions, {
+    fields: [payments.subscriptionId],
+    references: [subscriptions.id]
+  })
+}));
+
+export const adiIndustriesRelations = relations(adiIndustries, ({ many }) => ({
+  brands: many(brands),
+  benchmarks: many(adiBenchmarks),
+  leaderboards: many(adiLeaderboards)
+}))
+
+export const adiAgentsRelations = relations(adiAgents, ({ one, many }) => ({
+  evaluation: one(evaluations, {
+    fields: [adiAgents.evaluationId],
+    references: [evaluations.id]
+  }),
+  results: many(adiAgentResults),
+}));
+
+export const adiAgentResultsRelations = relations(adiAgentResults, ({ one }) => ({
+  agent: one(adiAgents, {
+    fields: [adiAgentResults.agentId],
+    references: [adiAgents.id]
+  })
+}))
+
+// Type Exports
+export type User = typeof users.$inferSelect
+export type NewUser = typeof users.$inferInsert
+export type Account = typeof accounts.$inferSelect
+export type NewAccount = typeof accounts.$inferInsert
+export type Session = typeof sessions.$inferSelect
+export type NewSession = typeof sessions.$inferInsert
+export type UserProfile = typeof userProfiles.$inferSelect
+export type NewUserProfile = typeof userProfiles.$inferInsert
+export type Brand = typeof brands.$inferSelect
+export type NewBrand = typeof brands.$inferInsert
+export type Evaluation = typeof evaluations.$inferSelect
+export type NewEvaluation = typeof evaluations.$inferInsert
+export type DimensionScore = typeof dimensionScores.$inferSelect
+export type NewDimensionScore = typeof dimensionScores.$inferInsert
+export type AIProvider = typeof aiProviders.$inferSelect
+export type NewAIProvider = typeof aiProviders.$inferInsert
+export type EvaluationResult = typeof evaluationResults.$inferSelect
+export type NewEvaluationResult = typeof evaluationResults.$inferInsert
+export type Recommendation = typeof recommendations.$inferSelect
+export type NewRecommendation = typeof recommendations.$inferInsert
+export type CompetitorBenchmark = typeof competitorBenchmarks.$inferSelect
+export type NewCompetitorBenchmark = typeof competitorBenchmarks.$inferInsert
+export type ADISubscription = typeof adiSubscriptions.$inferSelect
+export type NewADISubscription = typeof adiSubscriptions.$inferInsert
+export type Subscription = typeof subscriptions.$inferSelect;
+export type NewSubscription = typeof subscriptions.$inferInsert;
+export type Payment = typeof payments.$inferSelect;
+export type NewPayment = typeof payments.$inferInsert;
+export type ADIIndustry = typeof adiIndustries.$inferSelect
+export type NewADIIndustry = typeof adiIndustries.$inferInsert
+export type ADIAgent = typeof adiAgents.$inferSelect
+export type NewADIAgent = typeof adiAgents.$inferInsert
+export type ADIAgentResult = typeof adiAgentResults.$inferSelect
+export type NewADIAgentResult = typeof adiAgentResults.$inferInsert
+export type WebsiteSnapshot = typeof websiteSnapshots.$inferSelect;
+export type NewWebsiteSnapshot = typeof websiteSnapshots.$inferInsert;
+export type ContentChange = typeof contentChanges.$inferSelect;
+export type NewContentChange = typeof contentChanges.$inferInsert;
+export type CrawlSiteSignals = typeof crawlSiteSignals.$inferSelect;
+export type NewCrawlSiteSignals = typeof crawlSiteSignals.$inferInsert;
+export type EvaluationFeaturesFlat = typeof evaluationFeaturesFlat.$inferSelect;
+export type NewEvaluationFeaturesFlat = typeof evaluationFeaturesFlat.$inferInsert;

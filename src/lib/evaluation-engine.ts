@@ -47,7 +47,8 @@ export class EvaluationEngine {
   private aiClients: Map<AIProviderName, AIProviderClient> = new Map()
 
   constructor(config: EvaluationConfig, progressCallback?: (progress: EvaluationProgress) => void) {
-    this.config = config
+    // Force hybrid mode to bypass broken legacy crawl path
+    this.config = { ...config, infraMode: 'hybrid' };
     this.progressCallback = progressCallback
   }
 
