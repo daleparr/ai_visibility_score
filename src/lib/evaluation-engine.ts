@@ -101,75 +101,15 @@ export class EvaluationEngine {
       const evaluationResults: EvaluationResult[] = []
 
       // Run infrastructure tests
-      if (this.config.infraMode === 'hybrid') {
-       console.log('[DEBUG] infraMode is "hybrid", executing new path...');
-       const hybridDimResults = await this.evaluateInfrastructureHybrid(evaluation.id, brand);
-       dimensionResults.push(...hybridDimResults);
-       // This step count is a rough estimate for now
-       completedSteps += Object.keys(EVALUATION_PROMPTS.infrastructure).length;
-       this.updateProgress('Completed Infrastructure Pillar (Hybrid)', completedSteps, totalSteps);
-      } else {
-       // Legacy crawl-based evaluation
-       console.log('[DEBUG] infraMode is NOT "hybrid", executing legacy path...');
-       for (const [dimensionName, promptTemplate] of Object.entries(EVALUATION_PROMPTS.infrastructure)) {
-         const dimensionScore = await this.evaluateDimension(
-           evaluation.id,
-           dimensionName,
-           promptTemplate,
-           brand,
-           'infrastructure',
-           brandPlaybook
-         )
-         dimensionResults.push(dimensionScore)
-         
-         completedSteps += this.aiClients.size
-         this.updateProgress(
-           `Completed ${dimensionName.replace(/_/g, ' ')}`,
-           completedSteps,
-           totalSteps
-         )
-       }
-      }
+      console.log('[DEBUG] Forcing hybrid infrastructure evaluation path...');
+      const hybridDimResults = await this.evaluateInfrastructureHybrid(evaluation.id, brand);
+      dimensionResults.push(...hybridDimResults);
+      // This step count is a rough estimate for now
+      completedSteps += Object.keys(EVALUATION_PROMPTS.infrastructure).length;
+      this.updateProgress('Completed Infrastructure Pillar (Hybrid)', completedSteps, totalSteps);
 
-      // Run perception tests
-      for (const [dimensionName, promptTemplate] of Object.entries(EVALUATION_PROMPTS.perception)) {
-        const dimensionScore = await this.evaluateDimension(
-          evaluation.id,
-          dimensionName,
-          promptTemplate,
-          brand,
-          'perception',
-          brandPlaybook
-        )
-        dimensionResults.push(dimensionScore)
-        
-        completedSteps += this.aiClients.size
-        this.updateProgress(
-          `Completed ${dimensionName.replace(/_/g, ' ')}`,
-          completedSteps,
-          totalSteps
-        )
-      }
-
-      // Run commerce tests
-      for (const [dimensionName, promptTemplate] of Object.entries(EVALUATION_PROMPTS.commerce)) {
-        const dimensionScore = await this.evaluateDimension(
-          evaluation.id,
-          dimensionName,
-          promptTemplate,
-          brand,
-          'commerce',
-          brandPlaybook
-        )
-        dimensionResults.push(dimensionScore)
-        
-        completedSteps += this.aiClients.size
-        this.updateProgress(
-          `Completed ${dimensionName.replace(/_/g, ' ')}`,
-          completedSteps,
-          totalSteps
-        )
-      }
+      // [HYBRID MVP] Disabling perception and commerce pillars to isolate infrastructure test.
+      console.log('[DEBUG] Skipping perception and commerce pillars for this hybrid MVP test run.');
 
       // Calculate final scores
       this.updateProgress('Calculating final scores...', completedSteps, totalSteps)
