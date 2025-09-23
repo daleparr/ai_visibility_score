@@ -1,5 +1,5 @@
 import { eq, desc, and } from 'drizzle-orm'
-import { db, sql, brands, evaluations, dimensionScores, aiProviders, evaluationResults, recommendations, competitorBenchmarks, users, userProfiles, websiteSnapshots, crawlSiteSignals, evaluationFeaturesFlat, pageBlobs, probeRuns } from './db'
+import { db, sql, brands, evaluations, dimensionScores, aiProviders, evaluationResults, recommendations, competitorBenchmarks, users, userProfiles, websiteSnapshots, crawlSiteSignals, evaluationFeaturesFlat, pageBlobs, probeRuns, subscriptions } from './db'
 import type {
   Brand,
   NewBrand,
@@ -498,6 +498,18 @@ export const updateUserProfile = async (userId: string, updates: any) => {
   const result = await db.update(userProfiles).set(updates).where(eq(userProfiles.id, userId)).returning()
   return result[0]
 }
+
+// Subscription operations
+export const getSubscriptionByUserId = async (userId: string) => {
+  if (!userId) return null;
+  try {
+    const result = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1);
+    return result[0];
+  } catch (error) {
+    console.error('Error fetching subscription by user ID:', error);
+    return null;
+  }
+};
 
 // Crawl data persistence helpers
 

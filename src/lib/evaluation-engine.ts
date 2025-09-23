@@ -14,7 +14,8 @@ import {
   updateEvaluation,
   createDimensionScore,
   createEvaluationResult,
-  createRecommendation
+  createRecommendation,
+  getSubscriptionByUserId
 } from './database'
 import type { Brand, Evaluation, DimensionScore } from '@/lib/db/schema'
 import type { EvaluationResult, AIProviderName } from '@/lib/ai-providers'
@@ -90,7 +91,16 @@ export class EvaluationEngine {
     try {
       this.updateProgress('Initializing evaluation...', 0, 100)
 
-      const brandPlaybook = await this.runBrandPlaybookAnalysis(brand);
+      const subscription = await getSubscriptionByUserId(brand.userId);
+      let brandPlaybook = null;
+      if (subscription && subscription.tier === 'enterprise') {
+        // We still want to proceed even if this fails, so we wrap it
+        try {
+          brandPlaybook = await this.runBrandPlaybookAnalysis(brand);
+        } catch (playbookError) {
+          console.warn(`[Enterprise Playbook] Failed to process playbook for ${brand.name}, but continuing evaluation.`, playbookError);
+        }
+      }
 
       // Calculate total steps for progress tracking
       const totalDimensions = Object.keys(EVALUATION_PROMPTS.infrastructure).length +
@@ -315,7 +325,7 @@ export class EvaluationEngine {
 
     const dimensionDisplayName = dimensionName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
     
-    let explanation = `${dimensionDisplayName} scored ${score}/100, indicating ${scoreLevel} performance. `
+    let explanation = `\${dimensionDisplayName} scored \${score}/100, indicating \${scoreLevel} performance. `
 
     // Add insights based on common patterns in responses
     if (responses.length > 0) {
@@ -367,7 +377,7 @@ export class EvaluationEngine {
           break
           
         default:
-          recommendations.push(`Improve ${dimensionName.replace(/_/g, ' ')} implementation`)
+          recommendations.push(`Improve \${dimensionName.replace(/_/g, ' ')} implementation`)
           recommendations.push('Review industry best practices for this dimension')
           recommendations.push('Consider consulting with specialists in this area')
       }
@@ -437,14 +447,14 @@ export class EvaluationEngine {
         });
 
         if (!response.ok) {
-            console.warn(`[Playbook] Not found for ${brand.name} (status: ${response.status}). Proceeding without it.`);
+            console.warn(`[Playbook] Not found for \${brand.name} (status: \${response.status}). Proceeding without it.`);
             return null;
         }
 
         const text = await response.text();
         // The text is likely HTML for a 404 page, not JSON.
         if (text.trim().startsWith('<')) {
-            console.warn(`[Playbook] Expected JSON but received HTML for ${brand.name}.`);
+            console.warn(`[Playbook] Expected JSON but received HTML for \${brand.name}.`);
             return null;
         }
         
@@ -452,10 +462,11 @@ export class EvaluationEngine {
 
     } catch (error: any) {
         if (error instanceof SyntaxError) {
-             console.warn(`[Playbook] Failed to parse JSON for ${brand.name}. Content is likely not a valid playbook.`);
+            console.warn(`[Playbook] Failed to parse JSON for \${brand.name}. Content is likely not a valid playbook.`);
         } else {
-            console.error(`[Playbook] Unexpected error fetching for ${brand.name}:`, error);
+            console.error(`[Playbook] Unexpected error fetching for \${brand.name}:`, error);
         }
+        // Do not throw, allow evaluation to continue without the playbook.
         return null;
     }
   }
@@ -489,7 +500,7 @@ export async function triggerEvaluation(brandId: string): Promise<Evaluation> {
   const brand = await getBrand(brandId);
 
   if (!brand) {
-    throw new Error(`Brand with ID ${brandId} not found.`);
+    throw new Error(`Brand with ID \${brandId} not found.`);
   }
 
   // 2. Define the evaluation configuration
@@ -500,14 +511,13 @@ export async function triggerEvaluation(brandId: string): Promise<Evaluation> {
     testCompetitors: false,
   };
 
-  // 3. Create and run the evaluation engine
-  // Note: This runs asynchronously. In a real app, you might use a job queue.
+  // 3. Create and initialize the engine
   const engine = createEvaluationEngine(evaluationConfig);
   await engine.initialize();
-  
-  // We don't await this because we want to return the initial evaluation record immediately
-  // We don't await this because we want to return the initial evaluation record immediately
+
+  // 4. Run the evaluation
   const evaluation = await engine.runEvaluation(brand);
 
+  // 5. Return the completed evaluation
   return evaluation;
 }
