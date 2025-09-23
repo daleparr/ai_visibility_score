@@ -22,7 +22,7 @@ export const privacyLevelEnum = pgEnum('privacy_level', ['anonymized', 'pseudony
 export const improvementTypeEnum = pgEnum('improvement_type', ['scoring_accuracy', 'dimension_weights', 'agent_performance', 'user_satisfaction'])
 export const validationStatusEnum = pgEnum('validation_status', ['pending', 'validated', 'deployed', 'rolled_back'])
 // Enums (public schema - for shared types)
-export const pageTypeEnum = pgEnum('page_type', ['homepage', 'product', 'about', 'contact', 'blog', 'search_results'])
+export const pageTypeEnum = pgEnum('page_type', ['homepage', 'product', 'about', 'contact', 'blog', 'search_results', 'faq'])
 export const changeTypeEnum = pgEnum('change_type', ['content_update', 'structure_change', 'new_feature', 'removal', 'performance_change'])
 export const cacheTypeEnum = pgEnum('cache_type', ['evaluation_result', 'dimension_score', 'benchmark_data', 'competitor_analysis'])
 export const trendTypeEnum = pgEnum('trend_type', ['score_trajectory', 'dimension_improvement', 'competitive_position', 'market_share'])
@@ -709,3 +709,53 @@ export type CompetitiveAnalysis = typeof competitiveAnalysis.$inferSelect;
 export type NewCompetitiveAnalysis = typeof competitiveAnalysis.$inferInsert;
 export type UserEngagementMetric = typeof userEngagementMetrics.$inferSelect;
 export type NewUserEngagementMetric = typeof userEngagementMetrics.$inferInsert;
+// HYBRID EVALUATION (PROBE-FIRST) SCHEMA
+export const probeNameEnum = pgEnum('probe_name', ['schema_probe', 'policy_probe', 'kg_probe', 'semantics_probe']);
+export const modelIdEnum = pgEnum('model_id', ['gpt4o', 'claude35', 'gemini15']);
+
+export const pageBlobs = productionSchema.table('page_blobs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
+  url: varchar('url', { length: 2048 }).notNull(),
+  pageType: pageTypeEnum('page_type').notNull(),
+  contentHash: varchar('content_hash', { length: 64 }).notNull(),
+  htmlGzip: text('html_gzip'), // Storing as gzipped text
+  extractedJsonld: jsonb('extracted_jsonld'),
+  fetchedAt: timestamp('fetched_at').defaultNow(),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const probeRuns = productionSchema.table('probe_runs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
+  probeName: probeNameEnum('probe_name').notNull(),
+  model: modelIdEnum('model').notNull(),
+  promptHash: varchar('prompt_hash', { length: 64 }),
+  outputJson: jsonb('output_json'),
+  isValid: boolean('is_valid').default(false),
+  citationsOk: boolean('citations_ok').default(false),
+  confidence: integer('confidence'), // Stored as integer 0-100
+  startedAt: timestamp('started_at'),
+  finishedAt: timestamp('finished_at'),
+  executionTimeMs: integer('execution_time_ms'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Drizzle-Kit-Exported Types
+export type NewPageBlob = typeof pageBlobs.$inferInsert;
+export type NewProbeRun = typeof probeRuns.$inferInsert;
+
+// Relationships for Hybrid Schema
+export const pageBlobsRelations = relations(pageBlobs, ({ one }) => ({
+  evaluation: one(evaluations, {
+    fields: [pageBlobs.evaluationId],
+    references: [evaluations.id],
+  }),
+}));
+
+export const probeRunsRelations = relations(probeRuns, ({ one }) => ({
+  evaluation: one(evaluations, {
+    fields: [probeRuns.evaluationId],
+    references: [evaluations.id],
+  }),
+}));

@@ -1,5 +1,5 @@
 import { eq, desc, and } from 'drizzle-orm'
-import { db, sql, brands, evaluations, dimensionScores, aiProviders, evaluationResults, recommendations, competitorBenchmarks, users, userProfiles, websiteSnapshots, crawlSiteSignals, evaluationFeaturesFlat } from './db'
+import { db, sql, brands, evaluations, dimensionScores, aiProviders, evaluationResults, recommendations, competitorBenchmarks, users, userProfiles, websiteSnapshots, crawlSiteSignals, evaluationFeaturesFlat, pageBlobs, probeRuns } from './db'
 import type {
   Brand,
   NewBrand,
@@ -20,7 +20,9 @@ import type {
   CrawlSiteSignals,
   NewCrawlSiteSignals,
   EvaluationFeaturesFlat,
-  NewEvaluationFeaturesFlat
+  NewEvaluationFeaturesFlat,
+  NewPageBlob,
+  NewProbeRun
 } from './db/schema'
 import { normalizeBrandUrl, canonicalHost } from './brand-normalize'
 
@@ -498,6 +500,23 @@ export const updateUserProfile = async (userId: string, updates: any) => {
 }
 
 // Crawl data persistence helpers
+
+// Hybrid evaluation persistence
+export const createPageBlob = async (blob: NewPageBlob): Promise<void> => {
+   try {
+       await db.insert(pageBlobs).values(blob);
+   } catch (error) {
+       console.error('Error creating page blob:', error);
+   }
+};
+
+export const createProbeRun = async (run: NewProbeRun): Promise<void> => {
+   try {
+       await db.insert(probeRuns).values(run);
+   } catch (error) {
+       console.error('Error creating probe run:', error);
+   }
+};
 export const createWebsiteSnapshot = async (snapshot: NewWebsiteSnapshot): Promise<WebsiteSnapshot> => {
   try {
     const result = await db.insert(websiteSnapshots).values(snapshot).returning()

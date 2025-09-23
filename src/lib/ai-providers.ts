@@ -126,7 +126,7 @@ export const BRAND_RECOGNITION_PROMPTS = {
 
 // AI Provider API interfaces
 export interface AIProviderResponse {
-  content: string
+  content: string | Record<string, any>
   model: string
   usage?: {
     prompt_tokens: number
@@ -176,19 +176,64 @@ export class AIProviderClient {
     }
   }
 
-  private async queryOpenAI(prompt: string, model: string): Promise<AIProviderResponse> {
+  async queryWithSchema(prompt: string, schema: any, model?: string): Promise<AIProviderResponse> {
+   const selectedModel = model || this.defaultModel;
+
+   // A system prompt to enforce JSON output is a best practice
+   const systemPrompt = `Please respond ONLY with a valid JSON object that conforms to the following schema. Do not include any other text or explanations. Your entire response must be a single JSON object. Schema: ${JSON.stringify(schema)}`;
+
+   try {
+       switch (this.provider) {
+           case 'openai':
+               // OpenAI has a dedicated JSON mode
+               return await this.queryOpenAI(prompt, selectedModel, systemPrompt, { type: 'json_object' });
+           // case 'anthropic':
+           //     // Anthropic uses tool calling for structured output - implementation would go here
+           //     return await this.queryAnthropic(prompt, selectedModel, systemPrompt);
+           // case 'google':
+           //     // Google also uses tool/function calling
+           //     return await this.queryGoogle(prompt, selectedModel, systemPrompt);
+           default:
+               // Fallback for providers without structured output: attempt to parse JSON from string
+               const response = await this.query(prompt, selectedModel);
+               try {
+                   response.content = JSON.parse(response.content as string);
+               } catch (e) {
+                   console.error(`Failed to parse JSON for provider ${this.provider}`);
+                   response.error = 'Failed to parse structured JSON response.';
+               }
+               return response;
+       }
+   } catch (error: any) {
+       return {
+           content: '',
+           model: selectedModel,
+           error: error.message || 'Unknown error in queryWithSchema',
+       };
+   }
+  }
+
+  private async queryOpenAI(prompt: string, model: string, systemPrompt?: string, response_format?: { type: "json_object" }): Promise<AIProviderResponse> {
+    const messages: any[] = [{ role: 'user', content: prompt }];
+    if (systemPrompt) {
+       messages.unshift({ role: 'system', content: systemPrompt });
+    }
+    
+    const body = {
+      model,
+      messages,
+      max_tokens: 2000,
+      temperature: 0.0,
+      response_format,
+    };
+
     const response = await fetch(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 1000,
-        temperature: 0.1,
-      }),
+      body: JSON.stringify(body),
     })
 
     if (!response.ok) {
@@ -196,8 +241,22 @@ export class AIProviderClient {
     }
 
     const data = await response.json()
+    const content = data.choices[0]?.message?.content || '';
+
+    if (response_format?.type === 'json_object') {
+       try {
+           return {
+               content: JSON.parse(content),
+               model,
+               usage: data.usage
+           }
+       } catch (error) {
+           throw new Error('Failed to parse JSON response from OpenAI');
+       }
+    }
+
     return {
-      content: data.choices[0]?.message?.content || '',
+      content,
       model,
       usage: data.usage,
     }

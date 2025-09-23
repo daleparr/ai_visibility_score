@@ -17,6 +17,11 @@ import {
 } from './database'
 import type { Brand, Evaluation, DimensionScore } from '@/lib/db/schema'
 import type { EvaluationResult, AIProviderName } from '@/lib/ai-providers'
+import { SelectiveFetchAgent } from './adapters/selective-fetch-agent'
+import { ProbeHarness } from './adi/probe-harness'
+import { coreProbes } from './adi/probes'
+import { mapProbesToDimensionScores } from './adi/score-adapter'
+import { createPageBlob, createProbeRun } from './database'
 
 export interface EvaluationConfig {
   brandId: string
@@ -24,6 +29,7 @@ export interface EvaluationConfig {
   enabledProviders: AIProviderName[]
   testCompetitors: boolean
   competitorUrls?: string[]
+  infraMode?: 'legacy_crawl' | 'hybrid'
 }
 
 export interface EvaluationProgress {
@@ -94,23 +100,32 @@ export class EvaluationEngine {
       const evaluationResults: EvaluationResult[] = []
 
       // Run infrastructure tests
-      for (const [dimensionName, promptTemplate] of Object.entries(EVALUATION_PROMPTS.infrastructure)) {
-        const dimensionScore = await this.evaluateDimension(
-          evaluation.id,
-          dimensionName,
-          promptTemplate,
-          brand,
-          'infrastructure',
-          brandPlaybook
-        )
-        dimensionResults.push(dimensionScore)
-        
-        completedSteps += this.aiClients.size
-        this.updateProgress(
-          `Completed ${dimensionName.replace(/_/g, ' ')}`,
-          completedSteps,
-          totalSteps
-        )
+      if (this.config.infraMode === 'hybrid') {
+       const hybridDimResults = await this.evaluateInfrastructureHybrid(evaluation.id, brand);
+       dimensionResults.push(...hybridDimResults);
+       // This step count is a rough estimate for now
+       completedSteps += Object.keys(EVALUATION_PROMPTS.infrastructure).length;
+       this.updateProgress('Completed Infrastructure Pillar (Hybrid)', completedSteps, totalSteps);
+      } else {
+       // Legacy crawl-based evaluation
+       for (const [dimensionName, promptTemplate] of Object.entries(EVALUATION_PROMPTS.infrastructure)) {
+         const dimensionScore = await this.evaluateDimension(
+           evaluation.id,
+           dimensionName,
+           promptTemplate,
+           brand,
+           'infrastructure',
+           brandPlaybook
+         )
+         dimensionResults.push(dimensionScore)
+         
+         completedSteps += this.aiClients.size
+         this.updateProgress(
+           `Completed ${dimensionName.replace(/_/g, ' ')}`,
+           completedSteps,
+           totalSteps
+         )
+       }
       }
 
       // Run perception tests
@@ -229,11 +244,15 @@ export class EvaluationEngine {
       )
 
       try {
-        const response = await client.query(prompt)
-        const score = extractScoreFromResponse(response.content)
-        
+        const response = await client.query(prompt);
+        const responseContentString = typeof response.content === 'string'
+            ? response.content
+            : JSON.stringify(response.content);
+
+        const score = extractScoreFromResponse(responseContentString)
+       
         providerScores.push(score)
-        providerResponses.push(response.content)
+        providerResponses.push(responseContentString)
 
         // Save individual evaluation result
         await createEvaluationResult({
@@ -241,7 +260,7 @@ export class EvaluationEngine {
           providerName: providerName,
           testType: `${pillar}_${dimensionName}`,
           promptUsed: prompt,
-          responseReceived: response.content,
+          responseReceived: responseContentString,
           scoreContribution: score
         })
 
@@ -281,6 +300,61 @@ export class EvaluationEngine {
     })
 
     return dimensionScore as any
+  }
+
+  private async evaluateInfrastructureHybrid(evaluationId: string, brand: Brand): Promise<DimensionScore[]> {
+      this.updateProgress('Running Infrastructure Pillar (Hybrid Mode)...', 0, 0);
+      console.log(`[Hybrid Mode] Starting infrastructure evaluation for ${brand.name}`);
+
+      // 1. Run the SelectiveFetchAgent
+      this.updateProgress('Fetching canonical pages...', 1, 4);
+      const fetchAgent = new SelectiveFetchAgent(brand.websiteUrl);
+      const fetchedPages = await fetchAgent.run();
+
+      // Save fetched pages to the database
+      for (const page of fetchedPages) {
+          await createPageBlob({
+              evaluationId,
+              url: page.url,
+              pageType: page.pageType,
+              contentHash: page.contentHash,
+              // In a real implementation, you'd gzip the HTML before storing
+              htmlGzip: page.html,
+          });
+      }
+
+      // 2. Prepare context and run the ProbeHarness
+      this.updateProgress('Executing LLM probes...', 2, 4);
+      const probeContext = { brand, fetchedPages };
+      const probeHarness = new ProbeHarness(coreProbes, this.aiClients as any);
+      const probeResults = await probeHarness.run(probeContext);
+
+      // 3. Save probe results to the database
+      this.updateProgress('Saving probe evidence...', 3, 4);
+      for (const result of probeResults) {
+          await createProbeRun({
+              evaluationId,
+              probeName: result.probeName as any,
+              // For now, we just pick the first model's output
+              model: Object.keys(this.aiClients)[0] as any,
+              outputJson: result.output,
+              isValid: result.wasValid,
+              citationsOk: result.isTrusted,
+              confidence: result.confidence,
+          });
+      }
+
+      // 4. Map probe results to DimensionScore objects and save them
+      const dimensionScores = mapProbesToDimensionScores(probeResults, evaluationId);
+      
+      for (const dimScore of dimensionScores) {
+          await createDimensionScore(dimScore);
+      }
+
+      this.updateProgress('Completed Infrastructure Pillar (Hybrid)', 4, 4);
+      console.log(`[Hybrid Mode] Infrastructure evaluation complete for ${brand.name}.`);
+      // The 'as any' is needed because the DB returns a full DimensionScore, but the function expects NewDimensionScore[]
+      return dimensionScores as any;
   }
 
   private generateDimensionExplanation(

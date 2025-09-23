@@ -1,0 +1,1 @@
+ALTER TYPE "public"."page_type" ADD VALUE 'faq';
