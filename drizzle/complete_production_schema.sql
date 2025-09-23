@@ -1,5 +1,5 @@
--- Comprehensive Production Schema for AIDI (Simplified)
--- Generated from src/lib/db/schema.ts
+-- Final Comprehensive Production Schema for AIDI
+-- Generated from src/lib/db/schema.ts, including all necessary tables for leaderboard and core functionality.
 
 -- Create Schemas
 CREATE SCHEMA IF NOT EXISTS production;
@@ -12,23 +12,13 @@ DO $$ BEGIN CREATE TYPE production.recommendation_priority AS ENUM('1', '2', '3'
 DO $$ BEGIN CREATE TYPE production.adi_subscription_tier AS ENUM('free', 'professional', 'enterprise'); EXCEPTION WHEN duplicate_object THEN null; END $$;
 DO $$ BEGIN CREATE TYPE production.adi_industry_category AS ENUM('apparel', 'footwear', 'accessories', 'beauty', 'home', 'electronics', 'automotive', 'food_beverage', 'health_wellness', 'sports_outdoors', 'luxury', 'mass_market', 'b2b', 'services'); EXCEPTION WHEN duplicate_object THEN null; END $$;
 DO $$ BEGIN CREATE TYPE production.agent_status AS ENUM('pending', 'running', 'completed', 'failed', 'skipped'); EXCEPTION WHEN duplicate_object THEN null; END $$;
-
--- Create Enums (Public - Shared)
 DO $$ BEGIN CREATE TYPE public.page_type AS ENUM('homepage', 'product', 'about', 'contact', 'blog', 'search_results', 'faq'); EXCEPTION WHEN duplicate_object THEN null; END $$;
 DO $$ BEGIN CREATE TYPE public.change_type AS ENUM('content_update', 'structure_change', 'new_feature', 'removal', 'performance_change'); EXCEPTION WHEN duplicate_object THEN null; END $$;
-DO $$ BEGIN CREATE TYPE public.cache_type AS ENUM('evaluation_result', 'dimension_score', 'benchmark_data', 'competitor_analysis'); EXCEPTION WHEN duplicate_object THEN null; END $$;
-DO $$ BEGIN CREATE TYPE public.trend_type AS ENUM('score_trajectory', 'dimension_improvement', 'competitive_position', 'market_share'); EXCEPTION WHEN duplicate_object THEN null; END $$;
-DO $$ BEGIN CREATE TYPE public.time_period AS ENUM('7d', '30d', '90d', '1y'); EXCEPTION WHEN duplicate_object THEN null; END $$;
-DO $$ BEGIN CREATE TYPE public.trend_direction AS ENUM('up', 'down', 'stable', 'volatile'); EXCEPTION WHEN duplicate_object THEN null; END $$;
-DO $$ BEGIN CREATE TYPE public.evaluation_queue_status AS ENUM('pending', 'running', 'completed', 'failed', 'skipped'); EXCEPTION WHEN duplicate_object THEN null; END $$;
 DO $$ BEGIN CREATE TYPE public.trigger_type AS ENUM('user_added', 'auto_detected', 'leaderboard_gap'); EXCEPTION WHEN duplicate_object THEN null; END $$;
 DO $$ BEGIN CREATE TYPE public.competitive_evaluation_status AS ENUM('pending', 'queued', 'completed', 'failed'); EXCEPTION WHEN duplicate_object THEN null; END $$;
 DO $$ BEGIN CREATE TYPE public.selection_type AS ENUM('market_leader', 'emerging', 'geographic_mix', 'price_coverage'); EXCEPTION WHEN duplicate_object THEN null; END $$;
-
--- Create Enums (Hybrid Evaluation)
 DO $$ BEGIN CREATE TYPE production.probe_name AS ENUM('schema_probe', 'policy_probe', 'kg_probe', 'semantics_probe'); EXCEPTION WHEN duplicate_object THEN null; END $$;
 DO $$ BEGIN CREATE TYPE production.model_id AS ENUM('gpt4o', 'claude35', 'gemini15'); EXCEPTION WHEN duplicate_object THEN null; END $$;
-
 
 -- Create Tables
 CREATE TABLE IF NOT EXISTS production.users (
@@ -59,8 +49,6 @@ CREATE TABLE IF NOT EXISTS production.accounts (
   updated_at timestamp DEFAULT now()
 );
 
--- Note: In drizzle schema, `normalized_host` is a generated column.
--- We must define it manually here.
 CREATE TABLE IF NOT EXISTS production.brands (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES production.users(id) ON DELETE cascade,
@@ -132,7 +120,6 @@ CREATE TABLE IF NOT EXISTS production.website_snapshots (
     title varchar(255),
     meta_description varchar(255),
     has_title boolean,
-    has_meta_description boolean,
     has_structured_data boolean,
     structured_data_types_count integer,
     quality_score integer,
@@ -166,6 +153,69 @@ CREATE TABLE IF NOT EXISTS production.adi_agent_results (
   created_at timestamp DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS production.leaderboard_cache (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  niche_category varchar(100) NOT NULL,
+  brand_name varchar(255) NOT NULL,
+  website_url varchar(500) NOT NULL,
+  evaluation_id uuid REFERENCES production.evaluations(id),
+  adi_score integer NOT NULL,
+  grade varchar(5) NOT NULL,
+  pillar_scores jsonb NOT NULL,
+  dimension_scores jsonb NOT NULL,
+  strength_highlight jsonb NOT NULL,
+  gap_highlight jsonb NOT NULL,
+  rank_global integer,
+  rank_sector integer,
+  rank_industry integer,
+  rank_niche integer,
+  trend_data jsonb,
+  last_evaluated timestamp NOT NULL,
+  cache_expires timestamp NOT NULL,
+  is_public boolean DEFAULT true,
+  created_at timestamp DEFAULT now(),
+  updated_at timestamp DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS production.leaderboard_stats (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  niche_category varchar(100) NOT NULL,
+  total_brands integer NOT NULL,
+  evaluated_brands integer NOT NULL,
+  average_score integer NOT NULL,
+  median_score integer NOT NULL,
+  top_performer varchar(255),
+  top_score integer,
+  last_updated timestamp NOT NULL,
+  created_at timestamp DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS production.niche_brand_selection (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  niche_category varchar(100) NOT NULL,
+  brand_name varchar(255) NOT NULL,
+  website_url varchar(500) NOT NULL,
+  selection_type public.selection_type NOT NULL,
+  priority integer DEFAULT 5,
+  evaluation_status varchar(50) DEFAULT 'pending',
+  evaluation_id uuid REFERENCES production.evaluations(id),
+  added_at timestamp DEFAULT now(),
+  last_evaluated timestamp
+);
+
+CREATE TABLE IF NOT EXISTS production.competitive_triggers (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES production.users(id),
+  brand_id uuid REFERENCES production.brands(id),
+  competitor_url varchar(500) NOT NULL,
+  competitor_name varchar(255),
+  trigger_type public.trigger_type NOT NULL,
+  evaluation_status public.competitive_evaluation_status DEFAULT 'pending',
+  evaluation_id uuid REFERENCES production.evaluations(id),
+  triggered_at timestamp DEFAULT now(),
+  processed_at timestamp
+);
+
 CREATE TABLE IF NOT EXISTS production.page_blobs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   evaluation_id uuid NOT NULL REFERENCES production.evaluations(id) ON DELETE cascade,
@@ -194,7 +244,6 @@ CREATE TABLE IF NOT EXISTS production.probe_runs (
   created_at timestamp DEFAULT now()
 );
 
--- Grant privileges
 GRANT USAGE ON SCHEMA production TO service_role;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA production TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA production TO service_role;

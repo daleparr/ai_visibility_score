@@ -10,11 +10,13 @@ import {
 import { eq, and, desc, asc, sql, inArray, isNull, lt, count } from 'drizzle-orm'
 import { BRAND_TAXONOMY, BrandCategory } from './brand-taxonomy'
 import type {
-  LeaderboardCache as LeaderboardCacheType,
   NewLeaderboardCache,
   NewCompetitiveTrigger,
   NewNicheBrandSelection
 } from './db/schema'
+
+// Correctly infer the type from the table schema
+type LeaderboardCacheType = typeof leaderboardCache.$inferSelect;
 
 // Define a more complete result type to satisfy the compiler
 interface FullOrchestrationResult {
