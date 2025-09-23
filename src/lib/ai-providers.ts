@@ -138,7 +138,7 @@ export interface AIProviderResponse {
 
 export class AIProviderClient {
   private apiKey: string
-  private provider: AIProviderName
+  public provider: AIProviderName
   private baseUrl: string
   private defaultModel: string
 

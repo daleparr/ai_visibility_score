@@ -20,6 +20,7 @@ export interface ProbeContext {
 
 export interface ProbeResult {
     probeName: string;
+    model?: AIProviderName; // The model that produced the final output
     wasValid: boolean;
     isTrusted: boolean; // Citations verified, etc.
     confidence: number;
@@ -62,25 +63,26 @@ export class ProbeHarness {
         const confidence = validOutputs.length / modelsToRun.length;
 
         // In a real system, you would aggregate the outputs (e.g., majority vote, merge)
-        const finalOutput = validOutputs.length > 0 ? validOutputs[0].data : null; 
+        const finalOutput = validOutputs.length > 0 ? validOutputs[0] : { data: null, model: undefined };
 
         return {
             probeName: probe.name,
+            model: finalOutput.model,
             wasValid: validOutputs.length > 0,
             isTrusted: true, // Placeholder for citation checking
             confidence: Math.round(confidence * 100),
-            output: finalOutput,
+            output: finalOutput.data,
             allOutputs: outputs.map(o => o.data),
         };
     }
 
     private async runOnModel(
-        client: AIProviderClient, 
-        prompt: string, 
-        schema: any, 
+        client: AIProviderClient,
+        prompt: string,
+        schema: any,
         zodSchema: z.ZodType<any, any>,
         maxRetries = 1 // Allow one repair attempt
-    ): Promise<{ success: boolean, data: any }> {
+    ): Promise<{ success: boolean, data: any, model: AIProviderName }> {
         let attempt = 0;
         let currentPrompt = prompt;
 
@@ -95,7 +97,7 @@ export class ProbeHarness {
             const validationResult = zodSchema.safeParse(response.content);
 
             if (validationResult.success) {
-                return { success: true, data: validationResult.data };
+                return { success: true, data: validationResult.data, model: client.provider };
             } else {
                 // Repair loop: send back the validation error
                 attempt++;
@@ -104,7 +106,7 @@ export class ProbeHarness {
             }
         }
         
-        return { success: false, data: null };
+        return { success: false, data: null, model: client.provider };
     }
 
     // Placeholder for citation verification logic
