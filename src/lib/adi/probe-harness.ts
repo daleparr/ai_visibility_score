@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { AIProviderClient, AIProviderName } from '../ai-providers';
 import { Brand } from '../db/schema';
-import { SelectiveFetchAgent, PageFetchResult } from '../adapters/selective-fetch-agent';
+import { PageFetchResult } from '../adapters/selective-fetch-agent';
 
 export interface Probe {
     name: string;
@@ -52,27 +52,22 @@ export class ProbeHarness {
         const prompt = probe.promptTemplate(context);
         const modelsToRun = Object.keys(this.aiClients) as AIProviderName[];
 
-        const modelPromises = modelsToRun.map(modelName => 
+        const modelPromises = modelsToRun.map(modelName =>
             this.runOnModel(this.aiClients[modelName], prompt, probe.schema, probe.zodSchema)
         );
-        
+
         const outputs = await Promise.all(modelPromises);
         const validOutputs = outputs.filter(o => o.success);
 
         // Simple confidence score: ratio of models that returned valid data
         const confidence = validOutputs.length / modelsToRun.length;
 
-        // In a real system, you would aggregate the outputs (e.g., majority vote, merge)
-        // Aggregate results. If all models fail, create a default failure response.
-        const finalOutput = validOutputs.length > 0
-            ? validOutputs[0]
-            : (outputs.length > 0
-                ? { ...outputs[0], success: false, data: null }
-                : { success: false, data: null, model: 'probe_failed_to_run' as AIProviderName });
+        // Find the first valid output. If none, fall back to the first attempted output for attribution.
+        const finalOutput = this._findFinalOutput(validOutputs, outputs, modelsToRun);
 
         const probeResult: ProbeResult = {
             probeName: probe.name,
-            model: finalOutput.model,
+            model: finalOutput.model, // Guaranteed to be a valid AIProviderName
             wasValid: finalOutput.success,
             isTrusted: true, // Placeholder for citation checking
             confidence: Math.round(confidence * 100),
@@ -92,9 +87,9 @@ export class ProbeHarness {
         let attempt = 0;
         let currentPrompt = prompt;
 
-        while(attempt <= maxRetries) {
+        while (attempt <= maxRetries) {
             const response = await client.queryWithSchema(currentPrompt, schema);
-            
+
             if (response.error || typeof response.content !== 'object') {
                 attempt++;
                 continue;
@@ -111,8 +106,24 @@ export class ProbeHarness {
                 currentPrompt = `${prompt}\n\nThe previous attempt failed validation. Please correct the JSON output to match the schema. Errors: ${errorDetails}`;
             }
         }
-        
+
         return { success: false, data: null, model: client.provider };
+    }
+    
+    private _findFinalOutput(
+        validOutputs: { success: boolean; data: any; model: AIProviderName }[],
+        allOutputs: { success: boolean; data: any; model: AIProviderName }[],
+        modelsToRun: AIProviderName[]
+    ): { success: boolean; data: any; model: AIProviderName } {
+        if (validOutputs.length > 0) {
+            return validOutputs[0];
+        }
+        if (allOutputs.length > 0) {
+            return { ...allOutputs[0], success: false, data: null };
+        }
+        // This case handles a catastrophic failure where no models even return a result.
+        // We attribute it to the first model we intended to run.
+        return { success: false, data: null, model: modelsToRun[0] };
     }
 
     // Placeholder for citation verification logic
