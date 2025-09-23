@@ -123,7 +123,9 @@ export class EvaluationEngine {
       this.updateProgress('Generating recommendations...', completedSteps, totalSteps)
       const recommendations = generateRecommendations(dimensionResults, brand.name)
       
-      // Save recommendations to database
+      // [DB_FIX] Disabling recommendation saving due to schema mismatch on production.
+      console.log('[DB_FIX] Skipping recommendation save step.');
+      /*
       for (const rec of recommendations) {
         await createRecommendation({
           evaluationId: evaluation.id,
@@ -135,6 +137,7 @@ export class EvaluationEngine {
           category: rec.category
         })
       }
+      */
 
       // Update evaluation with final results
       const completedEvaluation = await updateEvaluation(evaluation.id, {
@@ -283,7 +286,7 @@ export class EvaluationEngine {
               outputJson: result.output,
               isValid: result.wasValid,
               citationsOk: result.isTrusted,
-              confidence: result.confidence,
+              confidence: Number.isFinite(result.confidence) ? result.confidence : 0,
           });
       }
 
