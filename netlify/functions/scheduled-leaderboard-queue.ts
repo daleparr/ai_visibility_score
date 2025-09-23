@@ -12,7 +12,9 @@ export const handler = async () => {
     const service = LeaderboardPopulationService.getInstance();
 
     // Process pending evaluations (handles retries, status updates)
-    await service.processEvaluationQueue();
+    // The evaluation queue has been deprecated in favor of direct evaluations.
+    // This scheduled function will now only handle cache cleanup.
+    // await service.processEvaluationQueue();
 
     // Optional maintenance: clean up expired cache entries
     await service.cleanupExpiredCache();
