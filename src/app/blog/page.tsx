@@ -8,6 +8,15 @@ export default function BlogPage() {
   const posts = [
     {
       id: 1,
+      title: "🚫 Why SEO Crawlers Won't Save You in the Age of AI Search",
+      excerpt: "Traditional SEO tools can't measure AI visibility. 70% of customers now start with AI assistants, not Google. Here's why you need AIDI to benchmark your brand's AI discoverability.",
+      author: "ADI Team",
+      date: "2025-09-24",
+      category: "Industry Analysis",
+      readTime: "7 min read"
+    },
+    {
+      id: 2,
       title: "The Future of AI Discoverability: What Brands Need to Know",
       excerpt: "As AI models become the primary way users discover information, brands must adapt their digital presence to remain visible and competitive.",
       author: "ADI Team",
@@ -16,16 +25,16 @@ export default function BlogPage() {
       readTime: "5 min read"
     },
     {
-      id: 2,
+      id: 3,
       title: "Understanding the ADI Framework: A Deep Dive",
       excerpt: "Explore the three pillars of AI discoverability and learn how each dimension impacts your brand's visibility across AI platforms.",
-      author: "ADI Team", 
+      author: "ADI Team",
       date: "2024-01-10",
       category: "Framework",
       readTime: "8 min read"
     },
     {
-      id: 3,
+      id: 4,
       title: "Case Study: How Leading Brands Optimize for AI Discovery",
       excerpt: "Real-world examples of brands that have successfully improved their AI discoverability scores and the strategies they used.",
       author: "ADI Team",
@@ -62,13 +71,13 @@ export default function BlogPage() {
             <CardHeader>
               <div className="flex items-center space-x-2 mb-2">
                 <Badge variant="secondary" className="bg-blue-100 text-blue-700">Featured</Badge>
-                <Badge variant="outline">Industry Insights</Badge>
+                <Badge variant="outline">{posts[0].category}</Badge>
               </div>
               <CardTitle className="text-2xl">
-                The Future of AI Discoverability: What Brands Need to Know
+                {posts[0].title}
               </CardTitle>
               <CardDescription className="text-base">
-                As AI models become the primary way users discover information, brands must adapt their digital presence to remain visible and competitive in this new landscape.
+                {posts[0].excerpt}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -76,13 +85,13 @@ export default function BlogPage() {
                 <div className="flex items-center space-x-4 text-sm text-gray-600">
                   <div className="flex items-center space-x-1">
                     <User className="h-4 w-4" />
-                    <span>ADI Team</span>
+                    <span>{posts[0].author}</span>
                   </div>
                   <div className="flex items-center space-x-1">
                     <Calendar className="h-4 w-4" />
-                    <span>January 15, 2024</span>
+                    <span>{new Date(posts[0].date).toLocaleDateString()}</span>
                   </div>
-                  <span>5 min read</span>
+                  <span>{posts[0].readTime}</span>
                 </div>
                 <Button variant="outline" size="sm" disabled>
                   Read More

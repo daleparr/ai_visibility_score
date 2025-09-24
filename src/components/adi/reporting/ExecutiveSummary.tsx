@@ -21,6 +21,13 @@ export function ExecutiveSummary({ overallScore, url, tier, pillarScores }: Exec
   const grade = getLetterGrade(overallScore)
   const impact = getBusinessImpact(overallScore)
   
+  // Safety check for pillarScores
+  const safePillarScores = {
+    infrastructure: pillarScores?.infrastructure ?? 0,
+    perception: pillarScores?.perception ?? 0,
+    commerce: pillarScores?.commerce ?? 0
+  }
+  
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600'
     if (score >= 60) return 'text-yellow-600'
@@ -120,33 +127,33 @@ export function ExecutiveSummary({ overallScore, url, tier, pillarScores }: Exec
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">🤖 Technical Foundation</span>
-                  <span className={`font-bold ${getScoreColor(pillarScores.infrastructure)}`}>
-                    {pillarScores.infrastructure}/100
+                  <span className={`font-bold ${getScoreColor(safePillarScores.infrastructure)}`}>
+                    {safePillarScores.infrastructure}/100
                   </span>
                 </div>
-                <Progress value={pillarScores.infrastructure} className="mb-1" />
+                <Progress value={safePillarScores.infrastructure} className="mb-1" />
                 <p className="text-xs text-gray-500">How easily AI can read your website</p>
               </div>
               
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">🎭 Brand Perception</span>
-                  <span className={`font-bold ${getScoreColor(pillarScores.perception)}`}>
-                    {pillarScores.perception}/100
+                  <span className={`font-bold ${getScoreColor(safePillarScores.perception)}`}>
+                    {safePillarScores.perception}/100
                   </span>
                 </div>
-                <Progress value={pillarScores.perception} className="mb-1" />
+                <Progress value={safePillarScores.perception} className="mb-1" />
                 <p className="text-xs text-gray-500">How well AI understands your brand</p>
               </div>
               
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">🛒 Shopping Experience</span>
-                  <span className={`font-bold ${getScoreColor(pillarScores.commerce)}`}>
-                    {pillarScores.commerce}/100
+                  <span className={`font-bold ${getScoreColor(safePillarScores.commerce)}`}>
+                    {safePillarScores.commerce}/100
                   </span>
                 </div>
-                <Progress value={pillarScores.commerce} className="mb-1" />
+                <Progress value={safePillarScores.commerce} className="mb-1" />
                 <p className="text-xs text-gray-500">How AI helps customers buy from you</p>
               </div>
             </div>

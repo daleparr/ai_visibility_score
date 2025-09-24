@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
+import BurgerMenu from '@/components/navigation/BurgerMenu'
 
 export default function DashboardLayout({
   children,
@@ -66,6 +67,13 @@ export default function DashboardLayout({
     )
   }
 
-  // If authenticated, render the dashboard
-  return children
+  // If authenticated, render the dashboard with navigation
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <BurgerMenu />
+      <main className="pt-4">
+        {children}
+      </main>
+    </div>
+  )
 }

@@ -690,7 +690,7 @@ export default function HomePage() {
                 <li><Link href="#features" className="hover:text-white">Features</Link></li>
                 <li><Link href="#pricing" className="hover:text-white">Pricing</Link></li>
                 <li><Link href="/demo" className="hover:text-white">Demo</Link></li>
-                <li><Link href="/api" className="hover:text-white">API</Link></li>
+                <li><Link href="/api-docs" className="hover:text-white">API</Link></li>
               </ul>
             </div>
             <div>

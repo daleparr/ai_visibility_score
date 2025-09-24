@@ -14,6 +14,7 @@ import { BloombergLeaderboardTable } from '@/components/adi/leaderboards/Bloombe
 import { LeaderboardData, LEADERBOARD_CATEGORIES } from '@/types/leaderboards'
 import { getUniqueSectors, getCategoriesBySector, getAllCategories } from '@/lib/brand-taxonomy'
 import { createCheckoutSession } from '@/lib/stripe-client'
+import BurgerMenu from '@/components/navigation/BurgerMenu'
 
 export default function LeaderboardsPage() {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null)
@@ -165,7 +166,9 @@ export default function LeaderboardsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <>
+      <BurgerMenu />
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div className="container mx-auto px-4 py-6">
         <div className="max-w-7xl mx-auto">
           {/* Bloomberg-Style Terminal Header */}
@@ -590,5 +593,6 @@ export default function LeaderboardsPage() {
         </div>
       </div>
     </div>
+    </>
   )
 }
