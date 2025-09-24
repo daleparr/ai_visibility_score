@@ -226,32 +226,49 @@ export class SelectiveFetchAgent {
      * @param timeoutMs Timeout in milliseconds for the fetch operation.
      * @returns A promise that resolves to a PageFetchResult.
      */
-    private async fetchPageWithTimeout(url: string, pageType: PageType, timeoutMs: number = 10000): Promise<PageFetchResult> {
+    private async fetchPageWithTimeout(url: string, pageType: string, timeoutMs: number = 5000): Promise<any> {
+        console.log(`🌐 [SelectiveFetch] Fetching ${pageType}: ${url}`);
+        
         try {
-            const controller = new AbortController()
-            const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
-            
-            const response = await fetch(url, {
-                headers: {
-                    'User-Agent': 'AIDI-Selective-Fetcher/1.0',
-                    'Accept': 'text/html',
-                },
-                signal: controller.signal
-            });
-
-            clearTimeout(timeoutId)
+            // BULLETPROOF 5-second timeout for page fetching
+            const response = await Promise.race([
+                fetch(url, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (compatible; AI-Visibility-Bot/1.0)',
+                    },
+                }),
+                new Promise<never>((_, reject) => {
+                    setTimeout(() => {
+                        console.log(`⏰ [SelectiveFetch] HARD TIMEOUT fetching ${url} after ${timeoutMs}ms`);
+                        reject(new Error('FETCH_TIMEOUT'));
+                    }, timeoutMs);
+                })
+            ]);
 
             if (!response.ok) {
-                 return { url, pageType, html: '', contentHash: '', status: response.status };
+                console.warn(`⚠️ [SelectiveFetch] HTTP ${response.status} for ${url}`);
+                return { status: response.status, content: '', url, pageType };
             }
 
-            const html = await response.text();
-            const contentHash = crypto.createHash('sha256').update(html).digest('hex');
-
-            return { url, pageType, html, contentHash, status: response.status};
+            const content = await response.text();
+            console.log(`✅ [SelectiveFetch] Successfully fetched ${url} (${content.length} chars)`);
+            
+            return {
+                status: 200,
+                content,
+                url,
+                pageType,
+                contentLength: content.length
+            };
+            
         } catch (error) {
-            console.warn(`⚠️ Failed to fetch ${url}:`, error);
-            return { url, pageType, html: '', contentHash: '', status: 500 };
+            if (error instanceof Error && error.message === 'FETCH_TIMEOUT') {
+                console.log(`⏰ [SelectiveFetch] Fetch timeout for ${url} - continuing with empty content`);
+            } else {
+                console.warn(`⚠️ [SelectiveFetch] Failed to fetch ${url}:`, error);
+            }
+            
+            return { status: 0, content: '', url, pageType };
         }
     }
 }
