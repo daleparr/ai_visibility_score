@@ -1,12 +1,5 @@
 'use client'
 
-import { Metadata } from 'next'
-
-export const metadata: Metadata = {
-  title: 'Terms of Service | AI Discoverability Index',
-  description: 'Terms of Service for using the AI Discoverability Index platform and services.',
-}
-
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
