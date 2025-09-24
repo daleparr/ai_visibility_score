@@ -122,15 +122,19 @@ export class SelectiveFetchAgent {
      */
     private async findPageUrlWithTimeout(pageType: PageType, timeoutMs: number = 10000): Promise<string | null> {
         let query = '';
+        // Extract clean domain without protocol for site: queries
+        const cleanDomain = this.domain.replace(/^https?:\/\//, '').replace(/^www\./, '');
+        
         switch(pageType){
             case 'about':
-                query = `site:${this.domain} about us`;
+                // Try multiple query formats for better results
+                query = `site:${cleanDomain} about us`;
                 break;
             case 'faq':
-                query = `site:${this.domain} faq OR returns policy OR shipping`;
+                query = `site:${cleanDomain} faq OR returns policy OR shipping`;
                 break;
             case 'product':
-                query = `site:${this.domain} product`;
+                query = `site:${cleanDomain} product`;
                 break;
         }
 
