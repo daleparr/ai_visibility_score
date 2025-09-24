@@ -283,15 +283,18 @@ export class PerformanceOptimizedADIOrchestrator {
     previousResults: Record<string, ADIAgentOutput>
   ): Promise<Record<string, ADIAgentOutput>> {
     // OPTIMIZATION 7: Individual agent timeouts based on complexity
+    // Detect build environment and use conservative timeouts
+    const isBuildTime = process.env.NODE_ENV === 'production' || process.env.NEXT_PHASE === 'phase-production-build'
+    
     const agentTimeouts: Record<string, number> = {
-      'crawl_agent': 4000,        // Reduced from 15000ms
+      'crawl_agent': isBuildTime ? 10000 : 4000,        // Build: 10s, Runtime: 4s
       'schema_agent': 1500,       // Reduced from 5000ms
       'semantic_agent': 2000,     // Reduced from 8000ms
       'knowledge_graph_agent': 2000, // Reduced from 10000ms
       'conversational_copy_agent': 1500, // Reduced from 6000ms
       'llm_test_agent': 3000,     // Reduced from 20000ms
       'geo_visibility_agent': 2000, // Reduced from 12000ms
-      'citation_agent': 2000,     // Reduced from 12000ms
+      'citation_agent': isBuildTime ? 8000 : 2000,     // Build: 8s, Runtime: 2s
       'sentiment_agent': 1500,    // Reduced from 5000ms
       'commerce_agent': 2000,     // Reduced from 8000ms
       'brand_heritage_agent': 1500, // New optimized
@@ -415,16 +418,19 @@ export class PerformanceOptimizedADIOrchestrator {
    * Estimate optimized execution time (target: under 10 seconds)
    */
   private estimateOptimizedExecutionTime(parallelPhases: string[][], sequentialPhases: string[]): number {
-    // Optimized estimates - aggressive reduction
+    // Detect build environment and use conservative estimates
+    const isBuildTime = process.env.NODE_ENV === 'production' || process.env.NEXT_PHASE === 'phase-production-build'
+    
+    // Optimized estimates - aggressive reduction for runtime, conservative for build
     const optimizedEstimates: Record<string, number> = {
-      'crawl_agent': 4000,        // 15s → 4s (smart crawling)
+      'crawl_agent': isBuildTime ? 10000 : 4000,        // Build: 10s, Runtime: 4s
       'schema_agent': 1500,       // 5s → 1.5s
       'semantic_agent': 2000,     // 8s → 2s
       'knowledge_graph_agent': 2000, // 10s → 2s
       'conversational_copy_agent': 1500, // 6s → 1.5s
       'llm_test_agent': 3000,     // 20s → 3s (reduced queries)
       'geo_visibility_agent': 2000, // 12s → 2s
-      'citation_agent': 2000,     // 12s → 2s
+      'citation_agent': isBuildTime ? 8000 : 2000,     // Build: 8s, Runtime: 2s
       'sentiment_agent': 1500,    // 5s → 1.5s
       'commerce_agent': 2000,     // 8s → 2s
       'brand_heritage_agent': 1500, // New

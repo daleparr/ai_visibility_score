@@ -524,9 +524,11 @@ export const createPageBlob = async (blob: NewPageBlob): Promise<void> => {
 
 export const createProbeRun = async (run: NewProbeRun): Promise<void> => {
    try {
-       await db.insert(probeRuns).values(run);
+       // Ensure model is always a valid non-null enum value
+       const safeModel = run.model ?? 'openai';
+       await db.insert(probeRuns).values({ ...run, model: safeModel });
    } catch (error) {
-       console.error('Error creating probe run:', error);
+       console.error('Error creating probe run:', error, 'Probe run data:', run);
    }
 };
 export const createWebsiteSnapshot = async (snapshot: NewWebsiteSnapshot): Promise<WebsiteSnapshot> => {

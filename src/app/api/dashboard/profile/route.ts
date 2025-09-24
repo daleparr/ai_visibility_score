@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { getUserProfile } from '@/lib/database'
 import { getUserSubscription } from '@/lib/subscription-service'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)

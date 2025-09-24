@@ -33,6 +33,7 @@ export interface EvaluationConfig {
   testCompetitors: boolean
   competitorUrls?: string[]
   infraMode?: 'legacy_crawl' | 'hybrid'
+  forceFullEvaluation?: boolean
 }
 
 export interface EvaluationProgress {
@@ -106,7 +107,8 @@ export class EvaluationEngine {
       const totalDimensions = Object.keys(EVALUATION_PROMPTS.infrastructure).length +
                              Object.keys(EVALUATION_PROMPTS.perception).length +
                              Object.keys(EVALUATION_PROMPTS.commerce).length
-      const totalSteps = totalDimensions * this.aiClients.size
+      const providerStepMultiplier = Math.max(1, this.aiClients.size)
+      const totalSteps = totalDimensions * providerStepMultiplier
 
       let completedSteps = 0
       const dimensionResults: DimensionScore[] = []
@@ -116,12 +118,45 @@ export class EvaluationEngine {
       console.log('[DEBUG] Forcing hybrid infrastructure evaluation path...');
       const hybridDimResults = await this.evaluateInfrastructureHybrid(evaluation.id, brand);
       dimensionResults.push(...hybridDimResults);
-      // This step count is a rough estimate for now
-      completedSteps += Object.keys(EVALUATION_PROMPTS.infrastructure).length;
+      completedSteps += Object.keys(EVALUATION_PROMPTS.infrastructure).length * providerStepMultiplier;
       this.updateProgress('Completed Infrastructure Pillar (Hybrid)', completedSteps, totalSteps);
 
-      // [HYBRID MVP] Disabling perception and commerce pillars to isolate infrastructure test.
-      console.log('[DEBUG] Skipping perception and commerce pillars for this hybrid MVP test run.');
+      if (this.config.forceFullEvaluation) {
+        const perceptionResults = await this.evaluatePromptPillar(
+          evaluation.id,
+          brand,
+          'perception',
+          brandPlaybook,
+          (dimensionName) => {
+            completedSteps += providerStepMultiplier;
+            this.updateProgress(
+              `Completed Perception dimension: ${dimensionName.replace(/_/g, ' ')}`,
+              completedSteps,
+              totalSteps
+            );
+          }
+        );
+        dimensionResults.push(...perceptionResults);
+
+        const commerceResults = await this.evaluatePromptPillar(
+          evaluation.id,
+          brand,
+          'commerce',
+          brandPlaybook,
+          (dimensionName) => {
+            completedSteps += providerStepMultiplier;
+            this.updateProgress(
+              `Completed Commerce dimension: ${dimensionName.replace(/_/g, ' ')}`,
+              completedSteps,
+              totalSteps
+            );
+          }
+        );
+        dimensionResults.push(...commerceResults);
+      } else {
+        // [HYBRID MVP] Disabling perception and commerce pillars to isolate infrastructure test.
+        console.log('[DEBUG] Skipping perception and commerce pillars for this hybrid MVP test run.');
+      }
 
       // Calculate final scores
       this.updateProgress('Calculating final scores...', completedSteps, totalSteps)
@@ -176,6 +211,32 @@ export class EvaluationEngine {
       
       throw error
     }
+  }
+
+  private async evaluatePromptPillar(
+    evaluationId: string,
+    brand: Brand,
+    pillar: keyof typeof EVALUATION_PROMPTS,
+    playbook: any,
+    onDimensionEvaluated: (dimensionName: string) => void
+  ): Promise<DimensionScore[]> {
+    const prompts = EVALUATION_PROMPTS[pillar];
+    const results: DimensionScore[] = [];
+
+    for (const [dimensionName, promptTemplate] of Object.entries(prompts)) {
+      const dimensionScore = await this.evaluateDimension(
+        evaluationId,
+        dimensionName,
+        promptTemplate,
+        brand,
+        pillar,
+        playbook
+      );
+      results.push(dimensionScore);
+      onDimensionEvaluated(dimensionName);
+    }
+
+    return results;
   }
 
   private async evaluateDimension(
