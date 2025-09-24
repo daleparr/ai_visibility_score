@@ -104,7 +104,7 @@ export function calculateOverallScore(
   }
 
   let overallScore =
-    totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
+    totalWeight > 0 ? (totalWeightedScore / totalWeight) * 100 : 0;
 
   // Apply Brand Playbook boost if available
   if (brandPlaybook && typeof brandPlaybook.scoring_boost === "number") {
@@ -144,13 +144,13 @@ export function calculatePillarScores(dimensionScores: DimensionScore[]): {
 
   return {
     infrastructure: pillarScores.infrastructure.totalWeight > 0 
-      ? Math.round(pillarScores.infrastructure.totalScore / pillarScores.infrastructure.totalWeight) 
+      ? Math.round((pillarScores.infrastructure.totalScore / pillarScores.infrastructure.totalWeight) * 100)
       : 0,
-    perception: pillarScores.perception.totalWeight > 0 
-      ? Math.round(pillarScores.perception.totalScore / pillarScores.perception.totalWeight) 
+    perception: pillarScores.perception.totalWeight > 0
+      ? Math.round((pillarScores.perception.totalScore / pillarScores.perception.totalWeight) * 100)
       : 0,
-    commerce: pillarScores.commerce.totalWeight > 0 
-      ? Math.round(pillarScores.commerce.totalScore / pillarScores.commerce.totalWeight) 
+    commerce: pillarScores.commerce.totalWeight > 0
+      ? Math.round((pillarScores.commerce.totalScore / pillarScores.commerce.totalWeight) * 100)
       : 0,
   }
 }
