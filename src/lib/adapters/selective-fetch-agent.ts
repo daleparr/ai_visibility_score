@@ -100,11 +100,12 @@ export class SelectiveFetchAgent {
     }
 
     /**
-     * Finds a a specific page type using a site-restricted search query.
+     * Finds a specific page type using a site-restricted search query with timeout protection.
      * @param pageType The type of page to find ('about', 'faq', 'product').
+     * @param timeoutMs Timeout in milliseconds for the search operation.
      * @returns A promise that resolves to the URL string or null.
      */
-    private async findPageUrl(pageType: PageType): Promise<string | null> {
+    private async findPageUrlWithTimeout(pageType: PageType, timeoutMs: number = 10000): Promise<string | null> {
         let query = '';
         switch(pageType){
             case 'about':
@@ -114,39 +115,78 @@ export class SelectiveFetchAgent {
                 query = `site:${this.domain} faq OR returns policy OR shipping`;
                 break;
             case 'product':
-                query = `site:${this.domain} product`; // This is a naive approach
+                query = `site:${this.domain} product`;
                 break;
         }
 
         try {
-           // Prefer Brave Search if the API key is available, otherwise fall back to Bing
-           // Prioritize Brave Search, fall back to Google Custom Search Engine
-           const searchFunction = process.env.BRAVE_API_KEY ? searchWithBrave : searchWithGoogleCSE;
-           const searchResults = await searchFunction(query);
-           
+            // Create timeout promise
+            const timeoutPromise = new Promise<never>((_, reject) => {
+                setTimeout(() => reject(new Error(`Search timeout after ${timeoutMs}ms`)), timeoutMs)
+            })
+
+            // Try search with timeout
+            const searchFunction = process.env.BRAVE_API_KEY ? searchWithBrave : searchWithGoogleCSE;
+            const searchResults = await Promise.race([
+                searchFunction(query),
+                timeoutPromise
+            ])
+            
             // Find the first result that is on the same domain
-            const firstResultOnDomain = searchResults.find((r: { url: string; }) => new URL(r.url).hostname.includes(this.domain));
-            return firstResultOnDomain ? firstResultOnDomain.url : null;
+            const firstResultOnDomain = searchResults.find((r: { url: string; }) => {
+                try {
+                    return new URL(r.url).hostname.includes(this.domain)
+                } catch {
+                    return false
+                }
+            })
+            return firstResultOnDomain ? firstResultOnDomain.url : null
+            
         } catch (error) {
-            console.error(`Error finding ${pageType} page for ${this.domain}:`, error);
-            return null;
+            console.warn(`⚠️ Search failed for ${pageType} page on ${this.domain}, using fallback:`, error)
+            
+            // FALLBACK: Use common URL patterns instead of search
+            return this.getFallbackUrl(pageType)
+        }
+    }
+
+    private getFallbackUrl(pageType: PageType): string | null {
+        const baseUrl = this.domain.startsWith('http') ? this.domain : `https://${this.domain}`
+        
+        switch(pageType) {
+            case 'about':
+                return `${baseUrl}/about`
+            case 'faq':
+                return `${baseUrl}/faq`
+            case 'product':
+                // Skip product page if we can't find it via search
+                return null
+            default:
+                return null
         }
     }
 
     /**
-     * Fetches the HTML content of a single page.
+     * Fetches the HTML content of a single page with timeout protection.
      * @param url The URL to fetch.
      * @param pageType The type of the page being fetched.
+     * @param timeoutMs Timeout in milliseconds for the fetch operation.
      * @returns A promise that resolves to a PageFetchResult.
      */
-    private async fetchPage(url: string, pageType: PageType): Promise<PageFetchResult> {
+    private async fetchPageWithTimeout(url: string, pageType: PageType, timeoutMs: number = 10000): Promise<PageFetchResult> {
         try {
+            const controller = new AbortController()
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+            
             const response = await fetch(url, {
                 headers: {
                     'User-Agent': 'AIDI-Selective-Fetcher/1.0',
                     'Accept': 'text/html',
                 },
+                signal: controller.signal
             });
+
+            clearTimeout(timeoutId)
 
             if (!response.ok) {
                  return { url, pageType, html: '', contentHash: '', status: response.status };
@@ -157,7 +197,7 @@ export class SelectiveFetchAgent {
 
             return { url, pageType, html, contentHash, status: response.status};
         } catch (error) {
-            console.error(`Failed to fetch ${url}:`, error);
+            console.warn(`⚠️ Failed to fetch ${url}:`, error);
             return { url, pageType, html: '', contentHash: '', status: 500 };
         }
     }
