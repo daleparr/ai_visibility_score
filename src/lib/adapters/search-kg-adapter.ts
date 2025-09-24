@@ -3,7 +3,6 @@
 import { z } from 'zod';
 
 // Zod schemas for validating API responses
-
 const GoogleCSEResultSchema = z.object({
   title: z.string(),
   link: z.string().url(),
@@ -12,18 +11,6 @@ const GoogleCSEResultSchema = z.object({
 
 const GoogleCSEResponseSchema = z.object({
   items: z.array(GoogleCSEResultSchema).optional(),
-});
-
-const WikidataEntitySchema = z.object({
-    id: z.string(),
-    label: z.object({ value: z.string() }).optional(),
-    description: z.object({ value: z.string() }).optional(),
-});
-
-const WikidataSearchResponseSchema = z.object({
-    results: z.object({
-        bindings: z.array(WikidataEntitySchema),
-    }),
 });
 
 const BraveSearchResultSchema = z.object({
@@ -38,19 +25,7 @@ const BraveSearchResponseSchema = z.object({
   }),
 });
 
-const GoogleKGSearchResponseSchema = z.object({
-  itemListElement: z.array(z.object({
-    result: z.object({
-      '@id': z.string(),
-      name: z.string().optional(),
-      description: z.string().optional(),
-    })
-  })).optional(),
-});
-
-
-// Normalized output types
-
+// Normalized output type
 export type NormalizedSearchResult = {
   rank: number;
   title: string;
@@ -58,125 +33,61 @@ export type NormalizedSearchResult = {
   snippet: string;
 };
 
-export type KnowledgeGraphResult = {
-  provider: 'wikidata' | 'google_kg';
-  id: string;
-  name?: string;
-  description?: string;
-};
-
 /**
- * Performs a search query against the Bing Search API.
- * @param query The search query string.
- * @returns A promise that resolves to an array of normalized search results.
+ * Performs a search query against Google Custom Search Engine.
  */
 export async function searchWithGoogleCSE(query: string): Promise<NormalizedSearchResult[]> {
   const apiKey = process.env.GOOGLE_API_KEY;
-  const cx = process.env.GOOGLE_CSE_ID; // Custom Search Engine ID
+  const cx = process.env.GOOGLE_CSE_ID;
 
   if (!apiKey || !cx) {
-    throw new Error('GOOGLE_API_KEY or GOOGLE_CSE_ID is not set for Custom Search.');
+    console.error('❌ [GoogleCSE] GOOGLE_API_KEY or GOOGLE_CSE_ID is not set');
+    return [];
   }
 
   const endpoint = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}`;
 
   try {
+    console.log(`🔍 [GoogleCSE] Searching: "${query}"`);
+    
     const response = await fetch(endpoint);
+    console.log(`✅ [GoogleCSE] Response received: ${response.status} ${response.statusText}`);
+    
     if (!response.ok) {
-      throw new Error(`Google CSE request failed with status ${response.status}`);
+      const errorText = await response.text();
+      console.error(`❌ [GoogleCSE] API error: ${response.status} ${response.statusText}`);
+      console.error(`❌ [GoogleCSE] Error body:`, errorText);
+      return [];
     }
+    
     const data = await response.json();
+    console.log(`📊 [GoogleCSE] Response keys:`, Object.keys(data));
+    
     const validatedData = GoogleCSEResponseSchema.parse(data);
 
-    if (!validatedData.items) return [];
+    if (!validatedData.items || validatedData.items.length === 0) {
+      console.log(`📊 [GoogleCSE] No results found`);
+      return [];
+    }
 
-    return validatedData.items.map((item, index) => ({
+    const results = validatedData.items.map((item, index) => ({
       rank: index + 1,
       title: item.title,
       url: item.link,
       snippet: item.snippet,
     }));
+
+    console.log(`✅ [GoogleCSE] Successfully parsed ${results.length} results`);
+    return results;
+    
   } catch (error) {
-    console.error('Error fetching from Google Custom Search API:', error);
+    console.error('❌ [GoogleCSE] Search failed:', error);
     return [];
   }
 }
 
 /**
- * Searches for a Wikidata entity.
- * @param entityLabel The label of the entity to search for (e.g., "Fortnum & Mason").
- * @returns A promise that resolves to a KnowledgeGraphResult or null if not found.
- */
-export async function findWikidataEntity(entityLabel: string): Promise<KnowledgeGraphResult | null> {
-    const endpoint = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(entityLabel)}&language=en&format=json&origin=*`;
-
-    try {
-        const response = await fetch(endpoint);
-        if(!response.ok) {
-            throw new Error(`Wikidata API request failed with status ${response.status}`);
-        }
-        const data = await response.json();
-        
-        // Basic validation, more robust would use Zod
-        if (data.search && data.search.length > 0) {
-            const topResult = data.search[0];
-            return {
-                provider: 'wikidata',
-                id: topResult.id,
-                name: topResult.label,
-                description: topResult.description,
-            };
-        }
-        return null;
-    } catch (error) {
-        console.error('Error fetching from Wikidata API:', error);
-        return null;
-    }
-}
-
-
-/**
- * Searches for a Google Knowledge Graph entity.
- * @param query The query string to search for.
- * @returns A promise that resolves to a KnowledgeGraphResult or null if not found.
- */
-export async function findGoogleKGEntity(query: string): Promise<KnowledgeGraphResult | null> {
-    const apiKey = process.env.GOOGLE_API_KEY;
-    if (!apiKey) {
-        throw new Error('GOOGLE_API_KEY for Knowledge Graph search is not set.');
-    }
-
-    const endpoint = `https://kgsearch.googleapis.com/v1/entities:search?query=${encodeURIComponent(query)}&key=${apiKey}&limit=1`;
-
-    try {
-        const response = await fetch(endpoint);
-        if (!response.ok) {
-            throw new Error(`Google KG API request failed with status ${response.status}`);
-        }
-        
-        const data = await response.json();
-        const validatedData = GoogleKGSearchResponseSchema.parse(data);
-
-        if (validatedData.itemListElement && validatedData.itemListElement.length > 0) {
-            const topResult = validatedData.itemListElement[0].result;
-            return {
-                provider: 'google_kg',
-                id: topResult['@id'],
-                name: topResult.name,
-                description: topResult.description,
-            };
-        }
-        return null;
-    } catch (error) {
-        console.error('Error fetching from Google Knowledge Graph API:', error);
-        return null;
-    }
-}
-
-/**
- * Performs a search query against the Brave Search API.
- * @param query The search query string.
- * @returns A promise that resolves to an array of normalized search results.
+ * Performs a search query against the Brave Search API with enhanced error handling.
  */
 export async function searchWithBrave(query: string): Promise<NormalizedSearchResult[]> {
   const apiKey = process.env.BRAVE_API_KEY;
@@ -189,8 +100,9 @@ export async function searchWithBrave(query: string): Promise<NormalizedSearchRe
 
   try {
     console.log(`🔍 [Brave] Searching: "${query}"`);
+    console.log(`🔗 [Brave] Endpoint: ${endpoint}`);
     
-    // Create timeout using AbortController (more compatible)
+    // Create timeout using AbortController (more compatible than AbortSignal.timeout)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       console.log(`⏰ [Brave] Timeout triggered after 8000ms`);
@@ -216,24 +128,28 @@ export async function searchWithBrave(query: string): Promise<NormalizedSearchRe
     }
 
     const data = await response.json();
-    console.log(`📊 [Brave] Raw response keys:`, Object.keys(data));
-    console.log(`📊 [Brave] Full response:`, JSON.stringify(data, null, 2));
+    console.log(`📊 [Brave] Response keys:`, Object.keys(data));
     
-    // More defensive parsing
+    // Log the full response structure for debugging
+    console.log(`📊 [Brave] Full response structure:`, JSON.stringify(data, null, 2));
+    
+    // Defensive parsing without Zod validation (in case schema is wrong)
     if (!data.web) {
-      console.warn(`⚠️ [Brave] No 'web' property in response:`, data);
+      console.warn(`⚠️ [Brave] No 'web' property in response. Available keys:`, Object.keys(data));
       return [];
     }
     
     if (!data.web.results) {
-      console.warn(`⚠️ [Brave] No 'results' property in web:`, data.web);
+      console.warn(`⚠️ [Brave] No 'results' property in web. Available keys:`, Object.keys(data.web));
       return [];
     }
     
     if (!Array.isArray(data.web.results)) {
-      console.warn(`⚠️ [Brave] Results is not an array:`, typeof data.web.results, data.web.results);
+      console.warn(`⚠️ [Brave] Results is not an array:`, typeof data.web.results);
       return [];
     }
+
+    console.log(`📊 [Brave] Found ${data.web.results.length} raw results`);
 
     const results = data.web.results.map((item: any, index: number) => {
       console.log(`📄 [Brave] Processing result ${index + 1}:`, {
@@ -251,12 +167,12 @@ export async function searchWithBrave(query: string): Promise<NormalizedSearchRe
     }).filter((item: any) => {
       const hasUrl = !!item.url;
       if (!hasUrl) {
-        console.warn(`⚠️ [Brave] Filtering out result without URL:`, item);
+        console.warn(`⚠️ [Brave] Filtering out result without URL:`, item.title);
       }
       return hasUrl;
     });
 
-    console.log(`✅ [Brave] Successfully parsed ${results.length} results`);
+    console.log(`✅ [Brave] Successfully parsed ${results.length} valid results`);
     results.forEach((r: any, i: number) => {
       console.log(`   ${i + 1}. ${r.title} - ${r.url}`);
     });
@@ -264,15 +180,17 @@ export async function searchWithBrave(query: string): Promise<NormalizedSearchRe
     return results;
     
   } catch (error) {
-    if (error.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       console.error('⏰ [Brave] Request timed out after 8000ms');
     } else {
       console.error('❌ [Brave] Search failed:', error);
-      console.error('❌ [Brave] Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      });
+      if (error instanceof Error) {
+        console.error('❌ [Brave] Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack?.split('\n').slice(0, 3).join('\n') // First 3 lines of stack
+        });
+      }
     }
     return [];
   }
