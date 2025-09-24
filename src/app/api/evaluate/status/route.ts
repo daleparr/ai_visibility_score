@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     const dimensionScores = await getDimensionScoresByEvaluationId(evaluation.id)
     
     // Get recommendations if available
-    let recommendations = []
+    let recommendations: any[] = []
     try {
       recommendations = await getRecommendationsByEvaluationId(evaluation.id)
     } catch (error) {
