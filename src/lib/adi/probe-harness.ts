@@ -30,9 +30,9 @@ export interface ProbeResult {
 
 export class ProbeHarness {
     private probes: Probe[];
-    private aiClients: Record<AIProviderName, AIProviderClient>;
+    private aiClients: Partial<Record<AIProviderName, AIProviderClient>>;
 
-    constructor(probes: Probe[], aiClients: Record<AIProviderName, AIProviderClient>) {
+    constructor(probes: Probe[], aiClients: Partial<Record<AIProviderName, AIProviderClient>>) {
         this.probes = probes;
         this.aiClients = aiClients;
     }
@@ -68,10 +68,24 @@ export class ProbeHarness {
 
     private async executeProbe(probe: Probe, context: ProbeContext): Promise<ProbeResult> {
         const prompt = probe.promptTemplate(context);
-        const modelsToRun = Object.keys(this.aiClients) as AIProviderName[];
+        const availableClients = Object.entries(this.aiClients).filter(([_, client]) => client !== undefined);
+        const modelsToRun = availableClients.map(([modelName, _]) => modelName as AIProviderName);
 
-        const modelPromises = modelsToRun.map(modelName =>
-            this.runOnModel(this.aiClients[modelName], prompt, probe.schema, probe.zodSchema)
+        if (modelsToRun.length === 0) {
+            console.warn(`⚠️ [ProbeHarness] No AI clients available for probe ${probe.name}`);
+            return {
+                probeName: probe.name,
+                model: 'openai', // Default fallback
+                wasValid: false,
+                isTrusted: false,
+                confidence: 0,
+                output: null,
+                allOutputs: []
+            };
+        }
+
+        const modelPromises = availableClients.map(([modelName, client]) =>
+            this.runOnModel(client!, prompt, probe.schema, probe.zodSchema)
         );
 
         const outputs = await Promise.all(modelPromises);

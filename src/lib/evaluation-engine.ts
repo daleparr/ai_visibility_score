@@ -367,7 +367,7 @@ export class EvaluationEngine {
       const probeContext = { brand, fetchedPages };
       
       // Convert Map to Record for ProbeHarness
-      const aiClientsRecord: Record<AIProviderName, AIProviderClient> = {};
+      const aiClientsRecord: Partial<Record<AIProviderName, AIProviderClient>> = {};
       for (const [providerName, client] of this.aiClients.entries()) {
           aiClientsRecord[providerName] = client;
       }
