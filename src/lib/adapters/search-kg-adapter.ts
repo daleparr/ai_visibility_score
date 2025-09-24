@@ -102,14 +102,24 @@ export async function searchWithBrave(query: string): Promise<NormalizedSearchRe
     console.log(`🔍 [Brave] Searching: "${query}"`);
     console.log(`🔗 [Brave] Endpoint: ${endpoint}`);
     
-    // Create timeout using AbortController (more compatible than AbortSignal.timeout)
+    // Create timeout using AbortController with Promise.race as backup
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
-      console.log(`⏰ [Brave] Timeout triggered after 8000ms`);
+      console.log(`⏰ [Brave] AbortController timeout triggered after 5000ms`);
       controller.abort();
-    }, 8000);
+    }, 5000); // Reduced to 5 seconds
 
-    const response = await fetch(endpoint, {
+    // Create a Promise.race timeout as additional safety
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        console.log(`⏰ [Brave] Promise.race timeout triggered after 6000ms`);
+        reject(new Error('Promise.race timeout after 6000ms'));
+      }, 6000);
+    });
+
+    console.log(`🚀 [Brave] Starting fetch request...`);
+    
+    const fetchPromise = fetch(endpoint, {
       headers: {
         'Accept': 'application/json',
         'X-Subscription-Token': apiKey,
@@ -117,6 +127,8 @@ export async function searchWithBrave(query: string): Promise<NormalizedSearchRe
       signal: controller.signal
     });
 
+    const response = await Promise.race([fetchPromise, timeoutPromise]);
+    
     clearTimeout(timeoutId);
     console.log(`✅ [Brave] Response received: ${response.status} ${response.statusText}`);
 
@@ -127,13 +139,19 @@ export async function searchWithBrave(query: string): Promise<NormalizedSearchRe
       return [];
     }
 
+    console.log(`📥 [Brave] Starting to parse response...`);
     const data = await response.json();
     console.log(`📊 [Brave] Response keys:`, Object.keys(data));
     
-    // Log the full response structure for debugging
-    console.log(`📊 [Brave] Full response structure:`, JSON.stringify(data, null, 2));
+    // Log the full response structure for debugging (but limit size)
+    const responseStr = JSON.stringify(data, null, 2);
+    if (responseStr.length > 2000) {
+      console.log(`📊 [Brave] Large response (${responseStr.length} chars), showing first 2000:`, responseStr.substring(0, 2000) + '...');
+    } else {
+      console.log(`📊 [Brave] Full response:`, responseStr);
+    }
     
-    // Defensive parsing without Zod validation (in case schema is wrong)
+    // Defensive parsing
     if (!data.web) {
       console.warn(`⚠️ [Brave] No 'web' property in response. Available keys:`, Object.keys(data));
       return [];
@@ -180,18 +198,23 @@ export async function searchWithBrave(query: string): Promise<NormalizedSearchRe
     return results;
     
   } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      console.error('⏰ [Brave] Request timed out after 8000ms');
-    } else {
-      console.error('❌ [Brave] Search failed:', error);
-      if (error instanceof Error) {
+    console.error('❌ [Brave] Search failed with error:', error);
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.error('⏰ [Brave] Request aborted (timeout)');
+      } else if (error.message.includes('Promise.race timeout')) {
+        console.error('⏰ [Brave] Promise.race timeout triggered');
+      } else {
         console.error('❌ [Brave] Error details:', {
           name: error.name,
           message: error.message,
-          stack: error.stack?.split('\n').slice(0, 3).join('\n') // First 3 lines of stack
+          stack: error.stack?.split('\n').slice(0, 3).join('\n')
         });
       }
     }
+    
+    console.log(`🔄 [Brave] Returning empty results due to error`);
     return [];
   }
 }
