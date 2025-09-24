@@ -160,7 +160,6 @@ export const createBrand = async (brand: NewBrand): Promise<Brand | null> => {
       }
     } catch (lookupErr) {
       console.error('⚠️ [DB] Fallback lookup after brand upsert error failed:', lookupErr)
-    console.log('📝 [DB] Checking subscription for userId:', userId);
     }
 
     throw error
@@ -539,6 +538,7 @@ export const updateUserProfile = async (userId: string, updates: any) => {
 export const getSubscriptionByUserId = async (userId: string) => {
   console.log('📝 [DB] Checking subscription for userId:', userId);
   if (!userId) return null;
+  console.log('📝 [DB] Checking subscription for userId:', userId);
   try {
     const result = await db.select().from(adiSubscriptions).where(eq(adiSubscriptions.userId, userId)).limit(1);
     return result[0];
