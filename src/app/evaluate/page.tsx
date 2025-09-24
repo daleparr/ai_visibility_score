@@ -134,13 +134,13 @@ ${evaluationData.tier === 'professional' ? 'Index Pro multi-model analysis' : 'S
 Overall AI Discoverability Index (AIDI) score of ${evaluationData.overallScore.toFixed(2)}/100 indicates ${evaluationData.overallScore >= 80 ? 'strong' : evaluationData.overallScore >= 60 ? 'moderate' : 'weak'} AI visibility.
 
 ## Pillar Breakdown
-### 🏗️ Infrastructure & Machine Readability: ${evaluationData.pillarScores.infrastructure.toFixed(2)}/100
+### 🏗️ Infrastructure & Machine Readability: ${evaluationData.pillarScores?.infrastructure?.toFixed(2) || 'N/A'}/100
 How easily AI can parse and understand your brand's digital footprint.
 
-### 🎯 Perception & Reputation: ${evaluationData.pillarScores.perception.toFixed(2)}/100
+### 🎯 Perception & Reputation: ${evaluationData.pillarScores?.perception?.toFixed(2) || 'N/A'}/100
 How well AI understands your brand matters and positioning.
 
-### 🛒 Commerce & Transaction Clarity: ${evaluationData.pillarScores.commerce.toFixed(2)}/100
+### 🛒 Commerce & Transaction Clarity: ${evaluationData.pillarScores?.commerce?.toFixed(2) || 'N/A'}/100
 How AI helps customers buy from you.
 
 ## Dimension Analysis
@@ -432,21 +432,21 @@ ${evaluationData.certification ? `
   const pillarScores: PillarScore[] = [
     {
       name: 'Infrastructure & Machine Readability',
-      score: evaluationData.pillarScores.infrastructure,
+      score: evaluationData.pillarScores?.infrastructure || 0,
       color: 'text-brand-600',
       icon: <Zap className="h-6 w-6" />,
       description: 'How well AI can parse your digital footprint'
     },
     {
       name: 'Perception & Reputation',
-      score: evaluationData.pillarScores.perception,
+      score: evaluationData.pillarScores?.perception || 0,
       color: 'text-success-600',
       icon: <Search className="h-6 w-6" />,
       description: 'How AI understands your brand value'
     },
     {
       name: 'Commerce & Customer Experience',
-      score: evaluationData.pillarScores.commerce,
+      score: evaluationData.pillarScores?.commerce || 0,
       color: 'text-warning-600',
       icon: <BarChart3 className="h-6 w-6" />,
       description: 'How AI facilitates transactions'
