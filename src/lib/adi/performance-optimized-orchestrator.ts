@@ -22,7 +22,7 @@ export class PerformanceOptimizedADIOrchestrator {
   private agents: Map<string, IADIAgent> = new Map()
   private executionPlan: ADIOrchestrationPlan | null = null
   private cache: Map<string, any> = new Map()
-  private readonly TARGET_EXECUTION_TIME = 8000 // 8 seconds target
+  private readonly TARGET_EXECUTION_TIME = 120000 // 2 minutes instead of 8 seconds
 
   constructor() {
     this.initializeAgents()
@@ -140,25 +140,13 @@ export class PerformanceOptimizedADIOrchestrator {
         return this.cache.get(cacheKey)
       }
 
-      // OPTIMIZATION 3: Execute with global timeout (ensure timer is cleared on success/failure)
-      const evaluationPromise = this.executeOptimizedPhases(plan, context, agentResults, errors, warnings)
-      let timeoutId: ReturnType<typeof setTimeout> | null = null
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        timeoutId = setTimeout(() => reject(new Error('Evaluation timeout')), this.TARGET_EXECUTION_TIME)
-      })
-      try {
-        await Promise.race([evaluationPromise, timeoutPromise])
-      } finally {
-        if (timeoutId) {
-          clearTimeout(timeoutId)
-          timeoutId = null
-        }
-      }
+      // Execute phases without global timeout
+      await this.executeOptimizedPhases(plan, context, agentResults, errors, warnings)
 
       const totalExecutionTime = Date.now() - startTime
       const overallStatus = this.determineOverallStatus(agentResults, errors)
 
-      console.log(`✅ Optimized evaluation completed in ${totalExecutionTime}ms (target: ${this.TARGET_EXECUTION_TIME}ms)`)
+      console.log(`✅ Optimized evaluation completed in ${totalExecutionTime}ms`)
 
       const result = {
         evaluationId: context.evaluationId,
@@ -171,7 +159,7 @@ export class PerformanceOptimizedADIOrchestrator {
           cacheUsed: false,
           parallelPhases: plan.parallelPhases.length,
           totalAgents: Object.keys(agentResults).length,
-          performanceGain: `${Math.round((70000 - totalExecutionTime) / 70000 * 100)}%`
+          performanceGain: `${totalExecutionTime}ms (target: ${this.TARGET_EXECUTION_TIME}ms)`
         }
       }
 
@@ -184,22 +172,20 @@ export class PerformanceOptimizedADIOrchestrator {
 
     } catch (error) {
       const totalExecutionTime = Date.now() - startTime
-      const errorMessage = error instanceof Error ? error.message : 'Unknown orchestration error'
-      
-      console.error(`❌ Optimized evaluation failed after ${totalExecutionTime}ms:`, errorMessage)
+      console.error(`❌ Optimized evaluation failed after ${totalExecutionTime}ms:`, error)
       
       return {
         evaluationId: context.evaluationId,
         overallStatus: 'failed',
         agentResults,
         totalExecutionTime,
-        errors: [...errors, errorMessage],
+        errors: [...errors, error instanceof Error ? error.message : 'Unknown error'],
         warnings,
         optimizations: {
           cacheUsed: false,
-          parallelPhases: plan.parallelPhases.length,
-          totalAgents: Object.keys(agentResults).length,
-          performanceGain: '0%'
+          parallelPhases: 0,
+          totalAgents: 0,
+          performanceGain: 'failed'
         }
       }
     }
@@ -282,27 +268,24 @@ export class PerformanceOptimizedADIOrchestrator {
     context: ADIEvaluationContext,
     previousResults: Record<string, ADIAgentOutput>
   ): Promise<Record<string, ADIAgentOutput>> {
-    // OPTIMIZATION 7: Individual agent timeouts based on complexity
-    // Detect build environment and use conservative timeouts
-    const isBuildTime = process.env.NODE_ENV === 'production' || process.env.NEXT_PHASE === 'phase-production-build'
     
     const agentTimeouts: Record<string, number> = {
-      'crawl_agent': isBuildTime ? 10000 : 4000,        // Build: 10s, Runtime: 4s
-      'schema_agent': 1500,       // Reduced from 5000ms
-      'semantic_agent': 2000,     // Reduced from 8000ms
-      'knowledge_graph_agent': 2000, // Reduced from 10000ms
-      'conversational_copy_agent': 1500, // Reduced from 6000ms
-      'llm_test_agent': 3000,     // Reduced from 20000ms
-      'geo_visibility_agent': 2000, // Reduced from 12000ms
-      'citation_agent': isBuildTime ? 8000 : 2000,     // Build: 8s, Runtime: 2s
-      'sentiment_agent': 1500,    // Reduced from 5000ms
-      'commerce_agent': 2000,     // Reduced from 8000ms
-      'brand_heritage_agent': 1500, // New optimized
-      'score_aggregator': 1000    // Reduced from 3000ms
+      'crawl_agent': 30000,          // 30 seconds for crawling
+      'schema_agent': 10000,         // 10 seconds for schema analysis
+      'semantic_agent': 15000,       // 15 seconds for semantic analysis
+      'knowledge_graph_agent': 15000, // 15 seconds for KG analysis
+      'conversational_copy_agent': 10000, // 10 seconds
+      'llm_test_agent': 20000,       // 20 seconds for AI API calls
+      'geo_visibility_agent': 15000, // 15 seconds for geo analysis
+      'citation_agent': 20000,       // 20 seconds for external APIs
+      'sentiment_agent': 10000,      // 10 seconds
+      'commerce_agent': 15000,       // 15 seconds
+      'brand_heritage_agent': 10000, // 10 seconds
+      'score_aggregator': 5000       // 5 seconds for aggregation
     }
 
     const promises = agentNames.map(agentName => {
-      const timeout = agentTimeouts[agentName] || 2000
+      const timeout = agentTimeouts[agentName] || 10000
       
       return Promise.race([
         this.executeOptimizedAgent(agentName, context, previousResults),
