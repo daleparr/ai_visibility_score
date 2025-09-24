@@ -190,35 +190,71 @@ export async function searchWithBrave(query: string): Promise<NormalizedSearchRe
   try {
     console.log(`🔍 [Brave] Searching: "${query}"`);
     
+    // Create timeout using AbortController (more compatible)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      console.log(`⏰ [Brave] Timeout triggered after 8000ms`);
+      controller.abort();
+    }, 8000);
+
     const response = await fetch(endpoint, {
       headers: {
         'Accept': 'application/json',
         'X-Subscription-Token': apiKey,
       },
-      // Add explicit timeout
-      signal: AbortSignal.timeout(8000)
+      signal: controller.signal
     });
 
+    clearTimeout(timeoutId);
+    console.log(`✅ [Brave] Response received: ${response.status} ${response.statusText}`);
+
     if (!response.ok) {
+      const errorText = await response.text();
       console.error(`❌ [Brave] API error: ${response.status} ${response.statusText}`);
+      console.error(`❌ [Brave] Error body:`, errorText);
       return [];
     }
 
     const data = await response.json();
     console.log(`📊 [Brave] Raw response keys:`, Object.keys(data));
+    console.log(`📊 [Brave] Full response:`, JSON.stringify(data, null, 2));
     
     // More defensive parsing
-    if (!data.web || !data.web.results || !Array.isArray(data.web.results)) {
-      console.warn(`⚠️ [Brave] Unexpected response structure:`, data);
+    if (!data.web) {
+      console.warn(`⚠️ [Brave] No 'web' property in response:`, data);
+      return [];
+    }
+    
+    if (!data.web.results) {
+      console.warn(`⚠️ [Brave] No 'results' property in web:`, data.web);
+      return [];
+    }
+    
+    if (!Array.isArray(data.web.results)) {
+      console.warn(`⚠️ [Brave] Results is not an array:`, typeof data.web.results, data.web.results);
       return [];
     }
 
-    const results = data.web.results.map((item: any, index: number) => ({
-      rank: index + 1,
-      title: item.title || 'No title',
-      url: item.url || '',
-      snippet: item.description || item.snippet || '',
-    })).filter((item: any) => item.url); // Filter out items without URLs
+    const results = data.web.results.map((item: any, index: number) => {
+      console.log(`📄 [Brave] Processing result ${index + 1}:`, {
+        title: item.title,
+        url: item.url,
+        description: item.description
+      });
+      
+      return {
+        rank: index + 1,
+        title: item.title || 'No title',
+        url: item.url || '',
+        snippet: item.description || item.snippet || '',
+      };
+    }).filter((item: any) => {
+      const hasUrl = !!item.url;
+      if (!hasUrl) {
+        console.warn(`⚠️ [Brave] Filtering out result without URL:`, item);
+      }
+      return hasUrl;
+    });
 
     console.log(`✅ [Brave] Successfully parsed ${results.length} results`);
     results.forEach((r: any, i: number) => {
@@ -228,7 +264,16 @@ export async function searchWithBrave(query: string): Promise<NormalizedSearchRe
     return results;
     
   } catch (error) {
-    console.error('❌ [Brave] Search failed:', error);
+    if (error.name === 'AbortError') {
+      console.error('⏰ [Brave] Request timed out after 8000ms');
+    } else {
+      console.error('❌ [Brave] Search failed:', error);
+      console.error('❌ [Brave] Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+    }
     return [];
   }
 }
