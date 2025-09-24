@@ -396,16 +396,18 @@ export class EvaluationEngine {
       }
 
       // 4. Map probe results to DimensionScore objects and save them
-      const dimensionScores = mapProbesToDimensionScores(probeResults, evaluationId);
-      
-      console.log(`📊 [ScoreAdapter] Generated ${dimensionScores.length} dimension scores`);
-      
-      for (const dimScore of dimensionScores) {
-          await createDimensionScore(dimScore);
+      const newDimensionScores = mapProbesToDimensionScores(probeResults, evaluationId);
+
+      console.log(`📊 [ScoreAdapter] Generated ${newDimensionScores.length} dimension scores`);
+
+      const savedDimensionScores: DimensionScore[] = [];
+      for (const dimScore of newDimensionScores) {
+          const savedScore = await createDimensionScore(dimScore);
+          savedDimensionScores.push(savedScore);
       }
 
       console.log(`✅ [Hybrid Mode] Infrastructure evaluation completed for ${brand.name}`);
-      return dimensionScores;
+      return savedDimensionScores;
   }
 
   private generateDimensionExplanation(
