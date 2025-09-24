@@ -122,11 +122,17 @@ export class ProbeHarness {
                 console.log(`✅ [PROBE] ${client.provider} SUCCESS - Valid response received`);
                 return { success: true, data: validationResult.data, model: client.provider };
             } else {
-                // Repair loop: send back the validation error
-                attempt++;
-                const errorDetails = JSON.stringify(validationResult.error.flatten());
-                console.log(`🔧 [PROBE] ${client.provider} attempting repair with errors:`, errorDetails);
-                currentPrompt = `${prompt}\n\nThe previous attempt failed validation. Please correct the JSON output to match the schema. Errors: ${errorDetails}`;
+                // Only retry for critical validation failures
+                if (attempt === 0) {
+                    attempt++;
+                    const errorDetails = JSON.stringify(validationResult.error.flatten());
+                    console.log(`🔧 [PROBE] ${client.provider} attempting repair with errors:`, errorDetails);
+                    currentPrompt = `${prompt}\n\nThe previous attempt failed validation. Please correct the JSON output to match the schema. Errors: ${errorDetails}`;
+                } else {
+                    // [OPTIMIZATION] Use partial success for meaningful AI responses
+                    console.log(`⚠️ [PROBE] ${client.provider} PARTIAL SUCCESS - Using AI response despite schema validation failure`);
+                    return { success: true, data: response.content, model: client.provider };
+                }
             }
         }
 

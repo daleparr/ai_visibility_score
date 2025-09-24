@@ -244,6 +244,22 @@ CREATE TABLE IF NOT EXISTS production.probe_runs (
   created_at timestamp DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS production.adi_subscriptions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES production.users(id) ON DELETE cascade,
+  tier production.adi_subscription_tier DEFAULT 'free' NOT NULL,
+  stripe_subscription_id varchar(255),
+  stripe_customer_id varchar(255),
+  current_period_start timestamp,
+  current_period_end timestamp,
+  is_active boolean DEFAULT true,
+  monthly_evaluation_limit integer DEFAULT 3,
+  api_access_enabled boolean DEFAULT false,
+  benchmarking_enabled boolean DEFAULT false,
+  created_at timestamp DEFAULT now(),
+  updated_at timestamp DEFAULT now()
+);
+
 GRANT USAGE ON SCHEMA production TO service_role;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA production TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA production TO service_role;

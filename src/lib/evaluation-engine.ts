@@ -76,8 +76,20 @@ export class EvaluationEngine {
       }
     }
 
+    // Use available API keys - prioritize Anthropic if OpenAI not available
     if (this.aiClients.size === 0) {
-      this.aiClients.set('openai', new AIProviderClient('openai', process.env.OPENAI_API_KEY!))
+      if (process.env.OPENAI_API_KEY) {
+        this.aiClients.set('openai', new AIProviderClient('openai', process.env.OPENAI_API_KEY))
+      } else if (process.env.ANTHROPIC_API_KEY) {
+        this.aiClients.set('anthropic', new AIProviderClient('anthropic', process.env.ANTHROPIC_API_KEY))
+        console.log('🤖 [AI] Using Anthropic as primary provider (OpenAI key not found)')
+      } else if (process.env.GOOGLE_AI_API_KEY) {
+        this.aiClients.set('google', new AIProviderClient('google', process.env.GOOGLE_AI_API_KEY))
+        console.log('🤖 [AI] Using Google AI as primary provider (OpenAI/Anthropic keys not found)')
+      } else {
+        console.error('🚨 [AI] No API keys available for any AI provider!')
+        throw new Error('No AI provider API keys configured')
+      }
     }
   }
 
@@ -121,41 +133,44 @@ export class EvaluationEngine {
       completedSteps += Object.keys(EVALUATION_PROMPTS.infrastructure).length * providerStepMultiplier;
       this.updateProgress('Completed Infrastructure Pillar (Hybrid)', completedSteps, totalSteps);
 
-      if (this.config.forceFullEvaluation) {
-        const perceptionResults = await this.evaluatePromptPillar(
-          evaluation.id,
-          brand,
-          'perception',
-          brandPlaybook,
-          (dimensionName) => {
-            completedSteps += providerStepMultiplier;
-            this.updateProgress(
-              `Completed Perception dimension: ${dimensionName.replace(/_/g, ' ')}`,
-              completedSteps,
-              totalSteps
-            );
-          }
-        );
-        dimensionResults.push(...perceptionResults);
+      // [PRODUCTION OPTIMIZATION] Enable full three-pillar evaluation by default
+      console.log('[OPTIMIZATION] Enabling full three-pillar evaluation for production');
+      
+      const perceptionResults = await this.evaluatePromptPillar(
+        evaluation.id,
+        brand,
+        'perception',
+        brandPlaybook,
+        (dimensionName) => {
+          completedSteps += providerStepMultiplier;
+          this.updateProgress(
+            `Completed Perception dimension: ${dimensionName.replace(/_/g, ' ')}`,
+            completedSteps,
+            totalSteps
+          );
+        }
+      );
+      dimensionResults.push(...perceptionResults);
 
-        const commerceResults = await this.evaluatePromptPillar(
-          evaluation.id,
-          brand,
-          'commerce',
-          brandPlaybook,
-          (dimensionName) => {
-            completedSteps += providerStepMultiplier;
-            this.updateProgress(
-              `Completed Commerce dimension: ${dimensionName.replace(/_/g, ' ')}`,
-              completedSteps,
-              totalSteps
-            );
-          }
-        );
-        dimensionResults.push(...commerceResults);
-      } else {
-        // [HYBRID MVP] Disabling perception and commerce pillars to isolate infrastructure test.
-        console.log('[DEBUG] Skipping perception and commerce pillars for this hybrid MVP test run.');
+      const commerceResults = await this.evaluatePromptPillar(
+        evaluation.id,
+        brand,
+        'commerce',
+        brandPlaybook,
+        (dimensionName) => {
+          completedSteps += providerStepMultiplier;
+          this.updateProgress(
+            `Completed Commerce dimension: ${dimensionName.replace(/_/g, ' ')}`,
+            completedSteps,
+            totalSteps
+          );
+        }
+      );
+      dimensionResults.push(...commerceResults);
+      
+      // Only skip perception/commerce if explicitly requested for testing
+      if (this.config.infraMode === 'legacy_crawl' && !this.config.forceFullEvaluation) {
+        console.log('[DEBUG] Legacy mode - running infrastructure only for compatibility');
       }
 
       // Calculate final scores
@@ -170,21 +185,24 @@ export class EvaluationEngine {
       this.updateProgress('Generating recommendations...', completedSteps, totalSteps)
       const recommendations = generateRecommendations(dimensionResults, brand.name)
       
-      // [DB_FIX] Disabling recommendation saving due to schema mismatch on production.
-      console.log('[DB_FIX] Skipping recommendation save step.');
-      /*
+      // [OPTIMIZATION] Re-enable recommendations with error handling
+      console.log('[OPTIMIZATION] Attempting to save recommendations with enhanced error handling...');
       for (const rec of recommendations) {
-        await createRecommendation({
-          evaluationId: evaluation.id,
-          priority: rec.priority,
-          title: rec.title,
-          description: rec.description,
-          impactLevel: rec.impact,
-          effortLevel: rec.effort,
-          category: rec.category
-        })
+        try {
+          await createRecommendation({
+            evaluationId: evaluation.id,
+            priority: rec.priority,
+            title: rec.title,
+            description: rec.description,
+            impactLevel: rec.impact,
+            effortLevel: rec.effort,
+            category: rec.category
+          })
+        } catch (error) {
+          console.warn(`[DB_WARNING] Failed to save recommendation: ${rec.title}. Error:`, error);
+          // Continue with other recommendations even if one fails
+        }
       }
-      */
 
       // Update evaluation with final results
       const completedEvaluation = await updateEvaluation(evaluation.id, {

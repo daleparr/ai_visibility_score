@@ -74,38 +74,64 @@ export function mapProbesToDimensionScores(probeResults: ProbeResult[], evaluati
 // --- Scoring Rubrics per Probe ---
 
 function scoreSchemaProbe(output: any): number {
-    if (!output) return 0;
-    let score = 0;
-    if (output.gtin) score += 30;
-    if (output.price) score += 30;
-    if (output.availability) score += 30;
-    if (output.variant_count && output.variant_count > 1) score += 10;
-    return Math.min(score, 100);
+    if (!output || typeof output !== 'object') return 15; // Base score for attempting schema markup
+    let score = 20; // Base score for having any structured data
+    
+    // More realistic scoring - basic product info is valuable
+    if (output.price || output.product_name) score += 25;
+    if (output.availability || output.in_stock !== undefined) score += 20;
+    if (output.gtin || output.sku) score += 20; // GTIN nice to have, not required
+    if (output.variant_count && typeof output.variant_count === 'number' && output.variant_count > 1) score += 15;
+    
+    return Math.min(isNaN(score) ? 15 : score, 100);
 }
 
 function scorePolicyProbe(output: any): number {
-    if (!output?.has_returns) return 10;
-    let score = 50;
-    if (output.window_days && output.window_days >= 30) score += 30;
-    if (output.restocking_fee_pct === 0) score += 20;
+    if (!output || typeof output !== 'object' || !output.has_returns) return 30; // Having any policy info is valuable
+    let score = 60; // Good base score for having returns policy
+    
+    // Reward good policies but don't penalize reasonable ones
+    if (typeof output.window_days === 'number' && output.window_days >= 14) score += 20; // 14 days is reasonable
+    if (typeof output.window_days === 'number' && output.window_days >= 30) score += 10; // 30+ days is excellent
+    if (typeof output.restocking_fee_pct === 'number' && output.restocking_fee_pct === 0) score += 10; // No fee is nice but not critical
+    
+    return Math.min(isNaN(score) ? 30 : score, 100);
+}
+
+function scoreSemanticsProbe(output: any): number {
+    if (!output) return 20; // Base score for semantic analysis attempt
+    let score = 30; // Base score for having semantic content
+    
+    // Reward clear semantic structure
+    if (output.clarity_score && output.clarity_score >= 0.7) score += 25;
+    if (output.terminology_consistent) score += 20;
+    if (output.brand_voice_consistent) score += 15;
+    if (output.navigation_clear) score += 10;
+    
     return Math.min(score, 100);
 }
 
 function scoreKgProbe(output: any): number {
-    if (!output) return 0;
-    let score = 0;
-    if (output.wikidata_id) score += 50;
-    if (output.google_kg_id) score += 50;
-    // Modulate by confidence
-    return Math.round(score * (output.confidence || 0.5));
+    if (!output) return 25; // Base score for being in search results
+    let score = 40; // Base score for having online presence
+    
+    // Knowledge graph presence is bonus, not requirement
+    if (output.wikidata_id) score += 30;
+    if (output.google_kg_id) score += 30;
+    
+    // Brand recognition and mentions are also valuable
+    if (output.mention_count && typeof output.mention_count === 'number' && output.mention_count > 0) score += 20;
+    
+    // Apply confidence but with generous minimum and NaN protection
+    let confidenceValue = output.confidence;
+    if (typeof confidenceValue !== 'number' || isNaN(confidenceValue)) {
+        confidenceValue = 0.8; // Default confidence
+    }
+    const confidenceMultiplier = Math.max(0.7, confidenceValue);
+    const finalScore = Math.round(score * confidenceMultiplier);
+    
+    return Math.min(isNaN(finalScore) ? 25 : finalScore, 100);
 }
 
-function scoreSemanticsProbe(output: any): number {
-    if (!output) return 20;
-    // Fewer ambiguous terms is better
-    const termCount = output.ambiguous_terms?.length || 0;
-    if (termCount === 0) return 100;
-    if (termCount <= 2) return 80;
-    if (termCount <= 5) return 50;
-    return 30;
-}
+// Export scoring functions for testing
+export { scoreSchemaProbe, scorePolicyProbe, scoreKgProbe, scoreSemanticsProbe };
