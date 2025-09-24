@@ -14,7 +14,7 @@ if (typeof window === 'undefined') {
   
   console.log('🔍 [DB] Environment check:', {
     hasNetlifyUrl: !!process.env.NETLIFY_DATABASE_URL,
-    hasNetlifyUnpooled: !!unpooledConnectionString,
+    hasNetlifyUnpooled: !!process.env.NETLIFY_DATABASE_URL_UNPOOLED,
     hasDatabaseUrl: !!process.env.DATABASE_URL,
     nodeEnv: process.env.NODE_ENV,
     connectionStringLength: connectionString?.length || 0
@@ -102,3 +102,4 @@ const mockDb = {
 }
 
 export { sql, db }
+export * from './schema'
