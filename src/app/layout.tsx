@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     siteName: 'AI Discoverability Index',
     images: [
       {
-        url: '/favicon.ico',
+        url: '/favicon.png',
         width: 32,
         height: 32,
         alt: 'AI Discoverability Index - AIDI Framework',
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'AI Discoverability Index - The Standard for AI Discoverability',
     description: 'Master your brand\'s AI discoverability with the AI Discoverability Index framework.',
-    images: ['/favicon.ico'],
+    images: ['/favicon.png'],
   },
   robots: {
     index: true,
@@ -64,7 +64,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
         <link rel="manifest" href="/site.webmanifest" />
       </head>
       <body className={`${inter.className} antialiased`}>

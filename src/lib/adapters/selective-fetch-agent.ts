@@ -43,40 +43,60 @@ export class SelectiveFetchAgent {
      * @returns A promise that resolves to an array of fetched page results.
      */
     public async run(seedUrls?: { about?: string; faq?: string; pdp?: string }): Promise<PageFetchResult[]> {
+        console.log(`🔍 [SelectiveFetch] Starting page discovery for ${this.domain}`)
+        const startTime = Date.now()
         const urlsToFetch = new Map<PageType, string>();
 
-        // 1. Determine URLs for About and FAQ/policy pages
+        // 1. Determine URLs for About and FAQ/policy pages with timeout
         if (seedUrls?.about) {
             urlsToFetch.set('about', seedUrls.about);
+            console.log(`📋 [SelectiveFetch] Using provided about URL: ${seedUrls.about}`)
         } else {
-            const aboutUrl = await this.findPageUrl('about');
-            if(aboutUrl) urlsToFetch.set('about', aboutUrl);
+            console.log(`🔍 [SelectiveFetch] Searching for about page...`)
+            const aboutUrl = await this.findPageUrlWithTimeout('about', 5000); // 5 second timeout
+            if(aboutUrl) {
+                urlsToFetch.set('about', aboutUrl);
+                console.log(`✅ [SelectiveFetch] Found about page: ${aboutUrl}`)
+            } else {
+                console.log(`❌ [SelectiveFetch] No about page found`)
+            }
         }
 
         if (seedUrls?.faq) {
             urlsToFetch.set('faq', seedUrls.faq);
+            console.log(`📋 [SelectiveFetch] Using provided FAQ URL: ${seedUrls.faq}`)
         } else {
-            const faqUrl = await this.findPageUrl('faq');
-            if(faqUrl) urlsToFetch.set('faq', faqUrl);
+            console.log(`🔍 [SelectiveFetch] Searching for FAQ page...`)
+            const faqUrl = await this.findPageUrlWithTimeout('faq', 5000); // 5 second timeout
+            if(faqUrl) {
+                urlsToFetch.set('faq', faqUrl);
+                console.log(`✅ [SelectiveFetch] Found FAQ page: ${faqUrl}`)
+            } else {
+                console.log(`❌ [SelectiveFetch] No FAQ page found`)
+            }
         }
 
-        // 2. Determine URL for a representative Product Detail Page (PDP)
+        // 2. Skip product page search to avoid delays
         if (seedUrls?.pdp) {
             urlsToFetch.set('product', seedUrls.pdp);
-        } else {
-            // In a real implementation, this would be a more sophisticated discovery method.
-            // For now, we'll try a simple search to find a product page.
-             const pdpUrl = await this.findPageUrl('product');
-             if(pdpUrl) urlsToFetch.set('product', pdpUrl);
+            console.log(`📋 [SelectiveFetch] Using provided product URL: ${seedUrls.pdp}`)
         }
+        // Skip automatic product discovery to avoid search delays
 
-        // 3. Fetch all determined URLs in parallel
+        console.log(`📊 [SelectiveFetch] Found ${urlsToFetch.size} pages to fetch`)
+
+        // 3. Fetch all determined URLs in parallel with timeout
         const fetchPromises = Array.from(urlsToFetch.entries()).map(([pageType, url]) =>
-            this.fetchPage(url, pageType)
+            this.fetchPageWithTimeout(url, pageType, 10000) // 10 second fetch timeout
         );
         
         const results = await Promise.all(fetchPromises);
-        return results.filter(result => result.status === 200); // Only return successful fetches
+        const successfulResults = results.filter(result => result.status === 200);
+        
+        const totalTime = Date.now() - startTime
+        console.log(`✅ [SelectiveFetch] Completed in ${totalTime}ms: ${successfulResults.length}/${results.length} pages fetched successfully`)
+        
+        return successfulResults;
     }
 
     /**
