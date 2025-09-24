@@ -348,6 +348,8 @@ export class EvaluationEngine {
       const fetchAgent = new SelectiveFetchAgent(brand.websiteUrl);
       const fetchedPages = await fetchAgent.run();
 
+      console.log(`✅ [SelectiveFetch] Fetched ${fetchedPages.length} pages successfully`);
+
       // Save fetched pages to the database
       for (const page of fetchedPages) {
           await createPageBlob({
@@ -363,8 +365,21 @@ export class EvaluationEngine {
       // 2. Prepare context and run the ProbeHarness
       this.updateProgress('Executing LLM probes...', 2, 4);
       const probeContext = { brand, fetchedPages };
-      const probeHarness = new ProbeHarness(coreProbes, this.aiClients as any);
+      
+      // Convert Map to Record for ProbeHarness
+      const aiClientsRecord: Record<AIProviderName, AIProviderClient> = {};
+      for (const [providerName, client] of this.aiClients.entries()) {
+          aiClientsRecord[providerName] = client;
+      }
+      
+      console.log(`🤖 [ProbeHarness] Initializing with ${Object.keys(aiClientsRecord).length} AI providers: ${Object.keys(aiClientsRecord).join(', ')}`);
+      
+      const probeHarness = new ProbeHarness(coreProbes, aiClientsRecord);
+      
+      console.log(`🔍 [ProbeHarness] Running ${coreProbes.length} probes...`);
       const probeResults = await probeHarness.run(probeContext);
+      
+      console.log(`✅ [ProbeHarness] Completed ${probeResults.length} probe results`);
 
       // 3. Save probe results to the database
       this.updateProgress('Saving probe evidence...', 3, 4);
@@ -383,14 +398,14 @@ export class EvaluationEngine {
       // 4. Map probe results to DimensionScore objects and save them
       const dimensionScores = mapProbesToDimensionScores(probeResults, evaluationId);
       
+      console.log(`📊 [ScoreAdapter] Generated ${dimensionScores.length} dimension scores`);
+      
       for (const dimScore of dimensionScores) {
           await createDimensionScore(dimScore);
       }
 
-      this.updateProgress('Completed Infrastructure Pillar (Hybrid)', 4, 4);
-      console.log(`[Hybrid Mode] Infrastructure evaluation complete for ${brand.name}.`);
-      // The 'as any' is needed because the DB returns a full DimensionScore, but the function expects NewDimensionScore[]
-      return dimensionScores as any;
+      console.log(`✅ [Hybrid Mode] Infrastructure evaluation completed for ${brand.name}`);
+      return dimensionScores;
   }
 
   private generateDimensionExplanation(

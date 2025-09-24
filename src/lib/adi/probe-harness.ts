@@ -38,13 +38,31 @@ export class ProbeHarness {
     }
 
     public async run(context: ProbeContext): Promise<ProbeResult[]> {
+        console.log(`🚀 [ProbeHarness] Starting ${this.probes.length} probes with ${Object.keys(this.aiClients).length} AI clients`);
         const results: ProbeResult[] = [];
 
         for (const probe of this.probes) {
-            const probeResult = await this.executeProbe(probe, context);
-            results.push(probeResult);
+            try {
+                console.log(`🔍 [ProbeHarness] Executing probe: ${probe.name}`);
+                const probeResult = await this.executeProbe(probe, context);
+                console.log(`✅ [ProbeHarness] Probe ${probe.name} completed - Valid: ${probeResult.wasValid}, Confidence: ${probeResult.confidence}%`);
+                results.push(probeResult);
+            } catch (error) {
+                console.error(`❌ [ProbeHarness] Probe ${probe.name} failed:`, error);
+                // Create a failed probe result instead of stopping
+                results.push({
+                    probeName: probe.name,
+                    model: Object.keys(this.aiClients)[0] as AIProviderName || 'openai',
+                    wasValid: false,
+                    isTrusted: false,
+                    confidence: 0,
+                    output: null,
+                    allOutputs: []
+                });
+            }
         }
 
+        console.log(`✅ [ProbeHarness] Completed all probes: ${results.length} results`);
         return results;
     }
 
