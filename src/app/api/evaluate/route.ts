@@ -45,43 +45,24 @@ export async function POST(request: NextRequest) {
 
     console.log(`[ROUTE_HANDLER] Starting evaluation for brand: ${brand.name} (${brand.id})`)
 
-    // 2. Use the simple, correct trigger function we built.
+    // 2. Start evaluation asynchronously and return immediately
     const { triggerEvaluation } = await import('@/lib/evaluation-engine')
-    const finalEvaluation = await triggerEvaluation(brand.id)
+    
+    // Start evaluation in background - don't await it
+    triggerEvaluation(brand.id).then(finalEvaluation => {
+      console.log(`[ROUTE_HANDLER] Completed evaluation: ${finalEvaluation.id}`)
+    }).catch(error => {
+      console.error(`[ROUTE_HANDLER] Evaluation failed: ${error.message}`)
+    })
 
-    console.log(`[ROUTE_HANDLER] Completed evaluation: ${finalEvaluation.id}`)
-
-    // 3. Return frontend-compatible response structure
+    // 3. Return immediate response with evaluation ID for polling
     return NextResponse.json({
+      evaluationId: brand.id, // Use brand ID to track evaluation
+      brandId: brand.id,
       url: normalizedUrl,
-      tier: 'free',
-      isDemo: false,
-      overallScore: finalEvaluation.overallScore || 0,
-      grade: finalEvaluation.grade || 'F',
-      pillarScores: {
-        infrastructure: finalEvaluation.overallScore || 0,
-        perception: 0,
-        commerce: 0
-      },
-      dimensionScores: [
-        {
-          name: 'schema_structured_data',
-          score: finalEvaluation.overallScore || 0,
-          description: 'Basic infrastructure evaluation completed',
-          pillar: 'infrastructure'
-        }
-      ],
-      recommendations: [
-        {
-          title: 'Improve Infrastructure',
-          description: 'Basic evaluation completed. Upgrade to professional tier for detailed analysis.',
-          score: finalEvaluation.overallScore || 0,
-          priority: 'medium'
-        }
-      ],
-      aiProviders: ['openai'],
-      defaultModel: 'gpt-4',
-      analysisMethod: 'Hybrid Infrastructure Evaluation'
+      status: 'running',
+      message: 'Evaluation started successfully. Please check status for completion.',
+      estimatedTime: '60-90 seconds'
     })
   } catch (error: any) {
     console.error('❌ [EVALUATE_API_ERROR] A critical error occurred:', error)

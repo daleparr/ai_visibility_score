@@ -1,4 +1,45 @@
-import '@testing-library/jest-dom'
+require('@testing-library/jest-dom')
+
+// Add Node.js polyfills for missing browser APIs
+if (typeof global.TextDecoder === 'undefined') {
+  global.TextDecoder = require('util').TextDecoder
+}
+
+if (typeof global.TextEncoder === 'undefined') {
+  global.TextEncoder = require('util').TextEncoder
+}
+
+// Add simple fetch mock for tests
+if (typeof global.fetch === 'undefined') {
+  global.fetch = jest.fn(() =>
+    Promise.resolve({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({}),
+      text: () => Promise.resolve(''),
+    })
+  )
+}
+
+// Add Request polyfill for Node.js environment
+if (typeof global.Request === 'undefined') {
+  global.Request = class Request {
+    constructor(input, init = {}) {
+      this.url = typeof input === 'string' ? input : input.url
+      this.method = init.method || 'GET'
+      this.headers = new Map(Object.entries(init.headers || {}))
+      this.body = init.body || null
+    }
+    
+    async json() {
+      return JSON.parse(this.body || '{}')
+    }
+    
+    async text() {
+      return this.body || ''
+    }
+  }
+}
 
 // Mock Next.js router
 jest.mock('next/router', () => ({

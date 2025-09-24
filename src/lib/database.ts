@@ -46,6 +46,41 @@ export const getBrand = async (brandId: string): Promise<Brand | undefined> => {
   }
 }
 
+export const getLatestEvaluationForBrand = async (brandId: string): Promise<Evaluation | undefined> => {
+  try {
+    const result = await db.select().from(evaluations)
+      .where(eq(evaluations.brandId, brandId))
+      .orderBy(desc(evaluations.createdAt))
+      .limit(1)
+    return result[0]
+  } catch (error) {
+    console.error('Error fetching latest evaluation:', error)
+    return undefined
+  }
+}
+
+export const getDimensionScoresByEvaluationId = async (evaluationId: string): Promise<DimensionScore[]> => {
+  try {
+    return await db.select().from(dimensionScores)
+      .where(eq(dimensionScores.evaluationId, evaluationId))
+      .orderBy(dimensionScores.createdAt)
+  } catch (error) {
+    console.error('Error fetching dimension scores:', error)
+    return []
+  }
+}
+
+export const getRecommendationsByEvaluationId = async (evaluationId: string): Promise<Recommendation[]> => {
+  try {
+    return await db.select().from(recommendations)
+      .where(eq(recommendations.evaluationId, evaluationId))
+      .orderBy(recommendations.createdAt)
+  } catch (error) {
+    console.error('Error fetching recommendations:', error)
+    return []
+  }
+}
+
 export const createBrand = async (brand: NewBrand): Promise<Brand | null> => {
   try {
     const normalizedUrl = normalizeBrandUrl(brand.websiteUrl || '')

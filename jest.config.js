@@ -12,7 +12,33 @@ const customJestConfig = {
     // Handle module aliases (this will be automatically configured for you based on your tsconfig.json paths)
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  testEnvironment: 'jest-environment-jsdom',
+  testEnvironment: 'jest-environment-node',
+  // Use different environments for different test types
+  projects: [
+    {
+      displayName: 'integration',
+      testMatch: ['<rootDir>/tests/integration/**/*.test.{js,jsx,ts,tsx}'],
+      testEnvironment: 'jest-environment-node',
+      setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/src/$1',
+      }
+    },
+    {
+      displayName: 'components',
+      testMatch: [
+        '<rootDir>/tests/**/*.test.{js,jsx,ts,tsx}',
+        '!<rootDir>/tests/integration/**/*.test.{js,jsx,ts,tsx}',
+        '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
+        '<rootDir>/src/**/*.{test,spec}.{js,jsx,ts,tsx}'
+      ],
+      testEnvironment: 'jest-environment-jsdom',
+      setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/src/$1',
+      }
+    }
+  ],
   testMatch: [
     '<rootDir>/tests/**/*.test.{js,jsx,ts,tsx}',
     '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
