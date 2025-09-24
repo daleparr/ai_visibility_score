@@ -181,34 +181,54 @@ export async function findGoogleKGEntity(query: string): Promise<KnowledgeGraphR
 export async function searchWithBrave(query: string): Promise<NormalizedSearchResult[]> {
   const apiKey = process.env.BRAVE_API_KEY;
   if (!apiKey) {
-    throw new Error('BRAVE_API_KEY is not set.');
+    console.error('❌ [Brave] BRAVE_API_KEY is not set');
+    return [];
   }
 
   const endpoint = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}`;
 
   try {
+    console.log(`🔍 [Brave] Searching: "${query}"`);
+    
     const response = await fetch(endpoint, {
       headers: {
         'Accept': 'application/json',
         'X-Subscription-Token': apiKey,
       },
+      // Add explicit timeout
+      signal: AbortSignal.timeout(8000)
     });
 
     if (!response.ok) {
-      throw new Error(`Brave Search API request failed with status ${response.status}`);
+      console.error(`❌ [Brave] API error: ${response.status} ${response.statusText}`);
+      return [];
     }
 
     const data = await response.json();
-    const validatedData = BraveSearchResponseSchema.parse(data);
+    console.log(`📊 [Brave] Raw response keys:`, Object.keys(data));
+    
+    // More defensive parsing
+    if (!data.web || !data.web.results || !Array.isArray(data.web.results)) {
+      console.warn(`⚠️ [Brave] Unexpected response structure:`, data);
+      return [];
+    }
 
-    return validatedData.web.results.map((item, index) => ({
+    const results = data.web.results.map((item: any, index: number) => ({
       rank: index + 1,
-      title: item.title,
-      url: item.url,
-      snippet: item.description || '',
-    }));
+      title: item.title || 'No title',
+      url: item.url || '',
+      snippet: item.description || item.snippet || '',
+    })).filter((item: any) => item.url); // Filter out items without URLs
+
+    console.log(`✅ [Brave] Successfully parsed ${results.length} results`);
+    results.forEach((r: any, i: number) => {
+      console.log(`   ${i + 1}. ${r.title} - ${r.url}`);
+    });
+    
+    return results;
+    
   } catch (error) {
-    console.error('Error fetching from Brave Search API:', error);
+    console.error('❌ [Brave] Search failed:', error);
     return [];
   }
 }
