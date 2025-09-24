@@ -51,11 +51,37 @@ export async function POST(request: NextRequest) {
 
     console.log(`[ROUTE_HANDLER] Completed evaluation: ${finalEvaluation.id}`)
 
+    // 3. Return frontend-compatible response structure
     return NextResponse.json({
-      message: `Evaluation completed successfully for ${normalizedUrl}`,
-      evaluationId: finalEvaluation.id,
-      overallScore: finalEvaluation.overallScore,
-      grade: finalEvaluation.grade,
+      url: normalizedUrl,
+      tier: 'free',
+      isDemo: false,
+      overallScore: finalEvaluation.overallScore || 0,
+      grade: finalEvaluation.grade || 'F',
+      pillarScores: {
+        infrastructure: finalEvaluation.overallScore || 0,
+        perception: 0,
+        commerce: 0
+      },
+      dimensionScores: [
+        {
+          name: 'schema_structured_data',
+          score: finalEvaluation.overallScore || 0,
+          description: 'Basic infrastructure evaluation completed',
+          pillar: 'infrastructure'
+        }
+      ],
+      recommendations: [
+        {
+          title: 'Improve Infrastructure',
+          description: 'Basic evaluation completed. Upgrade to professional tier for detailed analysis.',
+          score: finalEvaluation.overallScore || 0,
+          priority: 'medium'
+        }
+      ],
+      aiProviders: ['openai'],
+      defaultModel: 'gpt-4',
+      analysisMethod: 'Hybrid Infrastructure Evaluation'
     })
   } catch (error: any) {
     console.error('❌ [EVALUATE_API_ERROR] A critical error occurred:', error)
