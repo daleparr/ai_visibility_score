@@ -88,25 +88,49 @@ export class ProbeHarness {
         let currentPrompt = prompt;
 
         while (attempt <= maxRetries) {
+            console.log(`🔍 [PROBE] ${client.provider} attempt ${attempt + 1} - Schema:`, JSON.stringify(schema, null, 2));
+            
             const response = await client.queryWithSchema(currentPrompt, schema);
+            
+            console.log(`🔍 [PROBE] ${client.provider} raw response:`, {
+                hasError: !!response.error,
+                error: response.error,
+                contentType: typeof response.content,
+                contentPreview: typeof response.content === 'string' ? response.content.substring(0, 200) : JSON.stringify(response.content).substring(0, 200)
+            });
 
-            if (response.error || typeof response.content !== 'object') {
+            if (response.error) {
+                console.error(`❌ [PROBE] ${client.provider} API error:`, response.error);
+                attempt++;
+                continue;
+            }
+            
+            if (typeof response.content !== 'object') {
+                console.error(`❌ [PROBE] ${client.provider} expected object, got:`, typeof response.content);
                 attempt++;
                 continue;
             }
 
             const validationResult = zodSchema.safeParse(response.content);
+            
+            console.log(`🔍 [PROBE] ${client.provider} validation result:`, {
+                success: validationResult.success,
+                errors: validationResult.success ? null : validationResult.error.flatten()
+            });
 
             if (validationResult.success) {
+                console.log(`✅ [PROBE] ${client.provider} SUCCESS - Valid response received`);
                 return { success: true, data: validationResult.data, model: client.provider };
             } else {
                 // Repair loop: send back the validation error
                 attempt++;
                 const errorDetails = JSON.stringify(validationResult.error.flatten());
+                console.log(`🔧 [PROBE] ${client.provider} attempting repair with errors:`, errorDetails);
                 currentPrompt = `${prompt}\n\nThe previous attempt failed validation. Please correct the JSON output to match the schema. Errors: ${errorDetails}`;
             }
         }
 
+        console.error(`❌ [PROBE] ${client.provider} FAILED after ${maxRetries + 1} attempts`);
         return { success: false, data: null, model: client.provider };
     }
     
