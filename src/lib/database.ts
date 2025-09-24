@@ -1,5 +1,5 @@
 import { eq, desc, and } from 'drizzle-orm'
-import { db, sql, brands, evaluations, dimensionScores, aiProviders, evaluationResults, recommendations, competitorBenchmarks, users, userProfiles, websiteSnapshots, crawlSiteSignals, evaluationFeaturesFlat, pageBlobs, probeRuns, subscriptions } from './db'
+import { db, sql, brands, evaluations, dimensionScores, aiProviders, evaluationResults, recommendations, competitorBenchmarks, users, userProfiles, websiteSnapshots, crawlSiteSignals, evaluationFeaturesFlat, pageBlobs, probeRuns, adiSubscriptions } from './db'
 import type {
   Brand,
   NewBrand,
@@ -503,7 +503,7 @@ export const updateUserProfile = async (userId: string, updates: any) => {
 export const getSubscriptionByUserId = async (userId: string) => {
   if (!userId) return null;
   try {
-    const result = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1);
+    const result = await db.select().from(adiSubscriptions).where(eq(adiSubscriptions.userId, userId)).limit(1);
     return result[0];
   } catch (error) {
     console.error('Error fetching subscription by user ID:', error);
@@ -524,8 +524,17 @@ export const createPageBlob = async (blob: NewPageBlob): Promise<void> => {
 
 export const createProbeRun = async (run: NewProbeRun): Promise<void> => {
    try {
-       // Ensure model is always a valid non-null enum value
-       const safeModel = run.model ?? 'openai';
+       // Map provider names to enum values - ensure model is always a valid enum value
+       const modelMapping: Record<string, string> = {
+           'openai': 'gpt4o',
+           'anthropic': 'claude35',
+           'google': 'gemini15',
+           'gpt4o': 'gpt4o',
+           'claude35': 'claude35',
+           'gemini15': 'gemini15'
+       };
+       
+       const safeModel = modelMapping[run.model || ''] || 'gpt4o';
        await db.insert(probeRuns).values({ ...run, model: safeModel });
    } catch (error) {
        console.error('Error creating probe run:', error, 'Probe run data:', run);

@@ -218,3 +218,5 @@ export const logDatabaseOperation = (operation: string, table: string, data?: an
 
 // Export schema for use in other files
 export * from './schema'
+// Ensure adiSubscriptions is exported as subscriptions for backward compatibility
+export { adiSubscriptions as subscriptions } from './schema'
