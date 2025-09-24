@@ -47,56 +47,71 @@ export class SelectiveFetchAgent {
         const startTime = Date.now()
         const urlsToFetch = new Map<PageType, string>();
 
-        // 1. Determine URLs for About and FAQ/policy pages with timeout
-        if (seedUrls?.about) {
-            urlsToFetch.set('about', seedUrls.about);
-            console.log(`📋 [SelectiveFetch] Using provided about URL: ${seedUrls.about}`)
-        } else {
-            console.log(`🔍 [SelectiveFetch] Searching for about page...`)
-            const aboutUrl = await this.findPageUrlWithTimeout('about', 5000); // 5 second timeout
-            if(aboutUrl) {
-                urlsToFetch.set('about', aboutUrl);
-                console.log(`✅ [SelectiveFetch] Found about page: ${aboutUrl}`)
+        try {
+            // 1. Determine URLs for About and FAQ/policy pages with timeout
+            if (seedUrls?.about) {
+                urlsToFetch.set('about', seedUrls.about);
+                console.log(`📋 [SelectiveFetch] Using provided about URL: ${seedUrls.about}`)
             } else {
-                console.log(`❌ [SelectiveFetch] No about page found`)
+                console.log(`🔍 [SelectiveFetch] Searching for about page...`)
+                try {
+                    const aboutUrl = await this.findPageUrlWithTimeout('about', 5000); // 5 second timeout
+                    if(aboutUrl) {
+                        urlsToFetch.set('about', aboutUrl);
+                        console.log(`✅ [SelectiveFetch] Found about page: ${aboutUrl}`)
+                    } else {
+                        console.log(`❌ [SelectiveFetch] No about page found`)
+                    }
+                } catch (error) {
+                    console.error(`❌ [SelectiveFetch] About page search failed:`, error);
+                }
             }
-        }
 
-        if (seedUrls?.faq) {
-            urlsToFetch.set('faq', seedUrls.faq);
-            console.log(`📋 [SelectiveFetch] Using provided FAQ URL: ${seedUrls.faq}`)
-        } else {
-            console.log(`🔍 [SelectiveFetch] Searching for FAQ page...`)
-            const faqUrl = await this.findPageUrlWithTimeout('faq', 5000); // 5 second timeout
-            if(faqUrl) {
-                urlsToFetch.set('faq', faqUrl);
-                console.log(`✅ [SelectiveFetch] Found FAQ page: ${faqUrl}`)
+            if (seedUrls?.faq) {
+                urlsToFetch.set('faq', seedUrls.faq);
+                console.log(`📋 [SelectiveFetch] Using provided FAQ URL: ${seedUrls.faq}`)
             } else {
-                console.log(`❌ [SelectiveFetch] No FAQ page found`)
+                console.log(`🔍 [SelectiveFetch] Searching for FAQ page...`)
+                try {
+                    const faqUrl = await this.findPageUrlWithTimeout('faq', 5000); // 5 second timeout
+                    if(faqUrl) {
+                        urlsToFetch.set('faq', faqUrl);
+                        console.log(`✅ [SelectiveFetch] Found FAQ page: ${faqUrl}`)
+                    } else {
+                        console.log(`❌ [SelectiveFetch] No FAQ page found`)
+                    }
+                } catch (error) {
+                    console.error(`❌ [SelectiveFetch] FAQ page search failed:`, error);
+                }
             }
+
+            // 2. Skip product page search to avoid delays
+            if (seedUrls?.pdp) {
+                urlsToFetch.set('product', seedUrls.pdp);
+                console.log(`📋 [SelectiveFetch] Using provided product URL: ${seedUrls.pdp}`)
+            }
+            // Skip automatic product discovery to avoid search delays
+
+            console.log(`📊 [SelectiveFetch] Found ${urlsToFetch.size} pages to fetch`)
+
+            // 3. Fetch all determined URLs in parallel with timeout
+            const fetchPromises = Array.from(urlsToFetch.entries()).map(([pageType, url]) =>
+                this.fetchPageWithTimeout(url, pageType, 10000) // 10 second fetch timeout
+            );
+            
+            const results = await Promise.all(fetchPromises);
+            const successfulResults = results.filter(result => result.status === 200);
+            
+            const totalTime = Date.now() - startTime
+            console.log(`✅ [SelectiveFetch] Completed in ${totalTime}ms: ${successfulResults.length}/${results.length} pages fetched successfully`)
+            
+            return successfulResults;
+            
+        } catch (error) {
+            const totalTime = Date.now() - startTime
+            console.error(`❌ [SelectiveFetch] Fatal error after ${totalTime}ms:`, error);
+            return []; // Return empty array instead of throwing
         }
-
-        // 2. Skip product page search to avoid delays
-        if (seedUrls?.pdp) {
-            urlsToFetch.set('product', seedUrls.pdp);
-            console.log(`📋 [SelectiveFetch] Using provided product URL: ${seedUrls.pdp}`)
-        }
-        // Skip automatic product discovery to avoid search delays
-
-        console.log(`📊 [SelectiveFetch] Found ${urlsToFetch.size} pages to fetch`)
-
-        // 3. Fetch all determined URLs in parallel with timeout
-        const fetchPromises = Array.from(urlsToFetch.entries()).map(([pageType, url]) =>
-            this.fetchPageWithTimeout(url, pageType, 10000) // 10 second fetch timeout
-        );
-        
-        const results = await Promise.all(fetchPromises);
-        const successfulResults = results.filter(result => result.status === 200);
-        
-        const totalTime = Date.now() - startTime
-        console.log(`✅ [SelectiveFetch] Completed in ${totalTime}ms: ${successfulResults.length}/${results.length} pages fetched successfully`)
-        
-        return successfulResults;
     }
 
     /**
@@ -119,51 +134,85 @@ export class SelectiveFetchAgent {
                 break;
         }
 
+        console.log(`🔍 [SelectiveFetch] Searching for ${pageType} with query: "${query}"`);
+        console.log(`⏱️ [SelectiveFetch] Using ${timeoutMs}ms timeout`);
+
         try {
             // Create timeout promise
             const timeoutPromise = new Promise<never>((_, reject) => {
                 setTimeout(() => reject(new Error(`Search timeout after ${timeoutMs}ms`)), timeoutMs)
             })
 
-            // Try search with timeout
-            const searchFunction = process.env.BRAVE_API_KEY ? searchWithBrave : searchWithGoogleCSE;
+            // Determine which search function to use
+            const hasApiKey = !!process.env.BRAVE_API_KEY;
+            console.log(`🔑 [SelectiveFetch] Using ${hasApiKey ? 'Brave' : 'Google CSE'} search API`);
+            
+            const searchFunction = hasApiKey ? searchWithBrave : searchWithGoogleCSE;
+            
+            console.log(`🚀 [SelectiveFetch] Starting search for ${pageType}...`);
             const searchResults = await Promise.race([
                 searchFunction(query),
                 timeoutPromise
             ])
             
+            console.log(`📊 [SelectiveFetch] Search returned ${searchResults.length} results`);
+            
             // Find the first result that is on the same domain
             const firstResultOnDomain = searchResults.find((r: { url: string; }) => {
                 try {
-                    return new URL(r.url).hostname.includes(this.domain)
-                } catch {
-                    return false
+                    const resultDomain = new URL(r.url).hostname;
+                    const matches = resultDomain.includes(this.domain.replace(/^https?:\/\//, ''));
+                    console.log(`🔗 [SelectiveFetch] Checking result: ${r.url} (${resultDomain}) - matches: ${matches}`);
+                    return matches;
+                } catch (error) {
+                    console.warn(`⚠️ [SelectiveFetch] Invalid URL in search result: ${r.url}`);
+                    return false;
                 }
             })
-            return firstResultOnDomain ? firstResultOnDomain.url : null
+            
+            if (firstResultOnDomain) {
+                console.log(`✅ [SelectiveFetch] Found ${pageType} page: ${firstResultOnDomain.url}`);
+                return firstResultOnDomain.url;
+            } else {
+                console.log(`❌ [SelectiveFetch] No matching ${pageType} page found in search results`);
+                return this.getFallbackUrl(pageType);
+            }
             
         } catch (error) {
-            console.warn(`⚠️ Search failed for ${pageType} page on ${this.domain}, using fallback:`, error)
+            console.error(`❌ [SelectiveFetch] Search failed for ${pageType} page on ${this.domain}:`, error);
+            console.log(`🔄 [SelectiveFetch] Using fallback URL for ${pageType}`);
             
             // FALLBACK: Use common URL patterns instead of search
-            return this.getFallbackUrl(pageType)
+            return this.getFallbackUrl(pageType);
         }
     }
 
     private getFallbackUrl(pageType: PageType): string | null {
-        const baseUrl = this.domain.startsWith('http') ? this.domain : `https://${this.domain}`
+        const baseUrl = this.domain.startsWith('http') ? this.domain : `https://${this.domain}`;
         
+        let fallbackUrl: string | null = null;
         switch(pageType) {
             case 'about':
-                return `${baseUrl}/about`
+                fallbackUrl = `${baseUrl}/about`;
+                break;
             case 'faq':
-                return `${baseUrl}/faq`
+                fallbackUrl = `${baseUrl}/faq`;
+                break;
             case 'product':
                 // Skip product page if we can't find it via search
-                return null
+                fallbackUrl = null;
+                break;
             default:
-                return null
+                fallbackUrl = null;
         }
+        
+        if (fallbackUrl) {
+            console.log(`🔄 [SelectiveFetch] Using fallback URL for ${pageType}: ${fallbackUrl}`);
+        } else {
+            console.log(`⏭️ [SelectiveFetch] No fallback available for ${pageType}, skipping`);
+        }
+        
+        return fallbackUrl;
     }
 
     /**
