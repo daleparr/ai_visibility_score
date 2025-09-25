@@ -8,7 +8,7 @@ import { getBrand } from '@/lib/database'
 // import { EvaluationEngine, createEvaluationEngine } from '@/lib/evaluation-engine'
 // ADD THIS - Correct system
 import { ADIService } from '@/lib/adi/adi-service'
-import { ensureGuestUser, createBrand as upsertBrand } from '@/lib/database'
+import { ensureGuestUser, createBrand as upsertBrand, createEvaluation } from '@/lib/database'
 
 function extractBrandNameFromUrl(url: string): string {
   try {
@@ -48,13 +48,21 @@ export async function POST(request: NextRequest) {
 
     console.log(`[ROUTE_HANDLER] Starting evaluation for brand: ${brand.name} (${brand.id})`)
 
-    // 2. Use PROPER ADI orchestration system
+    // CREATE EVALUATION IN DATABASE FIRST
+    const evaluation = await createEvaluation({
+        brandId: brand.id,
+        status: 'running'
+    })
+
+    console.log(`[ROUTE_HANDLER] Created evaluation: ${evaluation.id}`)
+
+    // 2. Use PROPER ADI orchestration system with the database evaluation ID
     const adiService = new ADIService()
-    
+
     // Start evaluation in background - don't await it
     adiService.evaluateBrand(brand.id, brand.websiteUrl, undefined, guestUser.id, {
       persistToDb: true,
-      evaluationId: undefined // Let it generate one
+      evaluationId: evaluation.id  // ← USE THE DATABASE EVALUATION ID
     }).then(result => {
       console.log(`[ROUTE_HANDLER] Completed evaluation: ${result.adiScore.overall}/100`)
     }).catch(error => {
@@ -63,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     // 3. Return immediate response
     return NextResponse.json({
-      evaluationId: brand.id,
+      evaluationId: evaluation.id,  // ← RETURN THE DATABASE EVALUATION ID
       brandId: brand.id,
       url: normalizedUrl,
       status: 'running',
