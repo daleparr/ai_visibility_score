@@ -25,7 +25,8 @@
     "test:coverage": "jest --coverage",
     "test:hybrid": "node scripts/test-hybrid-framework.js",
     "test:hybrid:verbose": "node scripts/test-hybrid-framework.js --verbose",
-    "test:all": "npm run type-check && npm run test:hybrid && npm run test"
+    "test:all": "npm run type-check && npm run test:hybrid && npm run test",
+    "postinstall": "npx puppeteer browsers install chrome"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.62.0",
