@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getEvaluation, getDimensionScoresByEvaluationId } from '@/lib/database'
+import { getEvaluation, getDimensionScoresByEvaluationId, getBrand } from '@/lib/database'
 
 export async function GET(
   request: NextRequest,
@@ -31,12 +31,13 @@ export async function GET(
       })
     }
 
-    // If completed, get dimension scores and transform to frontend format
+    // If completed, get brand and dimension scores
+    const brand = await getBrand(evaluation.brandId)
     const dimensionScores = await getDimensionScoresByEvaluationId(evaluationId)
     
     // Transform to frontend-expected format
     const evaluationData = {
-      url: evaluation.brand?.websiteUrl || 'Unknown',
+      url: brand?.websiteUrl || 'Unknown',
       tier: 'free', // Default tier
       isDemo: false,
       overallScore: evaluation.overallScore || 0,
