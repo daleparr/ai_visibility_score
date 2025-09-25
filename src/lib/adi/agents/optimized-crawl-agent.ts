@@ -80,20 +80,17 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
       return this.createOutput(
         'completed',  // ← Changed from 'failed' to 'completed'
         [{
-          id: '',
-          agent_id: '',
-          result_type: 'homepage_crawl_fallback',
-          raw_value: 25,
-          normalized_score: 25,
-          confidence_level: 0.3,
+          resultType: 'homepage_crawl_fallback',
+          rawValue: 25,
+          normalizedScore: 25,
+          confidenceLevel: 0.3,
           evidence: {
             url: input.context.websiteUrl,
             error: error instanceof Error ? error.message : 'Unknown crawling error',
             method: 'fallback_minimal',
             crawlTimestamp: new Date().toISOString(),
             fallback: true
-          },
-          created_at: new Date().toISOString()
+          }
         }], 
         executionTime, 
         undefined, // No error message since status is 'completed'
