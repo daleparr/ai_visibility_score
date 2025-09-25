@@ -8,12 +8,12 @@ export default function BlogPage() {
   const posts = [
     {
       id: 1,
-      title: "🚫 Why SEO Crawlers Won't Save You in the Age of AI Search",
-      excerpt: "Traditional SEO tools can't measure AI visibility. 70% of customers now start with AI assistants, not Google. Here's why you need AIDI to benchmark your brand's AI discoverability.",
+      title: "🚫 Why SEO Crawlers Won’t Save You in the Age of AI Search",
+      excerpt: "For the last 20 years, SEO tools have ruled digital visibility. They crawled your site, counted your tags, and told you whether Google’s spiders could index your pages. That era is ending.",
       author: "ADI Team",
       date: "2025-09-24",
       category: "Industry Analysis",
-      readTime: "7 min read"
+      readTime: "4 min read"
     },
     {
       id: 2,
