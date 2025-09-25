@@ -35,6 +35,16 @@ export async function GET(
     const brand = await getBrand(evaluation.brandId)
     const dimensionScores = await getDimensionScoresByEvaluationId(evaluationId)
     
+    // Calculate pillar scores from dimension scores
+    const infrastructureAgents = ['crawl_agent', 'schema_agent', 'semantic_agent']
+    const perceptionAgents = ['citation_agent', 'sentiment_agent', 'brand_heritage_agent', 'llm_test_agent']
+    const commerceAgents = ['commerce_agent', 'geo_visibility_agent', 'conversational_copy_agent', 'knowledge_graph_agent']
+    
+    const calculatePillarScore = (agentNames: string[]) => {
+      const scores = dimensionScores.filter(ds => agentNames.includes(ds.dimensionName))
+      return scores.length > 0 ? Math.round(scores.reduce((sum, ds) => sum + (ds.score || 0), 0) / scores.length) : 0
+    }
+    
     // Transform to frontend-expected format
     const evaluationData = {
       url: brand?.websiteUrl || 'Unknown',
@@ -42,29 +52,30 @@ export async function GET(
       isDemo: false,
       overallScore: evaluation.overallScore || 0,
       pillarScores: {
-        infrastructure: Math.round((dimensionScores.filter(ds => 
-          ['crawl_agent', 'schema_agent', 'semantic_agent'].includes(ds.dimensionName)
-        ).reduce((sum, ds) => sum + (ds.score || 0), 0) / 3) || 0),
-        perception: Math.round((dimensionScores.filter(ds => 
-          ['citation_agent', 'sentiment_agent', 'brand_heritage_agent'].includes(ds.dimensionName)
-        ).reduce((sum, ds) => sum + (ds.score || 0), 0) / 3) || 0),
-        commerce: Math.round((dimensionScores.filter(ds => 
-          ['commerce_agent', 'geo_visibility_agent'].includes(ds.dimensionName)
-        ).reduce((sum, ds) => sum + (ds.score || 0), 0) / 2) || 0)
+        infrastructure: calculatePillarScore(infrastructureAgents),
+        perception: calculatePillarScore(perceptionAgents),
+        commerce: calculatePillarScore(commerceAgents)
       },
       dimensionScores: dimensionScores.map(ds => ({
-        name: ds.dimensionName.replace('_agent', '').replace('_', ' '),
+        name: ds.dimensionName.replace('_agent', '').replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
         score: ds.score || 0,
         description: `${ds.dimensionName.replace('_agent', '').replace('_', ' ')} analysis`,
-        pillar: ds.dimensionName.includes('crawl') || ds.dimensionName.includes('schema') || ds.dimensionName.includes('semantic') 
+        pillar: infrastructureAgents.includes(ds.dimensionName) 
           ? 'infrastructure' as const
-          : ds.dimensionName.includes('commerce') || ds.dimensionName.includes('geo')
+          : commerceAgents.includes(ds.dimensionName)
           ? 'commerce' as const
           : 'perception' as const
       })),
       aiProviders: ['GPT-4'],
       defaultModel: 'GPT-4',
-      recommendations: [],
+      recommendations: [
+        {
+          priority: 'high',
+          title: 'Improve Website Crawlability',
+          score: evaluation.overallScore || 0,
+          description: 'Enhance your website structure for better AI discoverability'
+        }
+      ],
       analysisMethod: 'ADI Framework'
     }
 

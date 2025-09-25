@@ -264,6 +264,21 @@ ${evaluationData.certification ? `
         setIsLoading(true)
         setError(null)
 
+        // Get brand categorization first
+        const brandName = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('.')[0]
+        let detectedCategory = null
+        
+        try {
+          const categorizationResponse = await fetch(`/api/brand-categorization?action=categorize&brand=${encodeURIComponent(brandName)}&url=${encodeURIComponent(url)}`)
+          if (categorizationResponse.ok) {
+            const categoryData = await categorizationResponse.json()
+            detectedCategory = categoryData.category
+            setBrandCategory(categoryData.category)
+          }
+        } catch (error) {
+          console.log('Brand categorization failed, using fallback')
+        }
+
         // Start evaluation
         const response = await fetch('/api/evaluate', {
           method: 'POST',
@@ -276,6 +291,7 @@ ${evaluationData.certification ? `
         }
 
         const { evaluationId } = await response.json()
+        console.log('Started evaluation:', evaluationId)
 
         // Poll for completion
         const pollForCompletion = async () => {
@@ -287,11 +303,16 @@ ${evaluationData.certification ? `
               throw new Error('Evaluation timed out')
             }
 
+            console.log(`Polling attempt ${attempts + 1} for evaluation ${evaluationId}`)
+            
             const statusResponse = await fetch(`/api/evaluation/${evaluationId}/status`)
             const statusData = await statusResponse.json()
 
+            console.log('Status response:', statusData)
+
             if (statusData.status === 'completed') {
               // Evaluation completed - set the results
+              console.log('Evaluation completed, setting results:', statusData.results)
               setEvaluationData(statusData.results)
               setIsLoading(false)
               return
@@ -310,6 +331,19 @@ ${evaluationData.certification ? `
         }
 
         await pollForCompletion()
+
+        // Fetch leaderboard data for professional tier using detected category
+        if (tier === 'professional') {
+          try {
+            const leaderboardResponse = await fetch(`/api/leaderboards?category=${detectedCategory || 'general'}&limit=10`)
+            if (leaderboardResponse.ok) {
+              const leaderboardData = await leaderboardResponse.json()
+              setLeaderboardData(leaderboardData)
+            }
+          } catch (error) {
+            console.log('Leaderboard fetch failed:', error)
+          }
+        }
 
       } catch (error) {
         console.error('Evaluation error:', error)
