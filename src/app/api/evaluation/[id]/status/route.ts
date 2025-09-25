@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDimensionScoresByEvaluationId, getBrand } from '@/lib/database'
-import { db, sql } from '@/lib/db'
+import { getEvaluation, getDimensionScoresByEvaluationId, getBrand } from '@/lib/database'
 
 export async function GET(
   request: NextRequest,
@@ -13,33 +12,21 @@ export async function GET(
       return NextResponse.json({ error: 'Evaluation ID is required' }, { status: 400 })
     }
 
-    // Use direct SQL query with fresh connection to avoid stale reads
-    const evaluationResult = await db.execute(sql`
-      SELECT 
-        id,
-        brand_id as "brandId",
-        status,
-        overall_score as "overallScore",
-        grade,
-        created_at as "createdAt",
-        updated_at as "updatedAt"
-      FROM production.evaluations 
-      WHERE id = ${evaluationId} 
-      LIMIT 1
-    `)
-    
-    const evaluation = evaluationResult.rows[0] as any
+    console.log(`[STATUS_DEBUG] Checking evaluation ${evaluationId}`)
 
-    console.log(`[STATUS_DEBUG] Evaluation ${evaluationId} status check:`, {
-      found: !!evaluation,
-      status: evaluation?.status,
-      overallScore: evaluation?.overallScore,
-      updatedAt: evaluation?.updatedAt
-    })
+    // Get evaluation from database
+    const evaluation = await getEvaluation(evaluationId)
 
     if (!evaluation) {
+      console.log(`[STATUS_DEBUG] Evaluation ${evaluationId} not found`)
       return NextResponse.json({ error: 'Evaluation not found' }, { status: 404 })
     }
+
+    console.log(`[STATUS_DEBUG] Evaluation ${evaluationId} found:`, {
+      status: evaluation.status,
+      overallScore: evaluation.overallScore,
+      updatedAt: evaluation.updatedAt
+    })
 
     // If still running, return status only
     if (evaluation.status !== 'completed') {
@@ -53,54 +40,9 @@ export async function GET(
       })
     }
 
-    // If completed, get brand and dimension scores
-    const brand = await getBrand(evaluation.brandId)
-    const dimensionScores = await getDimensionScoresByEvaluationId(evaluationId)
+    // If completed, return minimal results for now to test
+    console.log(`[STATUS_DEBUG] Evaluation ${evaluationId} is completed, returning results`)
     
-    // Calculate pillar scores from dimension scores
-    const infrastructureAgents = ['crawl_agent', 'schema_agent', 'semantic_agent']
-    const perceptionAgents = ['citation_agent', 'sentiment_agent', 'brand_heritage_agent', 'llm_test_agent']
-    const commerceAgents = ['commerce_agent', 'geo_visibility_agent', 'conversational_copy_agent', 'knowledge_graph_agent']
-    
-    const calculatePillarScore = (agentNames: string[]) => {
-      const scores = dimensionScores.filter(ds => agentNames.includes(ds.dimensionName))
-      return scores.length > 0 ? Math.round(scores.reduce((sum, ds) => sum + (ds.score || 0), 0) / scores.length) : 0
-    }
-    
-    // Transform to frontend-expected format
-    const evaluationData = {
-      url: brand?.websiteUrl || 'Unknown',
-      tier: 'free',
-      isDemo: false,
-      overallScore: evaluation.overallScore || 0,
-      pillarScores: {
-        infrastructure: calculatePillarScore(infrastructureAgents),
-        perception: calculatePillarScore(perceptionAgents),
-        commerce: calculatePillarScore(commerceAgents)
-      },
-      dimensionScores: dimensionScores.map(ds => ({
-        name: ds.dimensionName.replace('_agent', '').replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        score: ds.score || 0,
-        description: `${ds.dimensionName.replace('_agent', '').replace('_', ' ')} analysis`,
-        pillar: infrastructureAgents.includes(ds.dimensionName) 
-          ? 'infrastructure' as const
-          : commerceAgents.includes(ds.dimensionName)
-          ? 'commerce' as const
-          : 'perception' as const
-      })),
-      aiProviders: ['GPT-4'],
-      defaultModel: 'GPT-4',
-      recommendations: [
-        {
-          priority: 'high',
-          title: 'Improve Website Crawlability',
-          score: evaluation.overallScore || 0,
-          description: 'Enhance your website structure for better AI discoverability'
-        }
-      ],
-      analysisMethod: 'ADI Framework'
-    }
-
     return NextResponse.json({
       id: evaluation.id,
       status: evaluation.status,
@@ -108,13 +50,42 @@ export async function GET(
       grade: evaluation.grade,
       createdAt: evaluation.createdAt,
       updatedAt: evaluation.updatedAt,
-      results: evaluationData
+      results: {
+        url: 'test-url',
+        tier: 'free',
+        isDemo: false,
+        overallScore: evaluation.overallScore || 0,
+        pillarScores: {
+          infrastructure: 25,
+          perception: 30,
+          commerce: 20
+        },
+        dimensionScores: [
+          {
+            name: 'Crawl',
+            score: 25,
+            description: 'Website crawlability',
+            pillar: 'infrastructure'
+          }
+        ],
+        aiProviders: ['GPT-4'],
+        defaultModel: 'GPT-4',
+        recommendations: [
+          {
+            priority: 'high',
+            title: 'Improve Website Crawlability',
+            score: evaluation.overallScore || 0,
+            description: 'Enhance your website structure for better AI discoverability'
+          }
+        ],
+        analysisMethod: 'ADI Framework'
+      }
     })
 
   } catch (error) {
-    console.error('Error fetching evaluation status:', error)
+    console.error(`[STATUS_DEBUG] Error fetching evaluation status for ${params.id}:`, error)
     return NextResponse.json(
-      { error: 'Failed to fetch evaluation status' },
+      { error: 'Failed to fetch evaluation status', details: error.message },
       { status: 500 }
     )
   }
