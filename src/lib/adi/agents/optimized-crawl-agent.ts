@@ -14,7 +14,7 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
       version: 'v2.0-optimized',
       description: 'Fast website content extraction with smart caching and parallel processing',
       dependencies: [],
-      timeout: 6000, // Increased from 4s to 6s for better crawl reliability
+      timeout: 85000, // 85 seconds - Allow for serverless crawl timeout + buffer
       retryLimit: 1, // Reduced retries for speed
       parallelizable: false
     }
