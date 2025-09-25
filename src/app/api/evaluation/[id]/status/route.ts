@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getEvaluationById } from '@/lib/database'
+import { getEvaluation } from '@/lib/database'
 
 export async function GET(
   request: NextRequest,
@@ -13,7 +13,7 @@ export async function GET(
     }
 
     // Get evaluation from database
-    const evaluation = await getEvaluationById(evaluationId)
+    const evaluation = await getEvaluation(evaluationId)
 
     if (!evaluation) {
       return NextResponse.json({ error: 'Evaluation not found' }, { status: 404 })
