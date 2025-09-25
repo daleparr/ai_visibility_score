@@ -15,6 +15,13 @@ export async function GET(
     // Get evaluation from database
     const evaluation = await getEvaluation(evaluationId)
 
+    console.log(`[STATUS_DEBUG] Evaluation ${evaluationId} status check:`, {
+      found: !!evaluation,
+      status: evaluation?.status,
+      overallScore: evaluation?.overallScore,
+      updatedAt: evaluation?.updatedAt
+    })
+
     if (!evaluation) {
       return NextResponse.json({ error: 'Evaluation not found' }, { status: 404 })
     }
