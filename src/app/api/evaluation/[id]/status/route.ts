@@ -38,19 +38,29 @@ export async function GET(
     // Transform to frontend-expected format
     const evaluationData = {
       url: brand?.websiteUrl || 'Unknown',
-      tier: 'free', // Default tier
+      tier: 'free',
       isDemo: false,
       overallScore: evaluation.overallScore || 0,
       pillarScores: {
-        infrastructure: 0, // Calculate from dimension scores
-        perception: 0,
-        commerce: 0
+        infrastructure: Math.round((dimensionScores.filter(ds => 
+          ['crawl_agent', 'schema_agent', 'semantic_agent'].includes(ds.dimensionName)
+        ).reduce((sum, ds) => sum + (ds.score || 0), 0) / 3) || 0),
+        perception: Math.round((dimensionScores.filter(ds => 
+          ['citation_agent', 'sentiment_agent', 'brand_heritage_agent'].includes(ds.dimensionName)
+        ).reduce((sum, ds) => sum + (ds.score || 0), 0) / 3) || 0),
+        commerce: Math.round((dimensionScores.filter(ds => 
+          ['commerce_agent', 'geo_visibility_agent'].includes(ds.dimensionName)
+        ).reduce((sum, ds) => sum + (ds.score || 0), 0) / 2) || 0)
       },
       dimensionScores: dimensionScores.map(ds => ({
-        name: ds.dimensionName, // Fixed: use dimensionName
-        score: ds.score || 0,   // Fixed: use score (not normalizedScore)
-        description: `${ds.dimensionName} analysis`, // Fixed: use dimensionName
-        pillar: 'infrastructure' as const // Default pillar
+        name: ds.dimensionName.replace('_agent', '').replace('_', ' '),
+        score: ds.score || 0,
+        description: `${ds.dimensionName.replace('_agent', '').replace('_', ' ')} analysis`,
+        pillar: ds.dimensionName.includes('crawl') || ds.dimensionName.includes('schema') || ds.dimensionName.includes('semantic') 
+          ? 'infrastructure' as const
+          : ds.dimensionName.includes('commerce') || ds.dimensionName.includes('geo')
+          ? 'commerce' as const
+          : 'perception' as const
       })),
       aiProviders: ['GPT-4'],
       defaultModel: 'GPT-4',
@@ -65,7 +75,7 @@ export async function GET(
       grade: evaluation.grade,
       createdAt: evaluation.createdAt,
       updatedAt: evaluation.updatedAt,
-      results: evaluationData // Properly formatted for frontend
+      results: evaluationData
     })
 
   } catch (error) {

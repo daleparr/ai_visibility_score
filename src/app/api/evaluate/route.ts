@@ -70,13 +70,14 @@ export async function POST(request: NextRequest) {
     })
 
     // 3. Return immediate response
+    // The response should include evaluationId for polling
     return NextResponse.json({
-      evaluationId: evaluation.id,  // ← RETURN THE DATABASE EVALUATION ID
+      evaluationId: evaluation.id,  // This is crucial for polling
       brandId: brand.id,
       url: normalizedUrl,
       status: 'running',
       message: 'Evaluation started successfully. Please check status for completion.',
-      estimatedTime: '30-60 seconds' // ADI system is much faster
+      estimatedTime: '30-60 seconds'
     })
   } catch (error: any) {
     console.error('❌ [EVALUATE_API_ERROR] A critical error occurred:', error)
