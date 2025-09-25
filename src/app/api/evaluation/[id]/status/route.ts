@@ -47,9 +47,9 @@ export async function GET(
         commerce: 0
       },
       dimensionScores: dimensionScores.map(ds => ({
-        name: ds.dimension,
-        score: ds.normalizedScore || 0,
-        description: `${ds.dimension} analysis`,
+        name: ds.dimensionName, // Fixed: use dimensionName
+        score: ds.score || 0,   // Fixed: use score (not normalizedScore)
+        description: `${ds.dimensionName} analysis`, // Fixed: use dimensionName
         pillar: 'infrastructure' as const // Default pillar
       })),
       aiProviders: ['GPT-4'],
