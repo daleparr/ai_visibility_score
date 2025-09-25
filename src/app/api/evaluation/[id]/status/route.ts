@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getEvaluation, getDimensionScoresByEvaluationId, getBrand } from '@/lib/database'
+import { getDimensionScoresByEvaluationId, getBrand } from '@/lib/database'
 import { db, sql } from '@/lib/db'
 
 export async function GET(
@@ -13,16 +13,22 @@ export async function GET(
       return NextResponse.json({ error: 'Evaluation ID is required' }, { status: 400 })
     }
 
-    // Force fresh database connection to avoid stale reads
-    try {
-      // Force connection refresh by executing a simple query
-      await db.execute(sql`SELECT 1`)
-    } catch (e) {
-      // Ignore connection refresh errors
-    }
-
-    // Get evaluation from database
-    const evaluation = await getEvaluation(evaluationId)
+    // Use direct SQL query with fresh connection to avoid stale reads
+    const evaluationResult = await db.execute(sql`
+      SELECT 
+        id,
+        brand_id as "brandId",
+        status,
+        overall_score as "overallScore",
+        grade,
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM production.evaluations 
+      WHERE id = ${evaluationId} 
+      LIMIT 1
+    `)
+    
+    const evaluation = evaluationResult.rows[0] as any
 
     console.log(`[STATUS_DEBUG] Evaluation ${evaluationId} status check:`, {
       found: !!evaluation,
