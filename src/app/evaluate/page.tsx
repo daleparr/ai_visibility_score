@@ -264,77 +264,56 @@ ${evaluationData.certification ? `
         setIsLoading(true)
         setError(null)
 
-        // Get brand categorization first
-        const brandName = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('.')[0]
-        let detectedCategory = null
-        
-        try {
-          const categorizationResponse = await fetch(`/api/brand-categorization?action=categorize&brand=${encodeURIComponent(brandName)}&url=${encodeURIComponent(url)}`)
-          if (categorizationResponse.ok) {
-            const categoryData = await categorizationResponse.json()
-            detectedCategory = categoryData.category
-            setBrandCategory(categoryData.category)
-          }
-        } catch (error) {
-          console.log('Brand categorization failed, using fallback')
-        }
-
+        // Start evaluation
         const response = await fetch('/api/evaluate', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url, tier }),
         })
 
         if (!response.ok) {
-          throw new Error('Failed to run evaluation')
+          throw new Error('Failed to start evaluation')
         }
 
-        const data = await response.json()
-        setEvaluationData(data)
-        
-        // Fetch leaderboard data for professional tier using detected category
-        if (tier === 'professional') {
-          try {
-            // Use detected brand category or fallback based on URL analysis
-            let categoryForLeaderboard = detectedCategory?.niche || 'Multi-Brand Retail'
-            
-            // Fallback category detection based on URL if categorization failed
-            if (!detectedCategory) {
-              const urlLower = url.toLowerCase()
-              if (urlLower.includes('marks') || urlLower.includes('spencer')) {
-                categoryForLeaderboard = 'Mass-Market Department Stores'
-              } else if (urlLower.includes('selfridges') || urlLower.includes('harrods') || urlLower.includes('nordstrom')) {
-                categoryForLeaderboard = 'Luxury Department Stores'
-              } else if (urlLower.includes('amazon') || urlLower.includes('ebay') || urlLower.includes('walmart')) {
-                categoryForLeaderboard = 'Online Mega-Retailers'
-              } else if (urlLower.includes('fashion') || urlLower.includes('clothing')) {
-                categoryForLeaderboard = 'Contemporary Fashion'
-              } else if (urlLower.includes('luxury') || urlLower.includes('designer')) {
-                categoryForLeaderboard = 'Luxury Fashion Houses'
-              } else if (urlLower.includes('beauty') || urlLower.includes('cosmetic')) {
-                categoryForLeaderboard = 'Beauty & Personal Care'
-              } else if (urlLower.includes('tech') || urlLower.includes('software')) {
-                categoryForLeaderboard = 'Technology & Software'
-              } else {
-                // Default to Multi-Brand Retail for unknown brands
-                categoryForLeaderboard = 'Mass-Market Department Stores'
-              }
+        const { evaluationId } = await response.json()
+
+        // Poll for completion
+        const pollForCompletion = async () => {
+          const maxAttempts = 60 // 2 minutes max
+          let attempts = 0
+
+          const poll = async (): Promise<void> => {
+            if (attempts >= maxAttempts) {
+              throw new Error('Evaluation timed out')
             }
-            
-            const leaderboardResponse = await fetch(`/api/leaderboards?type=niche&category=${encodeURIComponent(categoryForLeaderboard)}`)
-            if (leaderboardResponse.ok) {
-              const leaderboardData = await leaderboardResponse.json()
-              setLeaderboardData(leaderboardData)
+
+            const statusResponse = await fetch(`/api/evaluation/${evaluationId}/status`)
+            const statusData = await statusResponse.json()
+
+            if (statusData.status === 'completed') {
+              // Evaluation completed - set the results
+              setEvaluationData(statusData.results)
+              setIsLoading(false)
+              return
             }
-          } catch (leaderboardError) {
-            console.error('Failed to fetch leaderboard data:', leaderboardError)
+
+            if (statusData.status === 'failed') {
+              throw new Error('Evaluation failed')
+            }
+
+            // Still running - poll again in 2 seconds
+            attempts++
+            setTimeout(poll, 2000)
           }
+
+          await poll()
         }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred')
-      } finally {
+
+        await pollForCompletion()
+
+      } catch (error) {
+        console.error('Evaluation error:', error)
+        setError(error instanceof Error ? error.message : 'Evaluation failed')
         setIsLoading(false)
       }
     }
