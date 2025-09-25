@@ -85,7 +85,10 @@ export async function GET(
   } catch (error) {
     console.error(`[STATUS_DEBUG] Error fetching evaluation status for ${params.id}:`, error)
     return NextResponse.json(
-      { error: 'Failed to fetch evaluation status', details: error.message },
+      { 
+        error: 'Failed to fetch evaluation status', 
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }
