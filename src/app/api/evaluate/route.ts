@@ -4,7 +4,11 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { normalizeBrandUrl } from '@/lib/brand-normalize'
 import { getBrand } from '@/lib/database'
+// WRONG - Uses legacy system with no timeouts
 import { EvaluationEngine, createEvaluationEngine } from '@/lib/evaluation-engine'
+
+// CORRECT - Use proper orchestrated system with timeouts
+import { ADIService } from '@/lib/adi/adi-service'
 import { ensureGuestUser, createBrand as upsertBrand } from '@/lib/database'
 
 function extractBrandNameFromUrl(url: string): string {
