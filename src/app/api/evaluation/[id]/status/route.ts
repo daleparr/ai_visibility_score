@@ -12,6 +12,9 @@ export async function GET(
       return NextResponse.json({ error: 'Evaluation ID is required' }, { status: 400 })
     }
 
+    // Force fresh read to avoid database connection staleness
+    await new Promise(resolve => setTimeout(resolve, 50))
+
     // Get evaluation from database
     const evaluation = await getEvaluation(evaluationId)
 
