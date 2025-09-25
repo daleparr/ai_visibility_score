@@ -270,18 +270,18 @@ export class PerformanceOptimizedADIOrchestrator {
   ): Promise<Record<string, ADIAgentOutput>> {
     
     const agentTimeouts: Record<string, number> = {
-      'crawl_agent': 30000,          // 30 seconds for crawling
-      'schema_agent': 10000,         // 10 seconds for schema analysis
+      'crawl_agent': 60000,          // 60 seconds (was 30s) - Allow for serverless crawl + fallback
+      'schema_agent': 15000,         // 15 seconds for schema analysis  
       'semantic_agent': 15000,       // 15 seconds for semantic analysis
       'knowledge_graph_agent': 15000, // 15 seconds for KG analysis
       'conversational_copy_agent': 10000, // 10 seconds
-      'llm_test_agent': 20000,       // 20 seconds for AI API calls
+      'llm_test_agent': 45000,       // 45 seconds (was 20s) - Allow for AI API calls + retries
       'geo_visibility_agent': 15000, // 15 seconds for geo analysis
-      'citation_agent': 20000,       // 20 seconds for external APIs
+      'citation_agent': 45000,       // 45 seconds (was 20s) - Allow for external API calls + retries
       'sentiment_agent': 10000,      // 10 seconds
       'commerce_agent': 15000,       // 15 seconds
-      'brand_heritage_agent': 10000, // 10 seconds
-      'score_aggregator': 5000       // 5 seconds for aggregation
+      'brand_heritage_agent': 15000, // 15 seconds (was 10s)
+      'score_aggregator': 10000      // 10 seconds (was 5s) for aggregation
     }
 
     const promises = agentNames.map(agentName => {
