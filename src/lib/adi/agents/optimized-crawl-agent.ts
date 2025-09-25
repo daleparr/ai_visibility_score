@@ -92,6 +92,12 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
     try {
       const normalizedUrl = this.normalizeUrl(url)
       
+      // Skip Puppeteer in serverless environments - use fetch fallback
+      if (process.env.NETLIFY || process.env.VERCEL) {
+        console.log(`🌐 Using serverless-compatible crawl for ${normalizedUrl}`)
+        return await this.serverlessCrawl(normalizedUrl)
+      }
+      
       // OPTIMIZATION 4: Balanced timeout for reliable content extraction
       const { content: html, statusCode } = await this.fetchWithPuppeteer(normalizedUrl, 15000); // 15s timeout for full rendering
 
@@ -128,7 +134,9 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
 
     } catch (error) {
       console.warn(`Fast crawl failed for ${url}:`, error)
-      return null
+      // Fallback to serverless crawl if Puppeteer fails
+      console.log(`🔄 Falling back to serverless crawl for ${url}`)
+      return await this.serverlessCrawl(this.normalizeUrl(url))
     }
   }
 
@@ -330,6 +338,79 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
       if (browser) {
         await browser.close();
       }
+    }
+  }
+
+  /**
+   * Serverless-compatible crawl using fetch
+   */
+  private async serverlessCrawl(url: string): Promise<any> {
+    try {
+      console.log(`🌐 [ServerlessCrawl] Fetching ${url}`)
+      
+      const response = await Promise.race([
+        fetch(url, {
+          method: 'GET',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cache-Control': 'no-cache',
+          },
+          redirect: 'follow',
+        }),
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Fetch timeout')), 10000)
+        )
+      ]);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const html = await response.text();
+      console.log(`📄 [ServerlessCrawl] Content length: ${html.length} characters`)
+
+      const essentialData = this.extractEssentialData(html);
+      console.log(`📊 [ServerlessCrawl] Essential data extracted:`, {
+        qualityScore: essentialData.qualityScore,
+        structuredDataCount: essentialData.structuredData.length,
+        hasTitle: !!essentialData.metaData.title,
+        hasDescription: !!essentialData.metaData.description
+      });
+
+      return this.createResult(
+        'homepage_crawl_serverless',
+        essentialData.qualityScore,
+        this.normalizeScore(essentialData.qualityScore, 0, 100, 0, 100),
+        0.85, // Slightly lower confidence than Puppeteer
+        {
+          url: url,
+          contentSize: html.length,
+          structuredData: essentialData.structuredData,
+          metaData: essentialData.metaData,
+          contentMetrics: essentialData.contentMetrics,
+          crawlTimestamp: new Date().toISOString(),
+          content: html.substring(0, 5000),
+          method: 'serverless_fetch'
+        }
+      );
+    } catch (error) {
+      console.error(`❌ [ServerlessCrawl] Failed for ${url}:`, error);
+      
+      // Return a minimal result so evaluation can continue
+      return this.createResult(
+        'homepage_crawl_failed',
+        30, // Low but not zero score
+        30,
+        0.3,
+        {
+          url: url,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          method: 'failed_fallback',
+          crawlTimestamp: new Date().toISOString()
+        }
+      );
     }
   }
 
