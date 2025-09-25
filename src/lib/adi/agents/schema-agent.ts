@@ -12,8 +12,8 @@ export class SchemaAgent extends BaseADIAgent {
       version: 'v1.0',
       description: 'Evaluates structured data coverage, completeness, and GS1 alignment',
       dependencies: ['crawl_agent'],
-      timeout: 30000, // 30 seconds
-      retryLimit: 3,
+      timeout: 12000, // 12 seconds (less than orchestrator's 15s)
+      retryLimit: 1, // Reduced for speed
       parallelizable: true
     }
     super(config)
