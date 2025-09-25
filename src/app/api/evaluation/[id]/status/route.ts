@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getEvaluation } from '@/lib/database'
+import { getEvaluation, getDimensionScoresByEvaluationId } from '@/lib/database'
 
 export async function GET(
   request: NextRequest,
@@ -19,7 +19,44 @@ export async function GET(
       return NextResponse.json({ error: 'Evaluation not found' }, { status: 404 })
     }
 
-    // Return evaluation status and results
+    // If still running, return status only
+    if (evaluation.status !== 'completed') {
+      return NextResponse.json({
+        id: evaluation.id,
+        status: evaluation.status,
+        overallScore: evaluation.overallScore,
+        grade: evaluation.grade,
+        createdAt: evaluation.createdAt,
+        updatedAt: evaluation.updatedAt
+      })
+    }
+
+    // If completed, get dimension scores and transform to frontend format
+    const dimensionScores = await getDimensionScoresByEvaluationId(evaluationId)
+    
+    // Transform to frontend-expected format
+    const evaluationData = {
+      url: evaluation.brand?.websiteUrl || 'Unknown',
+      tier: 'free', // Default tier
+      isDemo: false,
+      overallScore: evaluation.overallScore || 0,
+      pillarScores: {
+        infrastructure: 0, // Calculate from dimension scores
+        perception: 0,
+        commerce: 0
+      },
+      dimensionScores: dimensionScores.map(ds => ({
+        name: ds.dimension,
+        score: ds.normalizedScore || 0,
+        description: `${ds.dimension} analysis`,
+        pillar: 'infrastructure' as const // Default pillar
+      })),
+      aiProviders: ['GPT-4'],
+      defaultModel: 'GPT-4',
+      recommendations: [],
+      analysisMethod: 'ADI Framework'
+    }
+
     return NextResponse.json({
       id: evaluation.id,
       status: evaluation.status,
@@ -27,10 +64,7 @@ export async function GET(
       grade: evaluation.grade,
       createdAt: evaluation.createdAt,
       updatedAt: evaluation.updatedAt,
-      // Include full results if completed
-      ...(evaluation.status === 'completed' && {
-        results: evaluation // Include full evaluation data
-      })
+      results: evaluationData // Properly formatted for frontend
     })
 
   } catch (error) {
