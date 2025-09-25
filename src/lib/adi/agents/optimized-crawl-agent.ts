@@ -396,20 +396,29 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
         hasDescription: !!essentialData.metaData.description
       });
 
-      return this.createResult(
-        'homepage_crawl_serverless',
-        essentialData.qualityScore,
-        this.normalizeScore(essentialData.qualityScore, 0, 100, 0, 100),
-        0.85, // Slightly lower confidence than Puppeteer
+      return this.createOutput(
+        'completed',  // ← CRITICAL: Set status to 'completed'
+        [{
+          resultType: 'homepage_crawl_serverless',
+          rawValue: essentialData.qualityScore,
+          normalizedScore: this.normalizeScore(essentialData.qualityScore, 0, 100, 0, 100),
+          confidenceLevel: 0.85,
+          evidence: {
+            url: url,
+            contentSize: html.length,
+            structuredData: essentialData.structuredData,
+            metaData: essentialData.metaData,
+            contentMetrics: essentialData.contentMetrics,
+            crawlTimestamp: new Date().toISOString(),
+            content: html.substring(0, 5000),
+            method: 'serverless_fetch'
+          }
+        }],
+        0, // execution time
+        undefined, // no error message
         {
-          url: url,
-          contentSize: html.length,
-          structuredData: essentialData.structuredData,
-          metaData: essentialData.metaData,
-          contentMetrics: essentialData.contentMetrics,
-          crawlTimestamp: new Date().toISOString(),
-          content: html.substring(0, 5000),
-          method: 'serverless_fetch'
+          serverless: true,
+          successful: true
         }
       );
     } catch (error) {
