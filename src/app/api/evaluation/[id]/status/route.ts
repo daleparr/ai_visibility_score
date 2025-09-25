@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getEvaluation, getDimensionScoresByEvaluationId, getBrand } from '@/lib/database'
-import { sql } from 'drizzle-orm'
+import { db, sql } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
@@ -14,16 +14,12 @@ export async function GET(
     }
 
     // Force fresh database connection to avoid stale reads
-    const { db } = await import('@/lib/database')
     try {
       // Force connection refresh by executing a simple query
       await db.execute(sql`SELECT 1`)
     } catch (e) {
       // Ignore connection refresh errors
     }
-
-    // Force fresh read to avoid database connection staleness
-    await new Promise(resolve => setTimeout(resolve, 200))
 
     // Get evaluation from database
     const evaluation = await getEvaluation(evaluationId)
