@@ -118,6 +118,27 @@ export class ADIService {
       console.log('🛑 [INFO] Skipping internal agent-results persistence (use options.persistToDb or ADI_ENABLE_INTERNAL_PERSIST=1 to enable)')
     }
 
+    // Update evaluation status to completed
+    if (options?.evaluationId && orchestrationResult.overallStatus === 'completed') {
+      try {
+        const { updateEvaluation } = await import('@/lib/database')
+        const adiScore = ADIScoringEngine.calculateADIScore(orchestrationResult)
+        
+        await updateEvaluation(options.evaluationId, {
+          status: 'completed',
+          overallScore: adiScore.overall,
+          grade: adiScore.grade,
+          adiScore: adiScore.overall,
+          adiGrade: adiScore.grade,
+          completedAt: new Date()
+        })
+        
+        console.log(`✅ [DB] Evaluation ${options.evaluationId} marked as completed with score ${adiScore.overall}/100`)
+      } catch (error) {
+        console.error(`❌ [DB] Failed to update evaluation status:`, error)
+      }
+    }
+
     if (orchestrationResult.overallStatus === 'failed') {
       throw new Error(`ADI evaluation failed: ${orchestrationResult.errors.join(', ')}`)
     }
