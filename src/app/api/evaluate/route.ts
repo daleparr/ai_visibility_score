@@ -4,10 +4,9 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { normalizeBrandUrl } from '@/lib/brand-normalize'
 import { getBrand } from '@/lib/database'
-// WRONG - Uses legacy system with no timeouts
-import { EvaluationEngine, createEvaluationEngine } from '@/lib/evaluation-engine'
-
-// CORRECT - Use proper orchestrated system with timeouts
+// REMOVE THIS - Wrong system
+// import { EvaluationEngine, createEvaluationEngine } from '@/lib/evaluation-engine'
+// ADD THIS - Correct system
 import { ADIService } from '@/lib/adi/adi-service'
 import { ensureGuestUser, createBrand as upsertBrand } from '@/lib/database'
 
@@ -35,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     const normalizedUrl = normalizeBrandUrl(url)
 
-    // 1. Ensure a user and brand exist to associate the evaluation with
+    // 1. Ensure a user and brand exist
     const guestUser = await ensureGuestUser()
     const brand = await upsertBrand({
         userId: guestUser.id,
@@ -49,31 +48,34 @@ export async function POST(request: NextRequest) {
 
     console.log(`[ROUTE_HANDLER] Starting evaluation for brand: ${brand.name} (${brand.id})`)
 
-    // 2. Start evaluation asynchronously and return immediately
-    const { triggerEvaluation } = await import('@/lib/evaluation-engine')
+    // 2. Use PROPER ADI orchestration system
+    const adiService = new ADIService()
     
     // Start evaluation in background - don't await it
-    triggerEvaluation(brand.id).then(finalEvaluation => {
-      console.log(`[ROUTE_HANDLER] Completed evaluation: ${finalEvaluation.id}`)
+    adiService.evaluateBrand(brand.id, brand.websiteUrl, undefined, guestUser.id, {
+      persistToDb: true,
+      evaluationId: undefined // Let it generate one
+    }).then(result => {
+      console.log(`[ROUTE_HANDLER] Completed evaluation: ${result.adiScore.overall}/100`)
     }).catch(error => {
       console.error(`[ROUTE_HANDLER] Evaluation failed: ${error.message}`)
     })
 
-    // 3. Return immediate response with evaluation ID for polling
+    // 3. Return immediate response
     return NextResponse.json({
-      evaluationId: brand.id, // Use brand ID to track evaluation
+      evaluationId: brand.id,
       brandId: brand.id,
       url: normalizedUrl,
       status: 'running',
       message: 'Evaluation started successfully. Please check status for completion.',
-      estimatedTime: '60-90 seconds'
+      estimatedTime: '30-60 seconds' // ADI system is much faster
     })
   } catch (error: any) {
     console.error('❌ [EVALUATE_API_ERROR] A critical error occurred:', error)
     return NextResponse.json(
       {
-        error: 'An unexpected error occurred during evaluation.',
-        details: error.message,
+        error: 'An unexpected error occurred during evaluation setup. Please try again.',
+        details: error.message
       },
       { status: 500 }
     )
