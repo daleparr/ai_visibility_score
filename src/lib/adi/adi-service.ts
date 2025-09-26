@@ -24,8 +24,7 @@ import type {
   ADISubscription,
   ADILeaderboard
 } from '../../types/adi'
-import { TIER_FEATURES } from '@/lib/tier-based-models'
-import { getTierBasedModel } from '@/lib/tier-based-models'
+import { TIER_FEATURES, getTierBasedModel, type UserTier } from '@/lib/tier-based-models'
 
 /**
  * ADI Service - Main service layer for AI Discoverability Index
@@ -861,27 +860,7 @@ All scores include confidence intervals and reliability metrics.
   private async executeEnhancedEvaluation(
     brandId: string, 
     websiteUrl: string, 
-    userTier: string,
+    userTier: UserTier, // Changed from string to UserTier
     options?: any
   ) {
-    console.log(`✨ [ADI] Enhanced evaluation with Perplexity integration for ${userTier} tier`)
-    
-    // Pro/Enterprise tier gets Perplexity enhancement
-    const modelConfig = getTierBasedModel(userTier)
-    const enhancedOptions = {
-      ...options,
-      modelConfig,
-      userTier, // Pass tier to agents
-      perplexityEnabled: TIER_FEATURES[userTier].perplexityIntegration
-    }
-    
-    return await this.orchestrator.executeOptimizedEvaluation(
-      brandId, 
-      websiteUrl, 
-      enhancedOptions
-    )
-  }
-}
-
-// Export singleton instance
-export const adiService = new ADIService()
+    console.log(`
