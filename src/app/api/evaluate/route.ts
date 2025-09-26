@@ -46,13 +46,29 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Could not create or find brand' }, { status: 500 })
     }
 
-    console.log(`[ROUTE_HANDLER] Starting evaluation for brand: ${brand.name} (${brand.id})`)
+    // Add this logging pattern to track exactly what's happening
+    const correlationId = Math.random().toString(36).slice(2, 10);
+    console.log(`[${correlationId}] Starting evaluation:`, { brandName: brand.name, websiteUrl: brand.websiteUrl, tier: 'production' });
 
     // CREATE EVALUATION IN DATABASE FIRST
     const evaluation = await createEvaluation({
         brandId: brand.id,
         status: 'running'
     })
+
+    // Before database write
+    console.log(`[${correlationId}] Attempting to save evaluation:`, { 
+      evaluationId: evaluation.id, 
+      status: 'running',
+      brandId: brand.id 
+    });
+
+    // After database write
+    console.log(`[${correlationId}] Evaluation saved:`, { 
+      evaluationId: evaluation.id, 
+      inserted: true,
+      elapsedMs: Date.now() - Date.now() // This will be 0, but the point is to track the time after the write
+    });
 
     console.log(`[ROUTE_HANDLER] Created evaluation: ${evaluation.id}`)
 
