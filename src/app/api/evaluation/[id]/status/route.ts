@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
 export async function GET(
   request: Request,
@@ -8,12 +8,11 @@ export async function GET(
     const evaluationId = params.id
     console.log(`[STATUS_DEBUG] Checking evaluation ${evaluationId}`)
 
-    // Use the SAME connection type as writes (pooled) for consistency
+    // Use pooled connection with single statement
     const { sql } = await import('@/lib/db')
     
-    // Add cache-busting with explicit transaction
+    // ✅ Single statement, schema-qualified, no transactions
     const result = await sql`
-      BEGIN;
       SELECT 
         id, 
         status, 
@@ -24,9 +23,7 @@ export async function GET(
         brand_id
       FROM production.evaluations 
       WHERE id = ${evaluationId}
-      ORDER BY updated_at DESC
-      LIMIT 1;
-      COMMIT;
+      LIMIT 1
     `
 
     if (!result || result.length === 0) {
@@ -68,9 +65,9 @@ export async function GET(
       tier: 'free',
       isDemo: false,
       pillarScores: [
-        { name: 'Infrastructure', score: Math.round(evaluation.overall_score * 0.4), color: 'blue', icon: '🏗️', description: 'Technical foundation' },
-        { name: 'Perception', score: Math.round(evaluation.overall_score * 0.3), color: 'green', icon: '👁️', description: 'Brand awareness' },
-        { name: 'Commerce', score: Math.round(evaluation.overall_score * 0.3), color: 'purple', icon: '🛒', description: 'Commercial signals' }
+        { name: 'Infrastructure', score: Math.round((evaluation.overall_score || 0) * 0.4), color: 'blue', icon: '🏗️', description: 'Technical foundation' },
+        { name: 'Perception', score: Math.round((evaluation.overall_score || 0) * 0.3), color: 'green', icon: '👁️', description: 'Brand awareness' },
+        { name: 'Commerce', score: Math.round((evaluation.overall_score || 0) * 0.3), color: 'purple', icon: '🛒', description: 'Commercial signals' }
       ],
       dimensionScores: [],
       aiProviders: ['openai'],
