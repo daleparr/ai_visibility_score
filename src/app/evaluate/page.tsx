@@ -111,7 +111,9 @@ interface EvaluationData {
 export default function EvaluatePage() {
   const searchParams = useSearchParams()
   const url = searchParams.get('url') || 'example.com'
-  const tier = searchParams.get('tier') || 'free'
+  const tierParam = searchParams.get('tier')
+  const tier: 'free' | 'index-pro' | 'enterprise' = 
+    tierParam === 'index-pro' || tierParam === 'enterprise' ? tierParam : 'free'
   const [isLoading, setIsLoading] = useState(true)
   const [evaluationData, setEvaluationData] = useState<EvaluationData | null>(null)
   const [error, setError] = useState<string | null>(null)
