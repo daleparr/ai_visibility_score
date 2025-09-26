@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation'
 
 export default function HomePage() {
   const [url, setUrl] = useState('')
-  const [tier, setTier] = useState<'free' | 'index-pro'>('free')
+  const [tier, setTier] = useState<'free' | 'index-pro' | 'enterprise'>('free')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const router = useRouter()
