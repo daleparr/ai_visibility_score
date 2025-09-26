@@ -761,7 +761,14 @@ All scores include confidence intervals and reliability metrics.
         .orderBy(desc(evaluations.overallScore))
         .limit(50)
       
-      return realEvaluations.map(evaluation => ({
+      return realEvaluations.map((evaluation: {
+        brandId: string;
+        brandName: string;
+        websiteUrl: string;
+        adiScore: number | null;
+        evaluationId: string;
+        evaluationDate: Date;
+      }) => ({
         brandId: evaluation.brandId,
         brandName: evaluation.brandName,
         websiteUrl: evaluation.websiteUrl,
