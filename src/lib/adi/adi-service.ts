@@ -597,6 +597,7 @@ All scores include confidence intervals and reliability metrics.
       
       // Query real industries from database
       const industries = await db.select().from(adiIndustries)
+      // Fix the null safety issue
       return industries.map((industry: typeof adiIndustries.$inferSelect) => ({
         id: industry.id,
         name: industry.name,
@@ -604,8 +605,8 @@ All scores include confidence intervals and reliability metrics.
         description: industry.description || undefined,
         query_canon: industry.queryCanon,
         benchmark_criteria: industry.benchmarkCriteria,
-        created_at: industry.createdAt.toISOString(),
-        updated_at: industry.updatedAt.toISOString()
+        created_at: industry.createdAt?.toISOString() || new Date().toISOString(),
+        updated_at: industry.updatedAt?.toISOString() || new Date().toISOString()
       }))
       
     } catch (error) {
