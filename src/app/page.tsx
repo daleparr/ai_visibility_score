@@ -147,7 +147,7 @@ export default function HomePage() {
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto text-balance">
               Test how AI discovers, understands, and recommends your brand.
-              Get your free GPT-4 visibility audit in minutes.
+              Get your free AI visibility audit in minutes. Upgrade for GPT-4 + real-time web insights.
             </p>
 
             {/* URL Input Section */}
@@ -155,28 +155,39 @@ export default function HomePage() {
               <Card className="p-6 shadow-lg border-2">
                 {/* Tier Selection */}
                 <div className="mb-4">
-                  <div className="flex items-center justify-center gap-4">
+                  <div className="flex items-center justify-center gap-2 md:gap-4">
                     <button
                       onClick={() => setTier('free')}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                      className={`px-3 py-2 rounded-lg font-medium transition-all text-sm ${
                         tier === 'free'
                           ? 'bg-green-100 text-green-700 border-2 border-green-300'
                           : 'bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200'
                       }`}
                     >
                       🆓 Free Tier
-                      <div className="text-xs mt-1">GPT-4 Analysis</div>
+                      <div className="text-xs mt-1">3 evaluations • GPT-3.5</div>
                     </button>
                     <button
-                      onClick={() => setTier('professional')}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                        tier === 'professional'
+                      onClick={() => setTier('pro')}
+                      className={`px-3 py-2 rounded-lg font-medium transition-all text-sm ${
+                        tier === 'pro'
                           ? 'bg-brand-100 text-brand-700 border-2 border-brand-300'
                           : 'bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200'
                       }`}
                     >
-                      🚀 Professional
-                      <div className="text-xs mt-1">Multi-Model Analysis</div>
+                      💎 Index Pro
+                      <div className="text-xs mt-1">25 evaluations • GPT-4 + AI Web Search</div>
+                    </button>
+                    <button
+                      onClick={() => setTier('enterprise')}
+                      className={`px-3 py-2 rounded-lg font-medium transition-all text-sm ${
+                        tier === 'enterprise'
+                          ? 'bg-purple-100 text-purple-700 border-2 border-purple-300'
+                          : 'bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200'
+                      }`}
+                    >
+                      🏢 Enterprise
+                      <div className="text-xs mt-1">Unlimited • Full API Access</div>
                     </button>
                   </div>
                 </div>

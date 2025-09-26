@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { ArrowRight, Brain, Search, BarChart3, Zap, Shield, TrendingUp, Download, Lock, Star, Trophy } from 'lucide-react'
+import { ArrowRight, Brain, Search, BarChart3, Zap, Shield, TrendingUp, Download, Lock, Star, Trophy, Globe } from 'lucide-react'
 import Link from 'next/link'
 import { ExecutiveSummary } from '@/components/adi/reporting/ExecutiveSummary'
 import { UserFriendlyDimensionCard } from '@/components/adi/reporting/UserFriendlyDimensionCard'
@@ -807,32 +807,36 @@ ${evaluationData.certification ? `
             {/* Premium Actions */}
             <Card className="border-brand-200 bg-brand-50/50">
               <CardHeader>
-                <CardTitle className="text-brand-700">🚀 Unlock Premium Features</CardTitle>
+                <CardTitle className="text-brand-700">💎 Upgrade to Index Pro</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm mb-4">
                   <li className="flex items-center">
-                    <Download className="h-4 w-4 mr-2" />
-                    Export PDF/Excel reports
+                    <Brain className="h-4 w-4 mr-2" />
+                    GPT-4 enhanced analysis (+40% accuracy)
                   </li>
                   <li className="flex items-center">
-                    <Star className="h-4 w-4 mr-2" />
-                    Detailed optimization guides
+                    <Globe className="h-4 w-4 mr-2" />
+                    Real-time web search with Perplexity AI
                   </li>
                   <li className="flex items-center">
                     <TrendingUp className="h-4 w-4 mr-2" />
-                    Industry benchmarking
+                    25 evaluations per month
                   </li>
                   <li className="flex items-center">
                     <BarChart3 className="h-4 w-4 mr-2" />
-                    Multi-model comparison ({(evaluationData?.aiProviders?.length || 0) > 1 ? 'Active' : 'Available'})
+                    Advanced competitive intelligence
+                  </li>
+                  <li className="flex items-center">
+                    <Star className="h-4 w-4 mr-2" />
+                    Priority processing & support
                   </li>
                 </ul>
                 <Button
                   className="w-full"
                   onClick={async () => {
                     try {
-                      const tier = evaluationData.tier === 'professional' ? 'enterprise' : 'professional'
+                      const tier = evaluationData.tier === 'free' ? 'pro' : 'enterprise'
                       await createCheckoutSession(tier)
                     } catch (error) {
                       console.error('Error starting checkout:', error)
@@ -840,11 +844,10 @@ ${evaluationData.certification ? `
                     }
                   }}
                 >
-                  {evaluationData.tier === 'professional'
-                    ? 'Upgrade to Enterprise - £319'
-                    : 'Upgrade to AIDI Index Pro - £119'
+                  {evaluationData.tier === 'free'
+                    ? 'Upgrade to Index Pro - £29/month'
+                    : 'Upgrade to Enterprise - £199/month'
                   }
-                  <Lock className="ml-2 h-4 w-4" />
                 </Button>
               </CardContent>
             </Card>
@@ -852,7 +855,7 @@ ${evaluationData.certification ? `
 
           {/* Priority Action Cards */}
           <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-center">🚀 Your Action Plan</h2>
+            <h2 className="text-2xl font-bold mb-4 text-center">�� Your Action Plan</h2>
             <p className="text-gray-600 text-center mb-6">
               Focus on these improvements for the biggest impact on your AI visibility.
               Each card shows the business impact, timeline, and effort required.

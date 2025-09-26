@@ -283,7 +283,7 @@ export default function LeaderboardsPage() {
                   <Lock className="h-16 w-16 mx-auto mb-6 text-gray-400" />
                   <h3 className="text-2xl font-bold mb-4">Premium Leaderboards</h3>
                   <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                    Access competitive intelligence and industry rankings with AIDI Index Pro or Enterprise.
+                    Access competitive intelligence and industry rankings with Index Pro or Enterprise.
                   </p>
                   <div className="flex justify-center gap-4">
                     <Button
@@ -291,7 +291,7 @@ export default function LeaderboardsPage() {
                       className="bg-blue-600 hover:bg-blue-700"
                       onClick={async () => {
                         try {
-                          await createCheckoutSession('professional')
+                          await createCheckoutSession('pro')
                         } catch (error) {
                           console.error('Error starting checkout:', error)
                           alert('Unable to start checkout. Please try again.')
@@ -299,7 +299,7 @@ export default function LeaderboardsPage() {
                       }}
                     >
                       <Shield className="mr-2 h-5 w-5" />
-                      Upgrade to Index Pro - £119
+                      Upgrade to Index Pro - £29/month
                     </Button>
                     <Button
                       size="lg"
