@@ -8,13 +8,11 @@ export async function GET(
     const evaluationId = params.id
     console.log(`[STATUS_DEBUG] Checking evaluation ${evaluationId}`)
 
-    // Use direct SQL import to bypass any ORM caching
+    // Use direct SQL import with a single query
     const { sql } = await import('@/lib/db')
     
-    // Force a fresh read with explicit transaction isolation
+    // Single query - no transactions, no multiple commands
     const result = await sql`
-      BEGIN;
-      SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
       SELECT 
         id, 
         status, 
@@ -25,8 +23,7 @@ export async function GET(
         brand_id
       FROM production.evaluations 
       WHERE id = ${evaluationId}
-      LIMIT 1;
-      COMMIT;
+      LIMIT 1
     `
 
     if (!result || result.length === 0) {
@@ -35,7 +32,7 @@ export async function GET(
     }
 
     const evaluation = result[0]
-    console.log(`[STATUS_DEBUG] Evaluation ${evaluationId} found:`, {
+    console.log(`[STATUS_DEBUG] RAW SQL - Evaluation ${evaluationId} found:`, {
       status: evaluation.status,
       overallScore: evaluation.overall_score,
       updatedAt: evaluation.updated_at
@@ -54,7 +51,7 @@ export async function GET(
     }
 
     // If completed, return full results
-    console.log(`[STATUS_DEBUG] Evaluation ${evaluationId} is completed, returning results`)
+    console.log(`[STATUS_DEBUG] RAW SQL - Evaluation ${evaluationId} is completed, returning results`)
     
     return NextResponse.json({
       id: evaluation.id,
@@ -64,7 +61,7 @@ export async function GET(
       createdAt: evaluation.created_at,
       updatedAt: evaluation.updated_at,
       // Add mock data for now
-      url: 'https://nike.com',
+      url: 'https://vans.com',
       tier: 'free',
       isDemo: false,
       pillarScores: [
