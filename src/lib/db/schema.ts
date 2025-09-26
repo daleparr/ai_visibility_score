@@ -85,6 +85,7 @@ export const brands = productionSchema.table('brands', {
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   name: varchar('name', { length: 255 }).notNull(),
   websiteUrl: varchar('website_url', { length: 500 }).notNull(),
+  normalizedHost: varchar('normalized_host', { length: 255 }).unique(), // ADD THIS
   industry: varchar('industry', { length: 100 }),
   description: text('description'),
   competitors: jsonb('competitors').$type<string[]>(),
