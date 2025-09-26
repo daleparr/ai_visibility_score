@@ -68,11 +68,19 @@ export class EnhancedCitationAgent extends BaseADIAgent {
 
   private async executeBaseCitationAnalysis(input: ADIAgentInput): Promise<ADIAgentOutput> {
     // Your existing citation agent logic here
-    return this.createOutput('completed', {
-      score: 65,
-      citations: [],
-      analysis: 'Basic citation analysis'
-    })
+    return this.createOutput('completed', [
+      {
+        resultType: 'citation_analysis',
+        rawValue: 65,
+        normalizedScore: 65,
+        confidenceLevel: 0.7,
+        evidence: {
+          score: 65,
+          citations: [],
+          analysis: 'Basic citation analysis'
+        }
+      }
+    ])
   }
 
   private calculateEnhancedScore(baseResults: any[], perplexityData: any): number {
