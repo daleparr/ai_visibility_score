@@ -558,7 +558,7 @@ All scores include confidence intervals and reliability metrics.
         ) : []
       
       // Transform to expected format
-      return realEvaluations.map(evaluation => ({
+      return realEvaluations.map((evaluation: { brandId: string; adiScore: number | null; evaluationDate: Date; }) => ({
         brandId: evaluation.brandId,
         adiScore: evaluation.adiScore || 0,
         dimensionScores: {}, // Would need to aggregate dimension scores properly
