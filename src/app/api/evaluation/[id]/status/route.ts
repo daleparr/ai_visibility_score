@@ -88,7 +88,7 @@ export async function GET(
       ORDER BY score DESC
     `
 
-    // ✅ Get website snapshot data for technical insights
+    // ✅ Get website snapshot data with CORRECT column names
     const websiteData = await sql`
       SELECT 
         has_structured_data,
