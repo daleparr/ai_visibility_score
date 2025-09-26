@@ -413,7 +413,13 @@ ${evaluationData.certification ? `
                 <span className="text-xl font-bold">AI Discoverability Index</span>
               </Link>
               <h1 className="text-3xl font-bold mb-2">Analyzing Your Brand</h1>
-              <p className="text-gray-600">Testing {url} across {tier === 'free' ? 'GPT-4' : '5+ AI models'}...</p>
+              <p className="text-gray-600">
+                {tier === 'free' 
+                  ? 'Testing www.nike.com with GPT-3.5 Turbo...' 
+                  : tier === 'index-pro'
+                  ? 'Running GPT-4 + Perplexity AI analysis...'
+                  : 'Testing across GPT-4, Claude Opus, and Mistral Large...'}
+              </p>
             </div>
 
             {/* Loading Animation */}
@@ -423,12 +429,19 @@ ${evaluationData.certification ? `
                 <h2 className="text-xl font-semibold mb-4">Running AI Visibility Analysis</h2>
                 <div className="space-y-2 text-sm text-gray-600">
                   <p>✓ Crawling website content...</p>
-                  <p>✓ Testing {tier === 'free' ? 'GPT-4' : 'ChatGPT, Claude, Gemini'} responses...</p>
+                  <p>✓ Running {tier === 'free' ? 'GPT-3.5' : tier === 'index-pro' ? 'GPT-4' : 'multi-model'} probe tests...</p>
                   <p>✓ Analyzing schema and structured data...</p>
+                  {tier !== 'free' && (
+                    <p>✓ Enhancing with real-time web search...</p>
+                  )}
                   <p>⏳ Evaluating 12 key dimensions...</p>
                 </div>
                 <p className="text-xs text-gray-500 mt-4">
-                  {tier === 'free' ? 'Free analysis with GPT-4' : 'Premium multi-model analysis'} • Usually takes 2-3 minutes
+                  {tier === 'free' 
+                    ? 'Free analysis with GPT-3.5 Turbo • Usually takes 2-3 minutes' 
+                    : tier === 'index-pro'
+                    ? 'GPT-4 + Perplexity AI analysis • Usually takes 3-4 minutes'
+                    : 'Multi-model enterprise analysis • Usually takes 4-5 minutes'}
                 </p>
               </div>
             </Card>
@@ -905,9 +918,9 @@ ${evaluationData.certification ? `
                   }
                 }}
               >
-                {evaluationData.tier === 'index-pro'
-                  ? 'Upgrade to Enterprise - £319'
-                  : 'Upgrade to AIDI Index Pro - £119'
+                {evaluationData.tier === 'free'
+                  ? '�� Unlock GPT-4 + Perplexity - £119/month'
+                  : '⚡ Add Claude Opus + Mistral - £319/month'
                 }
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
