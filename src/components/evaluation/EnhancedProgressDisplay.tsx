@@ -20,6 +20,7 @@ import {
   Clock,
   Sparkles
 } from 'lucide-react'
+import { safeHostname } from '@/lib/url'
 
 interface Agent {
   id: string
@@ -231,7 +232,7 @@ export function EnhancedProgressDisplay({ tier, url }: EnhancedProgressDisplayPr
         </div>
 
         <div>
-          <h2 className="text-2xl font-bold mb-2">Analyzing {new URL(url).hostname}</h2>
+          <h2 className="text-2xl font-bold mb-2">Analyzing {safeHostname(url) || 'website'}</h2>
           <p className="text-gray-600">{getTierDescription()}</p>
           <Badge variant="outline" className="mt-2">
             Phase {currentPhase === 'phase1' ? '1' : currentPhase === 'phase2' ? '2' : '3'} of 3

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 export async function GET() {
   try {
@@ -8,27 +9,60 @@ export async function GET() {
     // Dynamic import to avoid build-time initialization
     const { sql } = await import('@/lib/db');
     
-    // Test basic insert
-    const result = await sql`
-      INSERT INTO production.evaluations(
-        id, brand_id, status, created_at, updated_at
-      ) VALUES (
-        gen_random_uuid(), 
-        gen_random_uuid(), 
-        'completed', 
-        now(), 
-        now()
-      ) RETURNING id, status, created_at
-    `;
+    const evaluationId = crypto.randomUUID();
+    const brandName = 'Canary Test Brand';
+    const websiteUrl = 'https://canary-test.example.com';
     
-    console.log(`[${correlationId}] Canary insert successful:`, result[0]);
-    
-    return NextResponse.json({
-      success: true,
-      correlationId,
-      inserted: result[0],
-      message: 'Canary test passed - database writes working'
-    });
+    // TRANSACTIONAL FIX: Brand → Evaluation
+    await sql`BEGIN`;
+    try {
+      // 1) Try to find existing brand
+      let brandResult = await sql`
+        SELECT id FROM production.brands 
+        WHERE website_url = ${websiteUrl}
+        LIMIT 1
+      `;
+
+      // 2) Create if doesn't exist
+      if (brandResult.length === 0) {
+        brandResult = await sql`
+          INSERT INTO production.brands (name, website_url, industry, user_id)
+          VALUES (${brandName}, ${websiteUrl}, 'test', gen_random_uuid())
+          RETURNING id
+        `;
+      }
+
+      const brandId = brandResult[0].id;
+      console.log(`[${correlationId}] Brand upserted:`, brandId);
+      
+      // 2) Insert evaluation with valid brand_id
+      const evalResult = await sql`
+        INSERT INTO production.evaluations(
+          id, brand_id, status, created_at, updated_at
+        ) VALUES (
+          ${evaluationId}, 
+          ${brandId}, 
+          'completed', 
+          now(), 
+          now()
+        ) RETURNING id, status, created_at
+      `;
+      
+      await sql`COMMIT`;
+      console.log(`[${correlationId}] Evaluation inserted:`, evalResult[0]);
+      
+      return NextResponse.json({
+        success: true,
+        correlationId,
+        brandId,
+        evaluation: evalResult[0],
+        message: 'Canary test passed - transactional brand→evaluation works'
+      });
+      
+    } catch (error) {
+      await sql`ROLLBACK`;
+      throw error;
+    }
     
   } catch (error) {
     console.error('Canary test failed:', error);

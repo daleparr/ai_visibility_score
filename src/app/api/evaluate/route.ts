@@ -9,10 +9,13 @@ import { getBrand } from '@/lib/database'
 // ADD THIS - Correct system
 import { ADIService } from '@/lib/adi/adi-service'
 import { ensureGuestUser, createBrand as upsertBrand, createEvaluation } from '@/lib/database'
+import { safeHostname } from '@/lib/url'
 
 function extractBrandNameFromUrl(url: string): string {
   try {
-    const hostname = new URL(url).hostname
+    const hostname = safeHostname(url)
+    if (!hostname) return 'Unnamed Brand'
+    
     const parts = hostname.split('.')
     if (parts.length > 2 && parts[0] === 'www') {
       return parts[1]

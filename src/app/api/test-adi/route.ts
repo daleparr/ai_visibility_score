@@ -11,6 +11,14 @@ const getADIService = async () => {
  * GET /api/test-adi - Test the complete ADI evaluation pipeline
  */
 export async function GET(request: NextRequest) {
+  // Gate integration test during build
+  if (process.env.ADI_RUN_INTEGRATION_TEST !== 'true') {
+    return NextResponse.json({
+      message: 'Integration test disabled during build',
+      note: 'Set ADI_RUN_INTEGRATION_TEST=true to enable'
+    });
+  }
+
   try {
     console.log('🚀 Starting ADI Integration Test via API...')
 

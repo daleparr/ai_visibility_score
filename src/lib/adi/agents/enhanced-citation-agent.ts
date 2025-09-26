@@ -2,6 +2,7 @@ import { BaseADIAgent } from './base-agent'
 import { perplexityClient } from '@/lib/perplexity-client'
 import { TIER_FEATURES, type UserTier } from '@/lib/tier-based-models'
 import type { ADIAgentConfig, ADIAgentInput, ADIAgentOutput } from '../../../types/adi'
+import { safeHostname } from '@/lib/url'
 
 export class EnhancedCitationAgent extends BaseADIAgent {
   constructor() {
@@ -103,7 +104,7 @@ export class EnhancedCitationAgent extends BaseADIAgent {
 
   private extractBrandName(websiteUrl: string): string {
     try {
-      const domain = new URL(websiteUrl).hostname.replace('www.', '')
+      const domain = safeHostname(websiteUrl)?.replace('www.', '') || 'unknown-domain'
       return domain.split('.')[0]
     } catch {
       return 'unknown'
