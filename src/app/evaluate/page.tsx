@@ -26,6 +26,7 @@ import { LeaderboardData } from '@/types/leaderboards'
 import type { AIDIPerformanceProfile } from '@/lib/adi/performance-framework'
 import { AIDIPerformanceDashboard } from '@/components/adi/performance/AIDIPerformanceDashboard'
 import { createCheckoutSession } from '@/lib/stripe-client'
+import { EnhancedProgressDisplay } from '@/components/evaluation/EnhancedProgressDisplay'
 
 interface DimensionScore {
   name: string
@@ -405,46 +406,12 @@ ${evaluationData.certification ? `
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
         <div className="container mx-auto px-4 py-8">
+          {/* Enhanced Loading Animation */}
           <div className="max-w-4xl mx-auto">
-            {/* Header */}
-            <div className="text-center mb-8">
-              <Link href="/" className="inline-flex items-center text-brand-600 hover:text-brand-700 mb-4">
-                <Brain className="h-6 w-6 mr-2" />
-                <span className="text-xl font-bold">AI Discoverability Index</span>
-              </Link>
-              <h1 className="text-3xl font-bold mb-2">Analyzing Your Brand</h1>
-              <p className="text-gray-600">
-                {tier === 'free' 
-                  ? 'Testing www.nike.com with GPT-3.5 Turbo...' 
-                  : tier === 'index-pro'
-                  ? 'Running GPT-4 + Perplexity AI analysis...'
-                  : 'Testing across GPT-4, Claude Opus, and Mistral Large...'}
-              </p>
-            </div>
-
-            {/* Loading Animation */}
-            <Card className="p-8">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-brand-600 mx-auto mb-6"></div>
-                <h2 className="text-xl font-semibold mb-4">Running AI Visibility Analysis</h2>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <p>✓ Crawling website content...</p>
-                  <p>✓ Running {tier === 'free' ? 'GPT-3.5' : tier === 'index-pro' ? 'GPT-4' : 'multi-model'} probe tests...</p>
-                  <p>✓ Analyzing schema and structured data...</p>
-                  {tier !== 'free' && (
-                    <p>✓ Enhancing with real-time web search...</p>
-                  )}
-                  <p>⏳ Evaluating 12 key dimensions...</p>
-                </div>
-                <p className="text-xs text-gray-500 mt-4">
-                  {tier === 'free' 
-                    ? 'Free analysis with GPT-3.5 Turbo • Usually takes 2-3 minutes' 
-                    : tier === 'index-pro'
-                    ? 'GPT-4 + Perplexity AI analysis • Usually takes 3-4 minutes'
-                    : 'Multi-model enterprise analysis • Usually takes 4-5 minutes'}
-                </p>
-              </div>
-            </Card>
+            <EnhancedProgressDisplay 
+              tier={tier} 
+              url={url || 'https://example.com'} 
+            />
           </div>
         </div>
       </div>

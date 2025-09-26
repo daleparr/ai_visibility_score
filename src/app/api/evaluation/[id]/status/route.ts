@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { neon } from '@neondatabase/serverless'
 
 export async function GET(
   request: Request,
@@ -8,11 +9,14 @@ export async function GET(
     const evaluationId = params.id
     console.log(`[STATUS_DEBUG] Checking evaluation ${evaluationId}`)
 
-    // Use direct SQL import with a single query
-    const { sql } = await import('@/lib/db')
+    // Create a completely fresh, unpooled connection
+    const freshSql = neon(process.env.DATABASE_URL!, {
+      // Force a new connection, bypass pooling
+      connectionTimeoutMillis: 5000,
+    })
     
-    // Single query - no transactions, no multiple commands
-    const result = await sql`
+    // Single query with fresh connection
+    const result = await freshSql`
       SELECT 
         id, 
         status, 
@@ -23,6 +27,7 @@ export async function GET(
         brand_id
       FROM production.evaluations 
       WHERE id = ${evaluationId}
+      ORDER BY updated_at DESC
       LIMIT 1
     `
 
@@ -32,7 +37,7 @@ export async function GET(
     }
 
     const evaluation = result[0]
-    console.log(`[STATUS_DEBUG] RAW SQL - Evaluation ${evaluationId} found:`, {
+    console.log(`[STATUS_DEBUG] FRESH CONNECTION - Evaluation ${evaluationId} found:`, {
       status: evaluation.status,
       overallScore: evaluation.overall_score,
       updatedAt: evaluation.updated_at
@@ -51,7 +56,7 @@ export async function GET(
     }
 
     // If completed, return full results
-    console.log(`[STATUS_DEBUG] RAW SQL - Evaluation ${evaluationId} is completed, returning results`)
+    console.log(`[STATUS_DEBUG] FRESH CONNECTION - Evaluation ${evaluationId} is completed, returning results`)
     
     return NextResponse.json({
       id: evaluation.id,
@@ -61,7 +66,7 @@ export async function GET(
       createdAt: evaluation.created_at,
       updatedAt: evaluation.updated_at,
       // Add mock data for now
-      url: 'https://vans.com',
+      url: 'https://schuh.co.uk',
       tier: 'free',
       isDemo: false,
       pillarScores: [
