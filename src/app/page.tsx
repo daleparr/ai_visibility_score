@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { ArrowRight, Brain, Search, TrendingUp, Shield, Zap, BarChart3, Globe, CheckCircle, Lock, Menu, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { safeHref } from '@/lib/url'
 
 export default function HomePage() {
   const [url, setUrl] = useState('')
@@ -22,7 +23,7 @@ export default function HomePage() {
     
     // Basic URL validation
     try {
-      new URL(url.startsWith('http') ? url : `https://${url}`)
+      const safeUrl = safeHref(url.startsWith('http') ? url : `https://${url}`)
     } catch {
       alert('Please enter a valid URL')
       return
