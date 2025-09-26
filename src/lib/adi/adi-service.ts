@@ -747,7 +747,8 @@ All scores include confidence intervals and reliability metrics.
           adiScore: evaluations.overallScore,
           evaluationId: evaluations.id,
           evaluationDate: evaluations.createdAt,
-          isPublic: brands.isPublic // Assuming this field exists
+          // Remove the non-existent field
+          // isPublic: brands.isPublic // This field doesn't exist
         })
         .from(evaluations)
         .innerJoin(brands, eq(evaluations.brandId, brands.id))
@@ -767,7 +768,7 @@ All scores include confidence intervals and reliability metrics.
         adiScore: evaluation.adiScore || 0,
         evaluationId: evaluation.evaluationId,
         evaluationDate: evaluation.evaluationDate.toISOString(),
-        isPublic: evaluation.isPublic || false
+        isPublic: false // Set a default value
       }))
       
     } catch (error) {
