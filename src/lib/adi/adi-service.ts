@@ -75,7 +75,11 @@ export class ADIService {
     websiteUrl: string,
     industryId?: string,
     userId?: string,
-    options?: { persistToDb?: boolean; evaluationId?: string }
+    options?: { 
+      persistToDb?: boolean; 
+      evaluationId?: string;
+      userTier?: UserTier; // Add tier parameter
+    }
   ): Promise<{
     orchestrationResult: ADIOrchestrationResult
     adiScore: ADIScore
@@ -85,44 +89,30 @@ export class ADIService {
   }> {
     await this.initialize()
 
-    console.log(`Starting ADI evaluation for brand ${brandId}`)
+    const userTier = options?.userTier || 'free' // Default to free tier
+    console.log(`Starting ADI evaluation for brand ${brandId} (${userTier} tier)`)
 
-    // Create evaluation context
-    const context: ADIEvaluationContext = {
-      evaluationId: options?.evaluationId ?? uuidv4(),
-      brandId,
-      websiteUrl,
-      industryId,
-      evaluationType: 'adi_premium',
-      queryCanon: await this.getQueryCanon(industryId),
-      crawlArtifacts: [], // Will be populated by crawl agent
-      metadata: {
-        userId,
-        startTime: new Date().toISOString(),
-        version: 'ADI-v1.0'
-      }
-    }
-
-    // Start trace logging
-    const evaluationStartTime = Date.now()
-    traceLogger.startEvaluation(context.evaluationId, websiteUrl, 'professional')
-
-    // Run orchestrated evaluation
-    const orchestrationResult = await this.orchestrator.executeEvaluation(context)
+    // Use tier-based evaluation
+    const tierFeatures = TIER_FEATURES[userTier]
     
+    // Enhanced orchestration for Pro/Enterprise tiers
+    const orchestrationResult = tierFeatures.agentEnhancements 
+      ? await this.executeEnhancedEvaluation(brandId, websiteUrl, userTier, options)
+      : await this.executeStandardEvaluation(brandId, websiteUrl, userTier, options)
+
     // Conditionally persist internal agent results (disabled by default to avoid FK issues)
     // Default to persisting results unless explicitly disabled. This ensures we always try to save and will see any errors.
     const internalPersist = (options?.persistToDb !== false) && (process.env.ADI_ENABLE_INTERNAL_PERSIST !== '0')
     if (internalPersist) {
-      await this.saveAgentResultsToDatabase(context.evaluationId, orchestrationResult)
+      await this.saveAgentResultsToDatabase(orchestrationResult.evaluationId, orchestrationResult)
     } else {
       console.log('🛑 [INFO] Skipping internal agent-results persistence (use options.persistToDb or ADI_ENABLE_INTERNAL_PERSIST=1 to enable)')
     }
 
     // Update evaluation status to completed
-    if (options?.evaluationId && orchestrationResult.overallStatus === 'completed') {
+    if (orchestrationResult.overallStatus === 'completed') {
       try {
-        console.log(`[DB_UPDATE_START] Attempting to update evaluation ${options.evaluationId} to completed`)
+        console.log(`[DB_UPDATE_START] Attempting to update evaluation ${orchestrationResult.evaluationId} to completed`)
         
         const adiScore = ADIScoringEngine.calculateADIScore(orchestrationResult)
         
@@ -142,14 +132,14 @@ export class ADIService {
             overall_score = ${adiScore.overall},
             grade = ${adiScore.grade},
             updated_at = NOW()
-          WHERE id = ${options.evaluationId}
+          WHERE id = ${orchestrationResult.evaluationId}
           RETURNING id, status, overall_score, updated_at
         `
         
-        console.log(`✅ [DB_UPDATE_SUCCESS] Evaluation ${options.evaluationId} marked as completed with score ${adiScore.overall}/100`)
+        console.log(`✅ [DB_UPDATE_SUCCESS] Evaluation ${orchestrationResult.evaluationId} marked as completed with score ${adiScore.overall}/100`)
         console.log(`[DB_UPDATE_RESULT]`, result[0])
       } catch (error) {
-        console.error(`❌ [DB_UPDATE_ERROR] Failed to update evaluation ${options.evaluationId}:`, error)
+        console.error(`❌ [DB_UPDATE_ERROR] Failed to update evaluation ${orchestrationResult.evaluationId}:`, error)
       }
     }
 
@@ -167,7 +157,7 @@ export class ADIService {
     }, {} as Record<string, number>) || {}
 
     traceLogger.logAggregation(
-      context.evaluationId,
+      orchestrationResult.evaluationId,
       pillarScores,
       adiScore.overall,
       'ADI Framework v1.0',
@@ -863,4 +853,53 @@ All scores include confidence intervals and reliability metrics.
     userTier: UserTier, // Changed from string to UserTier
     options?: any
   ) {
-    console.log(`
+    console.log(`✨ [ADI] Enhanced evaluation with Perplexity integration for ${userTier} tier`)
+    
+    // Pro/Enterprise tier gets Perplexity enhancement
+    const modelConfig = getTierBasedModel(userTier)
+    const enhancedOptions = {
+      ...options,
+      modelConfig,
+      userTier, // Pass tier to agents
+      perplexityEnabled: TIER_FEATURES[userTier].perplexityIntegration
+    }
+    
+    return await this.orchestrator.executeOptimizedEvaluation(
+      brandId, 
+      websiteUrl, 
+      enhancedOptions
+    )
+  }
+
+  private async executeStandardEvaluation(
+    brandId: string, 
+    websiteUrl: string, 
+    userTier: UserTier,
+    options?: any
+  ) {
+    // Create evaluation context with tier-appropriate models
+    const modelConfig = getTierBasedModel(userTier)
+    console.log(`🤖 [ADI] Using ${modelConfig.primary} for ${userTier} tier`)
+    
+    // Use existing orchestration logic but with tier-based models
+    const context: ADIEvaluationContext = {
+      evaluationId: options?.evaluationId ?? uuidv4(),
+      brandId,
+      websiteUrl,
+      evaluationType: 'adi_premium',
+      queryCanon: await this.getQueryCanon(),
+      crawlArtifacts: [],
+      metadata: {
+        startTime: new Date().toISOString(),
+        version: 'ADI-v1.0',
+        tier: userTier,
+        modelConfig
+      }
+    }
+
+    return await this.orchestrator.executeEvaluation(context)
+  }
+}
+
+// Export singleton instance
+export const adiService = new ADIService()
