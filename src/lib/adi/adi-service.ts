@@ -736,7 +736,7 @@ All scores include confidence intervals and reliability metrics.
     try {
       const { db } = await import('../db/index')
       const { evaluations, brands } = await import('../db/schema')
-      const { eq, desc } = await import('drizzle-orm')
+      const { eq, and, desc } = await import('drizzle-orm')
       
       // Query real evaluations from database
       const realEvaluations = await db
