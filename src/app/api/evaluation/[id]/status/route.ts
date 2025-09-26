@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { neon } from '@neondatabase/serverless'
 
 export async function GET(
   request: Request,
@@ -9,12 +8,12 @@ export async function GET(
     const evaluationId = params.id
     console.log(`[STATUS_DEBUG] Checking evaluation ${evaluationId}`)
 
-    // Use the unpooled connection string to force fresh reads
-    const connectionString = process.env.NETLIFY_DATABASE_URL_UNPOOLED || process.env.DATABASE_URL!
-    const freshSql = neon(connectionString)
+    // Use the SAME connection type as writes (pooled) for consistency
+    const { sql } = await import('@/lib/db')
     
-    // Single query with fresh connection
-    const result = await freshSql`
+    // Add cache-busting with explicit transaction
+    const result = await sql`
+      BEGIN;
       SELECT 
         id, 
         status, 
@@ -26,7 +25,8 @@ export async function GET(
       FROM production.evaluations 
       WHERE id = ${evaluationId}
       ORDER BY updated_at DESC
-      LIMIT 1
+      LIMIT 1;
+      COMMIT;
     `
 
     if (!result || result.length === 0) {
@@ -35,7 +35,7 @@ export async function GET(
     }
 
     const evaluation = result[0]
-    console.log(`[STATUS_DEBUG] UNPOOLED CONNECTION - Evaluation ${evaluationId} found:`, {
+    console.log(`[STATUS_DEBUG] POOLED CONNECTION - Evaluation ${evaluationId} found:`, {
       status: evaluation.status,
       overallScore: evaluation.overall_score,
       updatedAt: evaluation.updated_at
@@ -54,7 +54,7 @@ export async function GET(
     }
 
     // If completed, return full results
-    console.log(`[STATUS_DEBUG] UNPOOLED CONNECTION - Evaluation ${evaluationId} is completed, returning results`)
+    console.log(`[STATUS_DEBUG] POOLED CONNECTION - Evaluation ${evaluationId} is completed, returning results`)
     
     return NextResponse.json({
       id: evaluation.id,
