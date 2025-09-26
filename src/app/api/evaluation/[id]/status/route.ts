@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
 
+// ✅ Disable all caching
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -8,10 +12,10 @@ export async function GET(
     const evaluationId = params.id
     console.log(`[STATUS_DEBUG] Checking evaluation ${evaluationId}`)
 
-    // Use pooled connection with single statement
+    // ✅ Use SAME centralized connection as writes
     const { sql } = await import('@/lib/db')
     
-    // ✅ Single statement, schema-qualified, no transactions
+    // ✅ Single statement, schema-qualified
     const result = await sql`
       SELECT 
         id, 
@@ -28,52 +32,32 @@ export async function GET(
 
     if (!result || result.length === 0) {
       console.log(`[STATUS_DEBUG] Evaluation ${evaluationId} not found`)
-      return NextResponse.json({ error: 'Evaluation not found' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Evaluation not found' }, 
+        { 
+          status: 404,
+          headers: { 'Cache-Control': 'no-store' }
+        }
+      )
     }
 
     const evaluation = result[0]
-    console.log(`[STATUS_DEBUG] POOLED CONNECTION - Evaluation ${evaluationId} found:`, {
+    console.log(`[STATUS_DEBUG] CENTRALIZED CONNECTION - Evaluation ${evaluationId} found:`, {
       status: evaluation.status,
       overallScore: evaluation.overall_score,
       updatedAt: evaluation.updated_at
     })
 
-    // If still running, return status only
-    if (evaluation.status !== 'completed') {
-      return NextResponse.json({
-        id: evaluation.id,
-        status: evaluation.status,
-        overallScore: evaluation.overall_score,
-        grade: evaluation.grade,
-        createdAt: evaluation.created_at,
-        updatedAt: evaluation.updated_at
-      })
-    }
-
-    // If completed, return full results
-    console.log(`[STATUS_DEBUG] POOLED CONNECTION - Evaluation ${evaluationId} is completed, returning results`)
-    
+    // Return the evaluation data with no-cache headers
     return NextResponse.json({
       id: evaluation.id,
       status: evaluation.status,
       overallScore: evaluation.overall_score,
       grade: evaluation.grade,
       createdAt: evaluation.created_at,
-      updatedAt: evaluation.updated_at,
-      // Add mock data for now
-      url: 'https://schuh.co.uk',
-      tier: 'free',
-      isDemo: false,
-      pillarScores: [
-        { name: 'Infrastructure', score: Math.round((evaluation.overall_score || 0) * 0.4), color: 'blue', icon: '🏗️', description: 'Technical foundation' },
-        { name: 'Perception', score: Math.round((evaluation.overall_score || 0) * 0.3), color: 'green', icon: '👁️', description: 'Brand awareness' },
-        { name: 'Commerce', score: Math.round((evaluation.overall_score || 0) * 0.3), color: 'purple', icon: '🛒', description: 'Commercial signals' }
-      ],
-      dimensionScores: [],
-      aiProviders: ['openai'],
-      defaultModel: 'gpt-3.5-turbo',
-      recommendations: [],
-      analysisMethod: 'ADI Framework'
+      updatedAt: evaluation.updated_at
+    }, {
+      headers: { 'Cache-Control': 'no-store, max-age=0, must-revalidate' }
     })
 
   } catch (error) {
@@ -83,7 +67,10 @@ export async function GET(
         error: 'Failed to fetch evaluation status', 
         details: error instanceof Error ? error.message : 'Unknown error'
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: { 'Cache-Control': 'no-store' }
+      }
     )
   }
 }
