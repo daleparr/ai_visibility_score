@@ -597,11 +597,11 @@ All scores include confidence intervals and reliability metrics.
       
       // Query real industries from database
       const industries = await db.select().from(adiIndustries)
-      return industries.map(industry => ({
+      return industries.map((industry: typeof adiIndustries.$inferSelect) => ({
         id: industry.id,
         name: industry.name,
         category: industry.category,
-        description: industry.description,
+        description: industry.description || undefined,
         query_canon: industry.queryCanon,
         benchmark_criteria: industry.benchmarkCriteria,
         created_at: industry.createdAt.toISOString(),
