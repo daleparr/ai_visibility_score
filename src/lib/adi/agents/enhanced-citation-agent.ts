@@ -1,25 +1,28 @@
 import { BaseADIAgent } from './base-agent'
 import { perplexityClient } from '@/lib/perplexity-client'
-import { TIER_FEATURES } from '@/lib/tier-based-models'
+import { TIER_FEATURES, type UserTier } from '@/lib/tier-based-models'
 import type { ADIAgentConfig, ADIAgentInput, ADIAgentOutput } from '../../../types/adi'
 
 export class EnhancedCitationAgent extends BaseADIAgent {
   constructor() {
-    super({
+    const config: ADIAgentConfig = {
       name: 'enhanced_citation_agent',
       description: 'Citation analysis with real-time web search for Pro+ tiers',
       version: '1.0.0',
       dependencies: ['crawl_agent'],
-      timeout: 30000, // 30 seconds
+      timeout: 30000,
       retryLimit: 2,
       parallelizable: true
-    })
+    }
+    super(config)
   }
 
   async execute(input: ADIAgentInput): Promise<ADIAgentOutput> {
     const { context } = input
     const { websiteUrl } = context
-    const userTier = context.metadata?.tier || 'free'
+    
+    // Type the userTier properly
+    const userTier: UserTier = (context.metadata?.tier as UserTier) || 'free'
     const brandName = this.extractBrandName(websiteUrl)
     
     // Run base citation analysis
@@ -42,7 +45,7 @@ export class EnhancedCitationAgent extends BaseADIAgent {
         })
       } catch (error) {
         console.error(`❌ [${this.config.name}] Perplexity enhancement failed:`, error)
-        return baseResults // Fallback to base results
+        return baseResults
       }
     }
     
@@ -62,8 +65,15 @@ export class EnhancedCitationAgent extends BaseADIAgent {
     // Boost score based on real-time mentions and reputation
     let enhancementBoost = 0
     
-    if (perplexityData.currentMentions?.length > 100) enhancementBoost += 10
-    if (perplexityData.reputationSignals?.includes('positive')) enhancementBoost += 5
+    // Check if mentions content is substantial (string length, not array length)
+    if (perplexityData.currentMentions && perplexityData.currentMentions.length > 500) {
+      enhancementBoost += 10
+    }
+    
+    // Check for positive sentiment in reputation signals
+    if (perplexityData.reputationSignals && perplexityData.reputationSignals.toLowerCase().includes('positive')) {
+      enhancementBoost += 5
+    }
     
     return Math.min(100, (baseResults.score || 0) + enhancementBoost)
   }
