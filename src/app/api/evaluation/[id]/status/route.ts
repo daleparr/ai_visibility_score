@@ -1,9 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getEvaluation, getDimensionScoresByEvaluationId, getBrand } from '@/lib/database'
-import { db } from '@/lib/db'
-import { evaluations } from '@/lib/db/schema'
-import { eq } from 'drizzle-orm'
-import { sql } from 'drizzle-orm'
 
 export async function GET(
   request: Request,
@@ -13,21 +8,37 @@ export async function GET(
     const evaluationId = params.id
     console.log(`[STATUS_DEBUG] Checking evaluation ${evaluationId}`)
 
-    // Add cache busting with a dummy query first
-    await db.execute(sql`SELECT 1 as cache_bust`)
+    // Use direct SQL import to bypass any ORM caching
+    const { sql } = await import('@/lib/db')
     
-    // Then fetch the actual evaluation
-    const evaluation = await getEvaluation(evaluationId)
+    // Force a fresh read with explicit transaction isolation
+    const result = await sql`
+      BEGIN;
+      SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+      SELECT 
+        id, 
+        status, 
+        overall_score, 
+        grade, 
+        created_at, 
+        updated_at,
+        brand_id
+      FROM production.evaluations 
+      WHERE id = ${evaluationId}
+      LIMIT 1;
+      COMMIT;
+    `
 
-    if (!evaluation) {
+    if (!result || result.length === 0) {
       console.log(`[STATUS_DEBUG] Evaluation ${evaluationId} not found`)
       return NextResponse.json({ error: 'Evaluation not found' }, { status: 404 })
     }
 
+    const evaluation = result[0]
     console.log(`[STATUS_DEBUG] Evaluation ${evaluationId} found:`, {
       status: evaluation.status,
-      overallScore: evaluation.overallScore,
-      updatedAt: evaluation.updatedAt
+      overallScore: evaluation.overall_score,
+      updatedAt: evaluation.updated_at
     })
 
     // If still running, return status only
@@ -35,10 +46,10 @@ export async function GET(
       return NextResponse.json({
         id: evaluation.id,
         status: evaluation.status,
-        overallScore: evaluation.overallScore,
+        overallScore: evaluation.overall_score,
         grade: evaluation.grade,
-        createdAt: evaluation.createdAt,
-        updatedAt: evaluation.updatedAt
+        createdAt: evaluation.created_at,
+        updatedAt: evaluation.updated_at
       })
     }
 
@@ -48,18 +59,18 @@ export async function GET(
     return NextResponse.json({
       id: evaluation.id,
       status: evaluation.status,
-      overallScore: evaluation.overallScore,
+      overallScore: evaluation.overall_score,
       grade: evaluation.grade,
-      createdAt: evaluation.createdAt,
-      updatedAt: evaluation.updatedAt,
+      createdAt: evaluation.created_at,
+      updatedAt: evaluation.updated_at,
       // Add mock data for now
       url: 'https://nike.com',
       tier: 'free',
       isDemo: false,
       pillarScores: [
-        { name: 'Infrastructure', score: 45, color: 'blue', icon: '🏗️', description: 'Technical foundation' },
-        { name: 'Perception', score: 25, color: 'green', icon: '👁️', description: 'Brand awareness' },
-        { name: 'Commerce', score: 30, color: 'purple', icon: '🛒', description: 'Commercial signals' }
+        { name: 'Infrastructure', score: Math.round(evaluation.overall_score * 0.4), color: 'blue', icon: '🏗️', description: 'Technical foundation' },
+        { name: 'Perception', score: Math.round(evaluation.overall_score * 0.3), color: 'green', icon: '👁️', description: 'Brand awareness' },
+        { name: 'Commerce', score: Math.round(evaluation.overall_score * 0.3), color: 'purple', icon: '🛒', description: 'Commercial signals' }
       ],
       dimensionScores: [],
       aiProviders: ['openai'],
