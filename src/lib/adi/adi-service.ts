@@ -123,7 +123,6 @@ export class ADIService {
       try {
         console.log(`[DB_UPDATE_START] Attempting to update evaluation ${options.evaluationId} to completed`)
         
-        const { updateEvaluation } = await import('@/lib/database')
         const adiScore = ADIScoringEngine.calculateADIScore(orchestrationResult)
         
         console.log(`[DB_UPDATE_DATA] Updating with:`, {
@@ -132,13 +131,22 @@ export class ADIService {
           grade: adiScore.grade
         })
         
-        const result = await updateEvaluation(options.evaluationId, {
-          status: 'completed',
-          overallScore: adiScore.overall,
-          grade: adiScore.grade
-        })
+        // Use direct database connection with proper parameterized query
+        const { db } = await import('@/lib/db')
+        
+        const result = await db.query(`
+          UPDATE production.evaluations 
+          SET 
+            status = $1,
+            overall_score = $2,
+            grade = $3,
+            updated_at = NOW()
+          WHERE id = $4
+          RETURNING id, status, overall_score, updated_at
+        `, ['completed', adiScore.overall, adiScore.grade, options.evaluationId])
         
         console.log(`✅ [DB_UPDATE_SUCCESS] Evaluation ${options.evaluationId} marked as completed with score ${adiScore.overall}/100`)
+        console.log(`[DB_UPDATE_RESULT]`, result.rows[0])
       } catch (error) {
         console.error(`❌ [DB_UPDATE_ERROR] Failed to update evaluation ${options.evaluationId}:`, error)
       }
