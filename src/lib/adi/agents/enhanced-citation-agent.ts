@@ -35,17 +35,31 @@ export class EnhancedCitationAgent extends BaseADIAgent {
       try {
         const perplexityData = await perplexityClient.enhanceBrandAnalysis(brandName, websiteUrl)
         
-        return this.createOutput('completed', {
-          ...baseResults.data,
-          perplexityEnhancement: {
-            currentMentions: perplexityData.currentMentions,
-            competitorAnalysis: perplexityData.competitorAnalysis,
-            enhancedScore: this.calculateEnhancedScore(baseResults.data, perplexityData)
+        // Create enhanced results by combining base results with Perplexity data
+        const enhancedResults = [
+          ...baseResults.results,
+          {
+            resultType: 'perplexity_enhancement',
+            rawValue: this.calculateEnhancedScore(baseResults.results, perplexityData),
+            normalizedScore: this.calculateEnhancedScore(baseResults.results, perplexityData),
+            confidenceLevel: 0.8,
+            evidence: {
+              currentMentions: perplexityData.currentMentions,
+              competitorAnalysis: perplexityData.competitorAnalysis,
+              marketTrends: perplexityData.marketTrends,
+              reputationSignals: perplexityData.reputationSignals
+            }
           }
+        ]
+        
+        return this.createOutput('completed', enhancedResults, baseResults.executionTime, undefined, {
+          ...baseResults.metadata,
+          perplexityEnhanced: true,
+          tier: userTier
         })
       } catch (error) {
         console.error(`❌ [${this.config.name}] Perplexity enhancement failed:`, error)
-        return baseResults
+        return baseResults // Fallback to base results
       }
     }
     
@@ -61,8 +75,9 @@ export class EnhancedCitationAgent extends BaseADIAgent {
     })
   }
 
-  private calculateEnhancedScore(baseResults: any, perplexityData: any): number {
-    // Boost score based on real-time mentions and reputation
+  private calculateEnhancedScore(baseResults: any[], perplexityData: any): number {
+    // Get base score from results
+    const baseScore = baseResults.length > 0 ? baseResults[0].normalizedScore || 65 : 65
     let enhancementBoost = 0
     
     // Check if mentions content is substantial (string length, not array length)
@@ -75,7 +90,7 @@ export class EnhancedCitationAgent extends BaseADIAgent {
       enhancementBoost += 5
     }
     
-    return Math.min(100, (baseResults.score || 0) + enhancementBoost)
+    return Math.min(100, baseScore + enhancementBoost)
   }
 
   private extractBrandName(websiteUrl: string): string {
