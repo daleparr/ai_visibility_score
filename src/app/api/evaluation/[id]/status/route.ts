@@ -9,11 +9,9 @@ export async function GET(
     const evaluationId = params.id
     console.log(`[STATUS_DEBUG] Checking evaluation ${evaluationId}`)
 
-    // Create a completely fresh, unpooled connection
-    const freshSql = neon(process.env.DATABASE_URL!, {
-      // Force a new connection, bypass pooling
-      connectionTimeoutMillis: 5000,
-    })
+    // Use the unpooled connection string to force fresh reads
+    const connectionString = process.env.NETLIFY_DATABASE_URL_UNPOOLED || process.env.DATABASE_URL!
+    const freshSql = neon(connectionString)
     
     // Single query with fresh connection
     const result = await freshSql`
@@ -37,7 +35,7 @@ export async function GET(
     }
 
     const evaluation = result[0]
-    console.log(`[STATUS_DEBUG] FRESH CONNECTION - Evaluation ${evaluationId} found:`, {
+    console.log(`[STATUS_DEBUG] UNPOOLED CONNECTION - Evaluation ${evaluationId} found:`, {
       status: evaluation.status,
       overallScore: evaluation.overall_score,
       updatedAt: evaluation.updated_at
@@ -56,7 +54,7 @@ export async function GET(
     }
 
     // If completed, return full results
-    console.log(`[STATUS_DEBUG] FRESH CONNECTION - Evaluation ${evaluationId} is completed, returning results`)
+    console.log(`[STATUS_DEBUG] UNPOOLED CONNECTION - Evaluation ${evaluationId} is completed, returning results`)
     
     return NextResponse.json({
       id: evaluation.id,
