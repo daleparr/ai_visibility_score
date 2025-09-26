@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation'
 
 export default function HomePage() {
   const [url, setUrl] = useState('')
-  const [tier, setTier] = useState('free')
+  const [tier, setTier] = useState<'free' | 'index-pro'>('free')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const router = useRouter()
@@ -168,9 +168,9 @@ export default function HomePage() {
                       <div className="text-xs mt-1">3 evaluations • GPT-3.5</div>
                     </button>
                     <button
-                      onClick={() => setTier('pro')}
+                      onClick={() => setTier('index-pro')}
                       className={`px-3 py-2 rounded-lg font-medium transition-all text-sm ${
-                        tier === 'pro'
+                        tier === 'index-pro'
                           ? 'bg-brand-100 text-brand-700 border-2 border-brand-300'
                           : 'bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200'
                       }`}
@@ -210,16 +210,16 @@ export default function HomePage() {
                     onClick={handleAnalyze}
                     disabled={!url || isAnalyzing}
                     className={`h-12 px-8 text-lg ${
-                      tier === 'professional' ? 'bg-brand-600 hover:bg-brand-700' : ''
+                      tier === 'index-pro' ? 'bg-brand-600 hover:bg-brand-700' : ''
                     }`}
                   >
-                    {isAnalyzing ? 'Analyzing...' : tier === 'professional' ? 'Pro Analysis' : 'Analyze Now'}
+                    {isAnalyzing ? 'Analyzing...' : tier === 'index-pro' ? 'Pro Analysis' : 'Analyze Now'}
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </div>
                 <div className="flex items-center justify-center mt-4 text-sm text-gray-500">
                   <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  {tier === 'professional'
+                  {tier === 'index-pro'
                     ? 'Professional analysis • Multi-model comparison • Advanced insights'
                     : 'Free audit • No signup required • Results in 10 minutes'
                   }

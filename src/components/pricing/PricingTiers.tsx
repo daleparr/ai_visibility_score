@@ -60,7 +60,7 @@ export const PricingTiers = () => {
           <CardTitle className="flex items-center gap-2">
             💎 Index Pro
           </CardTitle>
-          <div className="text-3xl font-bold">£29<span className="text-lg text-gray-500">/month</span></div>
+          <div className="text-3xl font-bold">£119<span className="text-lg text-gray-500">/month</span></div>
           <p className="text-sm text-gray-600">For professionals and growing businesses</p>
         </CardHeader>
         <CardContent>
@@ -94,14 +94,14 @@ export const PricingTiers = () => {
             className="w-full"
             onClick={async () => {
               try {
-                await createCheckoutSession('pro')
+                await createCheckoutSession('index-pro')
               } catch (error) {
                 console.error('Error starting checkout:', error)
                 alert('Unable to start checkout. Please try again.')
               }
             }}
           >
-            Upgrade to Pro
+            Upgrade to Index Pro - £119/month
           </Button>
         </CardContent>
       </Card>

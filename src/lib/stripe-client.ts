@@ -2,7 +2,7 @@
 
 import { useSession, signIn } from 'next-auth/react'
 
-export async function createCheckoutSession(tier: 'professional' | 'enterprise') {
+export async function createCheckoutSession(tier: 'index-pro' | 'enterprise') {
   try {
     // Check if user is authenticated first
     const response = await fetch('/api/auth/session')
@@ -18,7 +18,7 @@ export async function createCheckoutSession(tier: 'professional' | 'enterprise')
     console.log('✅ User authenticated:', session.user.email)
 
     // Get price ID from environment variables
-    let priceId = tier === 'professional'
+    let priceId = tier === 'index-pro'
       ? process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_INDEX_PRO
       : process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_ENTERPRISE
 
@@ -111,7 +111,7 @@ export function getUpgradeButtonText(currentTier: string): string {
   switch (currentTier) {
     case 'free':
       return 'Upgrade to Index Pro - £119/month'
-    case 'professional':
+    case 'index-pro':
       return 'Upgrade to Enterprise - £319/month'
     case 'enterprise':
       return 'Manage Subscription'
@@ -123,12 +123,12 @@ export function getUpgradeButtonText(currentTier: string): string {
 export function getUpgradeAction(currentTier: string): () => Promise<void> {
   switch (currentTier) {
     case 'free':
-      return () => createCheckoutSession('professional')
-    case 'professional':
+      return () => createCheckoutSession('index-pro')
+    case 'index-pro':
       return () => createCheckoutSession('enterprise')
     case 'enterprise':
       return () => createCustomerPortalSession()
     default:
-      return () => createCheckoutSession('professional')
+      return () => createCheckoutSession('index-pro')
   }
 }

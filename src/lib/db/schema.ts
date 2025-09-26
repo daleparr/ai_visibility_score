@@ -8,7 +8,7 @@ export const productionSchema = pgSchema('production')
 export const evaluationStatusEnum = pgEnum('evaluation_status', ['pending', 'running', 'completed', 'failed'])
 export const gradeTypeEnum = pgEnum('grade_type', ['A', 'B', 'C', 'D', 'F'])
 export const recommendationPriorityEnum = pgEnum('recommendation_priority', ['1', '2', '3'])
-export const adiSubscriptionTierEnum = pgEnum('adi_subscription_tier', ['free', 'professional', 'enterprise'])
+export const adiSubscriptionTierEnum = pgEnum('adi_subscription_tier', ['free', 'index-pro', 'enterprise'])
 export const adiIndustryCategoryEnum = pgEnum('adi_industry_category', [
   'apparel', 'footwear', 'accessories', 'beauty', 'home', 'electronics',
   'automotive', 'food_beverage', 'health_wellness', 'sports_outdoors',
@@ -179,7 +179,7 @@ export const subscriptions = productionSchema.table('subscriptions', {
   userId: varchar('user_id').references(() => users.id),
   stripeCustomerId: varchar('stripe_customer_id').unique(),
   stripeSubscriptionId: varchar('stripe_subscription_id').unique(),
-  tier: varchar('tier', { enum: ['free', 'professional', 'enterprise'] }).default('free'),
+  tier: varchar('tier', { enum: ['free', 'index-pro', 'enterprise'] }).default('free'),
   status: varchar('status', { enum: ['active', 'canceled', 'past_due', 'unpaid', 'incomplete'] }).default('active'),
   currentPeriodStart: timestamp('current_period_start'),
   currentPeriodEnd: timestamp('current_period_end'),

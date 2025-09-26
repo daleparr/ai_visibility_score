@@ -130,7 +130,7 @@ export default function EvaluatePage() {
 **Overall AIDI Score:** ${evaluationData.overallScore.toFixed(2)}/100
 
 ## Executive Summary
-${evaluationData.tier === 'professional' ? 'Index Pro multi-model analysis' : 'Standard GPT-4 analysis'} conducted on ${evaluationData.url}.
+${evaluationData.tier === 'index-pro' ? 'Index Pro multi-model analysis' : 'Standard GPT-4 analysis'} conducted on ${evaluationData.url}.
 Overall AI Discoverability Index (AIDI) score of ${evaluationData.overallScore.toFixed(2)}/100 indicates ${evaluationData.overallScore >= 80 ? 'strong' : evaluationData.overallScore >= 60 ? 'moderate' : 'weak'} AI visibility.
 
 ## Pillar Breakdown
@@ -157,7 +157,7 @@ ${(evaluationData.recommendations || []).map((rec, index) => `
 **Description:** ${rec.description}
 `).join('')}
 
-${evaluationData.tier === 'professional' ? `
+${evaluationData.tier === 'index-pro' ? `
 ## Multi-Model Analysis Results
 ${evaluationData.modelResults?.map(model => `
 ### ${model.model}
@@ -333,7 +333,7 @@ ${evaluationData.certification ? `
         await pollForCompletion()
 
         // Fetch leaderboard data for professional tier using detected category
-        if (tier === 'professional') {
+        if (tier === 'index-pro') {
           try {
             const leaderboardResponse = await fetch(`/api/leaderboards?category=${detectedCategory || 'general'}&limit=10`)
             if (leaderboardResponse.ok) {
@@ -836,7 +836,7 @@ ${evaluationData.certification ? `
                   className="w-full"
                   onClick={async () => {
                     try {
-                      const tier = evaluationData.tier === 'free' ? 'pro' : 'enterprise'
+                      const tier = evaluationData.tier === 'free' ? 'index-pro' : 'enterprise'
                       await createCheckoutSession(tier)
                     } catch (error) {
                       console.error('Error starting checkout:', error)
@@ -897,7 +897,7 @@ ${evaluationData.certification ? `
                 className="px-8"
                 onClick={async () => {
                   try {
-                    const tier = evaluationData.tier === 'professional' ? 'enterprise' : 'professional'
+                    const tier = evaluationData.tier === 'index-pro' ? 'enterprise' : 'index-pro'
                     await createCheckoutSession(tier)
                   } catch (error) {
                     console.error('Error starting checkout:', error)
@@ -905,7 +905,7 @@ ${evaluationData.certification ? `
                   }
                 }}
               >
-                {evaluationData.tier === 'professional'
+                {evaluationData.tier === 'index-pro'
                   ? 'Upgrade to Enterprise - £319'
                   : 'Upgrade to AIDI Index Pro - £119'
                 }

@@ -28,7 +28,7 @@ export default function LeaderboardsPage() {
   })
   const [currentTime, setCurrentTime] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
-  const [userTier, setUserTier] = useState<'free' | 'professional' | 'enterprise'>('free')
+  const [userTier, setUserTier] = useState<'free' | 'index-pro' | 'enterprise'>('free')
 
   // Load dynamic categories on component mount
   useEffect(() => {
@@ -291,7 +291,7 @@ export default function LeaderboardsPage() {
                       className="bg-blue-600 hover:bg-blue-700"
                       onClick={async () => {
                         try {
-                          await createCheckoutSession('pro')
+                          await createCheckoutSession('index-pro')
                         } catch (error) {
                           console.error('Error starting checkout:', error)
                           alert('Unable to start checkout. Please try again.')
@@ -299,7 +299,7 @@ export default function LeaderboardsPage() {
                       }}
                     >
                       <Shield className="mr-2 h-5 w-5" />
-                      Upgrade to Index Pro - £29/month
+                      Upgrade to Index Pro - £119/month
                     </Button>
                     <Button
                       size="lg"
@@ -462,7 +462,7 @@ export default function LeaderboardsPage() {
               </div>
             </Button>
             
-            {userTier === 'professional' ? (
+            {userTier === 'index-pro' ? (
               <Button
                 className="h-16 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white"
                 onClick={() => window.location.href = '/pricing'}
@@ -552,7 +552,7 @@ export default function LeaderboardsPage() {
                 Your competitors are already optimizing for AI. See where you rank.
               </p>
               <div className="flex justify-center gap-4">
-                {userTier === 'professional' ? (
+                {userTier === 'index-pro' ? (
                   <Button
                     size="lg"
                     className="bg-white text-purple-600 hover:bg-purple-50 font-bold"

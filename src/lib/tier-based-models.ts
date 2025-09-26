@@ -1,5 +1,5 @@
 // Tier-based model configuration for cost optimization
-export type UserTier = 'free' | 'pro' | 'enterprise'
+export type UserTier = 'free' | 'index-pro' | 'enterprise'
 
 export interface TierModelConfig {
   primary: string
@@ -17,7 +17,7 @@ export const TIER_MODEL_CONFIGS: Record<UserTier, TierModelConfig> = {
     maxTokens: 4000,
     costPerEvaluation: 0.15 // ~$0.15 per evaluation
   },
-  pro: {
+  'index-pro': {
     primary: 'gpt-4',
     fallback: ['claude-3-sonnet-20240229', 'gpt-3.5-turbo'],
     provider: 'openai',
@@ -59,7 +59,7 @@ export const TIER_FEATURES = {
     advancedReporting: false,
     customBranding: false
   },
-  pro: {
+  'index-pro': {
     evaluationsPerMonth: 25,
     agentEnhancements: true,
     perplexityIntegration: true, // 🎯 KEY DIFFERENTIATOR

@@ -2,7 +2,7 @@ import { db } from '@/lib/db'
 import { users, subscriptions } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 
-export type SubscriptionTier = 'free' | 'professional' | 'enterprise'
+export type SubscriptionTier = 'free' | 'index-pro' | 'enterprise'
 
 export interface UserSubscription {
   tier: SubscriptionTier
@@ -77,7 +77,7 @@ export function isActiveSubscription(status: string | null): boolean {
 export function canAccessFeature(userTier: SubscriptionTier, requiredTier: SubscriptionTier): boolean {
   const tierHierarchy: Record<SubscriptionTier, number> = {
     free: 0,
-    professional: 1,
+    'index-pro': 1,
     enterprise: 2,
   }
 
@@ -92,10 +92,10 @@ export function getFeatureAccess(tier: SubscriptionTier) {
     basicReports: true,
     
     // Professional tier features
-    multiModelTesting: canAccessFeature(tier, 'professional'),
-    advancedAnalytics: canAccessFeature(tier, 'professional'),
-    leaderboardAccess: canAccessFeature(tier, 'professional'),
-    prioritySupport: canAccessFeature(tier, 'professional'),
+    multiModelTesting: canAccessFeature(tier, 'index-pro'),
+    advancedAnalytics: canAccessFeature(tier, 'index-pro'),
+    leaderboardAccess: canAccessFeature(tier, 'index-pro'),
+    prioritySupport: canAccessFeature(tier, 'index-pro'),
     
     // Enterprise tier features
     customIntegrations: canAccessFeature(tier, 'enterprise'),
@@ -109,7 +109,7 @@ export function getUpgradeMessage(currentTier: SubscriptionTier): string {
   switch (currentTier) {
     case 'free':
       return 'Upgrade to Index Pro for multi-model testing and leaderboard access'
-    case 'professional':
+    case 'index-pro':
       return 'Upgrade to Enterprise for custom integrations and dedicated support'
     case 'enterprise':
       return 'You have access to all features'
