@@ -131,22 +131,22 @@ export class ADIService {
           grade: adiScore.grade
         })
         
-        // Use direct database connection with proper parameterized query
-        const { db } = await import('@/lib/db')
+        // Use the sql function from Neon, not db.query
+        const { sql } = await import('@/lib/db')
         
-        const result = await db.query(`
+        const result = await sql`
           UPDATE production.evaluations 
           SET 
-            status = $1,
-            overall_score = $2,
-            grade = $3,
+            status = 'completed',
+            overall_score = ${adiScore.overall},
+            grade = ${adiScore.grade},
             updated_at = NOW()
-          WHERE id = $4
+          WHERE id = ${options.evaluationId}
           RETURNING id, status, overall_score, updated_at
-        `, ['completed', adiScore.overall, adiScore.grade, options.evaluationId])
+        `
         
         console.log(`✅ [DB_UPDATE_SUCCESS] Evaluation ${options.evaluationId} marked as completed with score ${adiScore.overall}/100`)
-        console.log(`[DB_UPDATE_RESULT]`, result.rows[0])
+        console.log(`[DB_UPDATE_RESULT]`, result[0])
       } catch (error) {
         console.error(`❌ [DB_UPDATE_ERROR] Failed to update evaluation ${options.evaluationId}:`, error)
       }
