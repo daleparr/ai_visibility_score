@@ -850,25 +850,33 @@ All scores include confidence intervals and reliability metrics.
   private async executeEnhancedEvaluation(
     brandId: string, 
     websiteUrl: string, 
-    userTier: UserTier, // Changed from string to UserTier
+    userTier: UserTier,
     options?: any
   ) {
     console.log(`✨ [ADI] Enhanced evaluation with Perplexity integration for ${userTier} tier`)
     
     // Pro/Enterprise tier gets Perplexity enhancement
     const modelConfig = getTierBasedModel(userTier)
-    const enhancedOptions = {
-      ...options,
-      modelConfig,
-      userTier, // Pass tier to agents
-      perplexityEnabled: TIER_FEATURES[userTier].perplexityIntegration
+    
+    // Create proper evaluation context
+    const context: ADIEvaluationContext = {
+      evaluationId: options?.evaluationId ?? uuidv4(),
+      brandId,
+      websiteUrl,
+      evaluationType: 'adi_premium',
+      queryCanon: await this.getQueryCanon(),
+      crawlArtifacts: [],
+      metadata: {
+        startTime: new Date().toISOString(),
+        version: 'ADI-v1.0',
+        tier: userTier,
+        modelConfig,
+        perplexityEnabled: TIER_FEATURES[userTier].perplexityIntegration
+      }
     }
     
-    return await this.orchestrator.executeOptimizedEvaluation(
-      brandId, 
-      websiteUrl, 
-      enhancedOptions
-    )
+    // Call with single context argument
+    return await this.orchestrator.executeOptimizedEvaluation(context)
   }
 
   private async executeStandardEvaluation(
