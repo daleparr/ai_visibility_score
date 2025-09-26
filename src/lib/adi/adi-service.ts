@@ -630,7 +630,7 @@ All scores include confidence intervals and reliability metrics.
         .from(evaluations)
         .where(eq(evaluations.status, 'completed'))
       
-      return allEvaluations.map(e => ({ adiScore: e.adiScore || 0 }))
+      return allEvaluations.map((e: { adiScore: number | null }) => ({ adiScore: e.adiScore || 0 }))
       
     } catch (error) {
       console.warn('Failed to fetch global evaluation data:', error)
