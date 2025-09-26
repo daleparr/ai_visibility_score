@@ -1,7 +1,12 @@
 import { drizzle } from 'drizzle-orm/neon-http'
 import { neon } from '@neondatabase/serverless'
 import * as schema from './schema'
-import { DB_URL } from './env'
+
+// ✅ Use centralized database URL - same for ALL connections
+const DB_URL = 
+  process.env.NETLIFY_DATABASE_URL_UNPOOLED ||
+  process.env.DATABASE_URL ||
+  process.env.NETLIFY_DATABASE_URL!;
 
 // Database connection - server-side only, single connection string
 let sql: any = null
@@ -12,14 +17,20 @@ if (typeof window === 'undefined') {
   console.log('🔍 [DB] Environment check:', {
     hasDbUrl: !!DB_URL,
     nodeEnv: process.env.NODE_ENV,
-    connectionStringLength: DB_URL?.length || 0
+    connectionStringLength: DB_URL?.length || 0,
+    usingUrl: DB_URL?.substring(0, 50) + '...'
   })
   
   if (DB_URL) {
     try {
-      console.log(`🔗 [DB] Connecting to centralized URL:`, DB_URL.substring(0, 50) + '...')
+      console.log(`🔗 [DB] CENTRALIZED CONNECTION:`, DB_URL.substring(0, 50) + '...')
       
-      sql = neon(DB_URL)
+      // ✅ Force read-write connection (no replicas)
+      const writerUrl = DB_URL.includes('?') 
+        ? `${DB_URL}&target_session_attrs=read-write`
+        : `${DB_URL}?target_session_attrs=read-write`
+      
+      sql = neon(writerUrl)
       db = drizzle(sql, {
         schema,
         logger: process.env.NODE_ENV === 'development'
@@ -41,7 +52,7 @@ if (typeof window === 'undefined') {
         }
       })()
       
-      console.log('✅ [DB] Database connection initialized')
+      console.log('✅ [DB] CENTRALIZED database connection initialized')
     } catch (error) {
       console.error(`❌ [DB] Failed to initialize database connection:`, error)
     }

@@ -15,7 +15,7 @@ export async function GET(
     // ✅ Use SAME centralized connection as writes
     const { sql } = await import('@/lib/db')
     
-    // ✅ Single statement, schema-qualified
+    // ✅ Single statement, schema-qualified, ordered by updated_at
     const result = await sql`
       SELECT 
         id, 
@@ -27,6 +27,7 @@ export async function GET(
         brand_id
       FROM production.evaluations 
       WHERE id = ${evaluationId}
+      ORDER BY updated_at DESC
       LIMIT 1
     `
 
@@ -42,10 +43,14 @@ export async function GET(
     }
 
     const evaluation = result[0]
-    console.log(`[STATUS_DEBUG] CENTRALIZED CONNECTION - Evaluation ${evaluationId} found:`, {
+    
+    // ✅ Enhanced logging to track the exact data
+    console.log(`[STATUS_QUERY] Raw DB row for ${evaluationId}:`, {
+      id: evaluation.id,
       status: evaluation.status,
       overallScore: evaluation.overall_score,
-      updatedAt: evaluation.updated_at
+      updatedAt: evaluation.updated_at,
+      timestamp: new Date().toISOString()
     })
 
     // Return the evaluation data with no-cache headers
