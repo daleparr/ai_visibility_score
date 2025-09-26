@@ -547,7 +547,7 @@ All scores include confidence intervals and reliability metrics.
         .orderBy(desc(evaluations.createdAt))
       
       // Get dimension scores for each evaluation
-      const evaluationIds = realEvaluations.map(e => e.evaluationId)
+      const evaluationIds = realEvaluations.map((e: { evaluationId: string }) => e.evaluationId)
       const dimensionScoresData = evaluationIds.length > 0 ? await db
         .select()
         .from(dimensionScores)
