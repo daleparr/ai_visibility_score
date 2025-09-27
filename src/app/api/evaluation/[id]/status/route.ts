@@ -122,7 +122,7 @@ export async function GET(
 
     console.log(`[STATUS_DEBUG] Evaluation ${evaluationId} completed, building comprehensive report`)
     
-    // ✅ Build real insights from agent data with proper typing
+    // ✅ Build DETAILED, ACTIONABLE insights from real agent data
     const buildInsights = () => {
       const scores = dimensionScores || []
       const strongest = scores[0]
@@ -133,114 +133,185 @@ export async function GET(
       const brandName = evaluation.brand_name || 'Unknown Brand'
       const websiteUrl = evaluation.website_url || 'unknown'
       
-      // ✅ Properly typed filter functions
-      const infrastructureScores = scores.filter((s: DimensionScore) => 
-        ['crawl_agent', 'schema_agent'].includes(s.dimension_name)
-      )
-      const perceptionScores = scores.filter((s: DimensionScore) => 
-        ['citation_agent', 'sentiment_agent', 'brand_heritage_agent'].includes(s.dimension_name)
-      )
-      const commerceScores = scores.filter((s: DimensionScore) => 
-        ['commerce_agent', 'conversational_copy_agent'].includes(s.dimension_name)
-      )
-      
-      // ✅ Properly typed avgScore function
-      const avgScore = (scoreArray: DimensionScore[]): number => scoreArray.length > 0 
-        ? Math.round(scoreArray.reduce((sum, s) => sum + s.score, 0) / scoreArray.length)
-        : Math.round(overallScore * 0.33)
-      
-      const pillarScores = {
-        infrastructure: avgScore(infrastructureScores),
-        perception: avgScore(perceptionScores), 
-        commerce: avgScore(commerceScores)
+      // ✅ MAP AGENTS TO BUSINESS-FRIENDLY DIMENSIONS
+      const agentFindings = {
+        crawl: scores.find((s: DimensionScore) => s.dimension_name === 'crawl_agent'),
+        citation: scores.find((s: DimensionScore) => s.dimension_name === 'citation_agent'),
+        sentiment: scores.find((s: DimensionScore) => s.dimension_name === 'sentiment_agent'),
+        semantic: scores.find((s: DimensionScore) => s.dimension_name === 'semantic_agent'),
+        commerce: scores.find((s: DimensionScore) => s.dimension_name === 'commerce_agent'),
+        conversational: scores.find((s: DimensionScore) => s.dimension_name === 'conversational_copy_agent'),
+        geo: scores.find((s: DimensionScore) => s.dimension_name === 'geo_visibility_agent'),
+        llm: scores.find((s: DimensionScore) => s.dimension_name === 'llm_test_agent'),
+        heritage: scores.find((s: DimensionScore) => s.dimension_name === 'brand_heritage_agent'),
+        knowledge: scores.find((s: DimensionScore) => s.dimension_name === 'knowledge_graph_agent')
       }
-      
-      // ✅ Properly typed recommendations array
-      const recommendations: Array<{
-        priority: string
-        title: string
-        score: number
-        description: string
-        timeframe: string
-        impact: number
-      }> = []
-      
-      // ✅ Safe property access with fallback
-      if (evalData.has_meta_description === false) {
-        recommendations.push({
-          priority: 'high',
-          title: 'Add Meta Descriptions',
-          score: pillarScores.infrastructure,
-          description: `Fix: Add meta descriptions to key pages. Impact: +6-8 pts`,
-          timeframe: '1 week',
-          impact: 8
+
+      // ✅ DETAILED DIMENSION ANALYSIS (Fortnum-style)
+      const dimensionAnalysis = [
+        {
+          name: "Technical Foundation",
+          score: agentFindings.crawl?.score || 0,
+          analysis: agentFindings.crawl?.score >= 80 
+            ? `Excellent technical infrastructure (${agentFindings.crawl.score}/100). AI systems can easily access and parse your website content.`
+            : agentFindings.crawl?.score >= 60
+            ? `Good technical foundation (${agentFindings.crawl.score}/100) with some optimization opportunities.`
+            : `Poor technical accessibility (${agentFindings.crawl?.score || 0}/100). Critical barriers prevent AI from effectively crawling your site.`,
+          findings: agentFindings.crawl?.explanation || "Technical crawlability analysis completed",
+          priority: agentFindings.crawl?.score < 60 ? "high" : "medium"
+        },
+        {
+          name: "AI Response Quality",
+          score: agentFindings.llm?.score || 0,
+          analysis: agentFindings.llm?.score >= 60
+            ? `Strong AI response quality (${agentFindings.llm.score}/100). AI systems provide accurate, detailed answers about your brand.`
+            : agentFindings.llm?.score >= 40
+            ? `Moderate AI response quality (${agentFindings.llm.score}/100). AI provides basic information but may miss key details.`
+            : `Poor AI response quality (${agentFindings.llm?.score || 0}/100). AI struggles to provide comprehensive answers about your brand.`,
+          findings: agentFindings.llm?.explanation || "LLM response quality analysis completed",
+          priority: agentFindings.llm?.score < 40 ? "high" : "medium"
+        },
+        {
+          name: "Brand Authority & Citations",
+          score: agentFindings.citation?.score || 0,
+          analysis: agentFindings.citation?.score >= 70
+            ? `Strong citation authority (${agentFindings.citation.score}/100). AI recognizes your brand credibility across multiple authoritative sources.`
+            : agentFindings.citation?.score >= 50
+            ? `Moderate citation strength (${agentFindings.citation.score}/100). Some authoritative mentions but gaps in coverage.`
+            : `Weak citation signals (${agentFindings.citation?.score || 0}/100). AI lacks sufficient authoritative sources to validate your brand.`,
+          findings: agentFindings.citation?.explanation || "Citation analysis completed",
+          priority: agentFindings.citation?.score < 50 ? "high" : "low"
+        },
+        {
+          name: "Geographic Discoverability",
+          score: agentFindings.geo?.score || 0,
+          analysis: agentFindings.geo?.score >= 70
+            ? `Excellent geographic visibility (${agentFindings.geo.score}/100). AI can effectively locate and recommend your business for location-based queries.`
+            : agentFindings.geo?.score >= 50
+            ? `Good geographic presence (${agentFindings.geo.score}/100) with some regional gaps.`
+            : `Limited geographic signals (${agentFindings.geo?.score || 0}/100). AI struggles to surface your business in location-based searches.`,
+          findings: agentFindings.geo?.explanation || "Geographic visibility analysis completed",
+          priority: agentFindings.geo?.score < 50 ? "medium" : "low"
+        },
+        {
+          name: "Brand Sentiment & Trust",
+          score: agentFindings.sentiment?.score || 0,
+          analysis: agentFindings.sentiment?.score >= 60
+            ? `Positive brand sentiment (${agentFindings.sentiment.score}/100). AI associates your brand with quality and trustworthiness.`
+            : agentFindings.sentiment?.score >= 40
+            ? `Mixed sentiment signals (${agentFindings.sentiment.score}/100). Some positive indicators but areas of concern exist.`
+            : `Weak sentiment profile (${agentFindings.sentiment?.score || 0}/100). AI may surface concerning information about your brand reputation.`,
+          findings: agentFindings.sentiment?.explanation || "Brand sentiment analysis completed",
+          priority: agentFindings.sentiment?.score < 40 ? "high" : "medium"
+        },
+        {
+          name: "Conversational AI Readiness",
+          score: agentFindings.conversational?.score || 0,
+          analysis: agentFindings.conversational?.score >= 60
+            ? `Strong conversational readiness (${agentFindings.conversational.score}/100). AI can engage naturally about your brand and products.`
+            : agentFindings.conversational?.score >= 40
+            ? `Basic conversational capability (${agentFindings.conversational.score}/100). AI can discuss basics but lacks nuanced understanding.`
+            : `Poor conversational signals (${agentFindings.conversational?.score || 0}/100). AI struggles to engage meaningfully about your brand.`,
+          findings: agentFindings.conversational?.explanation || "Conversational AI readiness analysis completed",
+          priority: agentFindings.conversational?.score < 40 ? "high" : "medium"
+        }
+      ].sort((a, b) => b.score - a.score)
+
+      // ✅ PRIORITY ACTIONS based on actual agent findings
+      const priorityActions = []
+
+      // Critical Infrastructure Issues
+      if (agentFindings.crawl && agentFindings.crawl.score < 60) {
+        priorityActions.push({
+          priority: "Critical (1 week)",
+          title: "Fix Technical Infrastructure",
+          description: `Your crawl agent scored only ${agentFindings.crawl.score}/100. AI systems cannot effectively access your content.`,
+          impact: "+15-20 pts",
+          specificFix: "Resolve server errors, improve page load speeds, add structured data markup",
+          businessImpact: "Without this fix, AI systems cannot discover or recommend your brand effectively"
         })
       }
-      
-      if (pillarScores.perception < 40) {
-        recommendations.push({
-          priority: 'medium', 
-          title: 'Enhance Brand Citations',
-          score: pillarScores.perception,
-          description: `Fix: Secure structured citations in industry press and review sites. Impact: +10-12 pts`,
-          timeframe: '90 days',
-          impact: 12
+
+      // AI Response Quality Issues
+      if (agentFindings.llm && agentFindings.llm.score < 40) {
+        priorityActions.push({
+          priority: "Critical (2 weeks)",
+          title: "Improve AI Response Quality",
+          description: `Your LLM test agent scored only ${agentFindings.llm.score}/100. AI provides poor quality answers about your brand.`,
+          impact: "+12-18 pts",
+          specificFix: "Enhance content structure, add FAQ sections, improve product descriptions",
+          businessImpact: "Poor AI responses mean customers get inadequate information about your brand"
         })
       }
-      
-      if (pillarScores.commerce < 50) {
-        recommendations.push({
-          priority: 'medium',
-          title: 'Improve Commerce Signals', 
-          score: pillarScores.commerce,
-          description: `Fix: Add product schema, pricing data, and availability signals. Impact: +7-9 pts`,
-          timeframe: '30 days',
-          impact: 9
+
+      // Citation and Authority Building
+      if (agentFindings.citation && agentFindings.citation.score < 50) {
+        priorityActions.push({
+          priority: "High (30 days)",
+          title: "Build Brand Authority",
+          description: `Your citation agent scored ${agentFindings.citation.score}/100. AI lacks authoritative sources to validate your brand.`,
+          impact: "+10-15 pts",
+          specificFix: "Secure press coverage, build quality backlinks, get industry mentions",
+          businessImpact: "Low authority means AI won't confidently recommend your brand over competitors"
         })
       }
-      
-      // Generate executive summary
+
+      // Conversational Readiness
+      if (agentFindings.conversational && agentFindings.conversational.score < 40) {
+        priorityActions.push({
+          priority: "Medium (60 days)",
+          title: "Enhance Conversational AI Readiness",
+          description: `Your conversational agent scored ${agentFindings.conversational.score}/100. AI struggles with natural brand discussions.`,
+          impact: "+8-12 pts",
+          specificFix: "Create conversational content, add brand personality elements, improve copy tone",
+          businessImpact: "Poor conversational readiness limits effectiveness in voice and chat commerce"
+        })
+      }
+
+      // ✅ EXECUTIVE SUMMARY with specific findings
       const getGradeDescription = (score: number): string => {
-        if (score >= 80) return 'strong AI visibility'
-        if (score >= 60) return 'moderate AI visibility' 
-        if (score >= 40) return 'weak AI visibility'
-        return 'poor AI visibility'
+        if (score >= 80) return 'excellent AI visibility with strong competitive positioning'
+        if (score >= 60) return 'good AI presence with optimization opportunities'
+        if (score >= 40) return 'moderate AI visibility but significant gaps versus competitors'
+        if (score >= 20) return 'weak AI presence limiting discoverability'
+        return 'poor AI visibility with critical barriers to discovery'
       }
-      
-      const executiveSummary = `${brandName} scores ${overallScore}/100, indicating ${getGradeDescription(overallScore)}. ${
-        strongest ? `Strongest area: ${strongest.dimension_name} (${strongest.score}/100).` : ''
-      } ${
-        weakest ? `Weakest area: ${weakest.dimension_name} (${weakest.score}/100).` : ''
-      } ${
-        recommendations.length > 0 
-          ? `Priority fix: ${recommendations[0].title} for +${recommendations[0].impact} point improvement.`
-          : 'Continue monitoring and optimizing structured data.'
-      }`
-      
-      const getPillarName = (dimensionName: string): string => {
-        if (dimensionName.includes('crawl') || dimensionName.includes('schema')) {
-          return 'infrastructure'
+
+      const getSpecificVerdict = (): string => {
+        const topScore = agentFindings.crawl?.score || 0
+        const bottomScore = agentFindings.llm?.score || 0
+        
+        if (topScore >= 80 && bottomScore < 40) {
+          return `Strong technical foundation (${topScore}/100) but poor AI response quality (${bottomScore}/100) creates a disconnect between accessibility and usability.`
+        } else if (topScore < 40) {
+          return `Critical technical barriers (${topScore}/100) prevent AI systems from effectively accessing your brand content.`
+        } else {
+          return `Balanced performance across dimensions with ${priorityActions.length} key optimization opportunities identified.`
         }
-        if (dimensionName.includes('citation') || dimensionName.includes('sentiment')) {
-          return 'perception'
-        }
-        return 'commerce'
+      }
+
+      const executiveSummary = {
+        score: `${overallScore}/100 indicating ${getGradeDescription(overallScore)}`,
+        verdict: getSpecificVerdict(),
+        strongest: strongest ? `${strongest.dimension_name.replace('_agent', '').replace('_', ' ')} (${strongest.score}/100)` : 'Not determined',
+        weakest: weakest ? `${weakest.dimension_name.replace('_agent', '').replace('_', ' ')} (${weakest.score}/100)` : 'Not determined',
+        opportunity: priorityActions[0]?.title || 'Continue monitoring and optimization',
+        keyInsight: priorityActions.length > 0 
+          ? `${priorityActions.length} critical improvement${priorityActions.length > 1 ? 's' : ''} identified with potential +${priorityActions.reduce((sum, action) => sum + parseInt(action.impact.split('-')[1] || '10'), 0)} point impact.`
+          : 'Strong foundation - focus on maintaining competitive positioning.'
       }
       
       return {
-        pillarScores,
-        dimensionScores: scores.map((s: DimensionScore) => ({
-          name: s.dimension_name,
-          score: s.score,
-          description: s.explanation || `${s.dimension_name} analysis`,
-          pillar: getPillarName(s.dimension_name)
-        })),
-        recommendations,
+        dimensionAnalysis,
+        priorityActions: priorityActions.slice(0, 3), // Top 3 priorities
         executiveSummary,
         technicalFindings: {
           hasMetaDescription: evalData.has_meta_description || false,
           hasTitle: evalData.has_title || false,
-          hasH1: evalData.has_h1 || false
+          hasH1: evalData.has_h1 || false,
+          crawlScore: agentFindings.crawl?.score || 0,
+          llmScore: agentFindings.llm?.score || 0,
+          citationScore: agentFindings.citation?.score || 0
         }
       }
     }
@@ -254,27 +325,61 @@ export async function GET(
       grade: evaluation.grade,
       createdAt: evaluation.created_at,
       updatedAt: evaluation.updated_at,
-      // ✅ Real, actionable results from agent findings
+      // ✅ DETAILED, ACTIONABLE RESULTS
       results: {
         url: evaluation.website_url || 'unknown',
         brandName: evaluation.brand_name || 'Unknown Brand',
         tier: 'free',
         isDemo: false,
         overallScore: evaluation.overall_score || 0,
-        pillarScores: insights.pillarScores,
-        dimensionScores: insights.dimensionScores,
-        recommendations: insights.recommendations,
+        
+        // Executive Summary
+        executiveSummary: insights.executiveSummary,
+        
+        // Detailed Dimension Analysis
+        dimensionAnalysis: insights.dimensionAnalysis,
+        
+        // Priority Actions
+        priorityActions: insights.priorityActions,
+        
+        // Technical Findings
+        technicalFindings: insights.technicalFindings,
+        
+        // Legacy format for compatibility
+        pillarScores: {
+          infrastructure: insights.dimensionAnalysis.find(d => d.name.includes('Technical'))?.score || 0,
+          perception: insights.dimensionAnalysis.find(d => d.name.includes('Authority'))?.score || 0,
+          commerce: insights.dimensionAnalysis.find(d => d.name.includes('Conversational'))?.score || 0
+        },
+        
+        dimensionScores: insights.dimensionAnalysis.map(d => ({
+          name: d.name,
+          score: d.score,
+          description: d.analysis,
+          findings: d.findings,
+          priority: d.priority
+        })),
+        
+        recommendations: insights.priorityActions.map(action => ({
+          priority: action.priority.toLowerCase().includes('critical') ? 'high' : 'medium',
+          title: action.title,
+          description: action.description,
+          impact: parseInt(action.impact.split('-')[1] || '10'),
+          timeframe: action.priority.includes('week') ? '1-2 weeks' : action.priority.includes('30 days') ? '30 days' : '60-90 days',
+          specificFix: action.specificFix,
+          businessImpact: action.businessImpact
+        })),
+        
         aiProviders: ['openai'],
         defaultModel: 'gpt-3.5-turbo',
         analysisMethod: 'ADI Framework',
-        executiveSummary: insights.executiveSummary,
-        technicalFindings: insights.technicalFindings,
-        // Add structured insights like your example
+        
         insights: {
-          strongest: evaluation.strongest_dimension || insights.dimensionScores[0]?.name,
-          weakest: evaluation.weakest_dimension || insights.dimensionScores[insights.dimensionScores.length - 1]?.name,
-          opportunity: evaluation.biggest_opportunity || insights.recommendations[0]?.title,
-          verdict: evaluation.verdict || insights.executiveSummary
+          strongest: insights.executiveSummary.strongest,
+          weakest: insights.executiveSummary.weakest,
+          opportunity: insights.executiveSummary.opportunity,
+          verdict: insights.executiveSummary.verdict,
+          keyInsight: insights.executiveSummary.keyInsight
         }
       }
     }, {
