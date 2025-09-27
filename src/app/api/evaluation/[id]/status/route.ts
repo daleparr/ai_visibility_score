@@ -76,28 +76,35 @@ export async function GET(
       })
     }
 
-    // ✅ Get dimension scores with CORRECT column names for production database
+    // ✅ Get dimension scores with CORRECT column names
     const dimensionScores = await sql`
       SELECT 
         dimension_name,
         score,
-        reasoning as explanation,
-        methodology as recommendations
+        explanation,
+        recommendations
       FROM production.dimension_scores
       WHERE evaluation_id = ${evaluationId}
       ORDER BY score DESC
     `
 
-    // ✅ Get evaluation results data (using the table that has the SEO columns)
-    const evaluationData = await sql`
-      SELECT 
-        has_meta_description,
-        has_title,
-        has_h1
-      FROM production.evaluation_results
-      WHERE evaluation_id = ${evaluationId}
-      LIMIT 1
-    `
+    // ✅ Try to get evaluation results data, but handle if columns don't exist
+    let evaluationData = []
+    try {
+      evaluationData = await sql`
+        SELECT 
+          has_meta_description,
+          has_title,
+          has_h1
+        FROM production.evaluation_results
+        WHERE evaluation_id = ${evaluationId}
+        LIMIT 1
+      `
+    } catch (error) {
+      console.log(`[STATUS_DEBUG] evaluation_results query failed, using defaults:`, error)
+      // Use empty array if columns don't exist
+      evaluationData = []
+    }
 
     console.log(`[STATUS_DEBUG] Evaluation ${evaluationId} completed, building comprehensive report`)
     
