@@ -76,7 +76,7 @@ export async function GET(
       })
     }
 
-    // ✅ Get dimension scores and agent findings
+    // ✅ Get dimension scores with CORRECT column names for production database
     const dimensionScores = await sql`
       SELECT 
         dimension_name,
@@ -88,22 +88,16 @@ export async function GET(
       ORDER BY score DESC
     `
 
-    // ✅ Get evaluation results with CORRECT table and column names
-    let evaluationResults = []
-    try {
-      evaluationResults = await sql`
-        SELECT 
-          has_meta_description,
-          has_title,
-          has_h1
-        FROM production.evaluation_results
-        WHERE evaluation_id = ${evaluationId}
-        LIMIT 1
-      `
-    } catch (resultsError) {
-      console.log(`[STATUS_DEBUG] Evaluation results query failed (table may not exist):`, resultsError)
-      evaluationResults = []
-    }
+    // ✅ Get evaluation results data (using the table that has the SEO columns)
+    const evaluationData = await sql`
+      SELECT 
+        has_meta_description,
+        has_title,
+        has_h1
+      FROM production.evaluation_results
+      WHERE evaluation_id = ${evaluationId}
+      LIMIT 1
+    `
 
     console.log(`[STATUS_DEBUG] Evaluation ${evaluationId} completed, building comprehensive report`)
     
@@ -112,7 +106,7 @@ export async function GET(
       const scores = dimensionScores || []
       const strongest = scores[0]
       const weakest = scores[scores.length - 1]
-      const results = evaluationResults[0] || {}
+      const evalData = evaluationData[0] || {}
       
       const overallScore = evaluation.overall_score || 0
       const brandName = evaluation.brand_name || 'Unknown Brand'
@@ -129,7 +123,6 @@ export async function GET(
         ['commerce_agent', 'conversational_copy_agent'].includes(s.dimension_name)
       )
       
-      // ✅ Fixed: Added type annotation
       const avgScore = (scores: any[]) => scores.length > 0 
         ? Math.round(scores.reduce((sum, s) => sum + s.score, 0) / scores.length)
         : Math.round(overallScore * 0.33)
@@ -140,7 +133,6 @@ export async function GET(
         commerce: avgScore(commerceScores)
       }
       
-      // ✅ Fixed: Added type annotation
       const recommendations: Array<{
         priority: string
         title: string
@@ -150,26 +142,14 @@ export async function GET(
         impact: number
       }> = []
       
-      // Generate recommendations based on pillar scores and SEO data
-      if (results.has_meta_description === false || results.has_title === false) {
+      if (evalData.has_meta_description === false) {
         recommendations.push({
           priority: 'high',
-          title: 'Fix Basic SEO Elements',
+          title: 'Add Meta Descriptions',
           score: pillarScores.infrastructure,
-          description: `Fix: Add missing ${!results.has_title ? 'title tags' : ''}${!results.has_title && !results.has_meta_description ? ' and ' : ''}${!results.has_meta_description ? 'meta descriptions' : ''}. Impact: +5-8 pts`,
+          description: `Fix: Add meta descriptions to key pages. Impact: +6-8 pts`,
           timeframe: '1 week',
-          impact: 7
-        })
-      }
-      
-      if (pillarScores.infrastructure < 50) {
-        recommendations.push({
-          priority: 'high',
-          title: 'Improve Technical Infrastructure',
-          score: pillarScores.infrastructure,
-          description: `Fix: Optimize crawlability, add structured data, improve page speed. Impact: +8-12 pts`,
-          timeframe: '2-4 weeks',
-          impact: 10
+          impact: 8
         })
       }
       
@@ -178,8 +158,8 @@ export async function GET(
           priority: 'medium', 
           title: 'Enhance Brand Citations',
           score: pillarScores.perception,
-          description: `Fix: Secure structured citations in industry press and review sites. Impact: +10-15 pts`,
-          timeframe: '60-90 days',
+          description: `Fix: Secure structured citations in industry press and review sites. Impact: +10-12 pts`,
+          timeframe: '90 days',
           impact: 12
         })
       }
@@ -187,10 +167,10 @@ export async function GET(
       if (pillarScores.commerce < 50) {
         recommendations.push({
           priority: 'medium',
-          title: 'Strengthen Commerce Signals', 
+          title: 'Improve Commerce Signals', 
           score: pillarScores.commerce,
-          description: `Fix: Add product schema, pricing data, and availability signals. Impact: +7-10 pts`,
-          timeframe: '2-6 weeks',
+          description: `Fix: Add product schema, pricing data, and availability signals. Impact: +7-9 pts`,
+          timeframe: '30 days',
           impact: 9
         })
       }
@@ -210,10 +190,9 @@ export async function GET(
       } ${
         recommendations.length > 0 
           ? `Priority fix: ${recommendations[0].title} for +${recommendations[0].impact} point improvement.`
-          : 'Continue monitoring and optimizing for AI visibility.'
+          : 'Continue monitoring and optimizing structured data.'
       }`
       
-      // ✅ Fixed: Split long ternary for readability
       const getPillarName = (dimensionName: string) => {
         if (dimensionName.includes('crawl') || dimensionName.includes('schema')) {
           return 'infrastructure'
@@ -235,12 +214,9 @@ export async function GET(
         recommendations,
         executiveSummary,
         technicalFindings: {
-          hasStructuredData: false, // Could be enhanced with more data
-          structuredDataTypes: 0,
-          qualityScore: overallScore, // Use overall score as proxy
-          hasTitle: results.has_title ?? true,
-          hasMetaDescription: results.has_meta_description ?? true,
-          hasH1: results.has_h1 ?? true
+          hasMetaDescription: evalData.has_meta_description || false,
+          hasTitle: evalData.has_title || false,
+          hasH1: evalData.has_h1 || false
         }
       }
     }
