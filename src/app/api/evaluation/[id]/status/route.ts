@@ -147,85 +147,116 @@ export async function GET(
         knowledge: scores.find((s: DimensionScore) => s.dimension_name === 'knowledge_graph_agent')
       }
 
-      // ✅ DETAILED DIMENSION ANALYSIS (Fortnum-style)
+      // ✅ DETAILED DIMENSION ANALYSIS (Fixed null safety)
       const dimensionAnalysis = [
         {
           name: "Technical Foundation",
           score: agentFindings.crawl?.score || 0,
-          analysis: agentFindings.crawl?.score >= 80 
-            ? `Excellent technical infrastructure (${agentFindings.crawl.score}/100). AI systems can easily access and parse your website content.`
-            : agentFindings.crawl?.score >= 60
-            ? `Good technical foundation (${agentFindings.crawl.score}/100) with some optimization opportunities.`
-            : `Poor technical accessibility (${agentFindings.crawl?.score || 0}/100). Critical barriers prevent AI from effectively crawling your site.`,
+          analysis: (() => {
+            const crawlScore = agentFindings.crawl?.score || 0;
+            if (crawlScore >= 80) {
+              return `Excellent technical infrastructure (${crawlScore}/100). AI systems can easily access and parse your website content.`;
+            } else if (crawlScore >= 60) {
+              return `Good technical foundation (${crawlScore}/100) with some optimization opportunities.`;
+            } else {
+              return `Poor technical accessibility (${crawlScore}/100). Critical barriers prevent AI from effectively crawling your site.`;
+            }
+          })(),
           findings: agentFindings.crawl?.explanation || "Technical crawlability analysis completed",
-          priority: agentFindings.crawl?.score < 60 ? "high" : "medium"
+          priority: (agentFindings.crawl?.score || 0) < 60 ? "high" : "medium"
         },
         {
           name: "AI Response Quality",
           score: agentFindings.llm?.score || 0,
-          analysis: agentFindings.llm?.score >= 60
-            ? `Strong AI response quality (${agentFindings.llm.score}/100). AI systems provide accurate, detailed answers about your brand.`
-            : agentFindings.llm?.score >= 40
-            ? `Moderate AI response quality (${agentFindings.llm.score}/100). AI provides basic information but may miss key details.`
-            : `Poor AI response quality (${agentFindings.llm?.score || 0}/100). AI struggles to provide comprehensive answers about your brand.`,
+          analysis: (() => {
+            const llmScore = agentFindings.llm?.score || 0;
+            if (llmScore >= 60) {
+              return `Strong AI response quality (${llmScore}/100). AI systems provide accurate, detailed answers about your brand.`;
+            } else if (llmScore >= 40) {
+              return `Moderate AI response quality (${llmScore}/100). AI provides basic information but may miss key details.`;
+            } else {
+              return `Poor AI response quality (${llmScore}/100). AI struggles to provide comprehensive answers about your brand.`;
+            }
+          })(),
           findings: agentFindings.llm?.explanation || "LLM response quality analysis completed",
-          priority: agentFindings.llm?.score < 40 ? "high" : "medium"
+          priority: (agentFindings.llm?.score || 0) < 40 ? "high" : "medium"
         },
         {
           name: "Brand Authority & Citations",
           score: agentFindings.citation?.score || 0,
-          analysis: agentFindings.citation?.score >= 70
-            ? `Strong citation authority (${agentFindings.citation.score}/100). AI recognizes your brand credibility across multiple authoritative sources.`
-            : agentFindings.citation?.score >= 50
-            ? `Moderate citation strength (${agentFindings.citation.score}/100). Some authoritative mentions but gaps in coverage.`
-            : `Weak citation signals (${agentFindings.citation?.score || 0}/100). AI lacks sufficient authoritative sources to validate your brand.`,
+          analysis: (() => {
+            const citationScore = agentFindings.citation?.score || 0;
+            if (citationScore >= 70) {
+              return `Strong citation authority (${citationScore}/100). AI recognizes your brand credibility across multiple authoritative sources.`;
+            } else if (citationScore >= 50) {
+              return `Moderate citation strength (${citationScore}/100). Some authoritative mentions but gaps in coverage.`;
+            } else {
+              return `Weak citation signals (${citationScore}/100). AI lacks sufficient authoritative sources to validate your brand.`;
+            }
+          })(),
           findings: agentFindings.citation?.explanation || "Citation analysis completed",
-          priority: agentFindings.citation?.score < 50 ? "high" : "low"
+          priority: (agentFindings.citation?.score || 0) < 50 ? "high" : "low"
         },
         {
           name: "Geographic Discoverability",
           score: agentFindings.geo?.score || 0,
-          analysis: agentFindings.geo?.score >= 70
-            ? `Excellent geographic visibility (${agentFindings.geo.score}/100). AI can effectively locate and recommend your business for location-based queries.`
-            : agentFindings.geo?.score >= 50
-            ? `Good geographic presence (${agentFindings.geo.score}/100) with some regional gaps.`
-            : `Limited geographic signals (${agentFindings.geo?.score || 0}/100). AI struggles to surface your business in location-based searches.`,
+          analysis: (() => {
+            const geoScore = agentFindings.geo?.score || 0;
+            if (geoScore >= 70) {
+              return `Excellent geographic visibility (${geoScore}/100). AI can effectively locate and recommend your business for location-based queries.`;
+            } else if (geoScore >= 50) {
+              return `Good geographic presence (${geoScore}/100) with some regional gaps.`;
+            } else {
+              return `Limited geographic signals (${geoScore}/100). AI struggles to surface your business in location-based searches.`;
+            }
+          })(),
           findings: agentFindings.geo?.explanation || "Geographic visibility analysis completed",
-          priority: agentFindings.geo?.score < 50 ? "medium" : "low"
+          priority: (agentFindings.geo?.score || 0) < 50 ? "medium" : "low"
         },
         {
           name: "Brand Sentiment & Trust",
           score: agentFindings.sentiment?.score || 0,
-          analysis: agentFindings.sentiment?.score >= 60
-            ? `Positive brand sentiment (${agentFindings.sentiment.score}/100). AI associates your brand with quality and trustworthiness.`
-            : agentFindings.sentiment?.score >= 40
-            ? `Mixed sentiment signals (${agentFindings.sentiment.score}/100). Some positive indicators but areas of concern exist.`
-            : `Weak sentiment profile (${agentFindings.sentiment?.score || 0}/100). AI may surface concerning information about your brand reputation.`,
+          analysis: (() => {
+            const sentimentScore = agentFindings.sentiment?.score || 0;
+            if (sentimentScore >= 60) {
+              return `Positive brand sentiment (${sentimentScore}/100). AI associates your brand with quality and trustworthiness.`;
+            } else if (sentimentScore >= 40) {
+              return `Mixed sentiment signals (${sentimentScore}/100). Some positive indicators but areas of concern exist.`;
+            } else {
+              return `Weak sentiment profile (${sentimentScore}/100). AI may surface concerning information about your brand reputation.`;
+            }
+          })(),
           findings: agentFindings.sentiment?.explanation || "Brand sentiment analysis completed",
-          priority: agentFindings.sentiment?.score < 40 ? "high" : "medium"
+          priority: (agentFindings.sentiment?.score || 0) < 40 ? "high" : "medium"
         },
         {
           name: "Conversational AI Readiness",
           score: agentFindings.conversational?.score || 0,
-          analysis: agentFindings.conversational?.score >= 60
-            ? `Strong conversational readiness (${agentFindings.conversational.score}/100). AI can engage naturally about your brand and products.`
-            : agentFindings.conversational?.score >= 40
-            ? `Basic conversational capability (${agentFindings.conversational.score}/100). AI can discuss basics but lacks nuanced understanding.`
-            : `Poor conversational signals (${agentFindings.conversational?.score || 0}/100). AI struggles to engage meaningfully about your brand.`,
+          analysis: (() => {
+            const conversationalScore = agentFindings.conversational?.score || 0;
+            if (conversationalScore >= 60) {
+              return `Strong conversational readiness (${conversationalScore}/100). AI can engage naturally about your brand and products.`;
+            } else if (conversationalScore >= 40) {
+              return `Basic conversational capability (${conversationalScore}/100). AI can discuss basics but lacks nuanced understanding.`;
+            } else {
+              return `Poor conversational signals (${conversationalScore}/100). AI struggles to engage meaningfully about your brand.`;
+            }
+          })(),
           findings: agentFindings.conversational?.explanation || "Conversational AI readiness analysis completed",
-          priority: agentFindings.conversational?.score < 40 ? "high" : "medium"
+          priority: (agentFindings.conversational?.score || 0) < 40 ? "high" : "medium"
         }
       ].sort((a, b) => b.score - a.score)
 
-      // ✅ PRIORITY ACTIONS based on actual agent findings
+      // ✅ PRIORITY ACTIONS (Fixed null safety)
       const priorityActions = []
 
       // Critical Infrastructure Issues
-      if (agentFindings.crawl && agentFindings.crawl.score < 60) {
+      const crawlScore = agentFindings.crawl?.score || 0;
+      if (crawlScore < 60) {
         priorityActions.push({
           priority: "Critical (1 week)",
           title: "Fix Technical Infrastructure",
-          description: `Your crawl agent scored only ${agentFindings.crawl.score}/100. AI systems cannot effectively access your content.`,
+          description: `Your crawl agent scored only ${crawlScore}/100. AI systems cannot effectively access your content.`,
           impact: "+15-20 pts",
           specificFix: "Resolve server errors, improve page load speeds, add structured data markup",
           businessImpact: "Without this fix, AI systems cannot discover or recommend your brand effectively"
@@ -233,11 +264,12 @@ export async function GET(
       }
 
       // AI Response Quality Issues
-      if (agentFindings.llm && agentFindings.llm.score < 40) {
+      const llmScore = agentFindings.llm?.score || 0;
+      if (llmScore < 40) {
         priorityActions.push({
           priority: "Critical (2 weeks)",
           title: "Improve AI Response Quality",
-          description: `Your LLM test agent scored only ${agentFindings.llm.score}/100. AI provides poor quality answers about your brand.`,
+          description: `Your LLM test agent scored only ${llmScore}/100. AI provides poor quality answers about your brand.`,
           impact: "+12-18 pts",
           specificFix: "Enhance content structure, add FAQ sections, improve product descriptions",
           businessImpact: "Poor AI responses mean customers get inadequate information about your brand"
@@ -245,11 +277,12 @@ export async function GET(
       }
 
       // Citation and Authority Building
-      if (agentFindings.citation && agentFindings.citation.score < 50) {
+      const citationScore = agentFindings.citation?.score || 0;
+      if (citationScore < 50) {
         priorityActions.push({
           priority: "High (30 days)",
           title: "Build Brand Authority",
-          description: `Your citation agent scored ${agentFindings.citation.score}/100. AI lacks authoritative sources to validate your brand.`,
+          description: `Your citation agent scored ${citationScore}/100. AI lacks authoritative sources to validate your brand.`,
           impact: "+10-15 pts",
           specificFix: "Secure press coverage, build quality backlinks, get industry mentions",
           businessImpact: "Low authority means AI won't confidently recommend your brand over competitors"
@@ -257,18 +290,19 @@ export async function GET(
       }
 
       // Conversational Readiness
-      if (agentFindings.conversational && agentFindings.conversational.score < 40) {
+      const conversationalScore = agentFindings.conversational?.score || 0;
+      if (conversationalScore < 40) {
         priorityActions.push({
           priority: "Medium (60 days)",
           title: "Enhance Conversational AI Readiness",
-          description: `Your conversational agent scored ${agentFindings.conversational.score}/100. AI struggles with natural brand discussions.`,
+          description: `Your conversational agent scored ${conversationalScore}/100. AI struggles with natural brand discussions.`,
           impact: "+8-12 pts",
           specificFix: "Create conversational content, add brand personality elements, improve copy tone",
           businessImpact: "Poor conversational readiness limits effectiveness in voice and chat commerce"
         })
       }
 
-      // ✅ EXECUTIVE SUMMARY with specific findings
+      // ✅ EXECUTIVE SUMMARY (Fixed null safety)
       const getGradeDescription = (score: number): string => {
         if (score >= 80) return 'excellent AI visibility with strong competitive positioning'
         if (score >= 60) return 'good AI presence with optimization opportunities'
@@ -278,15 +312,15 @@ export async function GET(
       }
 
       const getSpecificVerdict = (): string => {
-        const topScore = agentFindings.crawl?.score || 0
-        const bottomScore = agentFindings.llm?.score || 0
+        const topScore = agentFindings.crawl?.score || 0;
+        const bottomScore = agentFindings.llm?.score || 0;
         
         if (topScore >= 80 && bottomScore < 40) {
-          return `Strong technical foundation (${topScore}/100) but poor AI response quality (${bottomScore}/100) creates a disconnect between accessibility and usability.`
+          return `Strong technical foundation (${topScore}/100) but poor AI response quality (${bottomScore}/100) creates a disconnect between accessibility and usability.`;
         } else if (topScore < 40) {
-          return `Critical technical barriers (${topScore}/100) prevent AI systems from effectively accessing your brand content.`
+          return `Critical technical barriers (${topScore}/100) prevent AI systems from effectively accessing your brand content.`;
         } else {
-          return `Balanced performance across dimensions with ${priorityActions.length} key optimization opportunities identified.`
+          return `Balanced performance across dimensions with ${priorityActions.length} key optimization opportunities identified.`;
         }
       }
 
