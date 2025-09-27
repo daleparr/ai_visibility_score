@@ -4,6 +4,20 @@ import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+// ✅ Proper TypeScript interfaces
+interface DimensionScore {
+  dimension_name: string
+  score: number
+  explanation: string | null
+  recommendations: any
+}
+
+interface EvaluationData {
+  has_meta_description?: boolean
+  has_title?: boolean
+  has_h1?: boolean
+}
+
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -76,7 +90,7 @@ export async function GET(
       })
     }
 
-    // ✅ Get dimension scores with CORRECT column names
+    // ✅ Get dimension scores with proper typing
     const dimensionScores = await sql`
       SELECT 
         dimension_name,
@@ -86,10 +100,10 @@ export async function GET(
       FROM production.dimension_scores
       WHERE evaluation_id = ${evaluationId}
       ORDER BY score DESC
-    `
+    ` as DimensionScore[]
 
-    // ✅ Try to get evaluation results data, but handle if columns don't exist
-    let evaluationData = []
+    // ✅ Safe evaluation_results query with fallback
+    let evaluationData: EvaluationData[] = []
     try {
       evaluationData = await sql`
         SELECT 
@@ -99,7 +113,7 @@ export async function GET(
         FROM production.evaluation_results
         WHERE evaluation_id = ${evaluationId}
         LIMIT 1
-      `
+      ` as EvaluationData[]
     } catch (error) {
       console.log(`[STATUS_DEBUG] evaluation_results query failed, using defaults:`, error)
       // Use empty array if columns don't exist
@@ -108,7 +122,7 @@ export async function GET(
 
     console.log(`[STATUS_DEBUG] Evaluation ${evaluationId} completed, building comprehensive report`)
     
-    // ✅ Build real insights from agent data
+    // ✅ Build real insights from agent data with proper typing
     const buildInsights = () => {
       const scores = dimensionScores || []
       const strongest = scores[0]
@@ -119,19 +133,20 @@ export async function GET(
       const brandName = evaluation.brand_name || 'Unknown Brand'
       const websiteUrl = evaluation.website_url || 'unknown'
       
-      // Calculate pillar scores from dimension data
-      const infrastructureScores = scores.filter((s: any) => 
+      // ✅ Properly typed filter functions
+      const infrastructureScores = scores.filter((s: DimensionScore) => 
         ['crawl_agent', 'schema_agent'].includes(s.dimension_name)
       )
-      const perceptionScores = scores.filter((s: any) => 
+      const perceptionScores = scores.filter((s: DimensionScore) => 
         ['citation_agent', 'sentiment_agent', 'brand_heritage_agent'].includes(s.dimension_name)
       )
-      const commerceScores = scores.filter((s: any) => 
+      const commerceScores = scores.filter((s: DimensionScore) => 
         ['commerce_agent', 'conversational_copy_agent'].includes(s.dimension_name)
       )
       
-      const avgScore = (scores: any[]) => scores.length > 0 
-        ? Math.round(scores.reduce((sum, s) => sum + s.score, 0) / scores.length)
+      // ✅ Properly typed avgScore function
+      const avgScore = (scoreArray: DimensionScore[]): number => scoreArray.length > 0 
+        ? Math.round(scoreArray.reduce((sum, s) => sum + s.score, 0) / scoreArray.length)
         : Math.round(overallScore * 0.33)
       
       const pillarScores = {
@@ -140,6 +155,7 @@ export async function GET(
         commerce: avgScore(commerceScores)
       }
       
+      // ✅ Properly typed recommendations array
       const recommendations: Array<{
         priority: string
         title: string
@@ -149,6 +165,7 @@ export async function GET(
         impact: number
       }> = []
       
+      // ✅ Safe property access with fallback
       if (evalData.has_meta_description === false) {
         recommendations.push({
           priority: 'high',
@@ -183,7 +200,7 @@ export async function GET(
       }
       
       // Generate executive summary
-      const getGradeDescription = (score: number) => {
+      const getGradeDescription = (score: number): string => {
         if (score >= 80) return 'strong AI visibility'
         if (score >= 60) return 'moderate AI visibility' 
         if (score >= 40) return 'weak AI visibility'
@@ -200,7 +217,7 @@ export async function GET(
           : 'Continue monitoring and optimizing structured data.'
       }`
       
-      const getPillarName = (dimensionName: string) => {
+      const getPillarName = (dimensionName: string): string => {
         if (dimensionName.includes('crawl') || dimensionName.includes('schema')) {
           return 'infrastructure'
         }
@@ -212,7 +229,7 @@ export async function GET(
       
       return {
         pillarScores,
-        dimensionScores: scores.map((s: any) => ({
+        dimensionScores: scores.map((s: DimensionScore) => ({
           name: s.dimension_name,
           score: s.score,
           description: s.explanation || `${s.dimension_name} analysis`,
