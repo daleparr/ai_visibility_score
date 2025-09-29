@@ -130,6 +130,9 @@ export class ADIService {
           grade: adiScore.grade
         })
 
+        // ✅ ADD THIS LINE:
+        const { sql } = await import('@/lib/db')
+
         // Simple update without cached_report
         const updateResult = await sql`
           UPDATE production.evaluations 
