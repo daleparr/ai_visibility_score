@@ -45,8 +45,7 @@ export async function GET(
         e.verdict,
         b.name as brand_name,
         b.website_url,
-        b.industry,
-        e.cached_report
+        b.industry
       FROM production.evaluations e
       LEFT JOIN production.brands b ON e.brand_id = b.id
       WHERE e.id = ${evaluationId}
@@ -91,33 +90,7 @@ export async function GET(
       })
     }
 
-    // ✅ USE CACHED REPORT IF AVAILABLE
-    if (evaluation.cached_report) {
-      console.log(`[STATUS_DEBUG] Using cached report for ${evaluationId}`)
-      
-      const cachedReport = JSON.parse(evaluation.cached_report)
-      
-      return NextResponse.json({
-        id: evaluation.id,
-        status: evaluation.status,
-        overallScore: evaluation.overall_score,
-        grade: evaluation.grade,
-        createdAt: evaluation.created_at,
-        updatedAt: evaluation.updated_at,
-        results: {
-          url: evaluation.website_url || 'unknown',
-          brandName: evaluation.brand_name || 'Unknown Brand',
-          tier: 'free',
-          isDemo: false,
-          overallScore: evaluation.overall_score || 0,
-          ...cachedReport // Use pre-built report data
-        }
-      }, {
-        headers: { 'Cache-Control': 'no-store, max-age=0, must-revalidate' }
-      })
-    }
-
-    // ✅ Get dimension scores with proper typing
+    // ✅ Build report on-demand (existing working logic)
     const dimensionScores = await sql`
       SELECT 
         dimension_name,

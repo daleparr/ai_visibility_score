@@ -89,7 +89,8 @@ export class ADIService {
   }> {
     await this.initialize()
 
-    const userTier = options?.userTier || 'free' // Default to free tier
+    const userTier = options?.userTier || 'free'
+    const startTime = Date.now() // ✅ ADD: Capture start time
     console.log(`Starting ADI evaluation for brand ${brandId} (${userTier} tier)`)
 
     // Use tier-based evaluation
@@ -99,6 +100,13 @@ export class ADIService {
     const orchestrationResult = tierFeatures.agentEnhancements 
       ? await this.executeEnhancedEvaluation(brandId, websiteUrl, userTier, options)
       : await this.executeStandardEvaluation(brandId, websiteUrl, userTier, options)
+
+    // ✅ ADD: Initialize trace logging AFTER we have evaluationId
+    traceLogger.startEvaluation(
+      orchestrationResult.evaluationId,
+      websiteUrl,
+      userTier
+    )
 
     // Conditionally persist internal agent results (disabled by default to avoid FK issues)
     // Default to persisting results unless explicitly disabled. This ensures we always try to save and will see any errors.
@@ -245,6 +253,12 @@ export class ADIService {
     // Calculate global rank using benchmarking engine
     globalRank = await this.calculateGlobalRankWithBenchmarking(adiScore.overall)
 
+    // ✅ ADD: Complete the evaluation trace
+    const evaluationTrace = traceLogger.completeEvaluation(
+      orchestrationResult.evaluationId,
+      Date.now() - startTime
+    )
+
     console.log(`ADI evaluation completed for brand ${brandId}: ${adiScore.overall}/100 (${adiScore.grade})`)
 
     return {
@@ -255,7 +269,8 @@ export class ADIService {
         globalRank
       },
       industryPercentile,
-      globalRank
+      globalRank,
+      evaluationTrace // ✅ KEEP: This matches the return type
     }
   }
 
