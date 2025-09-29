@@ -724,8 +724,8 @@ export class ADIService {
         return isNaN(n) ? fb : n;
       };
 
-      // 1. Crawl Site Signals
-      if (orchestrationResult.artifacts.crawl?.signals) {
+      // ✅ ADD NULL SAFETY:
+      if (orchestrationResult.artifacts?.crawl?.signals) {
         const signals = orchestrationResult.artifacts.crawl.signals
         await sql`
           INSERT INTO production.crawl_site_signals (
@@ -737,14 +737,13 @@ export class ADIService {
             ${Boolean(signals.hasMetaDescription)}, ${Boolean(signals.hasTitle)}, ${Boolean(signals.hasH1)}
           )
           ON CONFLICT (evaluation_id) DO NOTHING;
-        `
-         console.log(`[DB_WRITE] Saved crawl_site_signals for ${evaluationId}`);
+        `;
       } else {
-        console.log(`[DB_WRITE_SKIP] No crawl signals for ${evaluationId}`);
+        console.log(`[DB_WRITE_SKIP] No crawl signals found for ${evaluationId}`)
       }
 
       // 2. Website Snapshots
-      if (orchestrationResult.artifacts.crawl?.snapshot) {
+      if (orchestrationResult.artifacts?.crawl?.snapshot) {
         const snapshot = orchestrationResult.artifacts.crawl.snapshot
         // Truncate content to fit in text column
         const truncatedContent = snapshot.content?.substring(0, 100000) ?? ''
@@ -759,7 +758,7 @@ export class ADIService {
         `
         console.log(`[DB_WRITE] Saved website_snapshots for ${evaluationId}`);
       } else {
-         console.log(`[DB_WRITE_SKIP] No crawl snapshot for ${evaluationId}`);
+         console.log(`[DB_WRITE_SKIP] No crawl snapshot found for ${evaluationId}`)
       }
 
       // 3. Evaluation Results (enriched)

@@ -15,7 +15,7 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
       description: 'Fast website content extraction with smart caching and parallel processing',
       dependencies: [],
       timeout: 85000, // 85 seconds - Allow for serverless crawl timeout + buffer
-      retryLimit: 1, // Reduced retries for speed
+      retryLimit: 1, // ✅ FIXED: Added missing retryLimit
       parallelizable: false
     }
     super(config)
@@ -208,61 +208,39 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
   /**
    * Extract only essential data for speed
    */
-  private extractEssentialData(html: string): {
-    qualityScore: number
-    structuredData: any[]
-    metaData: Record<string, any>
-    contentMetrics: any
-  } {
-    // OPTIMIZATION 6: Minimal data extraction
-    const structuredData = this.extractMinimalStructuredData(html)
+  private extractEssentialData(html: string): any {
+    const structuredData = this.extractStructuredData(html)
     const metaData = this.extractMinimalMetaData(html)
     const contentMetrics = this.calculateFastContentMetrics(html)
     
-    const qualityScore = (
-      (structuredData.length > 0 ? 40 : 0) +
-      (metaData.title ? 30 : 0) +
-      (metaData.description ? 30 : 0)
-    )
-
     return {
-      qualityScore,
+      qualityScore: contentMetrics.qualityScore,
       structuredData,
       metaData,
       contentMetrics
     }
   }
 
-  /**
-   * Minimal structured data extraction
-   */
-  private extractMinimalStructuredData(html: string): any[] {
+  private extractStructuredData(html: string): any[] {
     const structuredData: any[] = []
-    
-    // Only extract JSON-LD (fastest to parse)
     const jsonLdMatches = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>(.*?)<\/script>/gis)
     if (jsonLdMatches) {
-      for (const match of jsonLdMatches.slice(0, 3)) { // Limit to first 3
+      for (const match of jsonLdMatches.slice(0, 3)) {
         try {
           const jsonContent = match.replace(/<script[^>]*>|<\/script>/gi, '').trim()
           const parsed = JSON.parse(jsonContent)
           structuredData.push(parsed)
         } catch (error) {
-          // Skip invalid JSON for speed
+          // Skip invalid JSON
         }
       }
     }
-
     return structuredData
   }
 
-  /**
-   * Minimal meta data extraction
-   */
   private extractMinimalMetaData(html: string): Record<string, any> {
     const metaData: Record<string, any> = {}
     
-    // Extract only essential meta tags
     const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/i)
     if (titleMatch) {
       metaData.title = titleMatch[1].trim()
@@ -276,9 +254,6 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
     return metaData
   }
 
-  /**
-   * Fast content metrics calculation
-   */
   private calculateFastContentMetrics(html: string): any {
     const hasTitle = /<title[^>]*>/.test(html)
     const hasMetaDescription = /name=["']description["']/i.test(html)
@@ -287,11 +262,10 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
     const qualityScore = [hasTitle, hasMetaDescription, hasStructuredData].filter(Boolean).length * 33.33
 
     return {
-      qualityScore: Math.round(qualityScore),
       hasTitle,
       hasMetaDescription,
       hasStructuredData,
-      optimized: true
+      qualityScore: Math.round(qualityScore)
     }
   }
 
@@ -403,7 +377,7 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
         fetch(url, {
           method: 'GET',
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.82 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.9',
             'Cache-Control': 'no-cache',
@@ -411,7 +385,7 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
           redirect: 'follow',
         }),
         new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Fetch timeout')), 30000) // ✅ Increased from 10s to 30s
+          setTimeout(() => reject(new Error('Fetch timeout')), 30000)
         )
       ]);
 
@@ -430,56 +404,37 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
         hasDescription: !!essentialData.metaData.description
       });
 
-      return this.createOutput(
-        'completed',  // ← CRITICAL: Set status to 'completed'
-        [{
-          resultType: 'homepage_crawl_serverless',
-          rawValue: essentialData.qualityScore,
-          normalizedScore: this.normalizeScore(essentialData.qualityScore, 0, 100, 0, 100),
-          confidenceLevel: 0.85,
-          evidence: {
-            url: url,
-            contentSize: html.length,
-            structuredData: essentialData.structuredData,
-            metaData: essentialData.metaData,
-            contentMetrics: essentialData.contentMetrics,
-            crawlTimestamp: new Date().toISOString(),
-            content: html.substring(0, 5000),
-            method: 'serverless_fetch'
-          }
-        }],
-        0, // execution time
-        undefined, // no error message
+      return this.createResult(
+        'homepage_crawl_serverless',
+        essentialData.qualityScore,
+        this.normalizeScore(essentialData.qualityScore, 0, 100, 0, 100),
+        0.85,
         {
-          serverless: true,
-          successful: true
+          url: url,
+          contentSize: html.length,
+          structuredData: essentialData.structuredData,
+          metaData: essentialData.metaData,
+          contentMetrics: essentialData.contentMetrics,
+          crawlTimestamp: new Date().toISOString(),
+          content: html.substring(0, 5000),
+          method: 'serverless_fetch'
         }
       );
     } catch (error) {
       console.error(`❌ [ServerlessCrawl] Failed for ${url}:`, error);
       
-      // CRITICAL: Return same structure as main execute method
-      return this.createOutput(
-        'completed',  // ← Must be 'completed' to prevent critical failure
-        [{
-          resultType: 'homepage_crawl_fallback',
-          rawValue: 20,
-          normalizedScore: 20,
-          confidenceLevel: 0.2,
-          evidence: {
-            url: url,
-            error: error instanceof Error ? error.message : 'Unknown error',
-            method: 'serverless_fallback',
-            crawlTimestamp: new Date().toISOString()
-          }
-        }], 
-        0, // execution time
-        undefined, // no error message since status is 'completed'
+      return this.createResult(
+        'homepage_crawl_fallback',
+        20,
+        20,
+        0.2,
         {
-          fallback: true,
-          networkError: true
+          url: url,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          method: 'serverless_fallback',
+          crawlTimestamp: new Date().toISOString()
         }
-      )
+      );
     }
   }
 
