@@ -124,65 +124,13 @@ export class ADIService {
         
         const adiScore = ADIScoringEngine.calculateADIScore(orchestrationResult)
         
-        // ✅ PRE-BUILD REPORT BEFORE MARKING AS COMPLETED
-        console.log(`[REPORT_BUILD_START] Pre-building report for ${orchestrationResult.evaluationId}`)
-        
-        // Get dimension scores and evaluation data
-        const { sql } = await import('@/lib/db')
-        
-        const dimensionScores = await sql`
-          SELECT 
-            dimension_name,
-            score,
-            explanation,
-            recommendations
-          FROM production.dimension_scores
-          WHERE evaluation_id = ${orchestrationResult.evaluationId}
-          ORDER BY score DESC
-        `
-        
-        // Get evaluation data
-        let evaluationData = []
-        try {
-          evaluationData = await sql`
-            SELECT 
-              has_meta_description,
-              has_title,
-              has_h1
-            FROM production.evaluation_results
-            WHERE evaluation_id = ${orchestrationResult.evaluationId}
-            LIMIT 1
-          `
-        } catch (error) {
-          console.log(`[REPORT_BUILD] evaluation_results query failed, using defaults:`, error)
-        }
-        
-        // Build the comprehensive report (same logic as status endpoint)
-        const reportData = this.buildComprehensiveReport(
-          dimensionScores,
-          evaluationData[0] || {},
-          adiScore.overall,
-          brandId // You'll need to pass this
-        )
-        
-        // Cache the report in the database
-        await sql`
-          UPDATE production.evaluations 
-          SET 
-            cached_report = ${JSON.stringify(reportData)},
-            report_generated_at = NOW()
-          WHERE id = ${orchestrationResult.evaluationId}
-        `
-        
-        console.log(`[REPORT_BUILD_SUCCESS] Report pre-built and cached for ${orchestrationResult.evaluationId}`)
-        
         console.log(`[DB_UPDATE_DATA] Updating with:`, {
           status: 'completed',
           overallScore: adiScore.overall,
           grade: adiScore.grade
         })
 
-        // Now mark as completed
+        // Simple update without cached_report
         const updateResult = await sql`
           UPDATE production.evaluations 
           SET 
