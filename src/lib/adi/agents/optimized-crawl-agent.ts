@@ -326,24 +326,58 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
   }
 
   /**
-   * Fast fetch with timeout
+   * Optimized Puppeteer fetch with performance enhancements
    */
   private async fetchWithPuppeteer(url: string, timeout: number = 15000): Promise<{ content: string; statusCode: number }> {
     // Dynamically import puppeteer to keep cold starts fast
     const puppeteer = (await import('puppeteer')).default;
     let browser = null;
     try {
+      // ✅ OPTIMIZED LAUNCH CONFIGURATION
       browser = await puppeteer.launch({
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',      // Prevent /dev/shm issues in containers
+          '--disable-gpu',                // No GPU needed for crawling
+          '--disable-web-security',       // Bypass CORS for crawling
+          '--disable-features=VizDisplayCompositor',
+          '--single-process',             // Reduce memory usage
+          '--no-zygote',                  // Faster startup
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding',
+          '--memory-pressure-off',
+          '--max_old_space_size=4096'
+        ],
+        timeout: 30000 // 30s browser launch timeout
       });
+
       const page = await browser.newPage();
+
+      // ✅ BLOCK UNNECESSARY RESOURCES FOR FASTER CRAWLING
+      await page.setRequestInterception(true);
+      page.on('request', (req) => {
+        const resourceType = req.resourceType();
+        if (['image', 'stylesheet', 'font', 'media'].includes(resourceType)) {
+          req.abort(); // Skip images, CSS, fonts for speed
+        } else {
+          req.continue();
+        }
+      });
+
+      // ✅ SET CONSISTENT VIEWPORT
+      await page.setViewport({ width: 1920, height: 1080 });
+
+      // ✅ UPDATED USER AGENT (Chrome 140 to match installed version)
       await page.setUserAgent(
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.82 Safari/537.36'
       );
       
+      // ✅ OPTIMIZED NAVIGATION WITH FASTER WAIT CONDITION
       const response = await page.goto(url, {
-        waitUntil: 'networkidle2', // Wait for network to be idle
+        waitUntil: 'domcontentloaded', // Faster than networkidle2 for crawling
         timeout: timeout,
       });
       
@@ -377,7 +411,7 @@ export class OptimizedCrawlAgent extends BaseADIAgent {
           redirect: 'follow',
         }),
         new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Fetch timeout')), 10000)
+          setTimeout(() => reject(new Error('Fetch timeout')), 30000) // ✅ Increased from 10s to 30s
         )
       ]);
 
