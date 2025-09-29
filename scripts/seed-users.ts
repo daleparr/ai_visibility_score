@@ -50,7 +50,7 @@ async function createUser(email: string, name: string) {
  * @param tier - The subscription tier ('free', 'index-pro', 'enterprise').
  * @returns The newly created subscription.
  */
-async function createSubscription(userId: string, tier: 'free' | 'professional' | 'enterprise') {
+async function createSubscription(userId: string, tier: 'free' | 'index-pro' | 'enterprise') {
     // Check if a subscription already exists for this user.
     let subscription = await dbWithPool.query.adiSubscriptions.findFirst({
         where: (subscriptions, { eq }) => eq(subscriptions.userId, userId as any),
@@ -83,7 +83,7 @@ async function seedTestUsers() {
 
     // 2. Create an 'professional' tier user
     const proUser = await createUser('test-pro-user@example.com', 'Pro User');
-    await createSubscription(proUser.id, 'professional');
+    await createSubscription(proUser.id, 'index-pro');
 
     // 3. Create an 'enterprise' tier user
     const enterpriseUser = await createUser('test-enterprise-user@example.com', 'Enterprise User');
