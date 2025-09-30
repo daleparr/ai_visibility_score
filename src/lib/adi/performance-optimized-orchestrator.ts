@@ -354,7 +354,7 @@ export class PerformanceOptimizedADIOrchestrator {
             evidence: {
               ...crawlResult.evidence,
               // Include the actual HTML content for analysis
-              htmlContent: crawlResult.evidence?.content || '',
+              htmlContent: crawlResult.evidence?.html || crawlResult.evidence?.content || '',
               structuredData: crawlResult.evidence?.structuredData || [],
               metaData: crawlResult.evidence?.metaData || {}
             },

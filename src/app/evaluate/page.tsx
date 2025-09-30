@@ -754,7 +754,11 @@ ${new Date().toLocaleString()}
                         </div>
                         <div className="bg-white rounded p-3 border">
                           <span className="text-purple-600 font-medium">Category:</span>
-                          <span className="ml-2 font-bold">{leaderboardData.category}</span>
+                          <span className="ml-2 font-bold">
+                            {typeof leaderboardData.category === 'string' 
+                              ? leaderboardData.category 
+                              : (leaderboardData.category as any)?.niche || (leaderboardData.category as any)?.sector || 'General'}
+                          </span>
                         </div>
                         <div className="bg-white rounded p-3 border">
                           <span className="text-purple-600 font-medium">Percentile:</span>
