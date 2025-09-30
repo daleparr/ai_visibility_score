@@ -91,7 +91,10 @@ export class GeoVisibilityAgent extends BaseADIAgent {
     for (const result of crawlResults) {
       const structuredData = result.evidence?.structuredData || []
       
-      const localBusinessSchemas = structuredData.filter((data: any) => 
+      // Ensure structuredData is an array before filtering
+      const structuredDataArray = Array.isArray(structuredData) ? structuredData : []
+      
+      const localBusinessSchemas = structuredDataArray.filter((data: any) => 
         data['@type'] === 'LocalBusiness' || 
         data['@type']?.includes('LocalBusiness') ||
         data['@type'] === 'Store' ||

@@ -247,7 +247,11 @@ export class SemanticAgent extends BaseADIAgent {
       
       // Extract structured data categories
       const structuredData = result.evidence?.structuredData || []
-      for (const data of structuredData) {
+      
+      // Ensure structuredData is an array before iterating
+      const structuredDataArray = Array.isArray(structuredData) ? structuredData : []
+      
+      for (const data of structuredDataArray) {
         if (data.category || data.categories || data.productCategory) {
           taxonomyElements.push({
             type: 'structured_category',
