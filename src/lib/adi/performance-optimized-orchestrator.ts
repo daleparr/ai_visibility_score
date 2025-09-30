@@ -7,6 +7,7 @@ import type {
   ADIAgentOutput,
   AgentStatus
 } from '../../types/adi'
+import { ProgressiveScoreCalculator, type ProgressiveScoreUpdate } from './progressive-score-calculator'
 
 /**
  * Performance-Optimized ADI Orchestrator
@@ -23,6 +24,7 @@ export class PerformanceOptimizedADIOrchestrator {
   private executionPlan: ADIOrchestrationPlan | null = null
   private cache: Map<string, any> = new Map()
   private readonly TARGET_EXECUTION_TIME = 120000 // 2 minutes instead of 8 seconds
+  private progressiveCalculator: ProgressiveScoreCalculator = new ProgressiveScoreCalculator()
 
   constructor() {
     this.initializeAgents()
@@ -219,7 +221,7 @@ export class PerformanceOptimizedADIOrchestrator {
       // OPTIMIZATION 5: Aggressive parallel execution with individual timeouts
       const phaseResults = await this.executeOptimizedParallelPhase(phase, context, agentResults)
       
-      // Merge results
+      // Merge results and update progressive score
       for (const [agentName, result] of Object.entries(phaseResults)) {
         agentResults[agentName] = result
         
@@ -227,20 +229,28 @@ export class PerformanceOptimizedADIOrchestrator {
           errors.push(`Agent ${agentName} failed: ${result.errorMessage}`)
         } else if (result.status === 'skipped') {
           warnings.push(`Agent ${agentName} was skipped: ${result.errorMessage}`)
+        } else if (result.status === 'completed' && result.results && result.results.length > 0) {
+          // Update progressive score calculation
+          const score = result.results[0].normalizedScore
+          if (typeof score === 'number' && score >= 0 && score <= 100) {
+            const progressUpdate = this.progressiveCalculator.updateScore(agentName, score)
+            console.log(`📊 Progressive Score: ${progressUpdate.currentScore} (${progressUpdate.confidence.toFixed(2)} confidence, ${progressUpdate.dataCompleteness})`)
+          }
         }
       }
 
       const phaseTime = Date.now() - phaseStartTime
       console.log(`✅ Phase ${phaseIndex + 1} completed in ${phaseTime}ms`)
 
-      // OPTIMIZATION 6: Early termination if critical agents fail
+      // BULLETPROOF: Log critical agent failures but NEVER terminate evaluation
       const criticalAgents = ['crawl_agent']
       const failedCriticalAgents = phase.filter((name: string) =>
         criticalAgents.includes(name) && agentResults[name]?.status === 'failed'
       )
 
       if (failedCriticalAgents.length > 0) {
-        throw new Error(`Critical agents failed: ${failedCriticalAgents.join(', ')}`)
+        console.warn(`⚠️ Critical agents had issues: ${failedCriticalAgents.join(', ')} - continuing with fallback data`)
+        warnings.push(`Critical agents experienced issues: ${failedCriticalAgents.join(', ')}`)
       }
     }
 
@@ -254,7 +264,8 @@ export class PerformanceOptimizedADIOrchestrator {
       if (result.status === 'failed') {
         errors.push(`Agent ${agentName} failed: ${result.errorMessage}`)
         if (agentName === 'score_aggregator') {
-          throw new Error(`Score aggregator failed: ${result.errorMessage}`)
+          console.warn(`⚠️ Score aggregator had issues: ${result.errorMessage} - this should not happen with bulletproof aggregator`)
+          warnings.push(`Score aggregator experienced issues but evaluation continued`)
         }
       }
     }

@@ -2,9 +2,9 @@ import { v4 as uuidv4 } from 'uuid'
 import { PerformanceOptimizedADIOrchestrator } from './performance-optimized-orchestrator'
 import { ADIScoringEngine } from './scoring'
 import { ADIBenchmarkingEngine } from './benchmarking-engine'
-import { OptimizedCrawlAgent } from './agents/optimized-crawl-agent'
-import { OptimizedLLMTestAgent } from './agents/optimized-llm-test-agent'
-import { SchemaAgent } from './agents/schema-agent'
+import { BulletproofCrawlAgent } from './agents/bulletproof-crawl-agent'
+import { BulletproofLLMTestAgent } from './agents/bulletproof-llm-test-agent'
+import { BulletproofSchemaAgent } from './agents/bulletproof-schema-agent'
 import { SemanticAgent } from './agents/semantic-agent'
 import { KnowledgeGraphAgent } from './agents/knowledge-graph-agent'
 import { ConversationalCopyAgent } from './agents/conversational-copy-agent'
@@ -13,7 +13,7 @@ import { CitationAgent } from './agents/citation-agent'
 import { SentimentAgent } from './agents/sentiment-agent'
 import { BrandHeritageAgent } from './agents/brand-heritage-agent'
 import { CommerceAgent } from './agents/commerce-agent'
-import { ScoreAggregatorAgent } from './agents/score-aggregator-agent'
+import { BulletproofScoreAggregatorAgent } from './agents/bulletproof-score-aggregator-agent'
 import { traceLogger, EvaluationTrace } from './trace-logger'
 import { eq } from 'drizzle-orm'
 import type {
@@ -47,9 +47,9 @@ export class ADIService {
     console.log('Initializing ADI Service...')
 
     // Register optimized agents for performance
-    this.orchestrator.registerAgent(new OptimizedCrawlAgent())
-    this.orchestrator.registerAgent(new OptimizedLLMTestAgent())
-    this.orchestrator.registerAgent(new SchemaAgent())
+    this.orchestrator.registerAgent(new BulletproofCrawlAgent())
+    this.orchestrator.registerAgent(new BulletproofLLMTestAgent())
+    this.orchestrator.registerAgent(new BulletproofSchemaAgent())
     this.orchestrator.registerAgent(new SemanticAgent())
     this.orchestrator.registerAgent(new KnowledgeGraphAgent())
     this.orchestrator.registerAgent(new ConversationalCopyAgent())
@@ -58,7 +58,7 @@ export class ADIService {
     this.orchestrator.registerAgent(new SentimentAgent())
     this.orchestrator.registerAgent(new BrandHeritageAgent())
     this.orchestrator.registerAgent(new CommerceAgent())
-    this.orchestrator.registerAgent(new ScoreAggregatorAgent())
+    this.orchestrator.registerAgent(new BulletproofScoreAggregatorAgent())
 
     // Create optimized execution plan
     this.orchestrator.createOptimizedExecutionPlan()
