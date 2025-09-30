@@ -72,12 +72,14 @@ export async function searchWithGoogleCSE(query: string): Promise<NormalizedSear
     
     const validatedData = GoogleCSEResponseSchema.parse(data);
 
-    if (!validatedData.items || validatedData.items.length === 0) {
+    // Check if items exists and has content
+    if (!validatedData.items || !Array.isArray(validatedData.items) || validatedData.items!.length === 0) {
       console.log(`📊 [GoogleCSE] No results found`);
       return [];
     }
 
-    const results = validatedData.items.map((item, index) => ({
+    // At this point, validatedData.items is guaranteed to be a non-empty array
+    const results = validatedData.items!.map((item, index) => ({
       rank: index + 1,
       title: item.title,
       url: item.link,
