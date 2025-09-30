@@ -831,10 +831,21 @@ export class ADIService {
       const dimensionScores = []
       
       // Map agent results to dimension scores
+      console.log(`[DB_WRITE_DEBUG] Processing ${Object.keys(agentResults).length} agent results:`, Object.keys(agentResults));
+      
       for (const [agentName, agentResult] of Object.entries(agentResults)) {
+        console.log(`[DB_WRITE_DEBUG] Agent ${agentName}:`, {
+          status: (agentResult as any)?.status,
+          hasResults: !!(agentResult as any)?.results,
+          resultsLength: (agentResult as any)?.results?.length,
+          firstResultExists: !!(agentResult as any)?.results?.[0]
+        });
+        
         if ((agentResult as any)?.results?.[0]) {
           const result = (agentResult as any).results[0]
           const dimensionName = this.mapAgentToDimension(agentName)
+          
+          console.log(`[DB_WRITE_DEBUG] Agent ${agentName} -> dimension ${dimensionName}, score: ${result.normalizedScore}`);
           
           if (dimensionName) {
             dimensionScores.push({
