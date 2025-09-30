@@ -122,9 +122,9 @@ export async function searchWithBrave(query: string): Promise<NormalizedSearchRe
       }),
       new Promise<never>((_, reject) => {
         setTimeout(() => {
-          console.log(`⏰ [Brave] HARD TIMEOUT after 6000ms`);
+          console.log(`⏰ [Brave] HARD TIMEOUT after 10000ms`);
           reject(new Error('HARD_TIMEOUT'));
-        }, 6000);
+        }, 10000);
       })
     ]);
 

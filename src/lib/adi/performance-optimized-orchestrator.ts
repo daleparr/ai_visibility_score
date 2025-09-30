@@ -344,6 +344,17 @@ export class PerformanceOptimizedADIOrchestrator {
         // Special handling for crawl agent results - include actual content
         if (result.agentName === 'crawl_agent' && result.results && result.results.length > 0) {
           const crawlResult = result.results[0]
+          console.log(`🔍 [ORCHESTRATOR] Processing crawl result:`, {
+            agentName: result.agentName,
+            hasResults: !!result.results,
+            resultCount: result.results?.length,
+            hasEvidence: !!crawlResult.evidence,
+            hasHtml: !!crawlResult.evidence?.html,
+            hasContent: !!crawlResult.evidence?.content,
+            htmlLength: crawlResult.evidence?.html?.length || 0,
+            contentLength: crawlResult.evidence?.content?.length || 0
+          })
+          
           return {
             id: '',
             agent_id: 'crawl_agent',
