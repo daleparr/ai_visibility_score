@@ -29,6 +29,7 @@ export const DIMENSION_WEIGHTS = {
   'knowledge_graphs': 0.05,
   'llm_readability': 0.05,
   'conversational_copy': 0.05,
+  'policies_logistics': 0.05, // Added missing dimension weight
   
   // Perception & Reputation (35% total)
   'geo_visibility': 0.10,
@@ -55,6 +56,7 @@ export const DIMENSION_PILLARS = {
   'knowledge_graphs': 'infrastructure',
   'llm_readability': 'infrastructure',
   'conversational_copy': 'infrastructure',
+  'policies_logistics': 'infrastructure', // Added missing dimension
   
   // Perception & Reputation
   'geo_visibility': 'perception',
@@ -74,6 +76,7 @@ export const DIMENSION_NAMES = {
   'knowledge_graphs': 'Knowledge Graphs',
   'llm_readability': 'LLM Readability',
   'conversational_copy': 'Conversational Copy',
+  'policies_logistics': 'Policies & Logistics', // Added missing dimension name
   'geo_visibility': 'Geographic Visibility',
   'citation_strength': 'Citation Strength',
   'answer_quality': 'Answer Quality',

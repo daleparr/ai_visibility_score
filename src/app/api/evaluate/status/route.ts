@@ -36,9 +36,25 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if evaluation is complete based on dimension scores
-    const hasInfrastructure = dimensionScores.some(d => ['schema_structured_data', 'semantic_clarity', 'knowledge_graphs', 'policies_logistics'].includes(d.dimensionName))
-    const hasPerception = dimensionScores.some(d => ['geo_visibility', 'citation_strength', 'answer_quality', 'sentiment_trust'].includes(d.dimensionName))
-    const hasCommerce = dimensionScores.some(d => ['hero_products', 'shipping_freight'].includes(d.dimensionName))
+    const requiredInfrastructure = ['schema_structured_data', 'semantic_clarity', 'knowledge_graphs', 'policies_logistics']
+    const requiredPerception = ['geo_visibility', 'citation_strength', 'answer_quality', 'sentiment_trust']
+    const requiredCommerce = ['hero_products', 'shipping_freight']
+    
+    const dimensionNames = dimensionScores.map(d => d.dimensionName)
+    
+    const hasInfrastructure = requiredInfrastructure.every(dim => dimensionNames.includes(dim))
+    const hasPerception = requiredPerception.every(dim => dimensionNames.includes(dim))
+    const hasCommerce = requiredCommerce.every(dim => dimensionNames.includes(dim))
+    
+    console.log(`[STATUS_DEBUG] Evaluation ${evaluation.id} pillar completion:`, {
+      dimensionNames,
+      hasInfrastructure,
+      hasPerception, 
+      hasCommerce,
+      missingInfrastructure: requiredInfrastructure.filter(dim => !dimensionNames.includes(dim)),
+      missingPerception: requiredPerception.filter(dim => !dimensionNames.includes(dim)),
+      missingCommerce: requiredCommerce.filter(dim => !dimensionNames.includes(dim))
+    })
 
     let status = 'running'
     let progress = 0
