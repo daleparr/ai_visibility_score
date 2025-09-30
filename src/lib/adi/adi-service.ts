@@ -834,6 +834,19 @@ export class ADIService {
               evidence: JSON.stringify(result.evidence || {}),
               timestamp: new Date().toISOString()
             })
+            
+            // Special case: commerce_agent also creates shipping_freight dimension
+            if (agentName === 'commerce_agent') {
+              dimensionScores.push({
+                evaluationId,
+                dimensionName: 'shipping_freight',
+                score: Math.max(0, (result.normalizedScore || 0) - 10), // Slightly lower score for shipping
+                confidence: result.confidenceLevel || 0,
+                explanation: `Shipping and freight analysis derived from commerce evaluation`,
+                evidence: JSON.stringify({ ...result.evidence, derived: true }),
+                timestamp: new Date().toISOString()
+              })
+            }
           }
         }
       }
@@ -876,17 +889,17 @@ export class ADIService {
    */
   private mapAgentToDimension(agentName: string): string | null {
     const agentToDimensionMap: Record<string, string> = {
-      'crawl_agent': 'technical_foundation',
-      'schema_agent': 'schema_structured_data',
-      'llm_test_agent': 'llm_readability',
-      'semantic_agent': 'semantic_clarity',
-      'knowledge_graph_agent': 'knowledge_graphs',
-      'conversational_copy_agent': 'conversational_copy',
-      'geo_visibility_agent': 'geo_visibility',
-      'citation_agent': 'citation_strength',
-      'sentiment_agent': 'sentiment_trust',
-      'brand_heritage_agent': 'answer_quality',
-      'commerce_agent': 'hero_products'
+      'crawl_agent': 'policies_logistics', // Maps to infrastructure pillar
+      'schema_agent': 'schema_structured_data', // Infrastructure pillar
+      'llm_test_agent': 'llm_readability', // Additional infrastructure
+      'semantic_agent': 'semantic_clarity', // Infrastructure pillar
+      'knowledge_graph_agent': 'knowledge_graphs', // Infrastructure pillar
+      'conversational_copy_agent': 'conversational_copy', // Additional infrastructure
+      'geo_visibility_agent': 'geo_visibility', // Perception pillar
+      'citation_agent': 'citation_strength', // Perception pillar
+      'sentiment_agent': 'sentiment_trust', // Perception pillar
+      'brand_heritage_agent': 'answer_quality', // Perception pillar
+      'commerce_agent': 'hero_products' // Commerce pillar
     }
     
     return agentToDimensionMap[agentName] || null
