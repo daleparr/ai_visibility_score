@@ -3,6 +3,7 @@ import { PerformanceOptimizedADIOrchestrator } from './performance-optimized-orc
 import { ADIScoringEngine } from './scoring'
 import { ADIBenchmarkingEngine } from './benchmarking-engine'
 import { BulletproofCrawlAgent } from './agents/bulletproof-crawl-agent'
+import { HybridCrawlAgent } from './agents/hybrid-crawl-agent'
 import { BulletproofLLMTestAgent } from './agents/bulletproof-llm-test-agent'
 import { BulletproofSchemaAgent } from './agents/bulletproof-schema-agent'
 import { SemanticAgent } from './agents/semantic-agent'
@@ -47,7 +48,7 @@ export class ADIService {
     console.log('Initializing ADI Service...')
 
     // Register optimized agents for performance
-    this.orchestrator.registerAgent(new BulletproofCrawlAgent())
+    this.orchestrator.registerAgent(new HybridCrawlAgent())
     this.orchestrator.registerAgent(new BulletproofLLMTestAgent())
     this.orchestrator.registerAgent(new BulletproofSchemaAgent())
     this.orchestrator.registerAgent(new SemanticAgent())

@@ -64,6 +64,30 @@ interface EvaluationData {
   }>
   analysisMethod?: string
   upgradeMessage?: string
+  executiveSummary?: {
+    verdict?: string
+    strongest?: string
+    weakest?: string
+    opportunity?: string
+    keyInsight?: string
+    businessImpacts?: {
+      customerDiscovery?: string
+      brandPerception?: string
+      salesConversion?: string
+      competitivePosition?: string
+    }
+    actionableInsights?: Array<{
+      title: string
+      score: number
+      currentState: string
+      businessImpact: string
+      opportunity: string
+      actionRequired: string
+      timeframe: string
+      difficulty: string
+      potentialGain: string
+    }>
+  }
   // Professional tier features
   channelInsights?: Array<{
     channel: string
@@ -131,94 +155,78 @@ export default function EvaluatePage() {
     try {
       console.log('Starting technical report generation...', evaluationData)
 
+      // Generate merchant-focused executive snapshot report
+      const brandName = evaluationData.url?.replace(/^https?:\/\/(www\.)?/, '').split('.')[0] || 'Your Brand'
+      const grade = evaluationData.overallScore >= 80 ? 'A' : evaluationData.overallScore >= 70 ? 'B+' : evaluationData.overallScore >= 60 ? 'B' : evaluationData.overallScore >= 50 ? 'C+' : evaluationData.overallScore >= 40 ? 'C' : evaluationData.overallScore >= 30 ? 'D' : 'F'
+      
       const reportContent = `
-# AI Visibility Technical Report
-## ${evaluationData.url}
+EXECUTIVE SNAPSHOT
+Brand: ${brandName.charAt(0).toUpperCase() + brandName.slice(1)}
+Category: ${evaluationData.brandCategory || 'Multi-Category Business'}
+Date: ${new Date().toLocaleDateString('en-GB')}
 
-**Generated:** ${new Date().toLocaleString()}
-**Analysis Tier:** ${evaluationData.tier.toUpperCase()}
-**Overall AIDI Score:** ${evaluationData.overallScore || 0}/100
+🎯 Overall AI Visibility Score: ${evaluationData.overallScore || 0}/100 – Grade: ${grade}
+Verdict: ${evaluationData.executiveSummary?.verdict || 'Analysis completed - review detailed findings below.'}
 
-## Executive Summary
-${evaluationData.tier === 'index-pro' ? 'Index Pro frontier model consensus analysis across GPT-4 Turbo, Claude 3.5 Sonnet, Perplexity Pro, and Gemini Pro 1.5' : 'Standard GPT-4 analysis'} conducted on ${evaluationData.url}.
-Overall AI Discoverability Index (AIDI) score of ${evaluationData.overallScore || 0}/100 indicates ${(evaluationData.overallScore || 0) >= 80 ? 'strong' : (evaluationData.overallScore || 0) >= 60 ? 'moderate' : 'weak'} AI visibility.
+Infrastructure & Machine Readability
+${evaluationData.executiveSummary?.businessImpacts?.customerDiscovery || 'AI systems can discover and understand your brand with moderate effectiveness.'}
 
-## Pillar Breakdown
-### 🏗️ Infrastructure & Machine Readability: ${evaluationData.pillarScores?.infrastructure || 'N/A'}/100
-How easily AI can parse and understand your brand's digital footprint.
+Perception & Reputation  
+${evaluationData.executiveSummary?.businessImpacts?.brandPerception || 'Your brand reputation in AI systems shows room for improvement.'}
 
-### 🎯 Perception & Reputation: ${evaluationData.pillarScores?.perception || 'N/A'}/100
-How well AI understands your brand matters and positioning.
+Commerce & Transaction Clarity
+${evaluationData.executiveSummary?.businessImpacts?.salesConversion || 'AI can provide basic transaction information but lacks detail for optimal conversion.'}
 
-### 🛒 Commerce & Transaction Clarity: ${evaluationData.pillarScores?.commerce || 'N/A'}/100
-How AI helps customers buy from you.
+📊 DIMENSION SCORES (Quick View)
+(⭐ = 20 points, ☆ = remainder)
 
-## Dimension Analysis
-${(evaluationData.dimensionScores || []).map(dim => `
-### ${dim.name}: ${dim.score || 'N/A'}/100
-**Pillar:** ${dim.pillar && typeof dim.pillar === 'string' ? dim.pillar.charAt(0).toUpperCase() + dim.pillar.slice(1) : 'Unknown'}
-**Description:** ${dim.description || 'No description available'}
-`).join('')}
+${(evaluationData.executiveSummary?.actionableInsights || []).slice(0, 8).map((insight, index) => {
+  const score = insight?.score || 0
+  const stars = Math.floor(score / 20)
+  const remainder = score % 20
+  const starDisplay = '⭐'.repeat(stars) + (remainder >= 10 ? '☆' : '')
+  
+  return `${index + 1}️⃣ ${insight?.title || 'Analysis Area'} – ${insight?.currentState || 'Assessment in progress'}
+Score: ${score}/100 | Rating: ${starDisplay}
+${insight?.businessImpact || 'Business impact assessment available'}
 
-## Priority Recommendations
-${(evaluationData.recommendations || []).map((rec, index) => `
-### ${index + 1}. ${rec.title} (${rec.priority.toUpperCase()} PRIORITY)
-**Current Score:** ${rec.score || 'N/A'}/100
-**Description:** ${rec.description}
-`).join('')}
+💡 Opportunity: ${insight?.opportunity || 'Optimization potential identified'}
+🔧 Action Required: ${insight?.actionRequired || 'Review recommendations'}
+⏱️ Timeline: ${insight?.timeframe || '2-4 weeks'} | Difficulty: ${insight?.difficulty || 'Medium'}
+📈 Potential Gain: ${insight?.potentialGain || '+10 points improvement'}
+`
+}).join('\n')}
 
-${evaluationData.tier === 'index-pro' ? `
-## AI Channel Performance Analysis
-${evaluationData.channelInsights?.map(channel => `
-### ${channel.channel}
-**Performance Score:** ${channel.score}/100 (${channel.performance})
-**Business Impact:** ${channel.businessImpact}
-**Improvement Opportunities:** ${channel.opportunities.join(', ')} (+${channel.improvementPotential} points potential)
-**Recommendation:** ${channel.recommendation}
-`).join('') || ''}
+✅ Strongest Area: ${evaluationData.executiveSummary?.strongest || 'Analysis in progress'}
+⚠️ Weakest Area: ${evaluationData.executiveSummary?.weakest || 'Analysis in progress'}
 
-## Industry Benchmarks
-${evaluationData.industryBenchmarks ? `
-**Industry:** ${evaluationData.industryBenchmarks.industry}
-**Your Rank:** #${evaluationData.industryBenchmarks.yourRank} of ${evaluationData.industryBenchmarks.totalCompanies}
-**Percentile:** ${evaluationData.industryBenchmarks.percentile}th percentile
-**Industry Median:** ${evaluationData.industryBenchmarks.industryMedian || 'N/A'}/100
-**Top Performer:** ${evaluationData.industryBenchmarks.topPerformer || 'N/A'}/100
-` : ''}
+🚀 Biggest Opportunity: ${evaluationData.executiveSummary?.opportunity || 'Continue monitoring and optimization'}
 
-## Certification Status
-${evaluationData.certification ? `
-**Level:** ${evaluationData.certification.level}
-**Badge:** ${evaluationData.certification.badge}
-**Valid Until:** ${evaluationData.certification.validUntil}
-**Achievements:** ${evaluationData.certification.achievements.join(', ')}
-` : 'No certification achieved'}
-` : ''}
+🚦 QUICK ACTIONS
+Priority 1 – Immediate (${evaluationData.executiveSummary?.actionableInsights?.[0]?.timeframe || '2 weeks'})
+Fix: ${evaluationData.executiveSummary?.actionableInsights?.[0]?.actionRequired || 'Review top priority recommendation'}
+Impact: ${evaluationData.executiveSummary?.actionableInsights?.[0]?.potentialGain || '+10 pts'}
 
-## Technical Implementation Notes
-- Analysis Method: ${evaluationData.analysisMethod || 'Standard AIDI Framework'}
-- AI Providers: ${evaluationData.aiProviders.join(', ')}
-- Default Model: ${evaluationData.defaultModel}
+Priority 2 – Short Term (${evaluationData.executiveSummary?.actionableInsights?.[1]?.timeframe || '30 days'})
+Fix: ${evaluationData.executiveSummary?.actionableInsights?.[1]?.actionRequired || 'Address secondary optimization'}
+Impact: ${evaluationData.executiveSummary?.actionableInsights?.[1]?.potentialGain || '+8 pts'}
 
-${evaluationData.tier === 'index-pro' && evaluationData.channelInsights ? `
-## AI Channel Performance Analysis
-${evaluationData.channelInsights.map(channel => `
-### ${channel.channel}
-**Performance Score:** ${channel.score}/100 (${channel.performance})
-**Business Impact:** ${channel.businessImpact}
-**Opportunities:** ${channel.opportunities.join(', ')} (+${channel.improvementPotential} points potential)
-**Recommendation:** ${channel.recommendation}
-`).join('')}` : ''}
+Priority 3 – Medium Term (${evaluationData.executiveSummary?.actionableInsights?.[2]?.timeframe || '90 days'})
+Fix: ${evaluationData.executiveSummary?.actionableInsights?.[2]?.actionRequired || 'Implement strategic improvements'}
+Impact: ${evaluationData.executiveSummary?.actionableInsights?.[2]?.potentialGain || '+12 pts'}
 
-## Next Steps
-1. Review priority recommendations above
-2. Download implementation guides for each dimension
-3. Monitor score improvements over time
-4. Consider upgrading to Professional tier for multi-model analysis
+📝 BOTTOM LINE
+Current State: ${evaluationData.executiveSummary?.businessImpacts?.competitivePosition || 'Competitive analysis in progress'}
+
+Opportunity: ${evaluationData.executiveSummary?.keyInsight || 'Focus on quick wins for immediate impact'}
+
+If You Do Nothing: Risk of losing market share to competitors who are optimizing for AI-driven customer discovery.
+
+Next Step Today: ${evaluationData.executiveSummary?.actionableInsights?.[0]?.actionRequired || 'Download implementation guide and begin optimization'}
 
 ---
-*Report generated by AI Discoverability Index*
-*For technical support: support@ai-discoverability-index.com*
+Generated by AI Discoverability Index Platform
+${new Date().toLocaleString()}
     `.trim()
 
       // Create and download the report as PDF
@@ -231,7 +239,7 @@ ${evaluationData.channelInsights.map(channel => `
       
       // Add title
       pdf.setFontSize(20)
-      pdf.text('AI Visibility Technical Report', 20, 30)
+      pdf.text('EXECUTIVE SNAPSHOT', 20, 30)
       
       // Add content (simplified for PDF format)
       pdf.setFontSize(12)
