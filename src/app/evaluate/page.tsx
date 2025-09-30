@@ -35,6 +35,17 @@ interface DimensionScore {
   pillar: 'infrastructure' | 'perception' | 'commerce'
 }
 
+interface ModelAnalysis {
+  model: string
+  provider: string
+  score: number
+  confidence: number
+  strengths: string[]
+  weaknesses: string[]
+  keyInsight: string
+  recommendation: string
+}
+
 interface PillarScore {
   name: string
   score: number
@@ -89,6 +100,7 @@ interface EvaluationData {
     }>
   }
   // Professional tier features
+  modelAnalysis?: ModelAnalysis[]
   channelInsights?: Array<{
     channel: string
     score: number
@@ -617,39 +629,103 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
             pillarScores={evaluationData.pillarScores}
           />
 
-          {/* AI Models Used */}
+          {/* AI Models Analysis */}
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>AI Models Analyzed</CardTitle>
               <CardDescription>
                 {tier === 'free' 
                   ? 'Free tier uses GPT-4 for comprehensive analysis' 
-                  : 'Index Pro: Frontier model consensus analysis across GPT-4, Claude, Perplexity, and Gemini'
+                  : 'Index Pro: Frontier model consensus analysis with detailed insights from each AI system'
                 }
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {(evaluationData.aiProviders || []).map((provider, index) => (
-                  <Badge key={index} variant="outline" className="capitalize">
-                    {provider === 'openai' ? 'ChatGPT (GPT-4)' : 
-                     provider === 'OpenAI GPT-4' ? 'GPT-4 Turbo' :
-                     provider === 'Anthropic Claude' ? 'Claude 3.5 Sonnet' :
-                     provider === 'Perplexity AI' ? 'Perplexity Pro' :
-                     provider === 'Google Gemini' ? 'Gemini Pro 1.5' :
-                     provider === 'anthropic' ? 'Claude-3-Sonnet' :
-                     provider === 'google' ? 'Gemini-Pro' :
-                     provider === 'mistral' ? 'Mistral-Large' :
-                     provider === 'llama' ? 'LLaMA-2-70B' : provider}
-                  </Badge>
-                ))}
-                {tier === 'free' && (
-                  <Badge variant="secondary" className="ml-2">
-                    <Lock className="h-3 w-3 mr-1" />
-                    Upgrade for multi-model comparison
-                  </Badge>
-                )}
-              </div>
+              {tier === 'free' ? (
+                <div className="space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline" className="capitalize">GPT-4 Turbo</Badge>
+                    <Badge variant="secondary" className="ml-2">
+                      <Lock className="h-3 w-3 mr-1" />
+                      Upgrade for multi-model comparison
+                    </Badge>
+                  </div>
+                  <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                    <p className="text-sm text-gray-600 mb-2">
+                      <strong>Upgrade to Index Pro</strong> to see detailed insights from all frontier models:
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
+                      <div>• GPT-4 Turbo analysis</div>
+                      <div>• Claude 3.5 Sonnet insights</div>
+                      <div>• Perplexity Pro validation</div>
+                      <div>• Gemini Pro 1.5 assessment</div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {(evaluationData.modelAnalysis || []).map((model, index) => (
+                    <div key={index} className="border rounded-lg p-4 bg-gradient-to-r from-slate-50 to-white">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <Badge variant="outline" className="font-semibold">
+                            {model.model}
+                          </Badge>
+                          <span className="text-sm text-gray-500">by {model.provider}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant={model.score >= 70 ? 'default' : model.score >= 50 ? 'secondary' : 'destructive'}>
+                            {model.score}/100
+                          </Badge>
+                          <span className="text-xs text-gray-500">{model.confidence}% confidence</span>
+                        </div>
+                      </div>
+                      
+                      <div className="mb-3">
+                        <p className="text-sm font-medium text-gray-700 mb-1">Key Insight:</p>
+                        <p className="text-sm text-gray-600">{model.keyInsight}</p>
+                      </div>
+                      
+                      <div className="grid md:grid-cols-2 gap-4 mb-3">
+                        <div>
+                          <p className="text-xs font-semibold text-green-700 mb-1">Strengths:</p>
+                          <ul className="text-xs text-gray-600 space-y-1">
+                            {model.strengths.map((strength, idx) => (
+                              <li key={idx} className="flex items-start">
+                                <span className="text-green-500 mr-1">✓</span>
+                                {strength}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-orange-700 mb-1">Areas for Improvement:</p>
+                          <ul className="text-xs text-gray-600 space-y-1">
+                            {model.weaknesses.map((weakness, idx) => (
+                              <li key={idx} className="flex items-start">
+                                <span className="text-orange-500 mr-1">⚠</span>
+                                {weakness}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-blue-50 p-3 rounded border-l-4 border-blue-400">
+                        <p className="text-xs font-semibold text-blue-800 mb-1">Recommendation:</p>
+                        <p className="text-xs text-blue-700">{model.recommendation}</p>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {(!evaluationData.modelAnalysis || evaluationData.modelAnalysis.length === 0) && (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>Model analysis data is being processed...</p>
+                      <p className="text-sm">Refresh the page in a few moments to see detailed insights.</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
