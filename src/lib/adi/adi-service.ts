@@ -724,35 +724,52 @@ export class ADIService {
         return isNaN(n) ? fb : n;
       };
 
-      // ✅ ADD NULL SAFETY:
-      if (orchestrationResult.artifacts?.crawl?.signals) {
-        const signals = orchestrationResult.artifacts.crawl.signals
+      // Extract data from agent results instead of artifacts
+      const crawlAgent = orchestrationResult?.agentResults?.crawl_agent
+      const schemaAgent = orchestrationResult?.agentResults?.schema_agent
+      
+      // 1. Crawl Site Signals - extract from crawl agent results
+      if (crawlAgent?.results?.[0]?.evidence) {
+        const evidence = crawlAgent.results[0].evidence
+        const signals = {
+          loadTimeMs: evidence.loadTimeMs || evidence.executionTime || 0,
+          isMobileFriendly: evidence.isMobileFriendly || false,
+          hasHttps: evidence.hasHttps || evidence.url?.startsWith('https://') || false,
+          hasRobotsTxt: evidence.hasRobotsTxt || false,
+          hasSitemapXml: evidence.hasSitemapXml || false,
+          viewportMeta: evidence.viewportMeta || '',
+          hasMetaDescription: evidence.hasMetaDescription || evidence.metaData?.description || false,
+          hasTitle: evidence.hasTitle || evidence.metaData?.title || false,
+          hasH1: evidence.hasH1 || false
+        }
+        
         await sql`
           INSERT INTO production.crawl_site_signals (
             evaluation_id, load_time_ms, is_mobile_friendly, has_https, has_robots_txt, has_sitemap_xml,
             viewport_meta, has_meta_description, has_title, has_h1
           ) VALUES (
-            ${evaluationId}, ${signals.loadTimeMs || 0}, ${Boolean(signals.isMobileFriendly)}, ${Boolean(signals.hasHttps)},
+            ${evaluationId}, ${signals.loadTimeMs}, ${Boolean(signals.isMobileFriendly)}, ${Boolean(signals.hasHttps)},
             ${Boolean(signals.hasRobotsTxt)}, ${Boolean(signals.hasSitemapXml)}, ${signals.viewportMeta},
             ${Boolean(signals.hasMetaDescription)}, ${Boolean(signals.hasTitle)}, ${Boolean(signals.hasH1)}
           )
           ON CONFLICT (evaluation_id) DO NOTHING;
         `;
+        console.log(`[DB_WRITE] Saved crawl_site_signals for ${evaluationId}`);
       } else {
         console.log(`[DB_WRITE_SKIP] No crawl signals found for ${evaluationId}`)
       }
 
-      // 2. Website Snapshots
-      if (orchestrationResult.artifacts?.crawl?.snapshot) {
-        const snapshot = orchestrationResult.artifacts.crawl.snapshot
+      // 2. Website Snapshots - extract from crawl agent results
+      if (crawlAgent?.results?.[0]?.evidence?.content) {
+        const evidence = crawlAgent.results[0].evidence
         // Truncate content to fit in text column
-        const truncatedContent = snapshot.content?.substring(0, 100000) ?? ''
+        const truncatedContent = evidence.content?.substring(0, 100000) ?? ''
 
         await sql`
           INSERT INTO production.website_snapshots (
             evaluation_id, url, html_content, screenshot_url, page_type
           ) VALUES (
-            ${evaluationId}, ${snapshot.url}, ${truncatedContent}, '', 'homepage'
+            ${evaluationId}, ${evidence.url || evidence.websiteUrl || ''}, ${truncatedContent}, '', 'homepage'
           )
           ON CONFLICT (evaluation_id, url) DO NOTHING;
         `
@@ -761,8 +778,11 @@ export class ADIService {
          console.log(`[DB_WRITE_SKIP] No crawl snapshot found for ${evaluationId}`)
       }
 
-      // 3. Evaluation Results (enriched)
-      if (orchestrationResult.artifacts.schema?.schemaOrg) {
+      // 3. Evaluation Results - extract from schema agent results
+      if (schemaAgent?.results?.[0]) {
+        const schemaResult = schemaAgent.results[0]
+        const crawlEvidence = crawlAgent?.results?.[0]?.evidence || {}
+        
         await sql`
           INSERT INTO production.evaluation_results (
               evaluation_id,
@@ -777,14 +797,14 @@ export class ADIService {
           )
           VALUES (
               ${evaluationId},
-              ${orchestrationResult.artifacts.schema?.schemaOrg?.detected ?? false},
-              ${orchestrationResult.artifacts.schema?.schemaOrg?.type ?? null},
-              ${orchestrationResult.artifacts.schema?.schemaOrg?.errors?.join(',') ?? null},
-              ${orchestrationResult.artifacts.crawl?.signals.hasMetaDescription ?? false},
-              ${orchestrationResult.artifacts.crawl?.signals.hasTitle ?? false},
-              ${orchestrationResult.artifacts.crawl?.signals.hasH1 ?? false},
-              ${orchestrationResult.artifacts.crawl?.signals.isMobileFriendly ?? false},
-              ${orchestrationResult.artifacts.crawl?.signals.loadTimeMs ?? 0}
+              ${schemaResult.normalizedScore > 0},
+              ${schemaResult.evidence?.schemaType || 'unknown'},
+              ${schemaResult.evidence?.errors?.join(',') || null},
+              ${Boolean(crawlEvidence.hasMetaDescription || crawlEvidence.metaData?.description)},
+              ${Boolean(crawlEvidence.hasTitle || crawlEvidence.metaData?.title)},
+              ${Boolean(crawlEvidence.hasH1)},
+              ${Boolean(crawlEvidence.isMobileFriendly)},
+              ${crawlEvidence.loadTimeMs || crawlEvidence.executionTime || 0}
           )
           ON CONFLICT (evaluation_id) DO NOTHING;
         `;
@@ -794,29 +814,50 @@ export class ADIService {
       }
 
 
-      // 4. Dimension Scores
-      if (orchestrationResult.scores) {
-        for (const score of orchestrationResult.scores) {
+      // 4. Dimension Scores - extract from agent results
+      const agentResults = orchestrationResult?.agentResults || {}
+      const dimensionScores = []
+      
+      // Map agent results to dimension scores
+      for (const [agentName, agentResult] of Object.entries(agentResults)) {
+        if ((agentResult as any)?.results?.[0]) {
+          const result = (agentResult as any).results[0]
+          const dimensionName = this.mapAgentToDimension(agentName)
+          
+          if (dimensionName) {
+            dimensionScores.push({
+              evaluationId,
+              dimensionName,
+              score: result.normalizedScore || 0,
+              confidence: result.confidenceLevel || 0,
+              explanation: result.evidence?.reasoning || `${agentName} evaluation completed`,
+              evidence: JSON.stringify(result.evidence || {}),
+              timestamp: new Date().toISOString()
+            })
+          }
+        }
+      }
+      
+      // Save dimension scores to database
+      for (const score of dimensionScores) {
             await sql`
                 INSERT INTO production.dimension_scores (
                     evaluation_id, dimension_name, score, explanation, recommendations
                 ) VALUES (
-                    ${evaluationId},
-                    ${score.dimension},
-                    ${num(score.score, 0)},
-                    ${score.explanation},
-                    ${JSON.stringify(score.recommendations)}
+                    ${evaluationId}, ${score.dimensionName}, ${score.score}, ${score.explanation}, ${score.evidence}
                 )
                 ON CONFLICT (evaluation_id, dimension_name) DO UPDATE SET
-                    score = ${num(score.score, 0)},
-                    explanation = ${score.explanation},
-                    recommendations = ${JSON.stringify(score.recommendations)};
+                    score = EXCLUDED.score,
+                    explanation = EXCLUDED.explanation,
+                    recommendations = EXCLUDED.recommendations;
             `;
         }
-        console.log(`[DB_WRITE] Saved ${orchestrationResult.scores.length} dimension_scores for ${evaluationId}`);
-      } else {
-         console.log(`[DB_WRITE_SKIP] No scores for ${evaluationId}`);
-      }
+        
+        if (dimensionScores.length > 0) {
+          console.log(`[DB_WRITE] Saved ${dimensionScores.length} dimension scores for ${evaluationId}`);
+        } else {
+          console.log(`[DB_WRITE_SKIP] No dimension scores to save for ${evaluationId}`);
+        }
 
 
     console.log(`[DB_WRITE_SUCCESS] Agent results saved for evaluation ${evaluationId}`)
@@ -825,6 +866,27 @@ export class ADIService {
       console.error(`[DB_WRITE_ERROR] Failed to save agent results for ${evaluationId}:`, error)
       // Do not re-throw, as we don't want to fail the entire evaluation
     }
+  }
+
+  /**
+   * Map agent names to dimension names for database storage
+   */
+  private mapAgentToDimension(agentName: string): string | null {
+    const agentToDimensionMap: Record<string, string> = {
+      'crawl_agent': 'technical_foundation',
+      'schema_agent': 'schema_structured_data',
+      'llm_test_agent': 'llm_readability',
+      'semantic_agent': 'semantic_clarity',
+      'knowledge_graph_agent': 'knowledge_graphs',
+      'conversational_copy_agent': 'conversational_copy',
+      'geo_visibility_agent': 'geo_visibility',
+      'citation_agent': 'citation_strength',
+      'sentiment_agent': 'sentiment_trust',
+      'brand_heritage_agent': 'answer_quality',
+      'commerce_agent': 'hero_products'
+    }
+    
+    return agentToDimensionMap[agentName] || null
   }
 
   // Legacy stubs for reference during migration
