@@ -133,36 +133,54 @@ export async function GET(
       const brandName = evaluation.brand_name || 'Unknown Brand'
       const websiteUrl = evaluation.website_url || 'unknown'
       
-      // ✅ MAP AGENTS TO BUSINESS-FRIENDLY DIMENSIONS
+      // ✅ MAP DIMENSION NAMES TO BUSINESS-FRIENDLY DIMENSIONS (Updated for new system)
       const agentFindings = {
-        crawl: scores.find((s: DimensionScore) => s.dimension_name === 'crawl_agent'),
-        citation: scores.find((s: DimensionScore) => s.dimension_name === 'citation_agent'),
-        sentiment: scores.find((s: DimensionScore) => s.dimension_name === 'sentiment_agent'),
-        semantic: scores.find((s: DimensionScore) => s.dimension_name === 'semantic_agent'),
-        commerce: scores.find((s: DimensionScore) => s.dimension_name === 'commerce_agent'),
-        conversational: scores.find((s: DimensionScore) => s.dimension_name === 'conversational_copy_agent'),
-        geo: scores.find((s: DimensionScore) => s.dimension_name === 'geo_visibility_agent'),
-        llm: scores.find((s: DimensionScore) => s.dimension_name === 'llm_test_agent'),
-        heritage: scores.find((s: DimensionScore) => s.dimension_name === 'brand_heritage_agent'),
-        knowledge: scores.find((s: DimensionScore) => s.dimension_name === 'knowledge_graph_agent')
+        crawl: scores.find((s: DimensionScore) => s.dimension_name === 'policies_logistics'),
+        citation: scores.find((s: DimensionScore) => s.dimension_name === 'citation_strength'),
+        sentiment: scores.find((s: DimensionScore) => s.dimension_name === 'sentiment_trust'),
+        semantic: scores.find((s: DimensionScore) => s.dimension_name === 'semantic_clarity'),
+        commerce: scores.find((s: DimensionScore) => s.dimension_name === 'hero_products'),
+        conversational: scores.find((s: DimensionScore) => s.dimension_name === 'conversational_copy'),
+        geo: scores.find((s: DimensionScore) => s.dimension_name === 'geo_visibility'),
+        llm: scores.find((s: DimensionScore) => s.dimension_name === 'llm_readability'),
+        heritage: scores.find((s: DimensionScore) => s.dimension_name === 'answer_quality'),
+        knowledge: scores.find((s: DimensionScore) => s.dimension_name === 'knowledge_graphs'),
+        schema: scores.find((s: DimensionScore) => s.dimension_name === 'schema_structured_data'),
+        shipping: scores.find((s: DimensionScore) => s.dimension_name === 'shipping_freight')
       }
 
       // ✅ DETAILED DIMENSION ANALYSIS (Fixed null safety)
       const dimensionAnalysis = [
         {
-          name: "Technical Foundation",
+          name: "Schema & Structured Data",
+          score: agentFindings.schema?.score || 0,
+          analysis: (() => {
+            const schemaScore = agentFindings.schema?.score || 0;
+            if (schemaScore >= 80) {
+              return `Excellent structured data implementation (${schemaScore}/100). AI systems can easily understand your content structure.`;
+            } else if (schemaScore >= 60) {
+              return `Good structured data foundation (${schemaScore}/100) with some optimization opportunities.`;
+            } else {
+              return `Poor structured data implementation (${schemaScore}/100). Critical barriers prevent AI from understanding your content.`;
+            }
+          })(),
+          findings: agentFindings.schema?.explanation || "Schema and structured data analysis completed",
+          priority: (agentFindings.schema?.score || 0) < 60 ? "high" : "medium"
+        },
+        {
+          name: "Policies & Logistics",
           score: agentFindings.crawl?.score || 0,
           analysis: (() => {
             const crawlScore = agentFindings.crawl?.score || 0;
             if (crawlScore >= 80) {
-              return `Excellent technical infrastructure (${crawlScore}/100). AI systems can easily access and parse your website content.`;
+              return `Excellent policies and logistics clarity (${crawlScore}/100). AI systems can easily access your policy information.`;
             } else if (crawlScore >= 60) {
-              return `Good technical foundation (${crawlScore}/100) with some optimization opportunities.`;
+              return `Good policy foundation (${crawlScore}/100) with some optimization opportunities.`;
             } else {
-              return `Poor technical accessibility (${crawlScore}/100). Critical barriers prevent AI from effectively crawling your site.`;
+              return `Poor policy accessibility (${crawlScore}/100). Critical barriers prevent AI from understanding your policies.`;
             }
           })(),
-          findings: agentFindings.crawl?.explanation || "Technical crawlability analysis completed",
+          findings: agentFindings.crawl?.explanation || "Policies and logistics analysis completed",
           priority: (agentFindings.crawl?.score || 0) < 60 ? "high" : "medium"
         },
         {
@@ -244,6 +262,38 @@ export async function GET(
           })(),
           findings: agentFindings.conversational?.explanation || "Conversational AI readiness analysis completed",
           priority: (agentFindings.conversational?.score || 0) < 40 ? "high" : "medium"
+        },
+        {
+          name: "Hero Products",
+          score: agentFindings.commerce?.score || 0,
+          analysis: (() => {
+            const commerceScore = agentFindings.commerce?.score || 0;
+            if (commerceScore >= 70) {
+              return `Excellent product presentation (${commerceScore}/100). AI can effectively recommend your key products.`;
+            } else if (commerceScore >= 50) {
+              return `Good product visibility (${commerceScore}/100) with some optimization opportunities.`;
+            } else {
+              return `Poor product clarity (${commerceScore}/100). AI struggles to understand and recommend your products.`;
+            }
+          })(),
+          findings: agentFindings.commerce?.explanation || "Hero products analysis completed",
+          priority: (agentFindings.commerce?.score || 0) < 50 ? "high" : "medium"
+        },
+        {
+          name: "Shipping & Freight",
+          score: agentFindings.shipping?.score || 0,
+          analysis: (() => {
+            const shippingScore = agentFindings.shipping?.score || 0;
+            if (shippingScore >= 70) {
+              return `Clear shipping information (${shippingScore}/100). AI can provide accurate shipping details to customers.`;
+            } else if (shippingScore >= 50) {
+              return `Basic shipping clarity (${shippingScore}/100) with room for improvement.`;
+            } else {
+              return `Poor shipping transparency (${shippingScore}/100). AI cannot provide clear shipping information.`;
+            }
+          })(),
+          findings: agentFindings.shipping?.explanation || "Shipping and freight analysis completed",
+          priority: (agentFindings.shipping?.score || 0) < 50 ? "medium" : "low"
         }
       ].sort((a, b) => b.score - a.score)
 
@@ -339,6 +389,7 @@ export async function GET(
         dimensionAnalysis,
         priorityActions: priorityActions.slice(0, 3), // Top 3 priorities
         executiveSummary,
+        agentFindings, // Pass agentFindings through insights
         technicalFindings: {
           hasMetaDescription: evalData.has_meta_description || false,
           hasTitle: evalData.has_title || false,
@@ -379,11 +430,26 @@ export async function GET(
         // Technical Findings
         technicalFindings: insights.technicalFindings,
         
-        // Legacy format for compatibility
+        // Calculate pillar scores from actual dimension scores
         pillarScores: {
-          infrastructure: insights.dimensionAnalysis.find(d => d.name.includes('Technical'))?.score || 0,
-          perception: insights.dimensionAnalysis.find(d => d.name.includes('Authority'))?.score || 0,
-          commerce: insights.dimensionAnalysis.find(d => d.name.includes('Conversational'))?.score || 0
+          infrastructure: Math.round(
+            ((insights.agentFindings.crawl?.score || 0) + 
+             (insights.agentFindings.schema?.score || 0) + 
+             (insights.agentFindings.semantic?.score || 0) + 
+             (insights.agentFindings.knowledge?.score || 0) + 
+             (insights.agentFindings.llm?.score || 0) + 
+             (insights.agentFindings.conversational?.score || 0)) / 6
+          ),
+          perception: Math.round(
+            ((insights.agentFindings.geo?.score || 0) + 
+             (insights.agentFindings.citation?.score || 0) + 
+             (insights.agentFindings.heritage?.score || 0) + 
+             (insights.agentFindings.sentiment?.score || 0)) / 4
+          ),
+          commerce: Math.round(
+            ((insights.agentFindings.commerce?.score || 0) + 
+             (insights.agentFindings.shipping?.score || 0)) / 2
+          )
         },
         
         dimensionScores: insights.dimensionAnalysis.map(d => ({
