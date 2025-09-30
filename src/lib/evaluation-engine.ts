@@ -22,6 +22,7 @@ import type { EvaluationResult, AIProviderName } from '@/lib/ai-providers'
 import { SelectiveFetchAgent } from './adapters/selective-fetch-agent'
 import { ProbeHarness } from './adi/probe-harness'
 import { coreProbes } from './adi/probes'
+import { enhancedProbes } from './adi/enhanced-probes'
 import { mapProbesToDimensionScores } from './adi/score-adapter'
 import { createPageBlob, createProbeRun } from './database'
 export const DEBUG_VERSION = "v1.0.0-final-fix";
@@ -565,6 +566,76 @@ export class EvaluationEngine {
         // Do not throw, allow evaluation to continue without the playbook.
         return null;
     }
+  }
+
+  /**
+   * Run enhanced probes with Hybrid Crawl Agent data integration
+   * This method leverages the rich business intelligence from the Hybrid Crawl Agent
+   * to provide sophisticated AI analysis with competitive benchmarking
+   */
+  async runEnhancedProbesWithOrchestrator(
+    brand: Brand, 
+    orchestrationResult: any, 
+    fetchedPages: any[]
+  ): Promise<any[]> {
+    console.log(`🚀 [Enhanced Probes] Starting enhanced probe analysis for ${brand.name}`);
+    
+    // Extract Hybrid Crawl Agent data from orchestration results
+    const crawlAgentResult = orchestrationResult?.agentResults?.crawl_agent;
+    const hybridCrawlData = crawlAgentResult?.results?.[0]?.evidence || {};
+    
+    console.log(`🔍 [Enhanced Probes] Hybrid crawl data available:`, {
+      hasLightCrawl: !!hybridCrawlData.lightCrawl,
+      braveResults: hybridCrawlData.braveResults?.length || 0,
+      googleResults: hybridCrawlData.googleResults?.length || 0,
+      hasBusinessInfo: !!hybridCrawlData.businessInfo,
+      hasReputationAnalysis: !!hybridCrawlData.reputationAnalysis
+    });
+
+    // Prepare enhanced probe context with Hybrid Crawl data
+    const enhancedProbeContext = {
+      brand,
+      fetchedPages,
+      hybridCrawlData: {
+        lightCrawl: hybridCrawlData.lightCrawl,
+        braveResults: hybridCrawlData.braveResults || [],
+        googleResults: hybridCrawlData.googleResults || [],
+        businessInfo: hybridCrawlData.businessInfo || {},
+        reputationAnalysis: hybridCrawlData.reputationAnalysis || {},
+        searchQueries: hybridCrawlData.searchQueries || {},
+        qualityScore: hybridCrawlData.qualityScore || 0,
+        executionTime: hybridCrawlData.executionTime || 0
+      }
+    };
+
+    // Convert AI clients to record format
+    const aiClientsRecord: Partial<Record<AIProviderName, AIProviderClient>> = {};
+    for (const [providerName, client] of this.aiClients.entries()) {
+      aiClientsRecord[providerName] = client;
+    }
+
+    console.log(`🤖 [Enhanced Probes] Initializing with ${Object.keys(aiClientsRecord).length} AI providers`);
+
+    // Run enhanced probes
+    const enhancedProbeHarness = new ProbeHarness(enhancedProbes, aiClientsRecord);
+    
+    console.log(`🔍 [Enhanced Probes] Running ${enhancedProbes.length} enhanced probes...`);
+    const enhancedProbeResults = await enhancedProbeHarness.run(enhancedProbeContext);
+    
+    console.log(`✅ [Enhanced Probes] Completed ${enhancedProbeResults.length} enhanced probe results`);
+    
+    // Log enhanced insights for debugging
+    enhancedProbeResults.forEach(result => {
+      console.log(`📊 [Enhanced Probe Result] ${result.probeName}:`, {
+        wasValid: result.wasValid,
+        confidence: result.confidence,
+        outputPreview: typeof result.output === 'object' 
+          ? Object.keys(result.output || {}).join(', ')
+          : String(result.output).substring(0, 100)
+      });
+    });
+
+    return enhancedProbeResults;
   }
 }
 

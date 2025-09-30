@@ -15,6 +15,16 @@ export interface Probe {
 export interface ProbeContext {
     brand: Brand;
     fetchedPages: PageFetchResult[];
+    hybridCrawlData?: {
+        lightCrawl?: any;
+        braveResults?: any[];
+        googleResults?: any[];
+        businessInfo?: any;
+        reputationAnalysis?: any;
+        searchQueries?: any;
+        qualityScore?: number;
+        executionTime?: number;
+    };
     // Add other context as needed, e.g., KG results
 }
 
