@@ -63,7 +63,10 @@ export function PriorityActionCard({
   }
 
   const generateTechnicalGuide = async () => {
-    const guideContent = `
+    try {
+      console.log('Starting implementation guide generation...', { recommendation, dimensionName })
+
+      const guideContent = `
 # Technical Implementation Guide
 ## ${recommendation.title}
 
@@ -103,8 +106,10 @@ ${implementationSteps.map((step, index) => `${index + 1}. ${step}`).join('\n')}
 Generated on: ${new Date().toLocaleString()}
     `.trim()
 
-    // Create and download the enhanced guide as PDF
-    const { jsPDF } = await import('jspdf')
+      // Create and download the enhanced guide as PDF
+      console.log('Importing jsPDF for implementation guide...')
+      const { jsPDF } = await import('jspdf')
+      console.log('jsPDF imported successfully for implementation guide')
     const pdf = new jsPDF()
     
     // Colors
@@ -242,8 +247,19 @@ Generated on: ${new Date().toLocaleString()}
     pdf.text(`Generated on: ${new Date().toLocaleString()}`, 20, 280)
     pdf.text('AI Discoverability Index', 150, 280)
     
-    // Download PDF
-    pdf.save(`${recommendation.title.replace(/[^a-zA-Z0-9]/g, '_')}_Implementation_Guide.pdf`)
+      // Download PDF
+      const filename = `${recommendation.title.replace(/[^a-zA-Z0-9]/g, '_')}_Implementation_Guide.pdf`
+      console.log('Downloading implementation guide PDF:', filename)
+      pdf.save(filename)
+      console.log('Implementation guide PDF download initiated successfully')
+      
+      // Show success message
+      alert('Implementation guide downloaded successfully!')
+      
+    } catch (error) {
+      console.error('Error generating implementation guide:', error)
+      alert(`Failed to generate implementation guide: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
   }
 
   const getEffortDescription = (effort: string) => {

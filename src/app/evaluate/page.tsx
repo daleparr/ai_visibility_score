@@ -122,9 +122,16 @@ export default function EvaluatePage() {
   const [performanceProfile, setPerformanceProfile] = useState<AIDIPerformanceProfile | null>(null)
 
   const generateTechnicalReport = async () => {
-    if (!evaluationData) return
+    if (!evaluationData) {
+      console.error('No evaluation data available for report generation')
+      alert('No evaluation data available. Please run an evaluation first.')
+      return
+    }
 
-    const reportContent = `
+    try {
+      console.log('Starting technical report generation...', evaluationData)
+
+      const reportContent = `
 # AI Visibility Technical Report
 ## ${evaluationData.url}
 
@@ -205,35 +212,54 @@ ${evaluationData.certification ? `
 *For technical support: support@ai-discoverability-index.com*
     `.trim()
 
-    // Create and download the report as PDF
-    const { jsPDF } = await import('jspdf')
-    const pdf = new jsPDF()
-    
-    // Add title
-    pdf.setFontSize(20)
-    pdf.text('AI Visibility Technical Report', 20, 30)
-    
-    // Add content (simplified for PDF format)
-    pdf.setFontSize(12)
-    const lines = reportContent.split('\n').filter(line => line.trim())
-    let yPosition = 50
-    
-    lines.forEach((line, index) => {
-      if (yPosition > 270) { // Start new page if needed
-        pdf.addPage()
-        yPosition = 30
-      }
+      // Create and download the report as PDF
+      console.log('Importing jsPDF...')
+      const { jsPDF } = await import('jspdf')
+      console.log('jsPDF imported successfully')
       
-      // Remove markdown formatting for PDF
-      const cleanLine = line.replace(/[#*`]/g, '').trim()
-      if (cleanLine) {
-        pdf.text(cleanLine, 20, yPosition)
-        yPosition += 7
-      }
-    })
-    
-    // Download PDF
-    pdf.save(`AI_Visibility_Technical_Report_${evaluationData.url.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`)
+      const pdf = new jsPDF()
+      console.log('PDF instance created')
+      
+      // Add title
+      pdf.setFontSize(20)
+      pdf.text('AI Visibility Technical Report', 20, 30)
+      
+      // Add content (simplified for PDF format)
+      pdf.setFontSize(12)
+      const lines = reportContent.split('\n').filter(line => line.trim())
+      let yPosition = 50
+      
+      lines.forEach((line, index) => {
+        if (yPosition > 270) { // Start new page if needed
+          pdf.addPage()
+          yPosition = 30
+        }
+        
+        // Remove markdown formatting for PDF
+        const cleanLine = line.replace(/[#*`]/g, '').trim()
+        if (cleanLine) {
+          // Ensure text fits within page width
+          const splitText = pdf.splitTextToSize(cleanLine, 170)
+          pdf.text(splitText, 20, yPosition)
+          yPosition += Array.isArray(splitText) ? splitText.length * 7 : 7
+        }
+      })
+      
+      // Generate filename
+      const filename = `AI_Visibility_Technical_Report_${evaluationData.url.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+      console.log('Downloading PDF:', filename)
+      
+      // Download PDF
+      pdf.save(filename)
+      console.log('PDF download initiated successfully')
+      
+      // Show success message
+      alert('Technical report downloaded successfully!')
+      
+    } catch (error) {
+      console.error('Error generating technical report:', error)
+      alert(`Failed to generate technical report: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
 
     // Log evaluation for backend tracking
     logEvaluationForAdmin(evaluationData)
