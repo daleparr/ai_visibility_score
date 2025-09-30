@@ -45,6 +45,11 @@ export async function searchWithGoogleCSE(query: string): Promise<NormalizedSear
     return [];
   }
 
+  // Temporary fix: Disable Google CSE due to configuration issues
+  // The current API key and CSE ID appear to be swapped or incorrect
+  console.log('⚠️ [GoogleCSE] Temporarily disabled due to configuration issues');
+  return [];
+
   const endpoint = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}`;
 
   try {

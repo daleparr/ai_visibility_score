@@ -794,6 +794,11 @@ export class ADIService {
           await sql`
             INSERT INTO production.evaluation_results (
                 evaluation_id,
+                provider_name,
+                test_type,
+                prompt_used,
+                response_received,
+                score_contribution,
                 has_schema,
                 schema_type,
                 schema_errors,
@@ -805,6 +810,11 @@ export class ADIService {
             )
             VALUES (
                 ${evaluationId},
+                ${'hybrid_crawl_agent'},
+                ${'schema_analysis'},
+                ${'Schema detection and structured data analysis'},
+                ${JSON.stringify(schemaResult.evidence || {})},
+                ${schemaResult.normalizedScore || 0},
                 ${schemaResult.normalizedScore > 0},
                 ${schemaResult.evidence?.schemaType || 'unknown'},
                 ${schemaResult.evidence?.errors?.join(',') || null},
