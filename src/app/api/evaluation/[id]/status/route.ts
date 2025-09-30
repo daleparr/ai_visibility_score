@@ -480,15 +480,27 @@ export async function GET(
           businessImpact: action.businessImpact
         })),
         
-        aiProviders: new URL(request.url).searchParams.get('tier') === 'index-pro' 
-          ? ['OpenAI GPT-4', 'Anthropic Claude', 'Perplexity AI', 'Google Gemini'] 
-          : ['OpenAI GPT-4'],
-        defaultModel: new URL(request.url).searchParams.get('tier') === 'index-pro' 
-          ? 'Multi-Frontier Model Ensemble' 
-          : 'GPT-4',
-        analysisMethod: new URL(request.url).searchParams.get('tier') === 'index-pro' 
-          ? 'Frontier Model Consensus Analysis across GPT-4, Claude, Perplexity, and Gemini' 
-          : 'Standard GPT-4 analysis',
+        aiProviders: (() => {
+          const tier = new URL(request.url).searchParams.get('tier') || 'free'
+          if (tier === 'enterprise' || tier === 'index-pro') {
+            return ['OpenAI GPT-4', 'Anthropic Claude', 'Perplexity AI', 'Google Gemini']
+          }
+          return ['OpenAI GPT-4']
+        })(),
+        defaultModel: (() => {
+          const tier = new URL(request.url).searchParams.get('tier') || 'free'
+          if (tier === 'enterprise' || tier === 'index-pro') {
+            return 'Multi-Frontier Model Ensemble'
+          }
+          return 'GPT-4'
+        })(),
+        analysisMethod: (() => {
+          const tier = new URL(request.url).searchParams.get('tier') || 'free'
+          if (tier === 'enterprise' || tier === 'index-pro') {
+            return 'Frontier Model Consensus Analysis across GPT-4, Claude, Perplexity, and Gemini'
+          }
+          return 'Standard GPT-4 analysis'
+        })(),
         
         insights: {
           strongest: insights.executiveSummary.strongest,
@@ -498,8 +510,8 @@ export async function GET(
           keyInsight: insights.executiveSummary.keyInsight
         },
         
-        // ✅ Index Pro specific features - Business Channel Insights
-        ...(new URL(request.url).searchParams.get('tier') === 'index-pro' && {
+        // ✅ Index Pro & Enterprise specific features - Business Channel Insights
+        ...((new URL(request.url).searchParams.get('tier') === 'index-pro' || new URL(request.url).searchParams.get('tier') === 'enterprise') && {
           channelInsights: [
             {
               channel: 'Google Search & Featured Snippets',

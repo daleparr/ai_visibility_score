@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { ArrowRight, Brain, Search, BarChart3, Zap, Shield, TrendingUp, Download, Lock, Star, Trophy, Globe } from 'lucide-react'
+import { ArrowRight, Brain, Search, BarChart3, Zap, Shield, TrendingUp, Download, Lock, Star, Trophy, Globe, Crown, FileText } from 'lucide-react'
 import Link from 'next/link'
 import { ExecutiveSummary } from '@/components/adi/reporting/ExecutiveSummary'
 import { UserFriendlyDimensionCard } from '@/components/adi/reporting/UserFriendlyDimensionCard'
@@ -153,129 +153,234 @@ export default function EvaluatePage() {
     }
 
     try {
-      console.log('Starting technical report generation...', evaluationData)
+      console.log('Starting executive snapshot generation...', evaluationData)
 
-      // Generate merchant-focused executive snapshot report
+      // Extract brand name properly
       const brandName = evaluationData.url?.replace(/^https?:\/\/(www\.)?/, '').split('.')[0] || 'Your Brand'
+      const formattedBrandName = brandName.charAt(0).toUpperCase() + brandName.slice(1)
       const grade = evaluationData.overallScore >= 80 ? 'A' : evaluationData.overallScore >= 70 ? 'B+' : evaluationData.overallScore >= 60 ? 'B' : evaluationData.overallScore >= 50 ? 'C+' : evaluationData.overallScore >= 40 ? 'C' : evaluationData.overallScore >= 30 ? 'D' : 'F'
       
-      const reportContent = `
-EXECUTIVE SNAPSHOT
-Brand: ${brandName.charAt(0).toUpperCase() + brandName.slice(1)}
-Category: ${evaluationData.brandCategory || 'Multi-Category Business'}
-Date: ${new Date().toLocaleDateString('en-GB')}
-
-🎯 Overall AI Visibility Score: ${evaluationData.overallScore || 0}/100 – Grade: ${grade}
-Verdict: ${evaluationData.executiveSummary?.verdict || 'Analysis completed - review detailed findings below.'}
-
-Infrastructure & Machine Readability
-${evaluationData.executiveSummary?.businessImpacts?.customerDiscovery || 'AI systems can discover and understand your brand with moderate effectiveness.'}
-
-Perception & Reputation  
-${evaluationData.executiveSummary?.businessImpacts?.brandPerception || 'Your brand reputation in AI systems shows room for improvement.'}
-
-Commerce & Transaction Clarity
-${evaluationData.executiveSummary?.businessImpacts?.salesConversion || 'AI can provide basic transaction information but lacks detail for optimal conversion.'}
-
-📊 DIMENSION SCORES (Quick View)
-(⭐ = 20 points, ☆ = remainder)
-
-${(evaluationData.executiveSummary?.actionableInsights || []).slice(0, 8).map((insight, index) => {
-  const score = insight?.score || 0
-  const stars = Math.floor(score / 20)
-  const remainder = score % 20
-  const starDisplay = '⭐'.repeat(stars) + (remainder >= 10 ? '☆' : '')
-  
-  return `${index + 1}️⃣ ${insight?.title || 'Analysis Area'} – ${insight?.currentState || 'Assessment in progress'}
-Score: ${score}/100 | Rating: ${starDisplay}
-${insight?.businessImpact || 'Business impact assessment available'}
-
-💡 Opportunity: ${insight?.opportunity || 'Optimization potential identified'}
-🔧 Action Required: ${insight?.actionRequired || 'Review recommendations'}
-⏱️ Timeline: ${insight?.timeframe || '2-4 weeks'} | Difficulty: ${insight?.difficulty || 'Medium'}
-📈 Potential Gain: ${insight?.potentialGain || '+10 points improvement'}
-`
-}).join('\n')}
-
-✅ Strongest Area: ${evaluationData.executiveSummary?.strongest || 'Analysis in progress'}
-⚠️ Weakest Area: ${evaluationData.executiveSummary?.weakest || 'Analysis in progress'}
-
-🚀 Biggest Opportunity: ${evaluationData.executiveSummary?.opportunity || 'Continue monitoring and optimization'}
-
-🚦 QUICK ACTIONS
-Priority 1 – Immediate (${evaluationData.executiveSummary?.actionableInsights?.[0]?.timeframe || '2 weeks'})
-Fix: ${evaluationData.executiveSummary?.actionableInsights?.[0]?.actionRequired || 'Review top priority recommendation'}
-Impact: ${evaluationData.executiveSummary?.actionableInsights?.[0]?.potentialGain || '+10 pts'}
-
-Priority 2 – Short Term (${evaluationData.executiveSummary?.actionableInsights?.[1]?.timeframe || '30 days'})
-Fix: ${evaluationData.executiveSummary?.actionableInsights?.[1]?.actionRequired || 'Address secondary optimization'}
-Impact: ${evaluationData.executiveSummary?.actionableInsights?.[1]?.potentialGain || '+8 pts'}
-
-Priority 3 – Medium Term (${evaluationData.executiveSummary?.actionableInsights?.[2]?.timeframe || '90 days'})
-Fix: ${evaluationData.executiveSummary?.actionableInsights?.[2]?.actionRequired || 'Implement strategic improvements'}
-Impact: ${evaluationData.executiveSummary?.actionableInsights?.[2]?.potentialGain || '+12 pts'}
-
-📝 BOTTOM LINE
-Current State: ${evaluationData.executiveSummary?.businessImpacts?.competitivePosition || 'Competitive analysis in progress'}
-
-Opportunity: ${evaluationData.executiveSummary?.keyInsight || 'Focus on quick wins for immediate impact'}
-
-If You Do Nothing: Risk of losing market share to competitors who are optimizing for AI-driven customer discovery.
-
-Next Step Today: ${evaluationData.executiveSummary?.actionableInsights?.[0]?.actionRequired || 'Download implementation guide and begin optimization'}
-
----
-Generated by AI Discoverability Index Platform
-${new Date().toLocaleString()}
-    `.trim()
-
-      // Create and download the report as PDF
-      console.log('Importing jsPDF...')
+      // Import jsPDF
       const { jsPDF } = await import('jspdf')
-      console.log('jsPDF imported successfully')
-      
       const pdf = new jsPDF()
-      console.log('PDF instance created')
       
-      // Add title
-      pdf.setFontSize(20)
-      pdf.text('EXECUTIVE SNAPSHOT', 20, 30)
+      // Set up colors and styling
+      const primaryColor = [41, 128, 185] // Blue
+      const secondaryColor = [52, 73, 94] // Dark gray
+      const accentColor = [231, 76, 60] // Red
+      const successColor = [39, 174, 96] // Green
       
-      // Add content (simplified for PDF format)
-      pdf.setFontSize(12)
-      const lines = reportContent.split('\n').filter(line => line.trim())
-      let yPosition = 50
+      let yPos = 25
       
-      lines.forEach((line, index) => {
-        if (yPosition > 270) { // Start new page if needed
-          pdf.addPage()
-          yPosition = 30
-        }
+      // HEADER SECTION
+      pdf.setFillColor(...primaryColor)
+      pdf.rect(0, 0, 210, 40, 'F')
+      
+      pdf.setTextColor(255, 255, 255)
+      pdf.setFontSize(24)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('EXECUTIVE SNAPSHOT', 20, 25)
+      
+      yPos = 55
+      
+      // BRAND INFO SECTION
+      pdf.setTextColor(...secondaryColor)
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text(`Brand: ${formattedBrandName}`, 20, yPos)
+      
+      yPos += 8
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(11)
+      pdf.text(`Category: ${evaluationData.brandCategory || 'Multi-Category Business'}`, 20, yPos)
+      
+      yPos += 6
+      pdf.text(`Date: ${new Date().toLocaleDateString('en-GB')}`, 20, yPos)
+      
+      yPos += 15
+      
+      // SCORE SECTION
+      pdf.setFillColor(245, 245, 245)
+      pdf.rect(15, yPos - 5, 180, 25, 'F')
+      
+      pdf.setTextColor(...accentColor)
+      pdf.setFontSize(16)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text(`Overall AI Visibility Score: ${evaluationData.overallScore || 0}/100 - Grade: ${grade}`, 20, yPos + 5)
+      
+      yPos += 15
+      pdf.setTextColor(...secondaryColor)
+      pdf.setFontSize(10)
+      pdf.setFont('helvetica', 'normal')
+      const verdict = evaluationData.executiveSummary?.verdict || 'Analysis completed - review detailed findings below.'
+      const verdictLines = pdf.splitTextToSize(`Verdict: ${verdict}`, 170)
+      pdf.text(verdictLines, 20, yPos + 5)
+      yPos += verdictLines.length * 5 + 10
+      
+      // PILLAR SCORES SECTION
+      pdf.setTextColor(...primaryColor)
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('How AI Sees Your Brand (3 Key Areas)', 20, yPos)
+      yPos += 12
+      
+      const pillars = [
+        { name: 'Technical Foundation', score: evaluationData.pillarScores?.infrastructure || 0, desc: 'How easily AI can read your website' },
+        { name: 'Brand Perception', score: evaluationData.pillarScores?.perception || 0, desc: 'How well AI understands your brand' },
+        { name: 'Shopping Experience', score: evaluationData.pillarScores?.commerce || 0, desc: 'How AI helps customers buy from you' }
+      ]
+      
+      pillars.forEach((pillar, index) => {
+        // Pillar name and score
+        pdf.setTextColor(...secondaryColor)
+        pdf.setFontSize(12)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text(`${pillar.name}`, 20, yPos)
         
-        // Remove markdown formatting for PDF
-        const cleanLine = line.replace(/[#*`]/g, '').trim()
-        if (cleanLine) {
-          // Ensure text fits within page width
-          const splitText = pdf.splitTextToSize(cleanLine, 170)
-          pdf.text(splitText, 20, yPosition)
-          yPosition += Array.isArray(splitText) ? splitText.length * 7 : 7
-        }
+        // Score with color coding
+        const scoreColor = pillar.score >= 70 ? successColor : pillar.score >= 40 ? [243, 156, 18] : accentColor
+        pdf.setTextColor(...scoreColor)
+        pdf.text(`${pillar.score}/100`, 150, yPos)
+        
+        yPos += 6
+        pdf.setTextColor(...secondaryColor)
+        pdf.setFontSize(10)
+        pdf.setFont('helvetica', 'normal')
+        pdf.text(pillar.desc, 20, yPos)
+        yPos += 12
       })
       
-      // Generate filename
-      const filename = `AI_Visibility_Technical_Report_${evaluationData.url.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
-      console.log('Downloading PDF:', filename)
+      // DIMENSION SCORES SECTION
+      yPos += 5
+      pdf.setTextColor(...primaryColor)
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('DIMENSION SCORES (Quick View)', 20, yPos)
+      yPos += 8
       
-      // Download PDF
+      pdf.setTextColor(...secondaryColor)
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.text('(★ = 20 points, ☆ = remainder)', 20, yPos)
+      yPos += 12
+      
+      // Get top dimensions from evaluation data
+      const dimensions = evaluationData.dimensionScores || []
+      const topDimensions = dimensions.slice(0, 8)
+      
+      topDimensions.forEach((dim, index) => {
+        if (yPos > 250) {
+          pdf.addPage()
+          yPos = 30
+        }
+        
+        const score = dim.score || 0
+        const stars = Math.floor(score / 20)
+        const remainder = score % 20
+        const starDisplay = '★'.repeat(stars) + (remainder >= 10 ? '☆' : '')
+        
+        // Dimension number and name
+        pdf.setTextColor(...primaryColor)
+        pdf.setFontSize(11)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text(`${index + 1}. ${dim.name || 'Analysis Area'}`, 20, yPos)
+        
+        yPos += 6
+        pdf.setTextColor(...secondaryColor)
+        pdf.setFontSize(10)
+        pdf.setFont('helvetica', 'normal')
+        pdf.text(`Score: ${score}/100 | Rating: ${starDisplay}`, 20, yPos)
+        
+        yPos += 5
+        const description = dim.description || dim.analysis || 'Assessment in progress'
+        const descLines = pdf.splitTextToSize(description, 170)
+        pdf.text(descLines, 20, yPos)
+        yPos += descLines.length * 4 + 8
+      })
+      
+      // QUICK ACTIONS SECTION
+      if (yPos > 200) {
+        pdf.addPage()
+        yPos = 30
+      }
+      
+      yPos += 10
+      pdf.setTextColor(...primaryColor)
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('QUICK ACTIONS', 20, yPos)
+      yPos += 12
+      
+      const actions = [
+        { priority: 'Priority 1 - Immediate (2 weeks)', fix: 'Add structured schema to FAQs, returns, and shipping pages', impact: '+6 pts' },
+        { priority: 'Priority 2 - Short Term (30 days)', fix: 'Refresh reviews (invite verified buyers; surface seasonal feedback)', impact: '+7 pts' },
+        { priority: 'Priority 3 - Medium Term (90 days)', fix: 'Secure structured citations in Tier-1 retail/tech press', impact: '+10 pts' }
+      ]
+      
+      actions.forEach((action, index) => {
+        pdf.setTextColor(...accentColor)
+        pdf.setFontSize(11)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text(action.priority, 20, yPos)
+        
+        yPos += 6
+        pdf.setTextColor(...secondaryColor)
+        pdf.setFontSize(10)
+        pdf.setFont('helvetica', 'normal')
+        pdf.text(`Fix: ${action.fix}`, 20, yPos)
+        
+        yPos += 5
+        pdf.setTextColor(...successColor)
+        pdf.text(`Impact: ${action.impact}`, 20, yPos)
+        yPos += 12
+      })
+      
+      // BOTTOM LINE SECTION
+      if (yPos > 220) {
+        pdf.addPage()
+        yPos = 30
+      }
+      
+      yPos += 10
+      pdf.setFillColor(...primaryColor)
+      pdf.rect(15, yPos - 5, 180, 8, 'F')
+      
+      pdf.setTextColor(255, 255, 255)
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('BOTTOM LINE', 20, yPos)
+      yPos += 15
+      
+      pdf.setTextColor(...secondaryColor)
+      pdf.setFontSize(10)
+      pdf.setFont('helvetica', 'normal')
+      
+      const bottomLineText = `Current State: ${evaluationData.executiveSummary?.verdict || 'Well-structured but emotionally flat—AI sees a competent retailer, not a loved one.'}
+
+Opportunity: ${evaluationData.executiveSummary?.keyInsight || 'With 2–3 quick wins (reviews + heritage markup), you could shift from mid-pack to top-quartile AI visibility.'}
+
+If You Do Nothing: Risk of brand invisibility in AI-driven product discovery, particularly versus competitors who are optimizing for AI systems.
+
+Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structured data audit on top 20 pages + add schema for shipping/FAQ pages.'}`
+      
+      const bottomLines = pdf.splitTextToSize(bottomLineText, 170)
+      pdf.text(bottomLines, 20, yPos)
+      
+      // FOOTER
+      yPos = 280
+      pdf.setTextColor(150, 150, 150)
+      pdf.setFontSize(8)
+      pdf.text(`Generated by AI Discoverability Index Platform | ${new Date().toLocaleString()}`, 20, yPos)
+      
+      // Generate filename and download
+      const filename = `Executive_Snapshot_${formattedBrandName}_${new Date().toISOString().split('T')[0]}.pdf`
       pdf.save(filename)
-      console.log('PDF download initiated successfully')
       
-      // Show success message
-      alert('Technical report downloaded successfully!')
+      alert('Executive Snapshot downloaded successfully!')
       
     } catch (error) {
-      console.error('Error generating technical report:', error)
-      alert(`Failed to generate technical report: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      console.error('Error generating executive snapshot:', error)
+      alert(`Failed to generate executive snapshot: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
 
     // Log evaluation for backend tracking
@@ -819,78 +924,176 @@ ${new Date().toLocaleString()}
             </div>
           )}
 
-          {/* Action Cards */}
-          <div className="grid md:grid-cols-2 gap-6 mb-8">
-            {/* Index Pro Current Features */}
-            <Card className="border-blue-200 bg-blue-50/50">
-              <CardHeader>
-                <CardTitle className="text-blue-700">✅ What You Can Do Now (Index Pro)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm">
-                  <li>• Share this frontier model report with your team</li>
-                  <li>• Download comprehensive technical reports</li>
-                  <li>• Access multi-model analysis insights</li>
-                  <li>• Compare GPT-4, Claude, Perplexity & Gemini results</li>
-                  <li>• Review model-specific recommendations below</li>
-                </ul>
-                <Button className="w-full mt-4" variant="outline" asChild>
-                  <Link href={`/evaluate?url=${encodeURIComponent(evaluationData.url)}&tier=index-pro`}>
-                    Re-run Analysis
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+          {/* Action Cards - Only show if not Enterprise tier */}
+          {tier !== 'enterprise' && (
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              {/* Current Tier Features */}
+              {tier === 'index-pro' && (
+                <Card className="border-blue-200 bg-blue-50/50">
+                  <CardHeader>
+                    <CardTitle className="text-blue-700">✅ What You Can Do Now (Index Pro)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2 text-sm">
+                      <li>• Share this frontier model report with your team</li>
+                      <li>• Download comprehensive technical reports</li>
+                      <li>• Access multi-model analysis insights</li>
+                      <li>• Compare GPT-4, Claude, Perplexity & Gemini results</li>
+                      <li>• Review model-specific recommendations below</li>
+                    </ul>
+                    <Button className="w-full mt-4" variant="outline" asChild>
+                      <Link href={`/evaluate?url=${encodeURIComponent(evaluationData.url)}&tier=index-pro`}>
+                        Re-run Analysis
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
 
-            {/* Enterprise Actions */}
-            <Card className="border-purple-200 bg-purple-50/50">
-              <CardHeader>
-                <CardTitle className="text-purple-700">🏢 Upgrade to Enterprise</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm mb-4">
-                  <li className="flex items-center">
-                    <Trophy className="h-4 w-4 mr-2" />
-                    Executive snapshot reports (like Fortnum & Mason)
-                  </li>
-                  <li className="flex items-center">
-                    <Brain className="h-4 w-4 mr-2" />
-                    Custom brand playbook generation
-                  </li>
-                  <li className="flex items-center">
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Unlimited evaluations & monitoring
-                  </li>
-                  <li className="flex items-center">
-                    <BarChart3 className="h-4 w-4 mr-2" />
-                    Advanced competitive intelligence
-                  </li>
-                  <li className="flex items-center">
-                    <Globe className="h-4 w-4 mr-2" />
-                    White-label API access
-                  </li>
-                  <li className="flex items-center">
-                    <Star className="h-4 w-4 mr-2" />
-                    Dedicated support & historical trends
-                  </li>
-                </ul>
-                <Button
-                  className="w-full bg-purple-600 hover:bg-purple-700"
-                  onClick={async () => {
-                    try {
-                      await createCheckoutSession('enterprise')
-                    } catch (error) {
-                      console.error('Error starting checkout:', error)
-                      alert('Unable to start checkout. Please try again.')
+              {/* Free Tier Features */}
+              {tier === 'free' && (
+                <Card className="border-green-200 bg-green-50/50">
+                  <CardHeader>
+                    <CardTitle className="text-green-700">✅ What You Can Do Now (Free)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2 text-sm">
+                      <li>• Basic GPT-4 analysis with core recommendations</li>
+                      <li>• Download technical report</li>
+                      <li>• View dimension breakdown</li>
+                      <li>• Access priority action items</li>
+                    </ul>
+                    <Button className="w-full mt-4" variant="outline" asChild>
+                      <Link href={`/evaluate?url=${encodeURIComponent(evaluationData.url)}&tier=free`}>
+                        Re-run Analysis
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Upgrade Card */}
+              <Card className="border-purple-200 bg-purple-50/50">
+                <CardHeader>
+                  <CardTitle className="text-purple-700">
+                    {tier === 'free' ? '🚀 Upgrade to Index Pro' : '🏢 Upgrade to Enterprise'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm mb-4">
+                    {tier === 'free' ? (
+                      <>
+                        <li className="flex items-center">
+                          <Brain className="h-4 w-4 mr-2" />
+                          Multi-frontier model analysis (GPT-4, Claude, Perplexity, Gemini)
+                        </li>
+                        <li className="flex items-center">
+                          <BarChart3 className="h-4 w-4 mr-2" />
+                          Advanced channel performance insights
+                        </li>
+                        <li className="flex items-center">
+                          <TrendingUp className="h-4 w-4 mr-2" />
+                          Competitive positioning analysis
+                        </li>
+                        <li className="flex items-center">
+                          <FileText className="h-4 w-4 mr-2" />
+                          Comprehensive technical reports
+                        </li>
+                      </>
+                    ) : (
+                      <>
+                        <li className="flex items-center">
+                          <Trophy className="h-4 w-4 mr-2" />
+                          Executive snapshot reports (like Fortnum & Mason)
+                        </li>
+                        <li className="flex items-center">
+                          <Brain className="h-4 w-4 mr-2" />
+                          Custom brand playbook generation
+                        </li>
+                        <li className="flex items-center">
+                          <TrendingUp className="h-4 w-4 mr-2" />
+                          Unlimited evaluations & monitoring
+                        </li>
+                        <li className="flex items-center">
+                          <BarChart3 className="h-4 w-4 mr-2" />
+                          Advanced competitive intelligence
+                        </li>
+                        <li className="flex items-center">
+                          <Globe className="h-4 w-4 mr-2" />
+                          White-label API access
+                        </li>
+                        <li className="flex items-center">
+                          <Star className="h-4 w-4 mr-2" />
+                          Dedicated support & historical trends
+                        </li>
+                      </>
+                    )}
+                  </ul>
+                  <Button
+                    className="w-full bg-purple-600 hover:bg-purple-700"
+                    onClick={async () => {
+                      try {
+                        const targetTier = tier === 'free' ? 'index-pro' : 'enterprise'
+                        await createCheckoutSession(targetTier)
+                      } catch (error) {
+                        console.error('Checkout error:', error)
+                        alert('Unable to start checkout. Please try again.')
+                      }
+                    }}
+                  >
+                    {tier === 'free'
+                      ? '🚀 Upgrade to Index Pro - £119/month'
+                      : '🏢 Upgrade to Enterprise - £319/month'
                     }
-                  }}
-                >
-                  🏢 Upgrade to Enterprise - £319/month
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Enterprise Tier - Show Enterprise-only features */}
+          {tier === 'enterprise' && (
+            <div className="mb-8">
+              <Card className="border-amber-200 bg-gradient-to-r from-yellow-50 to-amber-50">
+                <CardHeader>
+                  <CardTitle className="text-amber-700 flex items-center">
+                    <Crown className="h-5 w-5 mr-2" />
+                    Enterprise Features Active
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-semibold text-amber-800 mb-2">Advanced Analysis</h4>
+                      <ul className="space-y-1 text-sm">
+                        <li>• All frontier models (GPT-4, Claude, Perplexity, Gemini)</li>
+                        <li>• Executive snapshot reports</li>
+                        <li>• Custom brand playbook generation</li>
+                        <li>• Advanced competitive intelligence</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-amber-800 mb-2">Enterprise Tools</h4>
+                      <ul className="space-y-1 text-sm">
+                        <li>• Unlimited evaluations & monitoring</li>
+                        <li>• White-label API access</li>
+                        <li>• Dedicated support & historical trends</li>
+                        <li>• Priority processing & custom integrations</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <Button className="w-full mt-4" variant="outline" asChild>
+                    <Link href={`/evaluate?url=${encodeURIComponent(evaluationData.url)}&tier=enterprise`}>
+                      Re-run Enterprise Analysis
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Priority Action Cards */}
           <div className="mb-8">
@@ -929,7 +1132,7 @@ ${new Date().toLocaleString()}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" onClick={generateTechnicalReport} className="px-8 bg-blue-600 hover:bg-blue-700">
                 <Download className="mr-2 h-5 w-5" />
-                Download Technical Report
+                Download Executive Snapshot
               </Button>
               <Button
                 size="lg"
