@@ -65,14 +65,14 @@ interface EvaluationData {
   analysisMethod?: string
   upgradeMessage?: string
   // Professional tier features
-  modelResults?: Array<{
-    provider: string
-    model: string
+  channelInsights?: Array<{
+    channel: string
     score: number
-    confidence: number
-    strengths: string[]
-    weaknesses: string[]
+    performance: string
+    opportunities: string[]
+    businessImpact: string
     recommendation: string
+    improvementPotential: number
   }>
   industryBenchmarks?: {
     industry: string
@@ -137,11 +137,11 @@ export default function EvaluatePage() {
 
 **Generated:** ${new Date().toLocaleString()}
 **Analysis Tier:** ${evaluationData.tier.toUpperCase()}
-**Overall AIDI Score:** ${typeof evaluationData.overallScore === 'number' ? evaluationData.overallScore.toFixed(2) : evaluationData.overallScore}/100
+**Overall AIDI Score:** ${evaluationData.overallScore || 0}/100
 
 ## Executive Summary
 ${evaluationData.tier === 'index-pro' ? 'Index Pro frontier model consensus analysis across GPT-4 Turbo, Claude 3.5 Sonnet, Perplexity Pro, and Gemini Pro 1.5' : 'Standard GPT-4 analysis'} conducted on ${evaluationData.url}.
-Overall AI Discoverability Index (AIDI) score of ${typeof evaluationData.overallScore === 'number' ? evaluationData.overallScore.toFixed(2) : evaluationData.overallScore}/100 indicates ${(evaluationData.overallScore || 0) >= 80 ? 'strong' : (evaluationData.overallScore || 0) >= 60 ? 'moderate' : 'weak'} AI visibility.
+Overall AI Discoverability Index (AIDI) score of ${evaluationData.overallScore || 0}/100 indicates ${(evaluationData.overallScore || 0) >= 80 ? 'strong' : (evaluationData.overallScore || 0) >= 60 ? 'moderate' : 'weak'} AI visibility.
 
 ## Pillar Breakdown
 ### 🏗️ Infrastructure & Machine Readability: ${evaluationData.pillarScores?.infrastructure?.toFixed(2) || 'N/A'}/100
@@ -168,14 +168,13 @@ ${(evaluationData.recommendations || []).map((rec, index) => `
 `).join('')}
 
 ${evaluationData.tier === 'index-pro' ? `
-## Multi-Model Analysis Results
-${evaluationData.modelResults?.map(model => `
-### ${model.model}
-**Score:** ${model.score.toFixed(2)}/100
-**Confidence:** ${(model.confidence * 100).toFixed(1)}%
-**Strengths:** ${model.strengths.join(', ')}
-**Weaknesses:** ${model.weaknesses.join(', ')}
-**Recommendation:** ${model.recommendation}
+## AI Channel Performance Analysis
+${evaluationData.channelInsights?.map(channel => `
+### ${channel.channel}
+**Performance Score:** ${channel.score}/100 (${channel.performance})
+**Business Impact:** ${channel.businessImpact}
+**Improvement Opportunities:** ${channel.opportunities.join(', ')} (+${channel.improvementPotential} points potential)
+**Recommendation:** ${channel.recommendation}
 `).join('') || ''}
 
 ## Industry Benchmarks
@@ -201,14 +200,14 @@ ${evaluationData.certification ? `
 - AI Providers: ${evaluationData.aiProviders.join(', ')}
 - Default Model: ${evaluationData.defaultModel}
 
-${evaluationData.tier === 'index-pro' && evaluationData.modelResults ? `
-## Frontier Model Analysis Results
-${evaluationData.modelResults.map(model => `
-### ${model.provider} ${model.model}
-**Score:** ${model.score}/100 (${model.confidence}% confidence)
-**Strengths:** ${model.strengths.join(', ')}
-**Weaknesses:** ${model.weaknesses.join(', ')}
-**Recommendation:** ${model.recommendation}
+${evaluationData.tier === 'index-pro' && evaluationData.channelInsights ? `
+## AI Channel Performance Analysis
+${evaluationData.channelInsights.map(channel => `
+### ${channel.channel}
+**Performance Score:** ${channel.score}/100 (${channel.performance})
+**Business Impact:** ${channel.businessImpact}
+**Opportunities:** ${channel.opportunities.join(', ')} (+${channel.improvementPotential} points potential)
+**Recommendation:** ${channel.recommendation}
 `).join('')}` : ''}
 
 ## Next Steps
@@ -288,7 +287,7 @@ ${evaluationData.modelResults.map(model => `
           timestamp: new Date().toISOString(),
           brandCategory: brandCategory,
           recommendations: data.recommendations,
-          modelResults: data.modelResults,
+          channelInsights: data.channelInsights,
           industryBenchmarks: data.industryBenchmarks
         })
       })
@@ -569,42 +568,47 @@ ${evaluationData.modelResults.map(model => `
               )}
 
               {/* Per-Model Analysis */}
-              {evaluationData.modelResults && (
+              {evaluationData.channelInsights && (
                 <Card className="mb-8">
                   <CardHeader>
-                    <CardTitle>Multi-Model Analysis Results</CardTitle>
-                    <CardDescription>Individual AI model evaluations and insights</CardDescription>
+                    <CardTitle>AI Channel Performance Analysis</CardTitle>
+                    <CardDescription>How your brand performs across different AI-powered channels and platforms</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {(evaluationData.modelResults || []).map((model, index) => (
-                        <Card key={index} className="border">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {(evaluationData.channelInsights || []).map((channel, index) => (
+                        <Card key={index} className="border-l-4 border-l-purple-500">
                           <CardHeader className="pb-3">
                             <div className="flex items-center justify-between">
-                              <CardTitle className="text-sm">{model.model}</CardTitle>
-                              <Badge variant={getScoreBadgeVariant(Math.round(model.score))}>
-                                {Math.round(model.score)}
-                              </Badge>
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              Confidence: {Math.round(model.confidence * 100)}%
+                              <CardTitle className="text-sm font-semibold">{channel.channel}</CardTitle>
+                              <div className="flex items-center space-x-2">
+                                <Badge variant={getScoreBadgeVariant(Math.round(channel.score))}>
+                                  {Math.round(channel.score)}
+                                </Badge>
+                                <Badge variant="outline" className={
+                                  channel.performance === 'Strong' ? 'text-green-600 border-green-200' : 
+                                  channel.performance === 'Moderate' ? 'text-yellow-600 border-yellow-200' : 'text-red-600 border-red-200'
+                                }>
+                                  {channel.performance}
+                                </Badge>
+                              </div>
                             </div>
                           </CardHeader>
-                          <CardContent className="space-y-2">
+                          <CardContent className="space-y-3">
                             <div>
-                              <div className="text-xs font-medium text-green-600 mb-1">Strengths:</div>
+                              <div className="text-xs font-medium text-blue-600 mb-1">Business Impact:</div>
                               <div className="text-xs text-gray-600">
-                                {(model.strengths || []).join(', ')}
+                                {channel.businessImpact}
                               </div>
                             </div>
                             <div>
-                              <div className="text-xs font-medium text-red-600 mb-1">Areas for Improvement:</div>
+                              <div className="text-xs font-medium text-green-600 mb-1">Opportunities (+{channel.improvementPotential} pts potential):</div>
                               <div className="text-xs text-gray-600">
-                                {(model.weaknesses || []).join(', ')}
+                                {(channel.opportunities || []).join(', ')}
                               </div>
                             </div>
-                            <div className="text-xs text-blue-600 font-medium">
-                              💡 {model.recommendation}
+                            <div className="text-xs text-purple-600 font-medium">
+                              💡 {channel.recommendation}
                             </div>
                           </CardContent>
                         </Card>
