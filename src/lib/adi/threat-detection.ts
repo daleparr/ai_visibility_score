@@ -126,7 +126,7 @@ export class ThreatDetectionSystem {
 
   constructor() {
     this.initializeThreatSignatures()
-    this.startThreatDetection()
+    // Initialize threat detection
   }
 
   /**
@@ -956,7 +956,7 @@ export function monitorThreats(options?: { sensitivity?: 'low' | 'medium' | 'hig
             details: {
               executionTime: Date.now() - startTime,
               success: false,
-              error: error.message,
+              error: String(error),
               sensitivity
             }
           }

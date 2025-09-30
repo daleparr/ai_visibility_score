@@ -343,7 +343,7 @@ export class PerformanceMetricsCollector {
 
     return bottlenecks.sort((a, b) => {
       const severityOrder = { critical: 4, high: 3, medium: 2, low: 1 }
-      return severityOrder[b.severity] - severityOrder[a.severity]
+      return (severityOrder[b.severity as keyof typeof severityOrder] || 0) - (severityOrder[a.severity as keyof typeof severityOrder] || 0)
     })
   }
 

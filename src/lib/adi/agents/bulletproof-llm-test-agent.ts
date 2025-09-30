@@ -55,7 +55,8 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
    */
   async execute(input: ADIAgentInput): Promise<ADIAgentOutput> {
     const startTime = Date.now()
-    const { websiteUrl, queryCanon, brandName } = input.context
+    const { websiteUrl, queryCanon } = input.context
+    const brandName = input.context.metadata?.brandName || 'Unknown Brand'
     
     console.log(`🛡️ Executing Bulletproof LLM Test Agent for ${brandName || websiteUrl}`)
 
@@ -68,7 +69,7 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
       }
 
       const extractedBrandName = brandName || this.extractBrandName(websiteUrl)
-      const testQueries = this.prepareTestQueries(extractedBrandName, queryCanon)
+      const testQueries = this.prepareTestQueries(extractedBrandName, queryCanon.map(q => q.query_text))
 
       // Tier 2: Multi-provider LLM testing with fallbacks
       const llmResults = await this.attemptMultiProviderTesting(extractedBrandName, testQueries)

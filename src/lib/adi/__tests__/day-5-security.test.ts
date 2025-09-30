@@ -18,7 +18,7 @@ describe('Day 5: Security & Compliance Systems', () => {
 
   afterEach(() => {
     // Clean up after tests
-    securityFramework.stop?.()
+    // securityFramework doesn't have a stop method
     threatDetection.stop()
     auditLogging.stop()
   })

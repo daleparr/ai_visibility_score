@@ -731,10 +731,10 @@ export function alertOnError(component: string, severity: 'warning' | 'critical'
         // Create alert for error
         createAlert(
           `${component} Error`,
-          `Method ${propertyName} failed: ${error.message}`,
+          `Method ${propertyName} failed: ${String(error)}`,
           severity,
           component,
-          { method: propertyName, error: error.name }
+          { method: propertyName, error: error instanceof Error ? error.name : 'unknown' }
         )
 
         throw error

@@ -580,7 +580,7 @@ export class BulletproofSchemaAgent extends BaseADIAgent {
   }
 
   private calculateSchemaScore(schemaType: string, method: string): number {
-    const baseScore = this.schemaTypePriorities[schemaType] || 40
+    const baseScore = this.schemaTypePriorities[schemaType as keyof typeof this.schemaTypePriorities] || 40
     
     // Apply method multipliers
     const methodMultipliers = {
@@ -592,7 +592,7 @@ export class BulletproofSchemaAgent extends BaseADIAgent {
       'static_fallback': 0.3
     }
     
-    const multiplier = methodMultipliers[method] || 0.5
+    const multiplier = methodMultipliers[method as keyof typeof methodMultipliers] || 0.5
     return Math.round(baseScore * multiplier)
   }
 

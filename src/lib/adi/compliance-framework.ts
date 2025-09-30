@@ -252,14 +252,14 @@ export class ComplianceFramework {
    * Process data subject request
    */
   async processDataSubjectRequest(
-    request: Omit<DataSubjectRequest, 'id' | 'status' | 'processingTime'>
+    request: Omit<DataSubjectRequest, 'id' | 'status' | 'processingTime' | 'fulfillmentActions'>
   ): Promise<DataSubjectRequest> {
     const dataSubjectRequest: DataSubjectRequest = {
       id: this.generateId('dsr'),
       status: 'received',
       processingTime: 0,
-      fulfillmentActions: [],
-      ...request
+      ...request,
+      fulfillmentActions: []
     }
 
     this.dataSubjectRequests.set(dataSubjectRequest.id, dataSubjectRequest)

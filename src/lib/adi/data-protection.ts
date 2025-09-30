@@ -87,7 +87,7 @@ export class DataProtectionSystem {
     email: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g,
     phone: /\b(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})\b/g,
     ssn: /\b(?!000|666|9\d{2})\d{3}[-.\s]?(?!00)\d{2}[-.\s]?(?!0000)\d{4}\b/g,
-    creditCard: /\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|3[0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\b/g,
+      credit_card: /\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|3[0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\b/g,
     ipAddress: /\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b/g
   }
 
@@ -404,7 +404,7 @@ export class DataProtectionSystem {
       evaluated: 0,
       deleted: 0,
       archived: 0,
-      errors: []
+      errors: [] as string[]
     }
 
     for (const [dataId, classification] of this.dataClassifications.entries()) {
@@ -433,7 +433,7 @@ export class DataProtectionSystem {
           }
         }
       } catch (error) {
-        results.errors.push(`Failed to process ${dataId}: ${error}`)
+        results.errors.push(`Failed to process ${dataId}: ${String(error)}`)
       }
     }
 
@@ -534,7 +534,7 @@ export class DataProtectionSystem {
       email: 0.95,
       phone: 0.9,
       ssn: 0.98,
-      creditCard: 0.95,
+      credit_card: 0.95,
       ipAddress: 0.85
     }
     
@@ -553,7 +553,7 @@ export class DataProtectionSystem {
       case 'ssn':
         return value.replace(/\d(?=\d{4})/g, '*')
       
-      case 'creditCard':
+      case 'credit_card':
         return value.replace(/\d(?=\d{4})/g, '*')
       
       case 'name':
@@ -570,7 +570,7 @@ export class DataProtectionSystem {
       email: 'medium',
       phone: 'medium',
       ssn: 'critical',
-      creditCard: 'critical',
+      credit_card: 'critical',
       ipAddress: 'low',
       name: 'medium'
     }
@@ -600,7 +600,7 @@ export class DataProtectionSystem {
         case 'ssn':
           categories.add('government_identifiers')
           break
-        case 'creditCard':
+        case 'credit_card':
           categories.add('financial_data')
           break
         case 'ip_address':

@@ -875,7 +875,7 @@ export function auditLog(options?: {
             description: `Failed to execute ${propertyName}`,
             metadata: {
               executionTime: Date.now() - startTime,
-              error: error.message
+              error: error instanceof Error ? error.message : String(error)
             }
           },
           riskLevel: 'medium', // Failures are higher risk

@@ -691,7 +691,7 @@ export function monitorHealth(component: string) {
           value: 1,
           unit: 'count',
           timestamp: Date.now(),
-          tags: { component, method: propertyName, error: error.message }
+          tags: { component, method: propertyName, error: error instanceof Error ? error.message : String(error) }
         })
 
         throw error

@@ -603,7 +603,9 @@ export class AnomalyDetectionSystem {
     const trends = { increasing: [], decreasing: [], stable: [] }
     
     for (const [key, baseline] of this.baselines.entries()) {
-      trends[baseline.trend].push(key)
+      if (baseline.trend in trends) {
+        (trends as any)[baseline.trend].push(key)
+      }
     }
     
     return trends

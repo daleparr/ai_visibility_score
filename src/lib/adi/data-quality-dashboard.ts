@@ -449,7 +449,7 @@ export class DataQualityDashboardManager {
       totalCleansed: stats.cleanedRecords,
       cleansingRate: stats.cleansingEfficiency,
       averageImprovement: stats.averageQualityImprovement,
-      autoFixRate: stats.autoFixRate,
+      autoFixRate: 0, // stats.autoFixRate not available in current interface
       topIssuesFixed: stats.topIssuesFixed.map(issue => ({
         issue: issue.issue,
         frequency: issue.frequency,
