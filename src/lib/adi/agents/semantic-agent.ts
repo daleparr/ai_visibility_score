@@ -394,7 +394,10 @@ export class SemanticAgent extends BaseADIAgent {
     for (const result of crawlResults) {
       const structuredData = result.evidence?.structuredData || []
       
-      for (const data of structuredData) {
+      // Ensure structuredData is an array before iterating
+      const structuredDataArray = Array.isArray(structuredData) ? structuredData : []
+      
+      for (const data of structuredDataArray) {
         // Look for ontology references
         if (data['@context']) {
           ontologyElements.push({

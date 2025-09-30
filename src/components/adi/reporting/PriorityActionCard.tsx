@@ -110,20 +110,22 @@ Generated on: ${new Date().toLocaleString()}
       console.log('Importing jsPDF for implementation guide...')
       const { jsPDF } = await import('jspdf')
       console.log('jsPDF imported successfully for implementation guide')
-    const pdf = new jsPDF()
-    
-    // Colors
-    const primaryBlue: [number, number, number] = [37, 99, 235]
-    const lightGray: [number, number, number] = [243, 244, 246]
-    const darkGray: [number, number, number] = [75, 85, 99]
-    const green: [number, number, number] = [34, 197, 94]
-    
-    // Header Section
-    pdf.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2])
-    pdf.rect(0, 0, 210, 40, 'F')
-    pdf.setTextColor(255, 255, 255)
-    pdf.setFontSize(24)
-    pdf.text('Implementation Guide', 20, 25)
+      
+      const pdf = new jsPDF()
+      console.log('PDF instance created for implementation guide')
+      
+      // Colors
+      const primaryBlue: [number, number, number] = [37, 99, 235]
+      const lightGray: [number, number, number] = [243, 244, 246]
+      const darkGray: [number, number, number] = [75, 85, 99]
+      const green: [number, number, number] = [34, 197, 94]
+      
+      // Header Section
+      pdf.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2])
+      pdf.rect(0, 0, 210, 40, 'F')
+      pdf.setTextColor(255, 255, 255)
+      pdf.setFontSize(24)
+      pdf.text('Implementation Guide', 20, 25)
     
     // Dimension name (clean text without emojis for better PDF compatibility)
     pdf.setFontSize(16)

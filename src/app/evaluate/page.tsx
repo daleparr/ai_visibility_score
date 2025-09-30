@@ -155,9 +155,9 @@ How AI helps customers buy from you.
 
 ## Dimension Analysis
 ${(evaluationData.dimensionScores || []).map(dim => `
-### ${dim.name}: ${dim.score.toFixed(2)}/100
-**Pillar:** ${dim.pillar.charAt(0).toUpperCase() + dim.pillar.slice(1)}
-**Description:** ${dim.description}
+### ${dim.name}: ${typeof dim.score === 'number' ? dim.score.toFixed(2) : dim.score}/100
+**Pillar:** ${dim.pillar && typeof dim.pillar === 'string' ? dim.pillar.charAt(0).toUpperCase() + dim.pillar.slice(1) : 'Unknown'}
+**Description:** ${dim.description || 'No description available'}
 `).join('')}
 
 ## Priority Recommendations
@@ -334,7 +334,7 @@ ${evaluationData.certification ? `
 
             console.log(`Polling attempt ${attempts + 1} for evaluation ${evaluationId}`)
             
-            const statusResponse = await fetch(`/api/evaluation/${evaluationId}/status`)
+            const statusResponse = await fetch(`/api/evaluation/${evaluationId}/status?tier=${tier}`)
             const statusData = await statusResponse.json()
 
             console.log('Status response:', statusData)

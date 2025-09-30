@@ -28,8 +28,9 @@ function extractBrandNameFromUrl(url: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: { url?: string } = await request.json()
+    const body: { url?: string; tier?: string } = await request.json()
     const url = body.url
+    const tier = body.tier || 'free'
 
     if (!url) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 })
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     // Add this logging pattern to track exactly what's happening
     const correlationId = Math.random().toString(36).slice(2, 10);
-    console.log(`[${correlationId}] Starting evaluation:`, { brandName: brand.name, websiteUrl: brand.websiteUrl, tier: 'production' });
+    console.log(`[${correlationId}] Starting evaluation:`, { brandName: brand.name, websiteUrl: brand.websiteUrl, tier });
 
     // CREATE EVALUATION IN DATABASE FIRST
     const evaluation = await createEvaluation({
@@ -81,7 +82,8 @@ export async function POST(request: NextRequest) {
     // Start evaluation in background - don't await it
     adiService.evaluateBrand(brand.id, brand.websiteUrl, undefined, guestUser.id, {
       persistToDb: true,
-      evaluationId: evaluation.id  // ← USE THE DATABASE EVALUATION ID
+      evaluationId: evaluation.id,  // ← USE THE DATABASE EVALUATION ID
+      userTier: tier as 'free' | 'index-pro' | 'enterprise'
     }).then(result => {
       console.log(`[ROUTE_HANDLER] Completed evaluation: ${result.adiScore.overall}/100`)
     }).catch(error => {
