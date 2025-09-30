@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { ArrowRight, Brain, Search, BarChart3, Zap, Shield, TrendingUp, Download, Lock, Star, Trophy, Globe, Crown, FileText } from 'lucide-react'
+import { ArrowRight, Brain, Search, BarChart3, Zap, Shield, TrendingUp, Download, Lock, Star, Trophy, Globe, Crown, FileText, AlertTriangle, Target } from 'lucide-react'
 import Link from 'next/link'
 import { ExecutiveSummary } from '@/components/adi/reporting/ExecutiveSummary'
 import { UserFriendlyDimensionCard } from '@/components/adi/reporting/UserFriendlyDimensionCard'
@@ -54,6 +54,18 @@ interface PillarScore {
   description: string
 }
 
+interface ProfessionalInsights {
+  aiReadiness: string
+  riskFactors: string[]
+  opportunities: string[]
+  nextSteps: string[]
+  categorySpecific: {
+    category: string
+    competitivePosition: string
+    marketOpportunity: string
+  }
+}
+
 interface EvaluationData {
   url: string
   tier: string
@@ -75,6 +87,7 @@ interface EvaluationData {
   }>
   analysisMethod?: string
   upgradeMessage?: string
+  professionalInsights?: ProfessionalInsights
   executiveSummary?: {
     verdict?: string
     strongest?: string
@@ -859,53 +872,280 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
               )}
 
               {/* Professional Insights */}
-              {evaluationData.insights && (
+              {evaluationData.professionalInsights && (
                 <Card className="mb-8">
                   <CardHeader>
                     <CardTitle>Professional Insights</CardTitle>
-                    <CardDescription>Advanced analysis and strategic recommendations</CardDescription>
+                    <CardDescription>Advanced analysis and strategic recommendations based on your brand's performance</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-semibold mb-3 flex items-center">
-                          <Shield className="h-4 w-4 mr-2" />
-                          AI Readiness: {evaluationData.insights.aiReadiness}
-                        </h4>
-                        {evaluationData?.insights?.riskFactors?.length > 0 && (
-                          <div className="mb-4">
-                            <div className="text-sm font-medium text-red-600 mb-2">Risk Factors:</div>
-                            <ul className="text-sm text-gray-600 space-y-1">
-                              {(evaluationData.insights?.riskFactors || []).map((risk, index) => (
-                                <li key={index}>• {risk}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
+                    {/* AI Readiness & Category Overview */}
+                    <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                      <div className="grid md:grid-cols-3 gap-4">
                         <div>
-                          <div className="text-sm font-medium text-green-600 mb-2">Opportunities:</div>
-                          <ul className="text-sm text-gray-600 space-y-1">
-                            {(evaluationData.insights?.opportunities || []).map((opportunity, index) => (
-                              <li key={index}>• {opportunity}</li>
-                            ))}
-                          </ul>
+                          <h4 className="font-semibold mb-2 flex items-center text-blue-800">
+                            <Shield className="h-4 w-4 mr-2" />
+                            AI Readiness
+                          </h4>
+                          <Badge variant={
+                            evaluationData.professionalInsights.aiReadiness === 'AI-Optimized' ? 'default' :
+                            evaluationData.professionalInsights.aiReadiness === 'AI-Ready' ? 'secondary' :
+                            evaluationData.professionalInsights.aiReadiness === 'Developing' ? 'outline' : 'destructive'
+                          } className="text-sm">
+                            {evaluationData.professionalInsights.aiReadiness}
+                          </Badge>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold mb-2 text-blue-800">Category Position</h4>
+                          <p className="text-sm text-gray-700">{evaluationData.professionalInsights.categorySpecific.category}</p>
+                          <p className="text-xs text-gray-600">{evaluationData.professionalInsights.categorySpecific.competitivePosition} performance</p>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold mb-2 text-blue-800">Market Opportunity</h4>
+                          <p className="text-sm text-gray-700">{evaluationData.professionalInsights.categorySpecific.marketOpportunity}</p>
                         </div>
                       </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Risk Factors */}
                       <div>
-                        <h4 className="font-semibold mb-3 flex items-center">
-                          <TrendingUp className="h-4 w-4 mr-2" />
-                          Strategic Next Steps
+                        <h4 className="font-semibold mb-3 flex items-center text-red-700">
+                          <AlertTriangle className="h-4 w-4 mr-2" />
+                          Risk Factors
+                        </h4>
+                        {evaluationData.professionalInsights.riskFactors.length > 0 ? (
+                          <ul className="text-sm text-gray-600 space-y-2">
+                            {evaluationData.professionalInsights.riskFactors.map((risk, index) => (
+                              <li key={index} className="flex items-start p-2 bg-red-50 rounded border-l-4 border-red-400">
+                                <span className="text-red-500 mr-2 mt-0.5">⚠</span>
+                                {risk}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="p-3 bg-green-50 rounded border-l-4 border-green-400">
+                            <p className="text-sm text-green-700">✓ No significant risk factors identified</p>
+                          </div>
+                        )}
+
+                        {/* Opportunities */}
+                        <h4 className="font-semibold mb-3 mt-6 flex items-center text-green-700">
+                          <Target className="h-4 w-4 mr-2" />
+                          Opportunities
                         </h4>
                         <ul className="text-sm text-gray-600 space-y-2">
-                          {(evaluationData.insights?.nextSteps || []).map((step, index) => (
-                            <li key={index} className="flex items-start">
-                              <span className="bg-brand-100 text-brand-700 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mr-2 mt-0.5">
-                                {index + 1}
-                              </span>
-                              {step}
+                          {evaluationData.professionalInsights.opportunities.map((opportunity, index) => (
+                            <li key={index} className="flex items-start p-2 bg-green-50 rounded border-l-4 border-green-400">
+                              <span className="text-green-500 mr-2 mt-0.5">✓</span>
+                              {opportunity}
                             </li>
                           ))}
                         </ul>
+                      </div>
+
+                      {/* Strategic Next Steps */}
+                      <div>
+                        <h4 className="font-semibold mb-3 flex items-center text-purple-700">
+                          <TrendingUp className="h-4 w-4 mr-2" />
+                          Strategic Next Steps
+                        </h4>
+                        <ul className="text-sm text-gray-600 space-y-3">
+                          {evaluationData.professionalInsights.nextSteps.map((step, index) => (
+                            <li key={index} className="flex items-start">
+                              <span className="bg-purple-100 text-purple-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-3 mt-0.5 flex-shrink-0">
+                                {index + 1}
+                              </span>
+                              <div className="flex-1">
+                                <p className="text-gray-700">{step}</p>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+
+                        {/* Action CTA */}
+                        <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+                          <h5 className="font-semibold text-purple-800 mb-2">Ready to Implement?</h5>
+                          <p className="text-sm text-purple-700 mb-3">
+                            These insights are based on your current AI visibility score of {evaluationData.overallScore}/100.
+                          </p>
+                          <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                            Download Action Plan
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Brand Playbook - Enterprise Feature */}
+              {tier === 'enterprise' && (
+                <Card className="mb-8 border-2 border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-amber-800">
+                      <FileText className="h-5 w-5 mr-2" />
+                      Brand Playbook Generator
+                      <Badge variant="secondary" className="ml-2 bg-amber-100 text-amber-800">Enterprise</Badge>
+                    </CardTitle>
+                    <CardDescription>
+                      Create a machine-readable JSON file that helps AI systems understand your brand accurately
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Playbook Status */}
+                      <div>
+                        <h4 className="font-semibold mb-3 text-amber-800">Current Status</h4>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between p-3 bg-white rounded border">
+                            <div>
+                              <p className="font-medium">Brand Playbook File</p>
+                              <p className="text-sm text-gray-600">/.well-known/aidi-brand.json</p>
+                            </div>
+                            <Badge variant="outline" className="text-orange-600 border-orange-300">
+                              Not Detected
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between p-3 bg-white rounded border">
+                            <div>
+                              <p className="font-medium">AI Visibility Boost</p>
+                              <p className="text-sm text-gray-600">Potential score improvement</p>
+                            </div>
+                            <Badge variant="secondary" className="bg-green-100 text-green-800">
+                              +15-25 points
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Playbook Benefits */}
+                      <div>
+                        <h4 className="font-semibold mb-3 text-amber-800">What's Included</h4>
+                        <ul className="space-y-2 text-sm">
+                          <li className="flex items-start">
+                            <span className="text-green-500 mr-2 mt-0.5">✓</span>
+                            <div>
+                              <strong>Brand Heritage & Story:</strong> Founding year, mission, key milestones
+                            </div>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="text-green-500 mr-2 mt-0.5">✓</span>
+                            <div>
+                              <strong>Product Catalog:</strong> Hero products, categories, key features
+                            </div>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="text-green-500 mr-2 mt-0.5">✓</span>
+                            <div>
+                              <strong>Brand Voice & Guidelines:</strong> Tone, messaging, do's and don'ts
+                            </div>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="text-green-500 mr-2 mt-0.5">✓</span>
+                            <div>
+                              <strong>Business Context:</strong> Target audience, positioning, competitive advantages
+                            </div>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="text-green-500 mr-2 mt-0.5">✓</span>
+                            <div>
+                              <strong>AI Instructions:</strong> How AI should represent and recommend your brand
+                            </div>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      <Button className="bg-amber-600 hover:bg-amber-700" asChild>
+                        <Link href="/dashboard/brand-playbook">
+                          <FileText className="h-4 w-4 mr-2" />
+                          Generate Brand Playbook
+                        </Link>
+                      </Button>
+                      <Button variant="outline" onClick={() => {
+                        // Generate sample playbook based on current evaluation
+                        const samplePlaybook = {
+                          spec_version: "1.0",
+                          brand_name: evaluationData.url?.replace(/^https?:\/\/(www\.)?/, '').split('.')[0] || 'Your Brand',
+                          legal_entity: `${evaluationData.url?.replace(/^https?:\/\/(www\.)?/, '').split('.')[0] || 'Your Brand'} Ltd.`,
+                          founding_year: new Date().getFullYear() - 5,
+                          last_updated: new Date().toISOString().split('T')[0],
+                          license: "proprietary",
+                          brand_heritage: {
+                            mission: "To provide exceptional products and services to our customers",
+                            vision: "Leading innovation in our industry",
+                            core_values: ["Quality", "Innovation", "Customer Focus", "Integrity"]
+                          },
+                          products: {
+                            categories: ["Primary Category", "Secondary Category"],
+                            hero_products: [
+                              {
+                                name: "Flagship Product",
+                                description: "Our most popular offering",
+                                key_features: ["Feature 1", "Feature 2", "Feature 3"]
+                              }
+                            ]
+                          },
+                          brand_voice: {
+                            tone: "Professional yet approachable",
+                            personality_traits: ["Trustworthy", "Innovative", "Customer-centric"],
+                            communication_style: "Clear, helpful, and informative"
+                          },
+                          ai_instructions: {
+                            how_to_recommend: "Focus on quality and customer satisfaction",
+                            key_differentiators: ["Superior quality", "Excellent customer service", "Innovative solutions"],
+                            avoid_mentioning: ["Competitors", "Pricing comparisons", "Negative aspects"]
+                          }
+                        };
+                        
+                        const blob = new Blob([JSON.stringify(samplePlaybook, null, 2)], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'aidi-brand-sample.json';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                      }}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Sample JSON
+                      </Button>
+                      <Button variant="outline" asChild>
+                        <Link href="/IMPLEMENTATION_GUIDE.md" target="_blank">
+                          View Implementation Guide
+                        </Link>
+                      </Button>
+                    </div>
+
+                    {/* Implementation Steps */}
+                    <div className="mt-6 p-4 bg-white rounded border border-amber-200">
+                      <h5 className="font-semibold text-amber-800 mb-3">Quick Implementation</h5>
+                      <div className="grid md:grid-cols-3 gap-4 text-sm">
+                        <div className="flex items-start">
+                          <span className="bg-amber-100 text-amber-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-2 mt-0.5">1</span>
+                          <div>
+                            <p className="font-medium">Generate Playbook</p>
+                            <p className="text-gray-600">Use our generator or download sample</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start">
+                          <span className="bg-amber-100 text-amber-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-2 mt-0.5">2</span>
+                          <div>
+                            <p className="font-medium">Upload to Website</p>
+                            <p className="text-gray-600">Place at /.well-known/aidi-brand.json</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start">
+                          <span className="bg-amber-100 text-amber-700 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-2 mt-0.5">3</span>
+                          <div>
+                            <p className="font-medium">Re-run Analysis</p>
+                            <p className="text-gray-600">See your improved AI visibility score</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>

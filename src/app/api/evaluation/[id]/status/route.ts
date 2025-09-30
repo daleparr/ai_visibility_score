@@ -479,6 +479,99 @@ export async function GET(
           specificFix: action.specificFix,
           businessImpact: action.businessImpact
         })),
+
+        // Professional Insights - Dynamic based on evaluation results
+        professionalInsights: (() => {
+          const overallScore = evaluation.overall_score || 0;
+          const brandName = evaluation.brand_name || 'Your brand';
+          const category = evaluation.industry || 'Multi-Category Business';
+          
+          // Determine AI Readiness Level
+          const aiReadiness = (() => {
+            if (overallScore >= 80) return 'AI-Optimized';
+            if (overallScore >= 60) return 'AI-Ready';
+            if (overallScore >= 40) return 'Developing';
+            return 'Needs Foundation Work';
+          })();
+
+          // Generate dynamic risk factors based on low-scoring dimensions
+          const riskFactors = [];
+          const opportunities = [];
+          const nextSteps = [];
+
+          // Analyze dimension scores for risks and opportunities
+          const lowScoreDimensions = insights.dimensionAnalysis.filter(d => d.score < 40);
+          const mediumScoreDimensions = insights.dimensionAnalysis.filter(d => d.score >= 40 && d.score < 70);
+          const highScoreDimensions = insights.dimensionAnalysis.filter(d => d.score >= 70);
+
+          // Risk Factors (based on low scores)
+          if (lowScoreDimensions.some(d => d.name.includes('Schema') || d.name.includes('Structured'))) {
+            riskFactors.push('Poor structured data implementation limits AI comprehension');
+          }
+          if (lowScoreDimensions.some(d => d.name.includes('Citation') || d.name.includes('Authority'))) {
+            riskFactors.push('Weak external validation reduces AI confidence in recommendations');
+          }
+          if (lowScoreDimensions.some(d => d.name.includes('Sentiment') || d.name.includes('Trust'))) {
+            riskFactors.push('Negative sentiment signals may impact AI-driven recommendations');
+          }
+          if (lowScoreDimensions.some(d => d.name.includes('Geographic') || d.name.includes('Geo'))) {
+            riskFactors.push('Limited geographic signals reduce local AI discovery');
+          }
+          if (overallScore < 30) {
+            riskFactors.push('Brand invisibility risk in AI-powered search and recommendations');
+          }
+
+          // Opportunities (based on medium scores that can be improved)
+          if (mediumScoreDimensions.some(d => d.name.includes('Content') || d.name.includes('Conversational'))) {
+            opportunities.push('Content optimization can significantly boost AI understanding');
+          }
+          if (mediumScoreDimensions.some(d => d.name.includes('Product') || d.name.includes('Commerce'))) {
+            opportunities.push('Enhanced product markup can improve AI-driven product discovery');
+          }
+          if (mediumScoreDimensions.some(d => d.name.includes('Knowledge') || d.name.includes('Graph'))) {
+            opportunities.push('Knowledge graph optimization can establish stronger entity relationships');
+          }
+          if (highScoreDimensions.length > 0) {
+            opportunities.push(`Leverage strong ${highScoreDimensions[0].name.toLowerCase()} performance as foundation for broader improvements`);
+          }
+
+          // Strategic Next Steps (prioritized based on impact and feasibility)
+          if (overallScore < 40) {
+            nextSteps.push('Implement basic schema.org markup on key pages (2-week impact)');
+            nextSteps.push('Optimize FAQ and policy pages for AI readability (1-month impact)');
+            nextSteps.push('Establish consistent brand messaging across all content (ongoing)');
+          } else if (overallScore < 70) {
+            nextSteps.push('Enhance product schema with detailed attributes and reviews (high impact)');
+            nextSteps.push('Build authoritative citations through PR and content marketing (3-month impact)');
+            nextSteps.push('Optimize visual content with comprehensive alt text and descriptions (medium impact)');
+          } else {
+            nextSteps.push('Maintain content freshness and expand FAQ coverage (ongoing optimization)');
+            nextSteps.push('Explore advanced schema types for competitive advantage (innovation focus)');
+            nextSteps.push('Monitor and respond to AI-generated brand mentions (reputation management)');
+          }
+
+          // Category-specific insights
+          if (category.toLowerCase().includes('retail') || category.toLowerCase().includes('ecommerce')) {
+            opportunities.push('E-commerce schema optimization can boost product visibility in AI shopping assistants');
+            nextSteps.push('Implement product availability and pricing schema for real-time AI updates');
+          }
+          if (category.toLowerCase().includes('service') || category.toLowerCase().includes('professional')) {
+            opportunities.push('Service area markup can improve local AI recommendations');
+            nextSteps.push('Create detailed service descriptions optimized for voice search queries');
+          }
+
+          return {
+            aiReadiness,
+            riskFactors: riskFactors.slice(0, 4), // Limit to top 4 risks
+            opportunities: opportunities.slice(0, 4), // Limit to top 4 opportunities
+            nextSteps: nextSteps.slice(0, 5), // Limit to top 5 next steps
+            categorySpecific: {
+              category,
+              competitivePosition: overallScore >= 60 ? 'Above Average' : overallScore >= 40 ? 'Average' : 'Below Average',
+              marketOpportunity: overallScore < 50 ? 'High potential for rapid improvement' : 'Incremental optimization opportunities'
+            }
+          };
+        })(),
         
         aiProviders: (() => {
           const tier = new URL(request.url).searchParams.get('tier') || 'free'
