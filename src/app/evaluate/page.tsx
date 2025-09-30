@@ -165,10 +165,10 @@ export default function EvaluatePage() {
       const pdf = new jsPDF()
       
       // Set up colors and styling
-      const primaryColor = [41, 128, 185] // Blue
-      const secondaryColor = [52, 73, 94] // Dark gray
-      const accentColor = [231, 76, 60] // Red
-      const successColor = [39, 174, 96] // Green
+      const primaryColor: [number, number, number] = [41, 128, 185] // Blue
+      const secondaryColor: [number, number, number] = [52, 73, 94] // Dark gray
+      const accentColor: [number, number, number] = [231, 76, 60] // Red
+      const successColor: [number, number, number] = [39, 174, 96] // Green
       
       let yPos = 25
       
@@ -238,7 +238,7 @@ export default function EvaluatePage() {
         pdf.text(`${pillar.name}`, 20, yPos)
         
         // Score with color coding
-        const scoreColor = pillar.score >= 70 ? successColor : pillar.score >= 40 ? [243, 156, 18] : accentColor
+        const scoreColor: [number, number, number] = pillar.score >= 70 ? successColor : pillar.score >= 40 ? [243, 156, 18] : accentColor
         pdf.setTextColor(...scoreColor)
         pdf.text(`${pillar.score}/100`, 150, yPos)
         
@@ -292,7 +292,7 @@ export default function EvaluatePage() {
         pdf.text(`Score: ${score}/100 | Rating: ${starDisplay}`, 20, yPos)
         
         yPos += 5
-        const description = dim.description || dim.analysis || 'Assessment in progress'
+        const description = dim.description || 'Assessment in progress'
         const descLines = pdf.splitTextToSize(description, 170)
         pdf.text(descLines, 20, yPos)
         yPos += descLines.length * 4 + 8
