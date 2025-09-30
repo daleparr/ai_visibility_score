@@ -56,7 +56,9 @@ export async function searchWithGoogleCSE(query: string): Promise<NormalizedSear
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`❌ [GoogleCSE] API error: ${response.status} ${response.statusText}`);
-      console.error(`❌ [GoogleCSE] Error body:`, errorText);
+      console.error(`❌ [GoogleCSE] Error body:`, JSON.parse(errorText));
+      console.error(`❌ [GoogleCSE] Query that failed: "${query}"`);
+      console.error(`❌ [GoogleCSE] Full endpoint: ${endpoint}`);
       return [];
     }
     

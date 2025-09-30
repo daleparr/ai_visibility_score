@@ -754,7 +754,6 @@ export class ADIService {
               ${Boolean(signals.hasRobotsTxt)}, ${Boolean(signals.hasSitemapXml)}, ${signals.viewportMeta},
               ${Boolean(signals.hasMetaDescription)}, ${Boolean(signals.hasTitle)}, ${Boolean(signals.hasH1)}
             )
-            ON CONFLICT (evaluation_id) DO NOTHING;
           `;
           console.log(`[DB_WRITE] Saved crawl_site_signals for ${evaluationId}`);
         } catch (crawlSignalsError) {
@@ -777,7 +776,6 @@ export class ADIService {
             ) VALUES (
               ${evaluationId}, ${evidence.url || evidence.websiteUrl || ''}, ${truncatedContent}, '', 'homepage'
             )
-            ON CONFLICT (evaluation_id, url) DO NOTHING;
           `
           console.log(`[DB_WRITE] Saved website_snapshots for ${evaluationId}`);
         } catch (snapshotError) {
@@ -816,7 +814,6 @@ export class ADIService {
                 ${Boolean(crawlEvidence.isMobileFriendly)},
                 ${crawlEvidence.loadTimeMs || crawlEvidence.executionTime || 0}
             )
-            ON CONFLICT (evaluation_id) DO NOTHING;
           `;
           console.log(`[DB_WRITE] Saved evaluation_results for ${evaluationId}`);
         } catch (evaluationResultsError) {

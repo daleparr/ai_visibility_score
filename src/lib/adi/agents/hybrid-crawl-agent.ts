@@ -202,11 +202,11 @@ export class HybridCrawlAgent extends BaseADIAgent {
     try {
       const domain = new URL(websiteUrl).hostname
       const queries = [
-        `"${brandName}" site:${domain} (about OR "about us" OR company OR mission)`,
-        `"${brandName}" site:${domain} (products OR services OR catalog OR shop)`,
-        `"${brandName}" site:${domain} (contact OR support OR help OR FAQ)`,
-        `"${brandName}" site:${domain} (shipping OR delivery OR returns OR policy)`,
-        `"${brandName}" (founded OR established OR history OR "since when")`
+        `"${brandName}" site:${domain} about`,
+        `"${brandName}" site:${domain} products`,
+        `"${brandName}" site:${domain} contact`,
+        `"${brandName}" site:${domain} shipping`,
+        `"${brandName}" founded history`
       ]
 
       const searchResults = await Promise.all(
