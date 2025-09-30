@@ -127,127 +127,127 @@ Generated on: ${new Date().toLocaleString()}
       pdf.setFontSize(24)
       pdf.text('Implementation Guide', 20, 25)
     
-    // Dimension name (clean text without emojis for better PDF compatibility)
-    pdf.setFontSize(16)
-    pdf.text(recommendation.title, 20, 35)
+      // Dimension name (clean text without emojis for better PDF compatibility)
+      pdf.setFontSize(16)
+      pdf.text(recommendation.title, 20, 35)
+      
+      // Reset text color
+      pdf.setTextColor(0, 0, 0)
+      
+      // Snapshot Box (4 columns)
+      pdf.setFillColor(lightGray[0], lightGray[1], lightGray[2])
+      pdf.rect(15, 50, 180, 25, 'F')
+      pdf.setDrawColor(200, 200, 200)
+      pdf.rect(15, 50, 180, 25, 'S')
     
-    // Reset text color
-    pdf.setTextColor(0, 0, 0)
+      // Column headers
+      pdf.setFontSize(10)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Current Score', 25, 60)
+      pdf.text('Priority', 70, 60)
+      pdf.text('Effort Level', 115, 60)
+      pdf.text('Timeline', 160, 60)
+      
+      // Column values
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(12)
+      pdf.text(`${recommendation.score}/100`, 25, 68)
+      pdf.text(recommendation.priority.toUpperCase(), 70, 68)
+      pdf.text(`${effort}`, 115, 68)
+      pdf.text(timeline, 160, 68)
     
-    // Snapshot Box (4 columns)
-    pdf.setFillColor(lightGray[0], lightGray[1], lightGray[2])
-    pdf.rect(15, 50, 180, 25, 'F')
-    pdf.setDrawColor(200, 200, 200)
-    pdf.rect(15, 50, 180, 25, 'S')
+      // Business Impact Box
+      pdf.setFillColor(255, 251, 235) // Light yellow
+      pdf.rect(15, 85, 180, 25, 'F')
+      pdf.setDrawColor(251, 191, 36)
+      pdf.rect(15, 85, 180, 25, 'S')
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Business Impact:', 20, 95)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(10)
+      const impactText = pdf.splitTextToSize(businessImpact, 160)
+      pdf.text(impactText, 20, 102)
     
-    // Column headers
-    pdf.setFontSize(10)
-    pdf.setFont('helvetica', 'bold')
-    pdf.text('Current Score', 25, 60)
-    pdf.text('Priority', 70, 60)
-    pdf.text('Effort Level', 115, 60)
-    pdf.text('Timeline', 160, 60)
+      // Visual Gauge Section (Left Column)
+      let currentY = 125
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Score Improvement Potential', 20, currentY)
+      
+      // Simple gauge representation
+      currentY += 15
+      pdf.setFillColor(lightGray[0], lightGray[1], lightGray[2])
+      pdf.rect(20, currentY, 80, 8, 'F')
+      
+      // Current score bar
+      const currentScoreWidth = (recommendation.score / 100) * 80
+      pdf.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2])
+      pdf.rect(20, currentY, currentScoreWidth, 8, 'F')
+      
+      // Expected improvement bar
+      const expectedImprovement = Math.min(15, 100 - recommendation.score)
+      const improvementWidth = (expectedImprovement / 100) * 80
+      pdf.setFillColor(green[0], green[1], green[2])
+      pdf.rect(20 + currentScoreWidth, currentY, improvementWidth, 8, 'F')
+      
+      currentY += 15
+      pdf.setFontSize(10)
+      pdf.text(`Current: ${recommendation.score}/100`, 20, currentY)
+      pdf.text(`Expected: +${expectedImprovement} points`, 20, currentY + 8)
+      pdf.text(`Max Potential: +${Math.min(25, 100 - recommendation.score)} points`, 20, currentY + 16)
     
-    // Column values
-    pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(12)
-    pdf.text(`${recommendation.score}/100`, 25, 68)
-    pdf.text(recommendation.priority.toUpperCase(), 70, 68)
-    pdf.text(`${effort} (Easy)`, 115, 68)
-    pdf.text(timeline, 160, 68)
-    
-    // Business Impact Box
-    pdf.setFillColor(255, 251, 235) // Light yellow
-    pdf.rect(15, 85, 180, 25, 'F')
-    pdf.setDrawColor(251, 191, 36)
-    pdf.rect(15, 85, 180, 25, 'S')
-    pdf.setFontSize(12)
-    pdf.setFont('helvetica', 'bold')
-    pdf.text('Business Impact:', 20, 95)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(10)
-    const impactText = pdf.splitTextToSize(businessImpact, 160)
-    pdf.text(impactText, 20, 102)
-    
-    // Visual Gauge Section (Left Column)
-    let currentY = 125
-    pdf.setFontSize(14)
-    pdf.setFont('helvetica', 'bold')
-    pdf.text('Score Improvement Potential', 20, currentY)
-    
-    // Simple gauge representation
-    currentY += 15
-    pdf.setFillColor(lightGray[0], lightGray[1], lightGray[2])
-    pdf.rect(20, currentY, 80, 8, 'F')
-    
-    // Current score bar
-    const currentScoreWidth = (recommendation.score / 100) * 80
-    pdf.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2])
-    pdf.rect(20, currentY, currentScoreWidth, 8, 'F')
-    
-    // Expected improvement bar
-    const expectedImprovement = Math.min(15, 100 - recommendation.score)
-    const improvementWidth = (expectedImprovement / 100) * 80
-    pdf.setFillColor(green[0], green[1], green[2])
-    pdf.rect(20 + currentScoreWidth, currentY, improvementWidth, 8, 'F')
-    
-    currentY += 15
-    pdf.setFontSize(10)
-    pdf.text(`Current: ${recommendation.score}/100`, 20, currentY)
-    pdf.text(`Expected: +${expectedImprovement} points`, 20, currentY + 8)
-    pdf.text(`Max Potential: +${Math.min(25, 100 - recommendation.score)} points`, 20, currentY + 16)
-    
-    // Implementation Steps (Right Column)
-    pdf.setFontSize(14)
-    pdf.setFont('helvetica', 'bold')
-    pdf.text('Step-by-Step Implementation', 110, 140)
-    
-    currentY = 150
-    pdf.setFontSize(10)
-    pdf.setFont('helvetica', 'normal')
-    implementationSteps.forEach((step, index) => {
-      const stepText = `${index + 1}. ${step}`
-      const wrappedStep = pdf.splitTextToSize(stepText, 80)
-      pdf.text(wrappedStep, 110, currentY)
-      currentY += wrappedStep.length * 4 + 5
-    })
-    
-    // Technical Specs Box (Bottom Left)
-    currentY = Math.max(currentY, 200)
-    pdf.setFillColor(lightGray[0], lightGray[1], lightGray[2])
-    pdf.rect(15, currentY, 85, 30, 'F')
-    pdf.setDrawColor(200, 200, 200)
-    pdf.rect(15, currentY, 85, 30, 'S')
-    
-    pdf.setFontSize(12)
-    pdf.setFont('helvetica', 'bold')
-    pdf.text('Technical Specifications', 20, currentY + 10)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(9)
-    pdf.text(`Implementation complexity: ${effort}`, 20, currentY + 18)
-    pdf.text(`Timeline: ${timeline}`, 20, currentY + 23)
-    pdf.text(`Score improvement potential: +${Math.min(25, 100 - recommendation.score)} points`, 20, currentY + 28)
-    
-    // Next Steps Box (Bottom Right)
-    pdf.setFillColor(239, 246, 255) // Light blue
-    pdf.rect(110, currentY, 85, 30, 'F')
-    pdf.setDrawColor(59, 130, 246)
-    pdf.rect(110, currentY, 85, 30, 'S')
-    
-    pdf.setFontSize(12)
-    pdf.setFont('helvetica', 'bold')
-    pdf.text('Next Steps', 115, currentY + 10)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(9)
-    pdf.text('1. Review current implementation status', 115, currentY + 18)
-    pdf.text('2. Allocate development resources', 115, currentY + 23)
-    pdf.text('3. Monitor score improvements', 115, currentY + 28)
-    
-    // Footer
-    pdf.setFontSize(8)
-    pdf.setTextColor(128, 128, 128)
-    pdf.text(`Generated on: ${new Date().toLocaleString()}`, 20, 280)
-    pdf.text('AI Discoverability Index', 150, 280)
+      // Implementation Steps (Right Column)
+      pdf.setFontSize(14)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Step-by-Step Implementation', 110, 140)
+      
+      currentY = 150
+      pdf.setFontSize(10)
+      pdf.setFont('helvetica', 'normal')
+      implementationSteps.forEach((step, index) => {
+        const stepText = `${index + 1}. ${step}`
+        const wrappedStep = pdf.splitTextToSize(stepText, 80)
+        pdf.text(wrappedStep, 110, currentY)
+        currentY += wrappedStep.length * 4 + 5
+      })
+      
+      // Technical Specs Box (Bottom Left)
+      currentY = Math.max(currentY, 200)
+      pdf.setFillColor(lightGray[0], lightGray[1], lightGray[2])
+      pdf.rect(15, currentY, 85, 30, 'F')
+      pdf.setDrawColor(200, 200, 200)
+      pdf.rect(15, currentY, 85, 30, 'S')
+      
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Technical Specifications', 20, currentY + 10)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(9)
+      pdf.text(`Implementation complexity: ${effort}`, 20, currentY + 18)
+      pdf.text(`Timeline: ${timeline}`, 20, currentY + 23)
+      pdf.text(`Score improvement potential: +${Math.min(25, 100 - recommendation.score)} points`, 20, currentY + 28)
+      
+      // Next Steps Box (Bottom Right)
+      pdf.setFillColor(239, 246, 255) // Light blue
+      pdf.rect(110, currentY, 85, 30, 'F')
+      pdf.setDrawColor(59, 130, 246)
+      pdf.rect(110, currentY, 85, 30, 'S')
+      
+      pdf.setFontSize(12)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Next Steps', 115, currentY + 10)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(9)
+      pdf.text('1. Review current implementation status', 115, currentY + 18)
+      pdf.text('2. Allocate development resources', 115, currentY + 23)
+      pdf.text('3. Monitor score improvements', 115, currentY + 28)
+      
+      // Footer
+      pdf.setFontSize(8)
+      pdf.setTextColor(128, 128, 128)
+      pdf.text(`Generated on: ${new Date().toLocaleString()}`, 20, 280)
+      pdf.text('AI Discoverability Index', 150, 280)
     
       // Download PDF
       const filename = `${recommendation.title.replace(/[^a-zA-Z0-9]/g, '_')}_Implementation_Guide.pdf`

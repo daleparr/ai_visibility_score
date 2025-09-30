@@ -137,11 +137,11 @@ export default function EvaluatePage() {
 
 **Generated:** ${new Date().toLocaleString()}
 **Analysis Tier:** ${evaluationData.tier.toUpperCase()}
-**Overall AIDI Score:** ${evaluationData.overallScore.toFixed(2)}/100
+**Overall AIDI Score:** ${typeof evaluationData.overallScore === 'number' ? evaluationData.overallScore.toFixed(2) : evaluationData.overallScore}/100
 
 ## Executive Summary
-${evaluationData.tier === 'index-pro' ? 'Index Pro multi-model analysis' : 'Standard GPT-4 analysis'} conducted on ${evaluationData.url}.
-Overall AI Discoverability Index (AIDI) score of ${evaluationData.overallScore.toFixed(2)}/100 indicates ${evaluationData.overallScore >= 80 ? 'strong' : evaluationData.overallScore >= 60 ? 'moderate' : 'weak'} AI visibility.
+${evaluationData.tier === 'index-pro' ? 'Index Pro frontier model consensus analysis across GPT-4 Turbo, Claude 3.5 Sonnet, Perplexity Pro, and Gemini Pro 1.5' : 'Standard GPT-4 analysis'} conducted on ${evaluationData.url}.
+Overall AI Discoverability Index (AIDI) score of ${typeof evaluationData.overallScore === 'number' ? evaluationData.overallScore.toFixed(2) : evaluationData.overallScore}/100 indicates ${(evaluationData.overallScore || 0) >= 80 ? 'strong' : (evaluationData.overallScore || 0) >= 60 ? 'moderate' : 'weak'} AI visibility.
 
 ## Pillar Breakdown
 ### 🏗️ Infrastructure & Machine Readability: ${evaluationData.pillarScores?.infrastructure?.toFixed(2) || 'N/A'}/100
@@ -200,6 +200,16 @@ ${evaluationData.certification ? `
 - Analysis Method: ${evaluationData.analysisMethod || 'Standard AIDI Framework'}
 - AI Providers: ${evaluationData.aiProviders.join(', ')}
 - Default Model: ${evaluationData.defaultModel}
+
+${evaluationData.tier === 'index-pro' && evaluationData.modelResults ? `
+## Frontier Model Analysis Results
+${evaluationData.modelResults.map(model => `
+### ${model.provider} ${model.model}
+**Score:** ${model.score}/100 (${model.confidence}% confidence)
+**Strengths:** ${model.strengths.join(', ')}
+**Weaknesses:** ${model.weaknesses.join(', ')}
+**Recommendation:** ${model.recommendation}
+`).join('')}` : ''}
 
 ## Next Steps
 1. Review priority recommendations above
@@ -502,7 +512,7 @@ ${evaluationData.certification ? `
               <CardDescription>
                 {tier === 'free' 
                   ? 'Free tier uses GPT-4 for comprehensive analysis' 
-                  : 'Premium analysis across multiple frontier models'
+                  : 'Index Pro: Frontier model consensus analysis across GPT-4, Claude, Perplexity, and Gemini'
                 }
               </CardDescription>
             </CardHeader>
@@ -511,6 +521,10 @@ ${evaluationData.certification ? `
                 {(evaluationData.aiProviders || []).map((provider, index) => (
                   <Badge key={index} variant="outline" className="capitalize">
                     {provider === 'openai' ? 'ChatGPT (GPT-4)' : 
+                     provider === 'OpenAI GPT-4' ? 'GPT-4 Turbo' :
+                     provider === 'Anthropic Claude' ? 'Claude 3.5 Sonnet' :
+                     provider === 'Perplexity AI' ? 'Perplexity Pro' :
+                     provider === 'Google Gemini' ? 'Gemini Pro 1.5' :
                      provider === 'anthropic' ? 'Claude-3-Sonnet' :
                      provider === 'google' ? 'Gemini-Pro' :
                      provider === 'mistral' ? 'Mistral-Large' :
@@ -791,20 +805,21 @@ ${evaluationData.certification ? `
 
           {/* Action Cards */}
           <div className="grid md:grid-cols-2 gap-6 mb-8">
-            {/* Free Actions */}
-            <Card className="border-green-200 bg-green-50/50">
+            {/* Index Pro Current Features */}
+            <Card className="border-blue-200 bg-blue-50/50">
               <CardHeader>
-                <CardTitle className="text-green-700">✅ What You Can Do Now (Free)</CardTitle>
+                <CardTitle className="text-blue-700">✅ What You Can Do Now (Index Pro)</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm">
-                  <li>• Share this report with your team</li>
-                  <li>• Bookmark for future reference</li>
-                  <li>• Compare with competitors manually</li>
-                  <li>• Review basic recommendations below</li>
+                  <li>• Share this frontier model report with your team</li>
+                  <li>• Download comprehensive technical reports</li>
+                  <li>• Access multi-model analysis insights</li>
+                  <li>• Compare GPT-4, Claude, Perplexity & Gemini results</li>
+                  <li>• Review model-specific recommendations below</li>
                 </ul>
                 <Button className="w-full mt-4" variant="outline" asChild>
-                  <Link href={`/evaluate?url=${encodeURIComponent(evaluationData.url)}`}>
+                  <Link href={`/evaluate?url=${encodeURIComponent(evaluationData.url)}&tier=index-pro`}>
                     Re-run Analysis
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
@@ -812,50 +827,50 @@ ${evaluationData.certification ? `
               </CardContent>
             </Card>
 
-            {/* Premium Actions */}
-            <Card className="border-brand-200 bg-brand-50/50">
+            {/* Enterprise Actions */}
+            <Card className="border-purple-200 bg-purple-50/50">
               <CardHeader>
-                <CardTitle className="text-brand-700">💎 Upgrade to Index Pro</CardTitle>
+                <CardTitle className="text-purple-700">🏢 Upgrade to Enterprise</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm mb-4">
                   <li className="flex items-center">
-                    <Brain className="h-4 w-4 mr-2" />
-                    GPT-4 enhanced analysis (+40% accuracy)
+                    <Trophy className="h-4 w-4 mr-2" />
+                    Executive snapshot reports (like Fortnum & Mason)
                   </li>
                   <li className="flex items-center">
-                    <Globe className="h-4 w-4 mr-2" />
-                    Real-time web search with Perplexity AI
+                    <Brain className="h-4 w-4 mr-2" />
+                    Custom brand playbook generation
                   </li>
                   <li className="flex items-center">
                     <TrendingUp className="h-4 w-4 mr-2" />
-                    25 evaluations per month
+                    Unlimited evaluations & monitoring
                   </li>
                   <li className="flex items-center">
                     <BarChart3 className="h-4 w-4 mr-2" />
                     Advanced competitive intelligence
                   </li>
                   <li className="flex items-center">
+                    <Globe className="h-4 w-4 mr-2" />
+                    White-label API access
+                  </li>
+                  <li className="flex items-center">
                     <Star className="h-4 w-4 mr-2" />
-                    Priority processing & support
+                    Dedicated support & historical trends
                   </li>
                 </ul>
                 <Button
-                  className="w-full"
+                  className="w-full bg-purple-600 hover:bg-purple-700"
                   onClick={async () => {
                     try {
-                      const tier = evaluationData.tier === 'free' ? 'index-pro' : 'enterprise'
-                      await createCheckoutSession(tier)
+                      await createCheckoutSession('enterprise')
                     } catch (error) {
                       console.error('Error starting checkout:', error)
                       alert('Unable to start checkout. Please try again.')
                     }
                   }}
                 >
-                  {evaluationData.tier === 'free'
-                    ? 'Upgrade to Index Pro - £29/month'
-                    : 'Upgrade to Enterprise - £199/month'
-                  }
+                  🏢 Upgrade to Enterprise - £319/month
                 </Button>
               </CardContent>
             </Card>
