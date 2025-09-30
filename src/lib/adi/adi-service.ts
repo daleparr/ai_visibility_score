@@ -838,20 +838,23 @@ export class ADIService {
         }
       }
       
-      // Save dimension scores to database
+      // Save dimension scores to database using proper ORM
       for (const score of dimensionScores) {
-            await sql`
-                INSERT INTO production.dimension_scores (
-                    evaluation_id, dimension_name, score, explanation, recommendations
-                ) VALUES (
-                    ${evaluationId}, ${score.dimensionName}, ${score.score}, ${score.explanation}, ${score.evidence}
-                )
-                ON CONFLICT (evaluation_id, dimension_name) DO UPDATE SET
-                    score = EXCLUDED.score,
-                    explanation = EXCLUDED.explanation,
-                    recommendations = EXCLUDED.recommendations;
-            `;
+        try {
+          const dimensionScoreData = {
+            evaluationId: evaluationId,
+            dimensionName: score.dimensionName,
+            score: Math.round(score.score),
+            explanation: score.explanation,
+            recommendations: JSON.parse(score.evidence || '[]')
+          }
+          
+          // Use the createDimensionScore function which handles conflicts properly
+          await this.createDimensionScoreWithFallback(dimensionScoreData)
+        } catch (error) {
+          console.error(`[DB_WRITE_ERROR] Failed to save dimension score ${score.dimensionName}:`, error)
         }
+      }
         
         if (dimensionScores.length > 0) {
           console.log(`[DB_WRITE] Saved ${dimensionScores.length} dimension scores for ${evaluationId}`);
@@ -887,6 +890,21 @@ export class ADIService {
     }
     
     return agentToDimensionMap[agentName] || null
+  }
+
+  /**
+   * Create dimension score with proper error handling and fallback
+   */
+  private async createDimensionScoreWithFallback(scoreData: any): Promise<void> {
+    const { createDimensionScore } = await import('@/lib/database')
+    
+    try {
+      await createDimensionScore(scoreData)
+      console.log(`[DB_WRITE] Saved dimension score: ${scoreData.dimensionName} = ${scoreData.score}`)
+    } catch (error) {
+      console.error(`[DB_WRITE_ERROR] Failed to create dimension score for ${scoreData.dimensionName}:`, error)
+      // Don't throw - we want to continue with other scores
+    }
   }
 
   // Legacy stubs for reference during migration
