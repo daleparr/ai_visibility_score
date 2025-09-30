@@ -557,6 +557,12 @@ export class SemanticAgent extends BaseADIAgent {
     for (const result of crawlResults) {
       const structuredData = result.evidence?.structuredData || []
       
+      // Add safety check for structured data
+      if (!Array.isArray(structuredData)) {
+        console.warn('Semantic Agent: structuredData is not an array, skipping')
+        continue
+      }
+      
       for (const data of structuredData) {
         // Extract semantic concepts from structured data
         if (data['@type']) {

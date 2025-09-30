@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { MerchantReportGenerator } from '@/lib/adi/merchant-report-generator'
 
 // ✅ Disable all caching
 export const dynamic = 'force-dynamic'
@@ -132,6 +133,15 @@ export async function GET(
       const overallScore = evaluation.overall_score || 0
       const brandName = evaluation.brand_name || 'Unknown Brand'
       const websiteUrl = evaluation.website_url || 'unknown'
+      
+      // ✅ Generate merchant-focused report
+      const merchantReportGenerator = new MerchantReportGenerator()
+      const merchantReport = merchantReportGenerator.generateMerchantReport(
+        overallScore,
+        scores.map(s => ({ name: s.dimension_name, score: s.score })),
+        brandName,
+        websiteUrl
+      )
       
       // ✅ MAP DIMENSION NAMES TO BUSINESS-FRIENDLY DIMENSIONS (Updated for new system)
       const agentFindings = {
@@ -375,14 +385,14 @@ export async function GET(
       }
 
       const executiveSummary = {
-        score: `${overallScore}/100 indicating ${getGradeDescription(overallScore)}`,
-        verdict: getSpecificVerdict(),
+        score: `${overallScore}/100 - Grade ${merchantReport.executiveSummary.overallGrade}`,
+        verdict: merchantReport.executiveSummary.keyFinding,
         strongest: strongest ? `${strongest.dimension_name.replace('_agent', '').replace('_', ' ')} (${strongest.score}/100)` : 'Not determined',
         weakest: weakest ? `${weakest.dimension_name.replace('_agent', '').replace('_', ' ')} (${weakest.score}/100)` : 'Not determined',
-        opportunity: priorityActions[0]?.title || 'Continue monitoring and optimization',
-        keyInsight: priorityActions.length > 0 
-          ? `${priorityActions.length} critical improvement${priorityActions.length > 1 ? 's' : ''} identified with potential +${priorityActions.reduce((sum, action) => sum + parseInt(action.impact.split('-')[1] || '10'), 0)} point impact.`
-          : 'Strong foundation - focus on maintaining competitive positioning.'
+        opportunity: merchantReport.executiveSummary.biggestOpportunity,
+        keyInsight: merchantReport.executiveSummary.quickWin,
+        businessImpacts: merchantReport.businessImpacts,
+        actionableInsights: merchantReport.actionableInsights.slice(0, 3) // Top 3 merchant insights
       }
       
       return {

@@ -144,18 +144,18 @@ ${evaluationData.tier === 'index-pro' ? 'Index Pro frontier model consensus anal
 Overall AI Discoverability Index (AIDI) score of ${evaluationData.overallScore || 0}/100 indicates ${(evaluationData.overallScore || 0) >= 80 ? 'strong' : (evaluationData.overallScore || 0) >= 60 ? 'moderate' : 'weak'} AI visibility.
 
 ## Pillar Breakdown
-### 🏗️ Infrastructure & Machine Readability: ${evaluationData.pillarScores?.infrastructure?.toFixed(2) || 'N/A'}/100
+### 🏗️ Infrastructure & Machine Readability: ${evaluationData.pillarScores?.infrastructure || 'N/A'}/100
 How easily AI can parse and understand your brand's digital footprint.
 
-### 🎯 Perception & Reputation: ${evaluationData.pillarScores?.perception?.toFixed(2) || 'N/A'}/100
+### 🎯 Perception & Reputation: ${evaluationData.pillarScores?.perception || 'N/A'}/100
 How well AI understands your brand matters and positioning.
 
-### 🛒 Commerce & Transaction Clarity: ${evaluationData.pillarScores?.commerce?.toFixed(2) || 'N/A'}/100
+### 🛒 Commerce & Transaction Clarity: ${evaluationData.pillarScores?.commerce || 'N/A'}/100
 How AI helps customers buy from you.
 
 ## Dimension Analysis
 ${(evaluationData.dimensionScores || []).map(dim => `
-### ${dim.name}: ${typeof dim.score === 'number' ? dim.score.toFixed(2) : dim.score}/100
+### ${dim.name}: ${dim.score || 'N/A'}/100
 **Pillar:** ${dim.pillar && typeof dim.pillar === 'string' ? dim.pillar.charAt(0).toUpperCase() + dim.pillar.slice(1) : 'Unknown'}
 **Description:** ${dim.description || 'No description available'}
 `).join('')}
@@ -163,7 +163,7 @@ ${(evaluationData.dimensionScores || []).map(dim => `
 ## Priority Recommendations
 ${(evaluationData.recommendations || []).map((rec, index) => `
 ### ${index + 1}. ${rec.title} (${rec.priority.toUpperCase()} PRIORITY)
-**Current Score:** ${rec.score.toFixed(2)}/100
+**Current Score:** ${rec.score || 'N/A'}/100
 **Description:** ${rec.description}
 `).join('')}
 
@@ -182,8 +182,8 @@ ${evaluationData.industryBenchmarks ? `
 **Industry:** ${evaluationData.industryBenchmarks.industry}
 **Your Rank:** #${evaluationData.industryBenchmarks.yourRank} of ${evaluationData.industryBenchmarks.totalCompanies}
 **Percentile:** ${evaluationData.industryBenchmarks.percentile}th percentile
-**Industry Median:** ${evaluationData.industryBenchmarks.industryMedian.toFixed(2)}/100
-**Top Performer:** ${evaluationData.industryBenchmarks.topPerformer.toFixed(2)}/100
+**Industry Median:** ${evaluationData.industryBenchmarks.industryMedian || 'N/A'}/100
+**Top Performer:** ${evaluationData.industryBenchmarks.topPerformer || 'N/A'}/100
 ` : ''}
 
 ## Certification Status
