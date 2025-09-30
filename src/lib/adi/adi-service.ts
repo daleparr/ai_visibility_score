@@ -743,18 +743,22 @@ export class ADIService {
           hasH1: evidence.hasH1 || false
         }
         
-        await sql`
-          INSERT INTO production.crawl_site_signals (
-            evaluation_id, load_time_ms, is_mobile_friendly, has_https, has_robots_txt, has_sitemap_xml,
-            viewport_meta, has_meta_description, has_title, has_h1
-          ) VALUES (
-            ${evaluationId}, ${signals.loadTimeMs}, ${Boolean(signals.isMobileFriendly)}, ${Boolean(signals.hasHttps)},
-            ${Boolean(signals.hasRobotsTxt)}, ${Boolean(signals.hasSitemapXml)}, ${signals.viewportMeta},
-            ${Boolean(signals.hasMetaDescription)}, ${Boolean(signals.hasTitle)}, ${Boolean(signals.hasH1)}
-          )
-          ON CONFLICT (evaluation_id) DO NOTHING;
-        `;
-        console.log(`[DB_WRITE] Saved crawl_site_signals for ${evaluationId}`);
+        try {
+          await sql`
+            INSERT INTO production.crawl_site_signals (
+              evaluation_id, load_time_ms, is_mobile_friendly, has_https, has_robots_txt, has_sitemap_xml,
+              viewport_meta, has_meta_description, has_title, has_h1
+            ) VALUES (
+              ${evaluationId}, ${signals.loadTimeMs}, ${Boolean(signals.isMobileFriendly)}, ${Boolean(signals.hasHttps)},
+              ${Boolean(signals.hasRobotsTxt)}, ${Boolean(signals.hasSitemapXml)}, ${signals.viewportMeta},
+              ${Boolean(signals.hasMetaDescription)}, ${Boolean(signals.hasTitle)}, ${Boolean(signals.hasH1)}
+            )
+            ON CONFLICT (evaluation_id) DO NOTHING;
+          `;
+          console.log(`[DB_WRITE] Saved crawl_site_signals for ${evaluationId}`);
+        } catch (crawlSignalsError) {
+          console.warn(`[DB_WRITE_SKIP] Failed to save crawl_site_signals (table may not exist):`, crawlSignalsError);
+        }
       } else {
         console.log(`[DB_WRITE_SKIP] No crawl signals found for ${evaluationId}`)
       }
@@ -765,15 +769,19 @@ export class ADIService {
         // Truncate content to fit in text column
         const truncatedContent = evidence.content?.substring(0, 100000) ?? ''
 
-        await sql`
-          INSERT INTO production.website_snapshots (
-            evaluation_id, url, html_content, screenshot_url, page_type
-          ) VALUES (
-            ${evaluationId}, ${evidence.url || evidence.websiteUrl || ''}, ${truncatedContent}, '', 'homepage'
-          )
-          ON CONFLICT (evaluation_id, url) DO NOTHING;
-        `
-        console.log(`[DB_WRITE] Saved website_snapshots for ${evaluationId}`);
+        try {
+          await sql`
+            INSERT INTO production.website_snapshots (
+              evaluation_id, url, html_content, screenshot_url, page_type
+            ) VALUES (
+              ${evaluationId}, ${evidence.url || evidence.websiteUrl || ''}, ${truncatedContent}, '', 'homepage'
+            )
+            ON CONFLICT (evaluation_id, url) DO NOTHING;
+          `
+          console.log(`[DB_WRITE] Saved website_snapshots for ${evaluationId}`);
+        } catch (snapshotError) {
+          console.warn(`[DB_WRITE_SKIP] Failed to save website_snapshots (table may not exist):`, snapshotError);
+        }
       } else {
          console.log(`[DB_WRITE_SKIP] No crawl snapshot found for ${evaluationId}`)
       }
@@ -783,32 +791,36 @@ export class ADIService {
         const schemaResult = schemaAgent.results[0]
         const crawlEvidence = crawlAgent?.results?.[0]?.evidence || {}
         
-        await sql`
-          INSERT INTO production.evaluation_results (
-              evaluation_id,
-              has_schema,
-              schema_type,
-              schema_errors,
-              has_meta_description,
-              has_title,
-              has_h1,
-              is_mobile_friendly,
-              load_time_ms
-          )
-          VALUES (
-              ${evaluationId},
-              ${schemaResult.normalizedScore > 0},
-              ${schemaResult.evidence?.schemaType || 'unknown'},
-              ${schemaResult.evidence?.errors?.join(',') || null},
-              ${Boolean(crawlEvidence.hasMetaDescription || crawlEvidence.metaData?.description)},
-              ${Boolean(crawlEvidence.hasTitle || crawlEvidence.metaData?.title)},
-              ${Boolean(crawlEvidence.hasH1)},
-              ${Boolean(crawlEvidence.isMobileFriendly)},
-              ${crawlEvidence.loadTimeMs || crawlEvidence.executionTime || 0}
-          )
-          ON CONFLICT (evaluation_id) DO NOTHING;
-        `;
-        console.log(`[DB_WRITE] Saved evaluation_results for ${evaluationId}`);
+        try {
+          await sql`
+            INSERT INTO production.evaluation_results (
+                evaluation_id,
+                has_schema,
+                schema_type,
+                schema_errors,
+                has_meta_description,
+                has_title,
+                has_h1,
+                is_mobile_friendly,
+                load_time_ms
+            )
+            VALUES (
+                ${evaluationId},
+                ${schemaResult.normalizedScore > 0},
+                ${schemaResult.evidence?.schemaType || 'unknown'},
+                ${schemaResult.evidence?.errors?.join(',') || null},
+                ${Boolean(crawlEvidence.hasMetaDescription || crawlEvidence.metaData?.description)},
+                ${Boolean(crawlEvidence.hasTitle || crawlEvidence.metaData?.title)},
+                ${Boolean(crawlEvidence.hasH1)},
+                ${Boolean(crawlEvidence.isMobileFriendly)},
+                ${crawlEvidence.loadTimeMs || crawlEvidence.executionTime || 0}
+            )
+            ON CONFLICT (evaluation_id) DO NOTHING;
+          `;
+          console.log(`[DB_WRITE] Saved evaluation_results for ${evaluationId}`);
+        } catch (evaluationResultsError) {
+          console.warn(`[DB_WRITE_SKIP] Failed to save evaluation_results (table may not exist):`, evaluationResultsError);
+        }
       } else {
          console.log(`[DB_WRITE_SKIP] No schema data for ${evaluationId}`);
       }
