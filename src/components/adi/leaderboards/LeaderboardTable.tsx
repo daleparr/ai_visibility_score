@@ -74,9 +74,9 @@ export function LeaderboardTable({ data, onFilterChange, showFilters = true }: L
       <CardContent>
         {/* Filters */}
         {showFilters && (
-          <div className="flex gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Sort by..." />
               </SelectTrigger>
               <SelectContent>
@@ -90,7 +90,7 @@ export function LeaderboardTable({ data, onFilterChange, showFilters = true }: L
             </Select>
 
             <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Filter by..." />
               </SelectTrigger>
               <SelectContent>
@@ -105,24 +105,24 @@ export function LeaderboardTable({ data, onFilterChange, showFilters = true }: L
 
         {/* Sector Insights */}
         {data.sectorInsights && (
-          <div className="bg-blue-50 rounded-lg p-4 mb-6 border border-blue-200">
+          <div className="bg-blue-50 rounded-lg p-3 sm:p-4 mb-6 border border-blue-200">
             <h3 className="font-semibold text-blue-800 mb-3">📊 Sector Insights</h3>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="text-blue-600 font-medium">Average Score:</span>
-                <span className="ml-2 font-bold">{data.sectorInsights.averageScore}/100</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-sm">
+              <div className="bg-white rounded p-2 border border-blue-100">
+                <span className="text-blue-600 font-medium block sm:inline">Average Score:</span>
+                <span className="ml-0 sm:ml-2 font-bold">{data.sectorInsights.averageScore}/100</span>
               </div>
-              <div>
-                <span className="text-blue-600 font-medium">Top Performer:</span>
-                <span className="ml-2 font-bold">{data.sectorInsights.topPerformer}</span>
+              <div className="bg-white rounded p-2 border border-blue-100">
+                <span className="text-blue-600 font-medium block sm:inline">Top Performer:</span>
+                <span className="ml-0 sm:ml-2 font-bold">{data.sectorInsights.topPerformer}</span>
               </div>
-              <div>
-                <span className="text-green-600 font-medium">Trending Up:</span>
-                <span className="ml-2">{data.sectorInsights.trendingUp.join(', ') || 'None'}</span>
+              <div className="bg-white rounded p-2 border border-blue-100">
+                <span className="text-green-600 font-medium block sm:inline">Trending Up:</span>
+                <span className="ml-0 sm:ml-2">{data.sectorInsights.trendingUp.join(', ') || 'None'}</span>
               </div>
-              <div>
-                <span className="text-red-600 font-medium">Common Weakness:</span>
-                <span className="ml-2">{data.sectorInsights.commonWeaknesses[0] || 'N/A'}</span>
+              <div className="bg-white rounded p-2 border border-blue-100">
+                <span className="text-red-600 font-medium block sm:inline">Common Weakness:</span>
+                <span className="ml-0 sm:ml-2">{data.sectorInsights.commonWeaknesses[0] || 'N/A'}</span>
               </div>
             </div>
             
@@ -152,11 +152,96 @@ export function LeaderboardTable({ data, onFilterChange, showFilters = true }: L
           {data.entries.map((entry, index) => (
             <div 
               key={index} 
-              className={`border rounded-lg p-4 ${
+              className={`border rounded-lg p-3 sm:p-4 ${
                 entry.rank <= 3 ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200' : 'bg-white'
               }`}
             >
-              <div className="grid grid-cols-12 gap-4 items-center">
+              {/* Mobile Layout (< 768px) */}
+              <div className="block md:hidden">
+                {/* Mobile Header Row */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0">
+                      {getRankIcon(entry.rank)}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-base">{entry.brand}</h3>
+                        <Button variant="ghost" size="sm" className="p-1">
+                          <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-gray-500">{entry.domain}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-xl font-bold ${getScoreColor(entry.overallScore)}`}>
+                      {entry.overallScore}
+                    </div>
+                    <Badge className={`text-xs ${getGradeColor(entry.grade)}`}>
+                      {entry.grade}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Mobile Category Badge */}
+                {(entry as any).category && (
+                  <div className="flex items-center gap-1 mb-3">
+                    <span className="text-sm">{(entry as any).category.emoji}</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {(entry as any).category.niche}
+                    </Badge>
+                  </div>
+                )}
+
+                {/* Mobile Pillar Scores */}
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  <div className="text-center bg-blue-50 rounded p-2">
+                    <div className="font-medium text-blue-600 text-sm">{entry.pillarScores.infrastructure}</div>
+                    <div className="text-xs text-gray-500">Tech</div>
+                  </div>
+                  <div className="text-center bg-green-50 rounded p-2">
+                    <div className="font-medium text-green-600 text-sm">{entry.pillarScores.perception}</div>
+                    <div className="text-xs text-gray-500">Brand</div>
+                  </div>
+                  <div className="text-center bg-purple-50 rounded p-2">
+                    <div className="font-medium text-purple-600 text-sm">{entry.pillarScores.commerce}</div>
+                    <div className="text-xs text-gray-500">Commerce</div>
+                  </div>
+                </div>
+
+                {/* Mobile Strength/Gap */}
+                <div className="space-y-2 mb-3">
+                  <div className="bg-green-50 rounded p-2 border border-green-200">
+                    <div className="flex items-start text-xs">
+                      <span className="text-green-600 font-medium flex-shrink-0">💪 Strength:</span>
+                      <span className="ml-2 text-gray-700">{entry.strengthHighlight.dimension}</span>
+                    </div>
+                  </div>
+                  <div className="bg-red-50 rounded p-2 border border-red-200">
+                    <div className="flex items-start text-xs">
+                      <span className="text-red-600 font-medium flex-shrink-0">⚠️ Gap:</span>
+                      <span className="ml-2 text-gray-700">{entry.gapHighlight.dimension}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile Trend */}
+                {entry.trend && (
+                  <div className="flex items-center justify-center gap-2 text-sm">
+                    {getTrendIcon(entry.trend)}
+                    <span className={`font-medium ${
+                      entry.trend.direction === 'up' ? 'text-green-600' : 
+                      entry.trend.direction === 'down' ? 'text-red-600' : 'text-gray-500'
+                    }`}>
+                      {entry.trend.change > 0 ? '+' : ''}{entry.trend.change} ({entry.trend.period})
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Desktop Layout (>= 768px) */}
+              <div className="hidden md:grid md:grid-cols-12 gap-4 items-center">
                 {/* Rank */}
                 <div className="col-span-1 flex justify-center">
                   {getRankIcon(entry.rank)}
@@ -243,8 +328,8 @@ export function LeaderboardTable({ data, onFilterChange, showFilters = true }: L
                 </div>
               </div>
 
-              {/* Expandable Details */}
-              <div className="mt-3 pt-3 border-t border-gray-200">
+              {/* Expandable Details - Desktop Only (Mobile has inline details) */}
+              <div className="hidden md:block mt-3 pt-3 border-t border-gray-200">
                 <div className="grid md:grid-cols-2 gap-4 text-sm">
                   <div className="bg-green-50 rounded p-2 border border-green-200">
                     <span className="font-medium text-green-800">✅ {entry.strengthHighlight.dimension}:</span>
