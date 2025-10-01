@@ -630,8 +630,17 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
           const categorizationResponse = await fetch(`/api/brand-categorization?action=categorize&brand=${encodeURIComponent(brandName)}&url=${encodeURIComponent(url)}`)
           if (categorizationResponse.ok) {
             const categoryData = await categorizationResponse.json()
-            detectedCategory = categoryData.category
+            // Extract the proper category string for leaderboard API
+            if (categoryData.category && typeof categoryData.category === 'object') {
+              detectedCategory = categoryData.category.niche || categoryData.category.industry || categoryData.category.sector || 'general'
+            } else {
+              detectedCategory = categoryData.category || 'general'
+            }
             setBrandCategory(categoryData.category)
+            console.log('🔍 Brand categorization result:', {
+              originalCategory: categoryData.category,
+              extractedCategory: detectedCategory
+            })
           }
         } catch (error) {
           console.log('Brand categorization failed, using fallback')
@@ -1514,13 +1523,26 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
                           <span className="text-purple-600 font-medium">Category:</span>
                           <span className="ml-2 font-bold">
                             {(() => {
+                              console.log('🔍 Category Debug:', {
+                                leaderboardCategory: leaderboardData?.category,
+                                leaderboardCategoryType: typeof leaderboardData?.category,
+                                firstEntry: leaderboardData?.entries?.[0],
+                                firstEntryCategory: (leaderboardData?.entries?.[0] as any)?.category
+                              });
+                              
                               // Get category from the leaderboard data or first entry
-                              if (leaderboardData.category && typeof leaderboardData.category === 'string') {
+                              if (leaderboardData?.category && typeof leaderboardData.category === 'string') {
                                 return leaderboardData.category;
                               }
                               
+                              // If category is an object, try to extract meaningful value
+                              if (leaderboardData?.category && typeof leaderboardData.category === 'object') {
+                                const categoryObj = leaderboardData.category as any;
+                                return categoryObj.niche || categoryObj.industry || categoryObj.sector || categoryObj.name || 'General';
+                              }
+                              
                               // Fallback to first entry's category if available
-                              const firstEntry = leaderboardData.entries?.[0];
+                              const firstEntry = leaderboardData?.entries?.[0];
                               if (firstEntry && (firstEntry as any).category) {
                                 const entryCategory = (firstEntry as any).category;
                                 return entryCategory.niche || entryCategory.sector || entryCategory.industry || 'General';
