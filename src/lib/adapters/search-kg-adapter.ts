@@ -45,10 +45,8 @@ export async function searchWithGoogleCSE(query: string): Promise<NormalizedSear
     return [];
   }
 
-  // Temporary fix: Disable Google CSE due to configuration issues
-  // The current API key and CSE ID appear to be swapped or incorrect
-  console.log('⚠️ [GoogleCSE] Temporarily disabled due to configuration issues');
-  return [];
+  // Re-enabled Google CSE with improved error handling
+  console.log('🔍 [GoogleCSE] Attempting search with improved error handling');
 
   const endpoint = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}`;
 
@@ -91,6 +89,21 @@ export async function searchWithGoogleCSE(query: string): Promise<NormalizedSear
     
   } catch (error) {
     console.error('❌ [GoogleCSE] Search failed:', error);
+    if (error instanceof Error) {
+      console.error('❌ [GoogleCSE] Error details:', {
+        message: error.message,
+        query: query,
+        endpoint: endpoint.replace(apiKey, 'REDACTED'),
+        apiKeyLength: apiKey?.length || 0,
+        cseIdLength: cx?.length || 0
+      });
+      
+      // If it's a 400 error, may indicate configuration issue
+      if (error.message.includes('400')) {
+        console.warn('⚠️ [GoogleCSE] 400 error detected - may indicate configuration issue');
+        console.warn('⚠️ [GoogleCSE] Continuing with Brave API only for this request');
+      }
+    }
     return [];
   }
 }
@@ -122,9 +135,9 @@ export async function searchWithBrave(query: string): Promise<NormalizedSearchRe
       }),
       new Promise<never>((_, reject) => {
         setTimeout(() => {
-          console.log(`⏰ [Brave] HARD TIMEOUT after 10000ms`);
+          console.log(`⏰ [Brave] HARD TIMEOUT after 15000ms`);
           reject(new Error('HARD_TIMEOUT'));
-        }, 10000);
+        }, 15000); // Increased timeout to 15 seconds
       })
     ]);
 

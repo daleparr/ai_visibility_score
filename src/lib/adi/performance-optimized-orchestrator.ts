@@ -352,7 +352,9 @@ export class PerformanceOptimizedADIOrchestrator {
             hasHtml: !!crawlResult.evidence?.html,
             hasContent: !!crawlResult.evidence?.content,
             htmlLength: crawlResult.evidence?.html?.length || 0,
-            contentLength: crawlResult.evidence?.content?.length || 0
+            contentLength: crawlResult.evidence?.content?.length || 0,
+            evidenceKeys: Object.keys(crawlResult.evidence || {}),
+            evidenceHtmlLength: crawlResult.evidence?.html?.length || 0
           })
           
           return {
