@@ -42,7 +42,11 @@ export class CommerceAgent extends BaseADIAgent {
       // Convert crawl results to expected format
       const crawlArtifacts = crawlResults.map(result => ({
         artifact_type: 'html_snapshot',
-        content: result.evidence?.htmlContent || '',
+        content: result.evidence?.htmlContent || result.evidence?.html || result.evidence?.content || '',
+        url: result.evidence?.url || result.evidence?.websiteUrl || '',
+        extracted_data: {
+          content: result.evidence?.htmlContent || result.evidence?.html || result.evidence?.content || ''
+        },
         metadata: result.evidence?.metaData || {},
         structuredData: result.evidence?.structuredData || []
       }))

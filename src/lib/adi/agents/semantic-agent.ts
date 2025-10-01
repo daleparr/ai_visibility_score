@@ -528,9 +528,21 @@ export class SemanticAgent extends BaseADIAgent {
       
       // Check internal linking
       const internalLinks = content.match(/href=["'][^"']*["']/gi) || []
-      const internalLinkCount = internalLinks.filter((link: string) =>
-        !link.includes('http') || link.includes(new URL(result.evidence?.url || '').hostname)
-      ).length
+      const internalLinkCount = internalLinks.filter((link: string) => {
+        try {
+          const url = result.evidence?.url || result.evidence?.websiteUrl || ''
+          if (!url) return false
+          
+          // Ensure URL has protocol
+          const normalizedUrl = url.startsWith('http') ? url : `https://${url}`
+          const hostname = new URL(normalizedUrl).hostname
+          
+          return !link.includes('http') || link.includes(hostname)
+        } catch (error) {
+          // If URL parsing fails, assume it's not an internal link
+          return false
+        }
+      }).length
       
       crossLinkingScore += Math.min(100, internalLinkCount * 5)
     }
