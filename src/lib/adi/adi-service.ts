@@ -772,7 +772,7 @@ export class ADIService {
         try {
           await sql`
             INSERT INTO production.website_snapshots (
-              evaluation_id, url, html_content, screenshot_url, page_type
+              evaluation_id, url, raw_html, screenshot_url, page_type
             ) VALUES (
               ${evaluationId}, ${evidence.url || evidence.websiteUrl || ''}, ${truncatedContent}, '', 'homepage'
             )
