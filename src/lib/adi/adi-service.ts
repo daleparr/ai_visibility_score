@@ -768,13 +768,17 @@ export class ADIService {
         const evidence = crawlAgent.results[0].evidence
         // Truncate content to fit in text column
         const truncatedContent = evidence.content?.substring(0, 100000) ?? ''
+        
+        // Generate content hash for deduplication
+        const crypto = require('crypto')
+        const contentHash = crypto.createHash('sha256').update(truncatedContent).digest('hex')
 
         try {
           await sql`
             INSERT INTO production.website_snapshots (
-              evaluation_id, url, raw_html, screenshot_url, page_type
+              evaluation_id, url, raw_html, screenshot_url, page_type, content_hash
             ) VALUES (
-              ${evaluationId}, ${evidence.url || evidence.websiteUrl || ''}, ${truncatedContent}, '', 'homepage'
+              ${evaluationId}, ${evidence.url || evidence.websiteUrl || ''}, ${truncatedContent}, '', 'homepage', ${contentHash}
             )
           `
           console.log(`[DB_WRITE] Saved website_snapshots for ${evaluationId}`);
