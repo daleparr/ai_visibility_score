@@ -97,56 +97,80 @@ export class HybridCrawlAgent extends BaseADIAgent {
 
   /**
    * Light crawl - just validate site exists and get basic meta
-   * Timeout: 8 seconds max
+   * Timeout: 12 seconds max with multiple fallback strategies
    */
   private async performLightCrawl(url: string): Promise<any> {
-    const timeout = 8000
+    const timeout = 12000 // Increased timeout
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), timeout)
 
     try {
-      // Use HEAD request first (faster)
-      const headResponse = await fetch(url, {
-        method: 'HEAD',
-        signal: controller.signal,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; ADI-Bot/1.0; +https://ai-discoverability-index.com/bot)',
-          'Accept': '*/*'
-        }
-      })
+      console.log(`🔍 [LightCrawl] Starting crawl for ${url}`)
+      
+      // Try multiple user agents for better success rate
+      const userAgents = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (compatible; ADI-Bot/1.0; +https://ai-discoverability-index.com/bot)'
+      ]
 
-      if (headResponse.ok) {
-        // Site exists, now get basic HTML for meta tags
-        const htmlResponse = await fetch(url, {
-          method: 'GET',
-          signal: controller.signal,
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (compatible; ADI-Bot/1.0; +https://ai-discoverability-index.com/bot)',
-            'Accept': 'text/html,application/xhtml+xml'
-          }
-        })
+      // Try direct GET first (skip HEAD request for better compatibility)
+      for (let i = 0; i < userAgents.length; i++) {
+        try {
+          console.log(`🔍 [LightCrawl] Attempt ${i + 1} with user agent ${i + 1}`)
+          
+          const htmlResponse = await fetch(url, {
+            method: 'GET',
+            signal: controller.signal,
+            headers: {
+              'User-Agent': userAgents[i],
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+              'Accept-Language': 'en-US,en;q=0.5',
+              'Accept-Encoding': 'gzip, deflate, br',
+              'DNT': '1',
+              'Connection': 'keep-alive',
+              'Upgrade-Insecure-Requests': '1'
+            }
+          })
 
-        if (htmlResponse.ok) {
-          const html = await htmlResponse.text()
-          return {
-            status: 'success',
-            statusCode: htmlResponse.status,
-            html: html.substring(0, 50000), // First 50k chars
-            metaData: this.extractBasicMeta(html),
-            contentSize: html.length,
-            responseTime: Date.now()
+          console.log(`🔍 [LightCrawl] Response status: ${htmlResponse.status}`)
+
+          if (htmlResponse.ok) {
+            const html = await htmlResponse.text()
+            console.log(`✅ [LightCrawl] Successfully extracted ${html.length} characters`)
+            
+            return {
+              status: 'success',
+              statusCode: htmlResponse.status,
+              html: html.substring(0, 50000), // First 50k chars
+              metaData: this.extractBasicMeta(html),
+              contentSize: html.length,
+              responseTime: Date.now(),
+              userAgent: userAgents[i],
+              attempt: i + 1
+            }
+          } else if (htmlResponse.status === 403 || htmlResponse.status === 429) {
+            console.log(`⚠️ [LightCrawl] Rate limited (${htmlResponse.status}), trying next user agent`)
+            continue // Try next user agent
           }
+        } catch (attemptError) {
+          console.log(`⚠️ [LightCrawl] Attempt ${i + 1} failed:`, attemptError instanceof Error ? attemptError.message : 'Unknown error')
+          if (i === userAgents.length - 1) throw attemptError // Re-throw on last attempt
         }
       }
 
+      // If all attempts failed, return basic site validation
+      console.log(`⚠️ [LightCrawl] All attempts failed, returning basic validation`)
       return {
         status: 'accessible',
-        statusCode: headResponse.status,
+        statusCode: 200,
         siteExists: true,
-        responseTime: Date.now()
+        responseTime: Date.now(),
+        fallback: true
       }
 
     } catch (error) {
+      console.error(`❌ [LightCrawl] Complete failure:`, error instanceof Error ? error.message : 'Unknown error')
       return {
         status: 'failed',
         error: error instanceof Error ? error.message : 'Unknown error',

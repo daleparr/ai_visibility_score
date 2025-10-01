@@ -45,8 +45,9 @@ export async function searchWithGoogleCSE(query: string): Promise<NormalizedSear
     return [];
   }
 
-  // Re-enabled Google CSE with improved error handling
-  console.log('🔍 [GoogleCSE] Attempting search with improved error handling');
+  // Temporarily disable Google CSE due to 400 errors - focus on light crawl first
+  console.log('⚠️ [GoogleCSE] Temporarily disabled due to API configuration issues');
+  return [];
 
   const endpoint = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}`;
 
