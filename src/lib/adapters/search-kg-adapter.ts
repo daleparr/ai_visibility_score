@@ -37,76 +37,9 @@ export type NormalizedSearchResult = {
  * Performs a search query against Google Custom Search Engine.
  */
 export async function searchWithGoogleCSE(query: string): Promise<NormalizedSearchResult[]> {
-  const apiKey = process.env.GOOGLE_API_KEY;
-  const cx = process.env.GOOGLE_CSE_ID;
-
-  if (!apiKey || !cx) {
-    console.error('❌ [GoogleCSE] GOOGLE_API_KEY or GOOGLE_CSE_ID is not set');
-    return [];
-  }
-
   // Temporarily disable Google CSE due to 400 errors - focus on light crawl first
   console.log('⚠️ [GoogleCSE] Temporarily disabled due to API configuration issues');
   return [];
-
-  const endpoint = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}`;
-
-  try {
-    console.log(`🔍 [GoogleCSE] Searching: "${query}"`);
-    
-    const response = await fetch(endpoint);
-    console.log(`✅ [GoogleCSE] Response received: ${response.status} ${response.statusText}`);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ [GoogleCSE] API error: ${response.status} ${response.statusText}`);
-      console.error(`❌ [GoogleCSE] Error body:`, JSON.parse(errorText));
-      console.error(`❌ [GoogleCSE] Query that failed: "${query}"`);
-      console.error(`❌ [GoogleCSE] Full endpoint: ${endpoint}`);
-      return [];
-    }
-    
-    const data = await response.json();
-    console.log(`📊 [GoogleCSE] Response keys:`, Object.keys(data));
-    
-    const validatedData = GoogleCSEResponseSchema.parse(data);
-
-    // Check if items exists and has content
-    if (!validatedData.items || !Array.isArray(validatedData.items) || validatedData.items!.length === 0) {
-      console.log(`📊 [GoogleCSE] No results found`);
-      return [];
-    }
-
-    // At this point, validatedData.items is guaranteed to be a non-empty array
-    const results = validatedData.items!.map((item, index) => ({
-      rank: index + 1,
-      title: item.title,
-      url: item.link,
-      snippet: item.snippet,
-    }));
-
-    console.log(`✅ [GoogleCSE] Successfully parsed ${results.length} results`);
-    return results;
-    
-  } catch (error) {
-    console.error('❌ [GoogleCSE] Search failed:', error);
-    if (error instanceof Error) {
-      console.error('❌ [GoogleCSE] Error details:', {
-        message: error.message,
-        query: query,
-        endpoint: endpoint.replace(apiKey, 'REDACTED'),
-        apiKeyLength: apiKey?.length || 0,
-        cseIdLength: cx?.length || 0
-      });
-      
-      // If it's a 400 error, may indicate configuration issue
-      if (error.message.includes('400')) {
-        console.warn('⚠️ [GoogleCSE] 400 error detected - may indicate configuration issue');
-        console.warn('⚠️ [GoogleCSE] Continuing with Brave API only for this request');
-      }
-    }
-    return [];
-  }
 }
 
 /**
