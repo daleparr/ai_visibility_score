@@ -170,6 +170,174 @@ export default function EvaluatePage() {
   const [brandCategory, setBrandCategory] = useState<any>(null)
   const [performanceProfile, setPerformanceProfile] = useState<AIDIPerformanceProfile | null>(null)
 
+  const generateActionPlan = async () => {
+    if (!evaluationData?.professionalInsights) {
+      alert('Professional insights not available. Please refresh the page.');
+      return;
+    }
+
+    try {
+      console.log('Generating Action Plan PDF...');
+      
+      // Import jsPDF
+      const { jsPDF } = await import('jspdf');
+      const pdf = new jsPDF();
+      
+      // Extract brand name
+      const brandName = evaluationData.url?.replace(/^https?:\/\/(www\.)?/, '').split('.')[0] || 'Your Brand';
+      const formattedBrandName = brandName.charAt(0).toUpperCase() + brandName.slice(1);
+      
+      // Set up colors matching executive snapshot
+      const primaryColor: [number, number, number] = [41, 128, 185]; // Blue
+      const secondaryColor: [number, number, number] = [52, 73, 94]; // Dark gray
+      const accentColor: [number, number, number] = [231, 76, 60]; // Red
+      const successColor: [number, number, number] = [39, 174, 96]; // Green
+      const warningColor: [number, number, number] = [243, 156, 18]; // Orange
+      
+      let yPos = 25;
+      
+      // HEADER SECTION
+      pdf.setFillColor(...primaryColor);
+      pdf.rect(0, 0, 210, 40, 'F');
+      
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(24);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('ACTION PLAN', 20, 25);
+      
+      yPos = 55;
+      
+      // BRAND INFO SECTION
+      pdf.setTextColor(...secondaryColor);
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`Brand: ${formattedBrandName}`, 20, yPos);
+      
+      yPos += 8;
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(11);
+      pdf.text(`Current AI Visibility Score: ${evaluationData.overallScore}/100`, 20, yPos);
+      
+      yPos += 6;
+      pdf.text(`AI Readiness Level: ${evaluationData.professionalInsights.aiReadiness}`, 20, yPos);
+      
+      yPos += 6;
+      pdf.text(`Date: ${new Date().toLocaleDateString('en-GB')}`, 20, yPos);
+      
+      yPos += 15;
+      
+      // EXECUTIVE SUMMARY
+      pdf.setFillColor(245, 245, 245);
+      pdf.rect(15, yPos - 5, 180, 20, 'F');
+      
+      pdf.setTextColor(...primaryColor);
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('EXECUTIVE SUMMARY', 20, yPos + 5);
+      
+      yPos += 15;
+      pdf.setTextColor(...secondaryColor);
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      const summaryText = `${formattedBrandName} currently scores ${evaluationData.overallScore}/100 for AI visibility. This action plan provides specific, prioritized steps to improve your brand's discoverability across AI systems including ChatGPT, Claude, Perplexity, and Google's AI features.`;
+      const summaryLines = pdf.splitTextToSize(summaryText, 170);
+      pdf.text(summaryLines, 20, yPos);
+      yPos += summaryLines.length * 5 + 15;
+      
+      // PRIORITY ACTIONS SECTION
+      if (yPos > 200) {
+        pdf.addPage();
+        yPos = 30;
+      }
+      
+      pdf.setTextColor(...primaryColor);
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('📋 PRIORITY ACTIONS', 20, yPos);
+      yPos += 12;
+      
+      evaluationData.professionalInsights.nextSteps.forEach((step, index) => {
+        if (yPos > 240) {
+          pdf.addPage();
+          yPos = 30;
+        }
+        
+        // Priority level based on index
+        const priority = index === 0 ? 'IMMEDIATE (Today)' : 
+                       index === 1 ? 'SHORT TERM (1 Week)' : 
+                       index === 2 ? 'MEDIUM TERM (2-4 Weeks)' : 
+                       'ONGOING';
+        const impact = index === 0 ? '+8-12 pts' : 
+                     index === 1 ? '+5-8 pts' : 
+                     index === 2 ? '+3-5 pts' : 
+                     '+2-4 pts';
+        
+        pdf.setTextColor(...warningColor);
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(`${index + 1}. ${priority}`, 20, yPos);
+        
+        pdf.setTextColor(...successColor);
+        pdf.text(`Impact: ${impact}`, 150, yPos);
+        
+        yPos += 6;
+        pdf.setTextColor(...secondaryColor);
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        const stepLines = pdf.splitTextToSize(step, 170);
+        pdf.text(stepLines, 20, yPos);
+        yPos += stepLines.length * 4 + 10;
+      });
+      
+      // BOTTOM LINE SECTION
+      if (yPos > 220) {
+        pdf.addPage();
+        yPos = 30;
+      }
+      
+      yPos += 10;
+      pdf.setFillColor(...primaryColor);
+      pdf.rect(15, yPos - 5, 180, 8, 'F');
+      
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('BOTTOM LINE', 20, yPos);
+      yPos += 15;
+      
+      pdf.setTextColor(...secondaryColor);
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      
+      const bottomLineText = `Current State: ${evaluationData.professionalInsights.categorySpecific.competitivePosition} performance in ${evaluationData.professionalInsights.categorySpecific.category}
+
+Market Opportunity: ${evaluationData.professionalInsights.categorySpecific.marketOpportunity}
+
+Expected Outcome: Following this action plan should improve your AI visibility score by 15-25 points within 3 months.
+
+Next Step Today: Start with Priority Action #1 - the highest impact, lowest effort improvements that can be implemented immediately.`;
+      
+      const bottomLines = pdf.splitTextToSize(bottomLineText, 170);
+      pdf.text(bottomLines, 20, yPos);
+      
+      // FOOTER
+      yPos = 280;
+      pdf.setTextColor(150, 150, 150);
+      pdf.setFontSize(8);
+      pdf.text(`Generated by AI Discoverability Index Platform | ${new Date().toLocaleString()}`, 20, yPos);
+      
+      // Generate filename and download
+      const filename = `Action_Plan_${formattedBrandName}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(filename);
+      
+      alert('Action Plan downloaded successfully!');
+      
+    } catch (error) {
+      console.error('Error generating action plan:', error);
+      alert(`Failed to generate action plan: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   const generateTechnicalReport = async () => {
     if (!evaluationData) {
       console.error('No evaluation data available for report generation')
@@ -969,7 +1137,11 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
                           <p className="text-sm text-purple-700 mb-3">
                             These insights are based on your current AI visibility score of {evaluationData.overallScore}/100.
                           </p>
-                          <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                          <Button 
+                            size="sm" 
+                            className="bg-purple-600 hover:bg-purple-700"
+                            onClick={generateActionPlan}
+                          >
                             Download Action Plan
                           </Button>
                         </div>
