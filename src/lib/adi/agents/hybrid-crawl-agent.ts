@@ -100,7 +100,7 @@ export class HybridCrawlAgent extends BaseADIAgent {
    * Timeout: 12 seconds max with multiple fallback strategies
    */
   private async performLightCrawl(url: string): Promise<any> {
-    const timeout = 12000 // Increased timeout
+    const timeout = 25000 // Much longer timeout for complex sites like Nike
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), timeout)
 
@@ -119,19 +119,20 @@ export class HybridCrawlAgent extends BaseADIAgent {
         try {
           console.log(`🔍 [LightCrawl] Attempt ${i + 1} with user agent ${i + 1}`)
           
-          const htmlResponse = await fetch(url, {
-            method: 'GET',
-            signal: controller.signal,
-            headers: {
-              'User-Agent': userAgents[i],
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-              'Accept-Language': 'en-US,en;q=0.5',
-              'Accept-Encoding': 'gzip, deflate, br',
-              'DNT': '1',
-              'Connection': 'keep-alive',
-              'Upgrade-Insecure-Requests': '1'
-            }
-          })
+                 const htmlResponse = await fetch(url, {
+                   method: 'GET',
+                   signal: controller.signal,
+                   headers: {
+                     'User-Agent': userAgents[i],
+                     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                     'Accept-Language': 'en-US,en;q=0.5',
+                     'Accept-Encoding': 'gzip, deflate, br',
+                     'DNT': '1',
+                     'Connection': 'keep-alive',
+                     'Upgrade-Insecure-Requests': '1',
+                     'Cache-Control': 'no-cache'
+                   }
+                 })
 
           console.log(`🔍 [LightCrawl] Response status: ${htmlResponse.status}`)
 
@@ -149,10 +150,11 @@ export class HybridCrawlAgent extends BaseADIAgent {
               userAgent: userAgents[i],
               attempt: i + 1
             }
-          } else if (htmlResponse.status === 403 || htmlResponse.status === 429) {
-            console.log(`⚠️ [LightCrawl] Rate limited (${htmlResponse.status}), trying next user agent`)
-            continue // Try next user agent
-          }
+               } else if (htmlResponse.status === 403 || htmlResponse.status === 429) {
+                 console.log(`⚠️ [LightCrawl] Rate limited (${htmlResponse.status}), waiting before next attempt`)
+                 await new Promise(resolve => setTimeout(resolve, 2000)) // Wait 2 seconds
+                 continue // Try next user agent
+               }
         } catch (attemptError) {
           console.log(`⚠️ [LightCrawl] Attempt ${i + 1} failed:`, attemptError instanceof Error ? attemptError.message : 'Unknown error')
           if (i === userAgents.length - 1) throw attemptError // Re-throw on last attempt
