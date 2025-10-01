@@ -26,9 +26,39 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     
+    const category = searchParams.get('category')
+    const requestedType = searchParams.get('type') as any
+    
+    // Auto-determine leaderboard type based on category if not explicitly specified
+    let leaderboardType = requestedType || 'global'
+    if (!requestedType && category) {
+      // Check if category matches a specific niche
+      const { BRAND_TAXONOMY } = await import('@/lib/brand-taxonomy')
+      const isNiche = Object.values(BRAND_TAXONOMY).some(cat => cat.niche === category)
+      const isSector = Object.values(BRAND_TAXONOMY).some(cat => cat.sector === category)
+      const isIndustry = Object.values(BRAND_TAXONOMY).some(cat => cat.industry === category)
+      
+      if (isNiche) {
+        leaderboardType = 'niche'
+      } else if (isIndustry) {
+        leaderboardType = 'industry'
+      } else if (isSector) {
+        leaderboardType = 'sector'
+      }
+      
+      console.log('🔍 Leaderboard type determination:', {
+        category,
+        requestedType,
+        determinedType: leaderboardType,
+        isNiche,
+        isIndustry,
+        isSector
+      })
+    }
+
     const filters: LeaderboardFilters = {
-      leaderboardType: (searchParams.get('type') as any) || 'global',
-      category: searchParams.get('category') || undefined,
+      leaderboardType,
+      category: category || undefined,
       minScore: searchParams.get('minScore') ? parseInt(searchParams.get('minScore')!) : undefined,
       maxScore: searchParams.get('maxScore') ? parseInt(searchParams.get('maxScore')!) : undefined,
       region: searchParams.get('region') || undefined,

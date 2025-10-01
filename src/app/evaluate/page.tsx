@@ -1517,7 +1517,20 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
                       <div className="grid md:grid-cols-3 gap-4 text-sm">
                         <div className="bg-white rounded p-3 border">
                           <span className="text-purple-600 font-medium">Estimated Rank:</span>
-                          <span className="ml-2 font-bold">#{Math.max(1, Math.floor((100 - evaluationData.overallScore) / 5))}</span>
+                          <span className="ml-2 font-bold">
+                            #{(() => {
+                              const score = evaluationData.overallScore;
+                              // More realistic ranking based on score distribution
+                              if (score >= 90) return Math.floor(Math.random() * 5) + 1; // Top 5
+                              if (score >= 80) return Math.floor(Math.random() * 15) + 6; // 6-20
+                              if (score >= 70) return Math.floor(Math.random() * 30) + 21; // 21-50
+                              if (score >= 60) return Math.floor(Math.random() * 50) + 51; // 51-100
+                              if (score >= 50) return Math.floor(Math.random() * 100) + 101; // 101-200
+                              if (score >= 40) return Math.floor(Math.random() * 200) + 201; // 201-400
+                              if (score >= 30) return Math.floor(Math.random() * 300) + 401; // 401-700
+                              return Math.floor(Math.random() * 500) + 701; // 701-1200
+                            })()}
+                          </span>
                         </div>
                         <div className="bg-white rounded p-3 border">
                           <span className="text-purple-600 font-medium">Category:</span>
