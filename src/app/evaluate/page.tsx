@@ -171,13 +171,25 @@ export default function EvaluatePage() {
   const [performanceProfile, setPerformanceProfile] = useState<AIDIPerformanceProfile | null>(null)
 
   const generateActionPlan = async () => {
+    console.log('🔍 generateActionPlan called');
+    console.log('🔍 evaluationData:', evaluationData);
+    console.log('🔍 professionalInsights:', evaluationData?.professionalInsights);
+    
     if (!evaluationData?.professionalInsights) {
+      console.error('❌ Professional insights not available');
       alert('Professional insights not available. Please refresh the page.');
       return;
     }
 
+    if (!evaluationData.professionalInsights.nextSteps || evaluationData.professionalInsights.nextSteps.length === 0) {
+      console.error('❌ No next steps available');
+      alert('No action steps available. Please refresh the page.');
+      return;
+    }
+
     try {
-      console.log('Generating Action Plan PDF...');
+      console.log('✅ Starting Action Plan PDF generation...');
+      console.log('✅ Next steps available:', evaluationData.professionalInsights.nextSteps.length);
       
       // Import jsPDF
       const { jsPDF } = await import('jspdf');
@@ -328,8 +340,10 @@ Next Step Today: Start with Priority Action #1 - the highest impact, lowest effo
       
       // Generate filename and download
       const filename = `Action_Plan_${formattedBrandName}_${new Date().toISOString().split('T')[0]}.pdf`;
+      console.log('✅ Saving PDF with filename:', filename);
       pdf.save(filename);
       
+      console.log('✅ Action Plan PDF generated and downloaded successfully');
       alert('Action Plan downloaded successfully!');
       
     } catch (error) {
@@ -1140,7 +1154,10 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
                           <Button 
                             size="sm" 
                             className="bg-purple-600 hover:bg-purple-700"
-                            onClick={generateActionPlan}
+                            onClick={() => {
+                              console.log('🔍 Action Plan button clicked');
+                              generateActionPlan();
+                            }}
                           >
                             Download Action Plan
                           </Button>
@@ -1496,9 +1513,21 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
                         <div className="bg-white rounded p-3 border">
                           <span className="text-purple-600 font-medium">Category:</span>
                           <span className="ml-2 font-bold">
-                            {typeof leaderboardData.category === 'string' 
-                              ? leaderboardData.category 
-                              : (leaderboardData.category as any)?.niche || (leaderboardData.category as any)?.sector || 'General'}
+                            {(() => {
+                              // Get category from the leaderboard data or first entry
+                              if (leaderboardData.category && typeof leaderboardData.category === 'string') {
+                                return leaderboardData.category;
+                              }
+                              
+                              // Fallback to first entry's category if available
+                              const firstEntry = leaderboardData.entries?.[0];
+                              if (firstEntry && (firstEntry as any).category) {
+                                const entryCategory = (firstEntry as any).category;
+                                return entryCategory.niche || entryCategory.sector || entryCategory.industry || 'General';
+                              }
+                              
+                              return 'General';
+                            })()}
                           </span>
                         </div>
                         <div className="bg-white rounded p-3 border">

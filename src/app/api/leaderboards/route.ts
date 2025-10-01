@@ -241,6 +241,7 @@ async function generateDynamicGlobalLeaderboard(categorizationService: BrandCate
     trend: generateTrend(index + 1),
     category: {
       sector: brand.sector,
+      industry: getDefaultIndustryForSector(brand.sector),
       niche: getDefaultNicheForSector(brand.sector),
       emoji: getSectorEmoji(brand.sector)
     }
@@ -493,6 +494,20 @@ function generateDomainFromBrand(brand: string): string {
   return brand.toLowerCase()
     .replace(/[^a-z0-9]/g, '')
     .replace(/\s+/g, '') + '.com'
+}
+
+function getDefaultIndustryForSector(sector: string): string {
+  const sectorIndustryDefaults: Record<string, string> = {
+    'Fashion & Apparel': 'Athletic & Lifestyle Brands',
+    'Beauty & Personal Care': 'Beauty & Cosmetics',
+    'Consumer Electronics & Entertainment': 'Consumer Technology',
+    'Multi-Brand Retail': 'E-commerce & Retail',
+    'Home & Lifestyle': 'Home Furnishings',
+    'Food, Beverage & Grocery': 'Food & Beverage',
+    'Health, Fitness & Wellness': 'Health & Wellness'
+  }
+
+  return sectorIndustryDefaults[sector] || 'General Business'
 }
 
 function getDefaultNicheForSector(sector: string): string {
