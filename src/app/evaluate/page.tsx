@@ -1762,7 +1762,7 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
 
           {/* Priority Action Cards */}
           <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-center">�� Your Action Plan</h2>
+            <h2 className="text-2xl font-bold mb-4 text-center">📋 Your Action Plan</h2>
             <p className="text-gray-600 text-center mb-6">
               Focus on these improvements for the biggest impact on your AI visibility.
               Each card shows the business impact, timeline, and effort required.
@@ -1813,7 +1813,7 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
                 }}
               >
                 {evaluationData.tier === 'free'
-                  ? '�� Unlock GPT-4 + Perplexity - £119/month'
+                  ? '🚀 Unlock GPT-4 + Perplexity - £119/month'
                   : '⚡ Add Claude Opus + Mistral - £319/month'
                 }
                 <ArrowRight className="ml-2 h-5 w-5" />
