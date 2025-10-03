@@ -4,7 +4,20 @@
  * Designed to circumnavigate anti-bot 403 errors through intelligent parsing
  */
 
-import { JSDOM } from 'jsdom';
+// Dynamic import for JSDOM (Node.js only)
+let JSDOM: any = null;
+
+// Initialize JSDOM only in Node.js environment
+const initJSDOM = async () => {
+  if (typeof window === 'undefined' && !JSDOM) {
+    try {
+      const jsdomModule = await import('jsdom');
+      JSDOM = jsdomModule.JSDOM;
+    } catch (error) {
+      console.warn('JSDOM not available, enhanced HTML parsing disabled:', error);
+    }
+  }
+};
 
 export interface ParsedElement {
   tag: string;
@@ -51,13 +64,19 @@ export interface ContentExtractionResult {
 }
 
 export class EnhancedHTMLParser {
-  private dom: JSDOM | null = null;
+  private dom: any = null;
   private document: Document | null = null;
 
   /**
    * Parse HTML content and create DOM representation
    */
-  parseHTML(html: string, url?: string): void {
+  async parseHTML(html: string, url?: string): Promise<void> {
+    await initJSDOM();
+    
+    if (!JSDOM) {
+      throw new Error('JSDOM not available - enhanced HTML parsing requires Node.js environment');
+    }
+    
     try {
       this.dom = new JSDOM(html, {
         url: url || 'https://example.com',

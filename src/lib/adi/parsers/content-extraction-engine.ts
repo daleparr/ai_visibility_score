@@ -93,7 +93,7 @@ export class ContentExtractionEngine {
   }> {
     try {
       // Parse HTML
-      this.parser.parseHTML(html, url);
+      await this.parser.parseHTML(html, url);
       
       // Extract all content
       this.extractionResult = this.parser.extractAll();
