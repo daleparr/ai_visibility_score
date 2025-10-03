@@ -863,7 +863,19 @@ export class ADIService {
     console.log(`Executing ENHANCED evaluation for ${brandId} (Tier: ${userTier})`);
     // Pass tier-specific models or configurations to the orchestrator
     const tierModel = getTierBasedModel(userTier);
-    return this.orchestrator.executeEvaluation({ brandId, websiteUrl, ...options, metadata: { llmModel: tierModel }, evaluationId: options?.evaluationId || '', industryId: '', evaluationType: 'standard', queryCanon: [], crawlArtifacts: [] });
+    
+    const context: ADIEvaluationContext = {
+      evaluationId: options?.evaluationId || '',
+      brandId,
+      websiteUrl,
+      industryId: '',
+      evaluationType: 'standard',
+      queryCanon: [],
+      crawlArtifacts: [],
+      metadata: { llmModel: tierModel }
+    };
+    
+    return this.orchestrator.executeEvaluation(context);
   }
   private async executeStandardEvaluation(
     brandId: string,
@@ -872,8 +884,20 @@ export class ADIService {
     options?: { evaluationId?: string }
   ): Promise<ADIOrchestrationResult> {
     console.log(`Executing STANDARD evaluation for ${brandId} (Tier: ${userTier})`);
-     const tierModel = getTierBasedModel(userTier);
-    return this.orchestrator.executeEvaluation({ brandId, websiteUrl, ...options, metadata: { llmModel: tierModel }, evaluationId: options?.evaluationId || '', industryId: '', evaluationType: 'standard', queryCanon: [], crawlArtifacts: [] });
+    const tierModel = getTierBasedModel(userTier);
+    
+    const context: ADIEvaluationContext = {
+      evaluationId: options?.evaluationId || '',
+      brandId,
+      websiteUrl,
+      industryId: '',
+      evaluationType: 'standard',
+      queryCanon: [],
+      crawlArtifacts: [],
+      metadata: { llmModel: tierModel }
+    };
+    
+    return this.orchestrator.executeEvaluation(context);
   }
 
   private buildComprehensiveReport(
