@@ -29,7 +29,7 @@ export class HybridCrawlAgent extends BaseADIAgent {
       version: 'v4.0-hybrid',
       description: 'Hybrid crawling using multiple data sources - search APIs, Wikidata, light crawl',
       dependencies: [],
-      timeout: 30000, // 30 seconds total
+      timeout: 20000, // 20 seconds total (reduced for emergency speed)
       retryLimit: 1,
       parallelizable: false
     }
@@ -100,7 +100,7 @@ export class HybridCrawlAgent extends BaseADIAgent {
    * Timeout: 12 seconds max with multiple fallback strategies
    */
   private async performLightCrawl(url: string): Promise<any> {
-    const timeout = 25000 // Much longer timeout for complex sites like Nike
+    const timeout = 15000 // Reduced timeout for emergency speed optimization
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), timeout)
 
@@ -152,7 +152,7 @@ export class HybridCrawlAgent extends BaseADIAgent {
             }
                } else if (htmlResponse.status === 403 || htmlResponse.status === 429) {
                  console.log(`⚠️ [LightCrawl] Rate limited (${htmlResponse.status}), waiting before next attempt`)
-                 await new Promise(resolve => setTimeout(resolve, 2000)) // Wait 2 seconds
+                 await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1 second (reduced)
                  continue // Try next user agent
                }
         } catch (attemptError) {

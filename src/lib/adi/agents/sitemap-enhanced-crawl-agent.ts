@@ -42,10 +42,10 @@ interface SitemapData {
 export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   private cache: Map<string, { data: any, timestamp: number }> = new Map()
   private readonly CACHE_TTL = 15 * 60 * 1000 // 15 minutes
-  private readonly MAX_URLS_TO_CRAWL = 8 // Reduced for faster execution
-  private readonly SITEMAP_TIMEOUT = 5000 // 5 seconds for sitemap discovery (reduced)
-  private readonly CRAWL_TIMEOUT = 15000 // 15 seconds per page (reduced)
-  private readonly MAX_SITEMAPS_TO_PROCESS = 2 // Limit sitemap processing
+  private readonly MAX_URLS_TO_CRAWL = 4 // ULTRA-FAST: Only 4 pages
+  private readonly SITEMAP_TIMEOUT = 3000 // 3 seconds for sitemap discovery (ultra-fast)
+  private readonly CRAWL_TIMEOUT = 8000 // 8 seconds per page (ultra-fast)
+  private readonly MAX_SITEMAPS_TO_PROCESS = 1 // Only 1 sitemap for speed
 
   constructor() {
     const config: ADIAgentConfig = {
@@ -53,7 +53,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       version: 'v5.0-sitemap-enhanced',
       description: 'Sitemap-driven crawling with intelligent URL prioritization and comprehensive content discovery',
       dependencies: [],
-      timeout: 45000, // 45 seconds total - optimized for production
+      timeout: 25000, // 25 seconds total - ULTRA-FAST for emergency
       retryLimit: 2,
       parallelizable: false
     }
@@ -333,9 +333,9 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
             allUrls.push(...sitemapData.urls)
             console.log(`✅ Found and processed sitemap at ${sitemapUrl}, adding ${sitemapData.urls.length} URLs. Total URLs: ${allUrls.length}`)
             
-            // Early exit if we have enough URLs
-            if (allUrls.length >= 500) {
-              console.log(`⚡ Early exit: Found ${allUrls.length} URLs, stopping sitemap processing for performance`)
+            // Early exit if we have enough URLs (ULTRA-FAST)
+            if (allUrls.length >= 100) {
+              console.log(`⚡ ULTRA-FAST exit: Found ${allUrls.length} URLs, stopping sitemap processing`)
               break
             }
           }
@@ -572,9 +572,9 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
           results.push(pageResult)
         }
 
-        // Rate limiting: wait between requests (reduced for performance)
+        // Rate limiting: wait between requests (ULTRA-FAST)
         if (i < urls.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400)) // 0.8-1.2s delay
+          await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 200)) // 0.5-0.7s delay
         }
 
       } catch (error) {
