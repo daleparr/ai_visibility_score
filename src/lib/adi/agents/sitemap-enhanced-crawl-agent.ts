@@ -3,6 +3,8 @@ import type { ADIAgentConfig, ADIAgentInput, ADIAgentOutput } from '../../../typ
 import { db } from '@/lib/db';
 import { websiteSnapshots, contentChanges } from '@/lib/db/schema';
 import { and, desc, eq } from 'drizzle-orm';
+import { ContentExtractionEngine } from '../parsers/content-extraction-engine';
+import { AntiBot403BypassEngine } from '../parsers/anti-bot-bypass-strategies';
 
 /**
  * Sitemap-Enhanced Crawl Agent
@@ -67,30 +69,32 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   }> = new Map()
 
   // Enhanced user agent pool with realistic browser fingerprints
+  private bypassEngine = new AntiBot403BypassEngine();
+  
   private userAgents = [
     {
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
       platform: 'Win32',
       language: 'en-US,en;q=0.9',
       viewport: { width: 1920, height: 1080 },
       timezone: 'America/New_York'
     },
     {
-      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
       platform: 'MacIntel',
       language: 'en-US,en;q=0.9',
       viewport: { width: 1440, height: 900 },
       timezone: 'America/Los_Angeles'
     },
     {
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0',
       platform: 'Win32',
       language: 'en-US,en;q=0.8,es;q=0.6',
       viewport: { width: 1366, height: 768 },
       timezone: 'America/Chicago'
     },
     {
-      userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
       platform: 'Linux x86_64',
       language: 'en-US,en;q=0.9',
       viewport: { width: 1920, height: 1080 },
@@ -885,7 +889,8 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       const html = await response.text()
       console.log(`✅ [CrawlPage] Successfully extracted ${html.length} chars from ${url.loc} with anti-bot evasion`)
       
-      const metaData = this.extractEnhancedMeta(html)
+      // Use enhanced HTML parser for comprehensive analysis
+      const metaData = await this.analyzeHTMLContent(html, url.loc)
 
       return this.createResult(
         `${url.contentType}_page`,
@@ -1066,7 +1071,37 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   }
 
   /**
-   * Enhanced metadata extraction
+   * Enhanced HTML content analysis using Beautiful Soup-style parsing
+   */
+  private async analyzeHTMLContent(html: string, url: string): Promise<any> {
+    try {
+      const engine = new ContentExtractionEngine();
+      const analysis = await engine.processHTML(html, url);
+      
+      console.log(`🧠 [Enhanced Parser] Extracted ${analysis.content.paragraphs.length} paragraphs, ${analysis.content.headings.length} headings`);
+      console.log(`🏢 [Business Intelligence] Industry: ${analysis.businessIntelligence.industry}, Type: ${analysis.businessIntelligence.businessType}`);
+      console.log(`📊 [SEO] Score: ${analysis.seoInsights.titleOptimization.score}/100, Word count: ${analysis.content.seo.wordCount}`);
+      
+      // Clean up resources
+      engine.destroy();
+      
+      return {
+        enhanced: true,
+        content: analysis.content,
+        businessIntelligence: analysis.businessIntelligence,
+        seoInsights: analysis.seoInsights,
+        accessibility: analysis.accessibility,
+        extractedAt: new Date().toISOString()
+      };
+    } catch (error) {
+      console.warn(`⚠️ [Enhanced Parser] Failed to analyze HTML:`, error);
+      // Fallback to basic extraction
+      return this.extractEnhancedMeta(html);
+    }
+  }
+
+  /**
+   * Enhanced metadata extraction (fallback method)
    */
   private extractEnhancedMeta(html: string): any {
     const meta: any = {}
@@ -1202,6 +1237,45 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       
     } catch (error) {
       console.error('Fallback crawling failed:', error)
+      
+      // If traditional fallback crawling fails, try anti-bot bypass strategies
+      console.log(`🛡️ [Anti-Bot Bypass] Traditional fallback failed, attempting bypass strategies...`)
+      
+      try {
+        const bypassResult = await this.bypassEngine.bypassAntiBot(websiteUrl);
+        
+        if (bypassResult.success && bypassResult.data) {
+          console.log(`✅ [Anti-Bot Bypass] Successfully bypassed with method: ${bypassResult.method} (confidence: ${bypassResult.confidence}%)`);
+          
+          // Convert bypass result to crawl result format
+          const bypassCrawlResult = this.createResult(
+            'bypass_page',
+            Math.floor(bypassResult.confidence * 0.8), // Slightly lower score for bypass data
+            Math.floor(bypassResult.confidence),
+            Math.floor(bypassResult.confidence), // confidence level
+            {
+              html: '', // No raw HTML from bypass methods
+              contentType: 'text/html',
+              contentSize: 0,
+              metaData: {
+                ...bypassResult.data,
+                bypassMethod: bypassResult.method,
+                confidence: bypassResult.confidence,
+                source: 'anti_bot_bypass',
+                enhanced: true
+              },
+              sitemapMetadata: null
+            }
+          );
+          
+          results.push(bypassCrawlResult);
+          console.log(`🎯 [Anti-Bot Bypass] Added bypass result with ${bypassResult.confidence}% confidence`);
+        } else {
+          console.log(`❌ [Anti-Bot Bypass] All bypass strategies failed: ${bypassResult.error}`);
+        }
+      } catch (bypassError) {
+        console.log(`❌ [Anti-Bot Bypass] Bypass engine error: ${bypassError instanceof Error ? bypassError.message : 'Unknown error'}`);
+      }
     }
     
     return results
