@@ -88,7 +88,10 @@ export class ADIService {
     globalRank?: number
     evaluationTrace?: EvaluationTrace
   }> {
+    console.log(`🔍 [DEBUG] Starting evaluateBrand for ${brandId}`)
+    
     await this.initialize()
+    console.log(`🔍 [DEBUG] ADI Service initialized successfully`)
 
     const userTier = options?.userTier || 'free'
     const startTime = Date.now() // ✅ ADD: Capture start time
@@ -96,11 +99,15 @@ export class ADIService {
 
     // Use tier-based evaluation
     const tierFeatures = TIER_FEATURES[userTier]
+    console.log(`🔍 [DEBUG] Tier features loaded: ${JSON.stringify(tierFeatures)}`)
     
     // Enhanced orchestration for Pro/Enterprise tiers
+    console.log(`🔍 [DEBUG] About to call orchestration method`)
     const orchestrationResult = tierFeatures.agentEnhancements 
       ? await this.executeEnhancedEvaluation(brandId, websiteUrl, userTier, options)
       : await this.executeStandardEvaluation(brandId, websiteUrl, userTier, options)
+    
+    console.log(`🔍 [DEBUG] Orchestration completed successfully`)
 
     // ✅ ADD: Initialize trace logging AFTER we have evaluationId
     traceLogger.startEvaluation(
