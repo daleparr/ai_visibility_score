@@ -10,12 +10,12 @@ import type {
  * Hybrid ADI Orchestrator
  * 
  * Splits agent execution between:
- * - Fast agents: Run in Netlify (8-second limit)
- * - Slow agents: Run in backend functions (60-second limit)
+ * - Fast agents: Run in Netlify functions (8-second limit)
+ * - Slow agents: Run in Netlify background functions (15-minute limit)
  * 
  * Architecture:
- * 1. Execute fast agents immediately in Netlify
- * 2. Trigger slow agents in background via API calls
+ * 1. Execute fast agents immediately in Netlify functions
+ * 2. Trigger slow agents in Netlify background functions
  * 3. Return partial results immediately
  * 4. Frontend polls for completion of slow agents
  */
@@ -190,8 +190,8 @@ export class HybridADIOrchestrator {
           config: {} // Add required config property
         }
 
-        // Make API call to backend function (don't wait for completion)
-        const response = await fetch('/api/backend-agents/llm-intensive', {
+        // Make API call to Netlify background function (don't wait for completion)
+        const response = await fetch('/.netlify/functions/background-agents', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

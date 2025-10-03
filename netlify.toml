@@ -11,6 +11,10 @@
   node_bundler = "esbuild"
   external_node_modules = ["pg","drizzle-orm"]
 
+# Background function for LLM-intensive agents (15-minute timeout)
+[functions."background-agents"]
+  timeout = 900  # 15 minutes for LLM processing
+
 
 # Scheduled function to process the leaderboard evaluation queue every 30 minutes
 [functions."scheduled-leaderboard-queue"]
