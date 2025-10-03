@@ -47,26 +47,209 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   private readonly CACHE_TTL = 15 * 60 * 1000 // 15 minutes
   private readonly MAX_URLS_TO_CRAWL = 3 // SPEED FOCUSED: Fewer pages for faster completion
   private readonly SITEMAP_TIMEOUT = 2000 // 2 seconds for sitemap discovery (ultra-fast)
+  private readonly MAX_403_FAILURES = 2 // Circuit breaker: fail fast after 2x 403s
   private readonly CRAWL_TIMEOUT = 8000 // 8 seconds per page (speed focused)
   private readonly MAX_SITEMAPS_TO_PROCESS = 5 // Maximum 5 sitemaps for history
 
+  // Enhanced Anti-Bot Evasion Configuration
+  private readonly MIN_REQUEST_DELAY = 2000 // 2-10 second randomized delays
+  private readonly MAX_REQUEST_DELAY = 10000
+  private readonly SESSION_PERSISTENCE_TTL = 30 * 60 * 1000 // 30 minutes
+  
+  // Session storage for cookies and state
+  private sessionStore: Map<string, {
+    cookies: string[]
+    lastUsed: number
+    userAgent: string
+    fingerprint: any
+  }> = new Map()
+
+  // Enhanced user agent pool with realistic browser fingerprints
   private userAgents = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0',
+    {
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      platform: 'Win32',
+      language: 'en-US,en;q=0.9',
+      viewport: { width: 1920, height: 1080 },
+      timezone: 'America/New_York'
+    },
+    {
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      platform: 'MacIntel',
+      language: 'en-US,en;q=0.9',
+      viewport: { width: 1440, height: 900 },
+      timezone: 'America/Los_Angeles'
+    },
+    {
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+      platform: 'Win32',
+      language: 'en-US,en;q=0.8,es;q=0.6',
+      viewport: { width: 1366, height: 768 },
+      timezone: 'America/Chicago'
+    },
+    {
+      userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      platform: 'Linux x86_64',
+      language: 'en-US,en;q=0.9',
+      viewport: { width: 1920, height: 1080 },
+      timezone: 'UTC'
+    },
+    {
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15',
+      platform: 'MacIntel',
+      language: 'en-US,en;q=0.9',
+      viewport: { width: 1440, height: 900 },
+      timezone: 'America/Los_Angeles'
+    }
+  ];
+
+  // Referrer pool for realistic navigation patterns
+  private referrers = [
+    'https://www.google.com/',
+    'https://www.bing.com/',
+    'https://duckduckgo.com/',
+    'https://search.yahoo.com/',
+    'https://www.ecosia.org/',
+    'https://www.startpage.com/',
+    '', // Direct navigation
   ];
 
   constructor() {
     const config: ADIAgentConfig = {
       name: 'crawl_agent',
-      version: 'v5.2-speed-optimized',
-      description: 'Speed-optimized sitemap crawling with aggressive timeouts',
+      version: 'v6.0-anti-bot-evasion',
+      description: 'Advanced anti-bot evasion with fingerprint randomization and session persistence',
       dependencies: [],
       timeout: 30000, // 30 seconds total - SPEED FOCUSED
       retryLimit: 1,
       parallelizable: false
     }
     super(config)
+  }
+
+  /**
+   * Generate realistic browser fingerprint for anti-bot evasion
+   */
+  private generateBrowserFingerprint(userAgentData: any): any {
+    const randomSeed = Math.random()
+    
+    return {
+      userAgent: userAgentData.userAgent,
+      platform: userAgentData.platform,
+      language: userAgentData.language,
+      viewport: userAgentData.viewport,
+      timezone: userAgentData.timezone,
+      colorDepth: 24,
+      pixelRatio: Math.random() > 0.5 ? 1 : 2,
+      hardwareConcurrency: Math.floor(Math.random() * 8) + 4,
+      maxTouchPoints: userAgentData.platform.includes('Mac') ? 0 : Math.floor(Math.random() * 5),
+      webGL: {
+        vendor: randomSeed > 0.5 ? 'Google Inc. (Intel)' : 'Google Inc. (NVIDIA)',
+        renderer: randomSeed > 0.5 ? 'ANGLE (Intel, Intel(R) HD Graphics)' : 'ANGLE (NVIDIA, NVIDIA GeForce GTX)'
+      },
+      canvas: Math.random().toString(36).substring(7),
+      audio: Math.random().toString(36).substring(7)
+    }
+  }
+
+  /**
+   * Get or create session for domain with persistence
+   */
+  private getOrCreateSession(domain: string): any {
+    const now = Date.now()
+    
+    // Clean expired sessions
+    for (const [key, session] of this.sessionStore.entries()) {
+      if (now - session.lastUsed > this.SESSION_PERSISTENCE_TTL) {
+        this.sessionStore.delete(key)
+      }
+    }
+    
+    let session = this.sessionStore.get(domain)
+    
+    if (!session) {
+      // Create new session with random fingerprint
+      const userAgentData = this.userAgents[Math.floor(Math.random() * this.userAgents.length)]
+      session = {
+        cookies: [],
+        lastUsed: now,
+        userAgent: userAgentData.userAgent,
+        fingerprint: this.generateBrowserFingerprint(userAgentData)
+      }
+      this.sessionStore.set(domain, session)
+      console.log(`🎭 [AntiBot] Created new session for ${domain} with ${userAgentData.platform} fingerprint`)
+    } else {
+      session.lastUsed = now
+      console.log(`🔄 [AntiBot] Reusing existing session for ${domain}`)
+    }
+    
+    return session
+  }
+
+  /**
+   * Generate realistic request headers with anti-detection features
+   */
+  private generateRealisticHeaders(url: string, session: any, isFirstRequest: boolean = false): Record<string, string> {
+    const domain = new URL(url).hostname
+    const referrer = isFirstRequest ? 
+      this.referrers[Math.floor(Math.random() * this.referrers.length)] : 
+      `https://${domain}/`
+    
+    const headers: Record<string, string> = {
+      'User-Agent': session.userAgent,
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+      'Accept-Language': session.fingerprint.language,
+      'Accept-Encoding': 'gzip, deflate, br',
+      'DNT': '1',
+      'Connection': 'keep-alive',
+      'Upgrade-Insecure-Requests': '1',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': isFirstRequest ? 'none' : 'same-origin',
+      'Sec-Fetch-User': '?1',
+      'Cache-Control': 'max-age=0'
+    }
+    
+    // Add referrer if not direct navigation
+    if (referrer) {
+      headers['Referer'] = referrer
+    }
+    
+    // Add cookies if available
+    if (session.cookies.length > 0) {
+      headers['Cookie'] = session.cookies.join('; ')
+    }
+    
+    // Add viewport hints for Chrome
+    if (session.userAgent.includes('Chrome')) {
+      headers['Sec-CH-UA'] = '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"'
+      headers['Sec-CH-UA-Mobile'] = '?0'
+      headers['Sec-CH-UA-Platform'] = `"${session.fingerprint.platform}"`
+      headers['Viewport-Width'] = session.fingerprint.viewport.width.toString()
+    }
+    
+    return headers
+  }
+
+  /**
+   * Randomized delay between requests to mimic human behavior
+   */
+  private async randomDelay(): Promise<void> {
+    const delay = Math.floor(Math.random() * (this.MAX_REQUEST_DELAY - this.MIN_REQUEST_DELAY)) + this.MIN_REQUEST_DELAY
+    console.log(`⏱️ [AntiBot] Human-like delay: ${delay}ms`)
+    await new Promise(resolve => setTimeout(resolve, delay))
+  }
+
+  /**
+   * Extract and store cookies from response
+   */
+  private extractAndStoreCookies(response: Response, session: any): void {
+    const setCookieHeaders = response.headers.get('set-cookie')
+    if (setCookieHeaders) {
+      const cookies = setCookieHeaders.split(',').map(cookie => cookie.split(';')[0].trim())
+      session.cookies.push(...cookies)
+      console.log(`🍪 [AntiBot] Stored ${cookies.length} cookies for session`)
+    }
   }
 
   async execute(input: ADIAgentInput): Promise<ADIAgentOutput> {
@@ -182,17 +365,28 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
 
     const allUrls: SitemapUrl[] = [];
     let sitemapCount = 0;
+    let consecutiveFailures = 0;
 
     for (const sitemapUrl of sitemapLocations) {
       try {
         const sitemapData = await this.fetchAndParseSitemap(sitemapUrl);
         if (sitemapData && sitemapData.urls.length > 0) {
           allUrls.push(...sitemapData.urls);
+          consecutiveFailures = 0; // Reset failure count on success
           sitemapCount++;
           console.log(`✅ Found and processed sitemap at ${sitemapUrl}, adding ${sitemapData.urls.length} URLs. Total URLs: ${allUrls.length}`);
         }
       } catch (error) {
         console.log(`❌ Failed to fetch sitemap from ${sitemapUrl}:`, error instanceof Error ? error.message : 'Unknown error');
+        
+        // Circuit breaker: detect 403 patterns and fail fast
+        if (error instanceof Error && (error.message.includes('403') || error.message.includes('Forbidden'))) {
+          consecutiveFailures++;
+          if (consecutiveFailures >= this.MAX_403_FAILURES) {
+            console.log(`🚨 Circuit breaker triggered: ${consecutiveFailures} consecutive 403 errors. Skipping remaining sitemaps.`);
+            break;
+          }
+        }
         continue;
       }
     }
@@ -253,25 +447,44 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
    * Fetch and parse a sitemap.xml file
    */
   private async fetchAndParseSitemap(sitemapUrl: string): Promise<SitemapData | null> {
+    const domain = new URL(sitemapUrl).hostname
+    const session = this.getOrCreateSession(domain)
+    
     for (let i = 0; i < this.userAgents.length; i++) {
-        const userAgent = this.userAgents[i];
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), this.SITEMAP_TIMEOUT);
 
         try {
+            // Add human-like delay between attempts
+            if (i > 0) {
+              await this.randomDelay()
+            }
+            
+            // Generate realistic headers with session persistence
+            const headers = this.generateRealisticHeaders(sitemapUrl, session, i === 0)
+            headers['Accept'] = 'application/xml, text/xml, */*'
+            
+            console.log(`🎭 [AntiBot] Fetching sitemap with ${session.fingerprint.platform} fingerprint (attempt ${i + 1})`)
+
             const response = await fetch(sitemapUrl, {
                 signal: controller.signal,
-                headers: { 'User-Agent': userAgent, 'Accept': 'application/xml, text/xml, */*' },
+                headers,
             });
 
             if (response.ok) {
+                // Store cookies for session persistence
+                this.extractAndStoreCookies(response, session)
+                
                 const xmlContent = await response.text();
                 clearTimeout(timeoutId);
+                console.log(`✅ [AntiBot] Successfully fetched sitemap with anti-bot evasion`)
                 return await this.parseSitemapXml(xmlContent, sitemapUrl);
             }
 
             if (response.status === 403 && i < this.userAgents.length - 1) {
-                console.warn(`[Crawl] 403 Forbidden for ${sitemapUrl}. Retrying with new User-Agent...`);
+                console.warn(`🚫 [AntiBot] 403 Forbidden for ${sitemapUrl}. Switching fingerprint and retrying...`);
+                // Create new session with different fingerprint for retry
+                this.sessionStore.delete(domain)
                 continue;
             }
 
@@ -573,30 +786,22 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
    */
   private async crawlPrioritizedUrls(urls: SitemapUrl[]): Promise<any[]> {
     const results = []
-    const userAgents = [
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    ]
 
-    console.log(`🚀 Crawling ${urls.length} prioritized URLs`)
+    console.log(`🚀 Crawling ${urls.length} prioritized URLs with anti-bot evasion`)
 
     for (let i = 0; i < urls.length; i++) {
       const url = urls[i]
-      const userAgent = userAgents[i % userAgents.length]
 
       try {
         console.log(`📄 Crawling ${i + 1}/${urls.length}: ${url.loc} (${url.contentType})`)
         
-        const pageResult = await this.crawlSinglePage(url, userAgent)
+        // The crawlSinglePage method now handles all anti-bot evasion internally
+        const pageResult = await this.crawlSinglePage(url, '') // userAgent parameter is now ignored
         if (pageResult) {
           results.push(pageResult)
         }
 
-        // Rate limiting: SPEED FOCUSED - minimal delay for faster completion
-        if (i < urls.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 200 + Math.random() * 200)) // 0.2-0.4s delay
-        }
+        // No additional delay needed - randomDelay() is handled in crawlSinglePage
 
       } catch (error) {
         console.log(`❌ Failed to crawl ${url.loc}:`, error instanceof Error ? error.message : 'Unknown error')
@@ -614,26 +819,24 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   private async crawlSinglePage(url: SitemapUrl, userAgent: string): Promise<any | null> {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), this.CRAWL_TIMEOUT)
+    const domain = new URL(url.loc).hostname
+    const session = this.getOrCreateSession(domain)
 
     try {
       console.log(`🔍 [CrawlPage] Starting crawl of ${url.loc}`)
       
+      // Add human-like delay before crawling
+      await this.randomDelay()
+      
+      // Generate realistic headers with session persistence
+      const headers = this.generateRealisticHeaders(url.loc, session, false)
+      
+      console.log(`🎭 [AntiBot] Crawling with ${session.fingerprint.platform} session`)
+      
       const response = await fetch(url.loc, {
         method: 'GET',
         signal: controller.signal,
-        headers: {
-          'User-Agent': userAgent,
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'DNT': '1',
-          'Connection': 'keep-alive',
-          'Upgrade-Insecure-Requests': '1',
-          'Cache-Control': 'no-cache',
-          'Sec-Fetch-Dest': 'document',
-          'Sec-Fetch-Mode': 'navigate',
-          'Sec-Fetch-Site': 'none'
-        }
+        headers
       })
 
       console.log(`📊 [CrawlPage] Response status: ${response.status} for ${url.loc}`)
@@ -643,8 +846,11 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
         throw new Error(`HTTP ${response.status}`)
       }
 
+      // Store cookies for session persistence
+      this.extractAndStoreCookies(response, session)
+
       const html = await response.text()
-      console.log(`✅ [CrawlPage] Successfully extracted ${html.length} chars from ${url.loc}`)
+      console.log(`✅ [CrawlPage] Successfully extracted ${html.length} chars from ${url.loc} with anti-bot evasion`)
       
       const metaData = this.extractEnhancedMeta(html)
 
@@ -927,10 +1133,11 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     const results = []
     
     try {
-      // Crawl homepage
+      // Crawl homepage with enhanced anti-bot evasion
+      console.log('🔍 [CrawlPage] Starting fallback crawl with anti-bot evasion')
       const homepageResult = await this.crawlSinglePage(
         { loc: websiteUrl, contentType: 'homepage', businessValue: 100, freshnessScore: 50 },
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        '' // userAgent parameter is now ignored - handled by session management
       )
       
       if (homepageResult) {
