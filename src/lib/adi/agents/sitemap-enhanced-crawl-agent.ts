@@ -1,5 +1,8 @@
 import { BaseADIAgent } from './base-agent'
-import type { ADIAgentConfig, ADIAgentInput, ADIAgentOutput } from '../../../types/adi'
+import type { ADIAgentConfig, ADIAgentInput, ADIAgentOutput } from '../../../types/adi';
+import { db } from '@/lib/db';
+import { websiteSnapshots, contentChanges } from '@/lib/db/schema';
+import { and, desc, eq } from 'drizzle-orm';
 
 /**
  * Sitemap-Enhanced Crawl Agent
@@ -684,76 +687,69 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     pageType: string = 'homepage'
   ): Promise<void> {
     try {
-      const crypto = require('crypto')
-      const contentHash = crypto.createHash('sha256').update(html).digest('hex')
-      
-      // Check for existing snapshots to detect changes
-      const { sql } = await import('@/lib/database')
-      
+      const crypto = require('crypto');
+      const contentHash = crypto.createHash('sha256').update(html).digest('hex');
+
       // Get the latest 3 snapshots for this brand/URL combination
-      const existingSnapshots = await sql`
-        SELECT content_hash, created_at, id
-        FROM production.website_snapshots 
-        WHERE brand_id = ${brandId} AND url = ${url}
-        ORDER BY created_at DESC 
-        LIMIT 3
-      `
-      
+      const existingSnapshots = await db
+        .select()
+        .from(websiteSnapshots)
+        .where(and(eq(websiteSnapshots.brandId, brandId), eq(websiteSnapshots.url, url)))
+        .orderBy(desc(websiteSnapshots.createdAt))
+        .limit(3);
+
       // Check if content has changed
-      const hasChanged = !existingSnapshots.some(snapshot => snapshot.content_hash === contentHash)
-      
+      const hasChanged = existingSnapshots.length === 0 || !existingSnapshots.some((snapshot: { contentHash: string | null }) => snapshot.contentHash === contentHash);
+
       if (hasChanged) {
-        console.log(`📸 [Evolution] Content changed for ${url}, storing new snapshot`)
-        
+        console.log(`📸 [Evolution] Content changed for ${url}, storing new snapshot`);
+
         // Store new snapshot
-        const newSnapshot = await sql`
-          INSERT INTO production.website_snapshots (
-            brand_id, evaluation_id, url, page_type, content_hash, 
-            raw_html, structured_content, metadata, crawl_timestamp,
-            content_size_bytes, title, meta_description, 
-            has_title, has_meta_description, has_structured_data
-          ) VALUES (
-            ${brandId}, ${evaluationId}, ${url}, ${pageType}, ${contentHash},
-            ${html.substring(0, 1000000)}, ${JSON.stringify({})}, ${JSON.stringify(metaData)}, NOW(),
-            ${html.length}, ${metaData.title || ''}, ${metaData.description || ''},
-            ${!!metaData.title}, ${!!metaData.description}, ${!!metaData.structuredData}
-          ) RETURNING id
-        `
-        
-        // If we have previous snapshots, record the change
-        if (existingSnapshots.length > 0) {
-          const previousSnapshot = existingSnapshots[0]
-          
-          await sql`
-            INSERT INTO production.content_changes (
-              website_snapshot_id, change_type, change_description, 
-              impact_score, previous_snapshot_id
-            ) VALUES (
-              ${newSnapshot[0].id}, 'content_update', 
-              'Content hash changed from sitemap crawl', 
-              ${this.calculateChangeImpact(html, existingSnapshots)}, 
-              ${previousSnapshot.id}
-            )
-          `
+        const newSnapshotResult = await db.insert(websiteSnapshots).values({
+          brandId,
+          evaluationId,
+          url,
+          pageType,
+          contentHash,
+          rawHtml: html.substring(0, 1000000),
+          structuredContent: {},
+          metadata: metaData,
+          crawlTimestamp: new Date(),
+          contentSizeBytes: html.length,
+          title: metaData.title || '',
+          metaDescription: metaData.description || '',
+          hasTitle: !!metaData.title,
+          hasMetaDescription: !!metaData.description,
+          hasStructuredData: !!metaData.structuredData,
+        }).returning({ id: websiteSnapshots.id });
+
+        const newSnapshotId = newSnapshotResult[0]?.id;
+
+        if (newSnapshotId && existingSnapshots.length > 0) {
+          const previousSnapshot = existingSnapshots[0];
+          await db.insert(contentChanges).values({
+            websiteSnapshotId: newSnapshotId,
+            changeType: 'content_update',
+            changeDescription: 'Content hash changed from sitemap crawl',
+            impactScore: this.calculateChangeImpact(html, existingSnapshots),
+            previousSnapshotId: previousSnapshot.id,
+          });
         }
         
         // Clean up old snapshots (keep only latest 3)
         if (existingSnapshots.length >= 3) {
-          const oldestSnapshot = existingSnapshots[existingSnapshots.length - 1]
-          await sql`
-            DELETE FROM production.website_snapshots 
-            WHERE brand_id = ${brandId} AND url = ${url} 
-            AND created_at < ${oldestSnapshot.created_at}
-          `
+            const snapshotsToDelete = existingSnapshots.slice(2); // All but the first two
+            for (const snapshot of snapshotsToDelete) {
+                await db.delete(websiteSnapshots).where(eq(websiteSnapshots.id, snapshot.id));
+            }
         }
-        
-        console.log(`✅ [Evolution] Stored snapshot with hash ${contentHash.substring(0, 8)}...`)
+
+        console.log(`✅ [Evolution] Stored snapshot with hash ${contentHash.substring(0, 8)}...`);
       } else {
-        console.log(`📋 [Evolution] No content changes detected for ${url}`)
+        console.log(`📋 [Evolution] No content changes detected for ${url}`);
       }
-      
     } catch (error) {
-      console.error(`❌ [Evolution] Failed to store snapshot:`, error)
+      console.error(`❌ [Evolution] Failed to store snapshot:`, error);
     }
   }
   
