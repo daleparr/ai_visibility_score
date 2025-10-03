@@ -102,17 +102,22 @@ function validateAndSuggestUrl(url: string): { isValid: boolean; normalizedUrl?:
 
 export async function POST(request: NextRequest) {
   try {
+    console.log(`🔍 [ROUTE_DEBUG] POST /api/evaluate called`)
+    
     const body: { url?: string; tier?: string } = await request.json()
     const url = body.url
     const tier = body.tier || 'free'
+    console.log(`🔍 [ROUTE_DEBUG] Request body parsed: url=${url}, tier=${tier}`)
 
     if (!url) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 })
     }
 
     // Validate URL and provide helpful suggestions
+    console.log(`🔍 [ROUTE_DEBUG] Validating URL: ${url}`)
     const validation = validateAndSuggestUrl(url)
     if (!validation.isValid) {
+      console.log(`🔍 [ROUTE_DEBUG] URL validation failed: ${validation.error}`)
       return NextResponse.json({ 
         error: validation.error,
         suggestion: validation.suggestion,
@@ -121,16 +126,23 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedUrl = validation.normalizedUrl!
+    console.log(`🔍 [ROUTE_DEBUG] URL validated and normalized: ${normalizedUrl}`)
 
     // 1. Ensure a user and brand exist
+    console.log(`🔍 [ROUTE_DEBUG] Ensuring guest user exists`)
     const guestUser = await ensureGuestUser()
+    console.log(`🔍 [ROUTE_DEBUG] Guest user ensured: ${guestUser.id}`)
+    
+    console.log(`🔍 [ROUTE_DEBUG] Creating/upserting brand`)
     const brand = await upsertBrand({
         userId: guestUser.id,
         name: extractBrandNameFromUrl(normalizedUrl),
         websiteUrl: normalizedUrl,
     })
+    console.log(`🔍 [ROUTE_DEBUG] Brand created/upserted: ${brand?.id}`)
 
     if (!brand) {
+        console.log(`🔍 [ROUTE_DEBUG] Brand creation failed`)
         return NextResponse.json({ error: 'Could not create or find brand' }, { status: 500 })
     }
 
@@ -161,9 +173,12 @@ export async function POST(request: NextRequest) {
     console.log(`[ROUTE_HANDLER] Created evaluation: ${evaluation.id}`)
 
     // 2. Use PROPER ADI orchestration system with the database evaluation ID
+    console.log(`🔍 [ROUTE_DEBUG] Creating ADI Service instance`)
     const adiService = new ADIService()
+    console.log(`🔍 [ROUTE_DEBUG] ADI Service instance created`)
 
     // Start evaluation in background - don't await it
+    console.log(`🔍 [ROUTE_DEBUG] Starting evaluateBrand call`)
     adiService.evaluateBrand(brand.id, brand.websiteUrl, undefined, guestUser.id, {
       persistToDb: true,
       evaluationId: evaluation.id,  // ← USE THE DATABASE EVALUATION ID
@@ -172,7 +187,9 @@ export async function POST(request: NextRequest) {
       console.log(`[ROUTE_HANDLER] Completed evaluation: ${result.adiScore.overall}/100`)
     }).catch(error => {
       console.error(`[ROUTE_HANDLER] Evaluation failed: ${error.message}`)
+      console.error(`[ROUTE_HANDLER] Error stack:`, error.stack)
     })
+    console.log(`🔍 [ROUTE_DEBUG] evaluateBrand call initiated (background)`)
 
     // 3. Return immediate response
     // The response should include evaluationId for polling
