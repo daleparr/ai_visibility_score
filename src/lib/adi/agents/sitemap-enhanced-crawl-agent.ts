@@ -51,9 +51,9 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   private readonly CRAWL_TIMEOUT = 8000 // 8 seconds per page (speed focused)
   private readonly MAX_SITEMAPS_TO_PROCESS = 5 // Maximum 5 sitemaps for history
 
-  // Enhanced Anti-Bot Evasion Configuration
-  private readonly MIN_REQUEST_DELAY = 2000 // 2-10 second randomized delays
-  private readonly MAX_REQUEST_DELAY = 10000
+  // Enhanced Anti-Bot Evasion Configuration - SPEED OPTIMIZED
+  private readonly MIN_REQUEST_DELAY = 500 // 0.5-2 second randomized delays (much faster)
+  private readonly MAX_REQUEST_DELAY = 2000
   private readonly SESSION_PERSISTENCE_TTL = 30 * 60 * 1000 // 30 minutes
   
   // Session storage for cookies and state
@@ -117,8 +117,8 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   constructor() {
     const config: ADIAgentConfig = {
       name: 'crawl_agent',
-      version: 'v6.0-anti-bot-evasion',
-      description: 'Advanced anti-bot evasion with fingerprint randomization and session persistence',
+      version: 'v6.1-speed-optimized-evasion',
+      description: 'Speed-optimized anti-bot evasion with realistic fingerprints and fast delays',
       dependencies: [],
       timeout: 30000, // 30 seconds total - SPEED FOCUSED
       retryLimit: 1,
@@ -455,7 +455,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
         const timeoutId = setTimeout(() => controller.abort(), this.SITEMAP_TIMEOUT);
 
         try {
-            // Add human-like delay between attempts
+            // Add human-like delay between attempts (skip first attempt for speed)
             if (i > 0) {
               await this.randomDelay()
             }
@@ -825,8 +825,10 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     try {
       console.log(`🔍 [CrawlPage] Starting crawl of ${url.loc}`)
       
-      // Add human-like delay before crawling
-      await this.randomDelay()
+      // Add human-like delay before crawling (reduced for speed)
+      const quickDelay = Math.floor(Math.random() * 1000) + 500 // 0.5-1.5s instead of 2-10s
+      console.log(`⏱️ [AntiBot] Quick delay: ${quickDelay}ms`)
+      await new Promise(resolve => setTimeout(resolve, quickDelay))
       
       // Generate realistic headers with session persistence
       const headers = this.generateRealisticHeaders(url.loc, session, false)
