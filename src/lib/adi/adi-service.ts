@@ -118,11 +118,13 @@ export class ADIService {
       console.log('🛑 [INFO] Skipping internal agent-results persistence (use options.persistToDb or ADI_ENABLE_INTERNAL_PERSIST=1 to enable)')
     }
 
-    // Update evaluation status to completed
-    if (orchestrationResult.overallStatus === 'completed') {
-      try {
-        console.log(`[DB_UPDATE_START] Attempting to update evaluation ${orchestrationResult.evaluationId} to completed`)
-        
+    // Update evaluation status based on orchestration result
+    try {
+      console.log(`[DB_UPDATE_START] Attempting to update evaluation ${orchestrationResult.evaluationId} status to ${orchestrationResult.overallStatus}`)
+      
+      const { sql } = await import('@/lib/db')
+      
+      if (orchestrationResult.overallStatus === 'completed') {
         const adiScore = ADIScoringEngine.calculateADIScore(orchestrationResult)
         
         console.log(`[DB_UPDATE_DATA] Updating with:`, {
@@ -131,16 +133,14 @@ export class ADIService {
           grade: adiScore.grade
         })
 
-        // ✅ ADD THIS LINE:
-        const { sql } = await import('@/lib/db')
-
-        // Simple update without cached_report
+        // Update to completed with score
         const updateResult = await sql`
           UPDATE production.evaluations 
           SET 
             status = 'completed',
             overall_score = ${adiScore.overall},
             grade = ${adiScore.grade},
+            completed_at = NOW(),
             updated_at = NOW()
           WHERE id = ${orchestrationResult.evaluationId}
           RETURNING id, status, overall_score, updated_at
@@ -149,14 +149,67 @@ export class ADIService {
         console.log(`✅ [DB_UPDATE_SUCCESS] Evaluation ${orchestrationResult.evaluationId} marked as completed with score ${adiScore.overall}/100`)
         console.log(`[DB_UPDATE_RESULT]`, updateResult[0])
         
-      } catch (error) {
-        console.error(`❌ [DB_UPDATE_ERROR] Failed to update evaluation ${orchestrationResult.evaluationId}:`, error)
-        // Don't throw - let the evaluation complete even if DB update fails
+      } else if (orchestrationResult.overallStatus === 'failed') {
+        // Update to failed status - CRITICAL FIX for zombie evaluations
+        const updateResult = await sql`
+          UPDATE production.evaluations 
+          SET 
+            status = 'failed',
+            completed_at = NOW(),
+            updated_at = NOW()
+          WHERE id = ${orchestrationResult.evaluationId}
+          RETURNING id, status, updated_at
+        `
+        
+        console.log(`✅ [DB_UPDATE_SUCCESS] Evaluation ${orchestrationResult.evaluationId} marked as failed`)
+        console.log(`[DB_UPDATE_RESULT]`, updateResult[0])
+        
+        // Still throw error for proper error handling, but DB is now updated
+        throw new Error(`ADI evaluation failed: ${orchestrationResult.errors.join(', ')}`)
+        
+      } else if (orchestrationResult.overallStatus === 'partial') {
+        // Handle partial completion - calculate score from available agents
+        const adiScore = ADIScoringEngine.calculateADIScore(orchestrationResult)
+        
+        const updateResult = await sql`
+          UPDATE production.evaluations 
+          SET 
+            status = 'completed',
+            overall_score = ${adiScore.overall},
+            grade = ${adiScore.grade},
+            completed_at = NOW(),
+            updated_at = NOW()
+          WHERE id = ${orchestrationResult.evaluationId}
+          RETURNING id, status, overall_score, updated_at
+        `
+        
+        console.log(`✅ [DB_UPDATE_SUCCESS] Evaluation ${orchestrationResult.evaluationId} marked as completed (partial) with score ${adiScore.overall}/100`)
+        console.log(`[DB_UPDATE_RESULT]`, updateResult[0])
       }
-    }
-
-    if (orchestrationResult.overallStatus === 'failed') {
-      throw new Error(`ADI evaluation failed: ${orchestrationResult.errors.join(', ')}`)
+      
+    } catch (error) {
+      console.error(`❌ [DB_UPDATE_ERROR] Failed to update evaluation ${orchestrationResult.evaluationId}:`, error)
+      
+      // Emergency fallback - ensure evaluation is never left in running state
+      try {
+        const { sql } = await import('@/lib/db')
+        await sql`
+          UPDATE production.evaluations 
+          SET 
+            status = 'failed',
+            completed_at = NOW(),
+            updated_at = NOW()
+          WHERE id = ${orchestrationResult.evaluationId} AND status = 'running'
+        `
+        console.log(`🚨 [EMERGENCY_FALLBACK] Evaluation ${orchestrationResult.evaluationId} marked as failed to prevent zombie state`)
+      } catch (fallbackError) {
+        console.error(`💀 [CRITICAL_ERROR] Failed to update evaluation status - zombie state possible:`, fallbackError)
+      }
+      
+      // Re-throw original error if it was a failed evaluation
+      if (orchestrationResult.overallStatus === 'failed') {
+        throw error
+      }
     }
 
     // Calculate ADI score

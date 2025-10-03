@@ -479,8 +479,9 @@ export class PerformanceOptimizedADIOrchestrator {
     const completedAgents = Object.values(agentResults).filter(r => r.status === 'completed').length
     const failedAgents = Object.values(agentResults).filter(r => r.status === 'failed').length
 
-    // Critical agents that must succeed
-    const criticalAgents = ['crawl_agent', 'score_aggregator']
+    // Critical agents that must succeed - ONLY score_aggregator is truly critical
+    // crawl_agent can fail and we still provide value with synthetic fallbacks
+    const criticalAgents = ['score_aggregator']
     const failedCriticalAgents = criticalAgents.filter(name => 
       agentResults[name]?.status === 'failed'
     )
