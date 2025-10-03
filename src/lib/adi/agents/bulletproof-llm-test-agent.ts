@@ -417,166 +417,165 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
    * Real OpenAI API call
    */
   private async callOpenAI(prompt: string, model: string = 'gpt-4o-mini'): Promise<string> {
-    const apiKey = process.env.OPENAI_API_KEY
+    const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      throw new Error('OpenAI API key not configured')
+      throw new Error('OpenAI API key not configured');
     }
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an AI assistant helping evaluate brand visibility. Provide accurate, factual responses based on your training data.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 300,
-        temperature: 0.3
-      })
-    });
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an AI assistant helping evaluate brand visibility. Provide accurate, factual responses based on your training data.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 300,
+          temperature: 0.3
+        }),
+        signal: controller.signal,
+      });
 
-    clearTimeout(timeoutId);
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+      }
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`)
+      const data = await response.json();
+      return data.choices[0]?.message?.content || 'No response received';
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    const data = await response.json()
-    return data.choices[0]?.message?.content || 'No response received'
   }
 
   /**
    * Real Anthropic API call
    */
   private async callAnthropic(prompt: string, model: string = 'claude-3-haiku-20240307'): Promise<string> {
-    const apiKey = process.env.ANTHROPIC_API_KEY
+    const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      throw new Error('Anthropic API key not configured')
+      throw new Error('Anthropic API key not configured');
     }
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 300,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ]
-      })
-    });
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'Content-Type': 'application/json',
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 300,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+        signal: controller.signal,
+      });
 
-    clearTimeout(timeoutId);
+      if (!response.ok) {
+        throw new Error(`Anthropic API error: ${response.status} ${response.statusText}`);
+      }
 
-    if (!response.ok) {
-      throw new Error(`Anthropic API error: ${response.status} ${response.statusText}`)
+      const data = await response.json();
+      return data.content[0]?.text || 'No response received';
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    const data = await response.json()
-    return data.content[0]?.text || 'No response received'
   }
 
   /**
    * Real Google Gemini API call
    */
   private async callGoogle(prompt: string, model: string = 'gemini-1.5-flash'): Promise<string> {
-    const apiKey = process.env.GOOGLE_AI_API_KEY
+    const apiKey = process.env.GOOGLE_AI_API_KEY;
     if (!apiKey) {
-      throw new Error('Google AI API key not configured')
+      throw new Error('Google AI API key not configured');
     }
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: prompt
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          maxOutputTokens: 300,
-          temperature: 0.3
-        }
-      })
-    })
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000); // 12-second timeout
 
-    if (!response.ok) {
-      throw new Error(`Google AI API error: ${response.status} ${response.statusText}`)
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: 300,
+          },
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Google AI API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.candidates[0]?.content?.parts[0]?.text || 'No response received';
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    const data = await response.json()
-    return data.candidates[0]?.content?.parts[0]?.text || 'No response received'
   }
 
   /**
    * Real Mistral API call
    */
   private async callMistral(prompt: string, model: string = 'mistral-small-latest'): Promise<string> {
-    const apiKey = process.env.MISTRAL_API_KEY
+    const apiKey = process.env.MISTRAL_API_KEY;
     if (!apiKey) {
-      throw new Error('Mistral API key not configured')
+      throw new Error('Mistral API key not configured');
     }
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15-second timeout
+    
+    try {
+      const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 300,
+          temperature: 0.3,
+        }),
+        signal: controller.signal,
+      });
 
-    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 300,
-        temperature: 0.3
-      })
-    });
+      if (!response.ok) {
+        throw new Error(`Mistral API error: ${response.status} ${response.statusText}`);
+      }
 
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`Mistral API error: ${response.status} ${response.statusText}`)
+      const data = await response.json();
+      return data.choices[0]?.message?.content || 'No response received';
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    const data = await response.json()
-    return data.choices[0]?.message?.content || 'No response received'
   }
 
   /**
