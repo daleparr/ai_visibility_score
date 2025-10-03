@@ -1719,9 +1719,16 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     
     // Store snapshots with evolution tracking (async, don't wait)
     if (evidence.html && evidence.html.length > 0 && data.pages && data.pages.length > 0) {
-      this.storeEvolutionSnapshots(data, metadata).catch(error => {
-        console.error('❌ [Evolution] Failed to store snapshots:', error)
-      })
+      // 📸 [Evolution] Store snapshots for evolution tracking - TEMPORARILY DISABLED due to schema mismatch
+      // TODO: Re-enable after database schema is updated with missing columns
+      try {
+        // this.storeEvolutionSnapshots(data, metadata).catch(error => {
+        //   console.error('❌ [Evolution] Failed to store snapshots:', error)
+        // })
+        console.log('📸 [Evolution] Snapshot storage temporarily disabled - schema update needed')
+      } catch (error) {
+        console.warn('📸 [Evolution] Snapshot storage skipped:', error)
+      }
     }
     
     const result = this.createResult(
