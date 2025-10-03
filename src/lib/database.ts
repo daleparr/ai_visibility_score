@@ -394,63 +394,29 @@ export const getDimensionScores = async (evaluationId: string): Promise<Dimensio
   return await db.select().from(dimensionScores).where(eq(dimensionScores.evaluationId, evaluationId))
 }
 
-export const createDimensionScore = async (score: NewDimensionScore): Promise<DimensionScore> => {
+export const createDimensionScore = async (
+  score: NewDimensionScore,
+  tx: any = db, // Allow passing a transaction
+): Promise<DimensionScore> => {
   console.log('🔍 [DB] Creating dimension score:', {
     evaluationId: score.evaluationId,
     dimensionName: score.dimensionName,
     score: score.score
-  })
-  
-  try {
-    const result = await db.insert(dimensionScores).values(score).returning()
-    
-    if (!result || result.length === 0) {
-      throw new Error('Insert returned empty result - dimension score save failed')
-    }
-    
-    console.log('✅ [DB] Dimension score created (ORM):', result[0].id)
-    return result[0]
-  } catch (error: any) {
-    console.error('❌ [DB] Failed to create dimension score via ORM, attempting raw SQL fallback:', error)
-    console.error('❌ [DB] Score data:', score)
+  });
 
-    // Fallback: raw SQL UPSERT on (evaluation_id, dimension_name)
-    try {
-      const s: any = score || {}
-      const recJson = JSON.stringify(s.recommendations ?? {})
-      const rows = await sql<any>`
-        INSERT INTO production.dimension_scores
-          (evaluation_id, dimension_name, score, explanation, recommendations)
-        VALUES
-          (${s.evaluationId},
-           ${s.dimensionName},
-           ${Number(s.score ?? 0)},
-           ${s.explanation ?? null},
-           ${recJson}::jsonb)
-        ON CONFLICT (evaluation_id, dimension_name)
-        DO UPDATE SET
-          score = EXCLUDED.score,
-          explanation = COALESCE(EXCLUDED.explanation, production.dimension_scores.explanation),
-          recommendations = COALESCE(EXCLUDED.recommendations, production.dimension_scores.recommendations)
-        RETURNING
-          id,
-          evaluation_id  AS "evaluationId",
-          dimension_name AS "dimensionName",
-          score,
-          explanation,
-          recommendations,
-          created_at     AS "createdAt"
-      `
-      const row = rows?.[0]
-      if (!row) throw new Error('Raw SQL upsert returned no row for dimension_scores')
-      console.log('✅ [DB] Dimension score created via raw SQL fallback:', row.id)
-      return row as any
-    } catch (fallbackErr) {
-      console.error('❌ [DB] Raw SQL fallback for dimension_scores also failed:', fallbackErr)
-      throw fallbackErr
+  try {
+    const result = await tx.insert(dimensionScores).values(score).returning();
+    if (!result || result.length === 0) {
+      throw new Error('Insert returned empty result - dimension score save failed');
     }
+    console.log('✅ [DB] Dimension score created (ORM):', result[0].id);
+    return result[0];
+  } catch (error: any) {
+    console.error('❌ [DB] Failed to create dimension score:', error);
+    // Removed raw SQL fallback for simplicity and to enforce ORM usage
+    throw error;
   }
-}
+};
 
 // Recommendations operations
 export const getRecommendations = async (evaluationId: string): Promise<Recommendation[]> => {

@@ -708,203 +708,36 @@ export class ADIService {
   
 
   private async saveAgentResultsToDatabase(evaluationId: string, orchestrationResult: any): Promise<void> {
-    const { sql } = await import('@/lib/db')
-    const {
-      crawlSiteSignals,
-      websiteSnapshots,
-      evaluationResults,
-      dimensionScores
-    } = await import('@/lib/db/schema')
+    const { createDimensionScore } = await import('@/lib/database');
+    const { db } = await import('@/lib/db');
 
-    console.log(`[DB_WRITE_START] Saving agent results for evaluation ${evaluationId}`)
-
+    console.log(`[DB_WRITE_START] Saving agent results for evaluation ${evaluationId}`);
     try {
-      // Helper to safely convert to number
-      const num = (x: any, fb = 0) => {
-        const n = Number(x);
-        return isNaN(n) ? fb : n;
-      };
+        await db.transaction(async (tx: any) => {
+            const allResults = Object.values(orchestrationResult.agentResults || {}).flatMap((agent: any) => agent.results || []) as any[];
+            const dimensionResults = allResults.filter(r => this.mapAgentToDimension(r.agent_id || r.agentName) !== null);
 
-      // Extract data from agent results instead of artifacts
-      const crawlAgent = orchestrationResult?.agentResults?.crawl_agent
-      const schemaAgent = orchestrationResult?.agentResults?.schema_agent
-      
-      // 1. Crawl Site Signals - extract from crawl agent results
-      if (crawlAgent?.results?.[0]?.evidence) {
-        const evidence = crawlAgent.results[0].evidence
-        const signals = {
-          loadTimeMs: evidence.loadTimeMs || evidence.executionTime || 0,
-          isMobileFriendly: evidence.isMobileFriendly || false,
-          hasHttps: evidence.hasHttps || evidence.url?.startsWith('https://') || false,
-          hasRobotsTxt: evidence.hasRobotsTxt || false,
-          hasSitemapXml: evidence.hasSitemapXml || false,
-          viewportMeta: evidence.viewportMeta || '',
-          hasMetaDescription: evidence.hasMetaDescription || evidence.metaData?.description || false,
-          hasTitle: evidence.hasTitle || evidence.metaData?.title || false,
-          hasH1: evidence.hasH1 || false
-        }
-        
-        try {
-          await sql`
-            INSERT INTO production.crawl_site_signals (
-              evaluation_id, load_time_ms, is_mobile_friendly, has_https, has_robots_txt, has_sitemap_xml,
-              viewport_meta, has_meta_description, has_title, has_h1
-            ) VALUES (
-              ${evaluationId}, ${signals.loadTimeMs}, ${Boolean(signals.isMobileFriendly)}, ${Boolean(signals.hasHttps)},
-              ${Boolean(signals.hasRobotsTxt)}, ${Boolean(signals.hasSitemapXml)}, ${signals.viewportMeta},
-              ${Boolean(signals.hasMetaDescription)}, ${Boolean(signals.hasTitle)}, ${Boolean(signals.hasH1)}
-            )
-          `;
-          console.log(`[DB_WRITE] Saved crawl_site_signals for ${evaluationId}`);
-        } catch (crawlSignalsError) {
-          console.warn(`[DB_WRITE_SKIP] Failed to save crawl_site_signals (table may not exist):`, crawlSignalsError);
-        }
-      } else {
-        console.log(`[DB_WRITE_SKIP] No crawl signals found for ${evaluationId}`)
-      }
+            for (const result of dimensionResults) {
+                const agentName = result.agentName || result.agent_id;
+                const dimensionName = this.mapAgentToDimension(agentName);
 
-      // 2. Website Snapshots - extract from crawl agent results
-      if (crawlAgent?.results?.[0]?.evidence?.content) {
-        const evidence = crawlAgent.results[0].evidence
-        // Truncate content to fit in text column
-        const truncatedContent = evidence.content?.substring(0, 100000) ?? ''
-        
-        // Generate content hash for deduplication
-        const crypto = require('crypto')
-        const contentHash = crypto.createHash('sha256').update(truncatedContent).digest('hex')
-
-        try {
-          await sql`
-            INSERT INTO production.website_snapshots (
-              evaluation_id, url, raw_html, screenshot_url, page_type, content_hash
-            ) VALUES (
-              ${evaluationId}, ${evidence.url || evidence.websiteUrl || ''}, ${truncatedContent}, '', 'homepage', ${contentHash}
-            )
-          `
-          console.log(`[DB_WRITE] Saved website_snapshots for ${evaluationId}`);
-        } catch (snapshotError) {
-          console.warn(`[DB_WRITE_SKIP] Failed to save website_snapshots (table may not exist):`, snapshotError);
-        }
-      } else {
-         console.log(`[DB_WRITE_SKIP] No crawl snapshot found for ${evaluationId}`)
-      }
-
-      // 3. Evaluation Results - extract from schema agent results
-      if (schemaAgent?.results?.[0]) {
-        const schemaResult = schemaAgent.results[0]
-        const crawlEvidence = crawlAgent?.results?.[0]?.evidence || {}
-        
-        try {
-          await sql`
-            INSERT INTO production.evaluation_results (
-                evaluation_id,
-                provider_name,
-                test_type,
-                prompt_used,
-                response_received,
-                score_contribution,
-                has_schema,
-                schema_type,
-                schema_errors,
-                has_meta_description,
-                has_title,
-                has_h1,
-                is_mobile_friendly,
-                load_time_ms
-            )
-            VALUES (
-                ${evaluationId},
-                ${'sitemap_enhanced_crawl_agent'},
-                ${'schema_analysis'},
-                ${'Schema detection and structured data analysis'},
-                ${JSON.stringify(schemaResult.evidence || {})},
-                ${schemaResult.normalizedScore || 0},
-                ${schemaResult.normalizedScore > 0},
-                ${schemaResult.evidence?.schemaType || 'unknown'},
-                ${schemaResult.evidence?.errors?.join(',') || null},
-                ${Boolean(crawlEvidence.hasMetaDescription || crawlEvidence.metaData?.description)},
-                ${Boolean(crawlEvidence.hasTitle || crawlEvidence.metaData?.title)},
-                ${Boolean(crawlEvidence.hasH1)},
-                ${Boolean(crawlEvidence.isMobileFriendly)},
-                ${crawlEvidence.loadTimeMs || crawlEvidence.executionTime || 0}
-            )
-          `;
-          console.log(`[DB_WRITE] Saved evaluation_results for ${evaluationId}`);
-        } catch (evaluationResultsError) {
-          console.warn(`[DB_WRITE_SKIP] Failed to save evaluation_results (table may not exist):`, evaluationResultsError);
-        }
-      } else {
-         console.log(`[DB_WRITE_SKIP] No schema data for ${evaluationId}`);
-      }
-
-
-      // 4. Dimension Scores - extract from agent results
-      const agentResults = orchestrationResult?.agentResults || {}
-      const dimensionScores = []
-      
-      // Map agent results to dimension scores
-      for (const [agentName, agentResult] of Object.entries(agentResults)) {
-        if ((agentResult as any)?.results?.[0]) {
-          const result = (agentResult as any).results[0]
-          const dimensionName = this.mapAgentToDimension(agentName)
-          
-          if (dimensionName) {
-            dimensionScores.push({
-              evaluationId,
-              dimensionName,
-              score: result.normalizedScore || 0,
-              confidence: result.confidenceLevel || 0,
-              explanation: result.evidence?.reasoning || `${agentName} evaluation completed`,
-              evidence: JSON.stringify(result.evidence || {}),
-              timestamp: new Date().toISOString()
-            })
-            
-            // Special case: commerce_agent also creates shipping_freight dimension
-            if (agentName === 'commerce_agent') {
-              dimensionScores.push({
-                evaluationId,
-                dimensionName: 'shipping_freight',
-                score: Math.max(0, (result.normalizedScore || 0) - 10), // Slightly lower score for shipping
-                confidence: result.confidenceLevel || 0,
-                explanation: `Shipping and freight analysis derived from commerce evaluation`,
-                evidence: JSON.stringify({ ...result.evidence, derived: true }),
-                timestamp: new Date().toISOString()
-              })
+                if (dimensionName) {
+                    const scoreData = {
+                        evaluationId: evaluationId,
+                        dimensionName: dimensionName,
+                        score: Number(result.normalized_score ?? 0),
+                        explanation: result.evidence?.explanation || result.keyInsight || `Score derived from ${agentName}`,
+                        recommendations: { ...result.evidence },
+                    };
+                    await createDimensionScore(scoreData, tx);
+                }
             }
-          }
-        }
-      }
-      
-      // Save dimension scores to database using proper ORM
-      for (const score of dimensionScores) {
-        try {
-          const dimensionScoreData = {
-            evaluationId: evaluationId,
-            dimensionName: score.dimensionName,
-            score: Math.round(score.score),
-            explanation: score.explanation,
-            recommendations: JSON.parse(score.evidence || '[]')
-          }
-          
-          // Use the createDimensionScore function which handles conflicts properly
-          await this.createDimensionScoreWithFallback(dimensionScoreData)
-        } catch (error) {
-          console.error(`[DB_WRITE_ERROR] Failed to save dimension score ${score.dimensionName}:`, error)
-        }
-      }
-        
-        if (dimensionScores.length > 0) {
-          console.log(`[DB_WRITE] Saved ${dimensionScores.length} dimension scores for ${evaluationId}`);
-        } else {
-          console.log(`[DB_WRITE_SKIP] No dimension scores to save for ${evaluationId}`);
-        }
-
-
-    console.log(`[DB_WRITE_SUCCESS] Agent results saved for evaluation ${evaluationId}`)
-
+            console.log(`[DB_WRITE] Transaction committed for ${dimensionResults.length} dimension scores.`);
+        });
+        console.log(`[DB_WRITE_SUCCESS] Agent results saved for evaluation ${evaluationId}`);
     } catch (error) {
-      console.error(`[DB_WRITE_ERROR] Failed to save agent results for ${evaluationId}:`, error)
-      // Do not re-throw, as we don't want to fail the entire evaluation
+        console.error(`❌ [DB_WRITE_ERROR] Unhandled error in saveAgentResultsToDatabase:`, error);
+        throw new Error(`Failed to save agent results to database: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
