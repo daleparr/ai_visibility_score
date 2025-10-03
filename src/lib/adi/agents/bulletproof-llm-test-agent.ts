@@ -32,9 +32,9 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
   // Provider configurations with fallback order
   private readonly providers = [
     { name: 'openai', timeout: 8000, cost: 0.03, model: 'gpt-4o-mini' },
-    { name: 'anthropic', timeout: 10000, cost: 0.025, model: 'claude-3-haiku' },
-    { name: 'google', timeout: 12000, cost: 0.02, model: 'gemini-1.5-flash' },
-    { name: 'mistral', timeout: 15000, cost: 0.015, model: 'mistral-small' }
+    { name: 'anthropic', timeout: 10000, cost: 0.025, model: 'claude-3-5-haiku-20241022' },
+    { name: 'google', timeout: 12000, cost: 0.02, model: 'gemini-1.5-flash-latest' },
+    { name: 'mistral', timeout: 15000, cost: 0.015, model: 'mistral-small-latest' }
   ]
 
   constructor() {
@@ -464,7 +464,7 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
   /**
    * Real Anthropic API call
    */
-  private async callAnthropic(prompt: string, model: string = 'claude-3-haiku-20240307'): Promise<string> {
+  private async callAnthropic(prompt: string, model: string = 'claude-3-5-haiku-20241022'): Promise<string> {
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) {
       throw new Error('Anthropic API key not configured')
@@ -473,40 +473,42 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model,
-        max_tokens: 300,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ]
-      }),
-      signal: controller.signal
-    });
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'Content-Type': 'application/json',
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 300,
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ]
+        }),
+        signal: controller.signal
+      });
 
-    clearTimeout(timeoutId);
+      if (!response.ok) {
+        throw new Error(`Anthropic API error: ${response.status} ${response.statusText}`)
+      }
 
-    if (!response.ok) {
-      throw new Error(`Anthropic API error: ${response.status} ${response.statusText}`)
+      const data = await response.json()
+      return data.content[0]?.text || 'No response received'
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    const data = await response.json()
-    return data.content[0]?.text || 'No response received'
   }
 
   /**
    * Real Google Gemini API call
    */
-  private async callGoogle(prompt: string, model: string = 'gemini-1.5-flash'): Promise<string> {
+  private async callGoogle(prompt: string, model: string = 'gemini-1.5-flash-latest'): Promise<string> {
     const apiKey = process.env.GOOGLE_AI_API_KEY
     if (!apiKey) {
       throw new Error('Google AI API key not configured')
@@ -534,11 +536,12 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
         });
 
         if (!response.ok) {
-            throw new Error(`Google AI API error: ${response.status} ${response.statusText}`)
+            const errorText = await response.text();
+            throw new Error(`Google AI API error: ${response.status} ${response.statusText} - ${errorText}`)
         }
 
         const data = await response.json()
-        return data.candidates[0]?.content?.parts[0]?.text || 'No response received'
+        return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received'
     } finally {
         clearTimeout(timeoutId);
     }

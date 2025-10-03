@@ -77,7 +77,7 @@ export class MerchantReportGenerator {
   }
 
   private generateKeyFinding(score: number, dimensions: Array<{name: string, score: number}>, brandName: string): string {
-    const avgScore = dimensions.reduce((sum, d) => sum + d.score, 0) / dimensions.length
+    const avgScore = dimensions.length > 0 ? dimensions.reduce((sum, d) => sum + d.score, 0) / dimensions.length : score
     
     if (score < 40) {
       return `${brandName} is largely invisible to AI systems. Customers using AI shopping assistants, voice search, or chatbots will struggle to find your products and services.`
@@ -91,6 +91,10 @@ export class MerchantReportGenerator {
   }
 
   private identifyBiggestOpportunity(dimensions: Array<{name: string, score: number}>): string {
+    if (dimensions.length === 0) {
+      return 'Add structured data markup to your website to improve AI understanding and visibility.'
+    }
+    
     const lowestScore = dimensions.reduce((min, d) => d.score < min.score ? d : min)
     
     const opportunities: Record<string, string> = {
@@ -111,6 +115,10 @@ export class MerchantReportGenerator {
   }
 
   private identifyQuickWin(dimensions: Array<{name: string, score: number}>): string {
+    if (dimensions.length === 0) {
+      return 'Add FAQ schema markup to your website - takes 2 hours, improves AI answers immediately.'
+    }
+    
     // Find dimensions with moderate scores that can be easily improved
     const quickWins = dimensions
       .filter(d => d.score >= 30 && d.score <= 60)
