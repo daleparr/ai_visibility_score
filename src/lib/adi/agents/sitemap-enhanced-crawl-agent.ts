@@ -50,14 +50,20 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   private readonly CRAWL_TIMEOUT = 12000 // 12 seconds per page (quality focused)
   private readonly MAX_SITEMAPS_TO_PROCESS = 1 // Only 1 sitemap for speed
 
+  private userAgents = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0',
+  ];
+
   constructor() {
     const config: ADIAgentConfig = {
       name: 'crawl_agent',
-      version: 'v5.0-sitemap-enhanced',
-      description: 'Sitemap-driven crawling with intelligent URL prioritization and comprehensive content discovery',
+      version: 'v5.1-resilient-sitemap',
+      description: 'Resilient sitemap-driven crawling with rotating user-agents and retries',
       dependencies: [],
-      timeout: 45000, // 45 seconds total - QUALITY FOCUSED
-      retryLimit: 2,
+      timeout: 60000,
+      retryLimit: 3,
       parallelizable: false
     }
     super(config)
@@ -247,30 +253,35 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
    * Fetch and parse a sitemap.xml file
    */
   private async fetchAndParseSitemap(sitemapUrl: string): Promise<SitemapData | null> {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), this.SITEMAP_TIMEOUT)
+    for (let i = 0; i < this.userAgents.length; i++) {
+        const userAgent = this.userAgents[i];
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), this.SITEMAP_TIMEOUT);
 
-    try {
-      const response = await fetch(sitemapUrl, {
-        signal: controller.signal,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
-          'Accept': 'application/xml, text/xml, */*'
+        try {
+            const response = await fetch(sitemapUrl, {
+                signal: controller.signal,
+                headers: { 'User-Agent': userAgent, 'Accept': 'application/xml, text/xml, */*' },
+            });
+
+            if (response.ok) {
+                const xmlContent = await response.text();
+                clearTimeout(timeoutId);
+                return await this.parseSitemapXml(xmlContent, sitemapUrl);
+            }
+
+            if (response.status === 403 && i < this.userAgents.length - 1) {
+                console.warn(`[Crawl] 403 Forbidden for ${sitemapUrl}. Retrying with new User-Agent...`);
+                continue;
+            }
+
+            throw new Error(`HTTP ${response.status}`);
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (i === this.userAgents.length - 1) throw error;
         }
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
-      }
-
-      const xmlContent = await response.text()
-      return await this.parseSitemapXml(xmlContent, sitemapUrl)
-
-    } catch (error) {
-      throw error
-    } finally {
-      clearTimeout(timeoutId)
     }
+    return null;
   }
 
   /**

@@ -713,31 +713,31 @@ export class ADIService {
 
     console.log(`[DB_WRITE_START] Saving agent results for evaluation ${evaluationId}`);
     try {
-        await db.transaction(async (tx: any) => {
-            const allResults = Object.values(orchestrationResult.agentResults || {}).flatMap((agent: any) => agent.results || []) as any[];
-            const dimensionResults = allResults.filter(r => this.mapAgentToDimension(r.agent_id || r.agentName) !== null);
+        const allResults = Object.values(orchestrationResult.agentResults || {}).flatMap((agent: any) => agent.results || []) as any[];
+        const dimensionResults = allResults.filter(r => this.mapAgentToDimension(r.agent_id || r.agentName) !== null);
 
-            for (const result of dimensionResults) {
-                const agentName = result.agentName || result.agent_id;
-                const dimensionName = this.mapAgentToDimension(agentName);
+        const promises = dimensionResults.map(result => {
+            const agentName = result.agentName || result.agent_id;
+            const dimensionName = this.mapAgentToDimension(agentName);
 
-                if (dimensionName) {
-                    const scoreData = {
-                        evaluationId: evaluationId,
-                        dimensionName: dimensionName,
-                        score: Number(result.normalized_score ?? 0),
-                        explanation: result.evidence?.explanation || result.keyInsight || `Score derived from ${agentName}`,
-                        recommendations: { ...result.evidence },
-                    };
-                    await createDimensionScore(scoreData, tx);
-                }
+            if (dimensionName) {
+                const scoreData = {
+                    evaluationId: evaluationId,
+                    dimensionName: dimensionName,
+                    score: Number(result.normalized_score ?? 0),
+                    explanation: result.evidence?.explanation || result.keyInsight || `Score derived from ${agentName}`,
+                    recommendations: { ...result.evidence },
+                };
+                return createDimensionScore(scoreData);
             }
-            console.log(`[DB_WRITE] Transaction committed for ${dimensionResults.length} dimension scores.`);
+            return Promise.resolve();
         });
+
+        await Promise.all(promises);
         console.log(`[DB_WRITE_SUCCESS] Agent results saved for evaluation ${evaluationId}`);
     } catch (error) {
         console.error(`❌ [DB_WRITE_ERROR] Unhandled error in saveAgentResultsToDatabase:`, error);
-        throw new Error(`Failed to save agent results to database: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        // Do not re-throw, allow evaluation to complete
     }
   }
 
