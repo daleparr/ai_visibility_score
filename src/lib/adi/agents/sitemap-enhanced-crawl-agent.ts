@@ -51,7 +51,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   private readonly MAX_URLS_TO_CRAWL = 2 // Focus on quality over quantity
   private readonly SITEMAP_TIMEOUT = 3000 // 3 seconds for sitemap discovery (balanced)
   private readonly MAX_403_FAILURES = 3 // Allow more attempts for valuable sites
-  private readonly CRAWL_TIMEOUT = 15000 // 15 seconds per page (allow HTML extraction)
+  private readonly CRAWL_TIMEOUT = 25000 // 25 seconds per page (allow complex sites like Nike)
   private readonly HTML_PROCESSING_TIMEOUT = 5000 // 5 seconds for enhanced parsing
   private readonly MAX_SITEMAPS_TO_PROCESS = 3 // Focus on most important sitemaps
   private readonly MAX_TOTAL_SITEMAP_ATTEMPTS = 8 // Reduced but sufficient attempts

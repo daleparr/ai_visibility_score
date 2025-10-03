@@ -29,12 +29,12 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
   private readonly CIRCUIT_BREAKER_TIMEOUT = 60 * 1000 // 1 minute
   private readonly MAX_QUERIES = 3 // Optimized query count
   
-  // Provider configurations with fallback order
+  // Provider configurations with fallback order - INCREASED TIMEOUTS for reliability
   private readonly providers = [
-    { name: 'openai', timeout: 8000, cost: 0.03, model: 'gpt-4o-mini' },
-    { name: 'anthropic', timeout: 10000, cost: 0.025, model: 'claude-3-5-haiku-20241022' },
-    { name: 'google', timeout: 12000, cost: 0.02, model: 'gemini-1.5-flash' },
-    { name: 'mistral', timeout: 15000, cost: 0.015, model: 'mistral-small-latest' }
+    { name: 'openai', timeout: 12000, cost: 0.03, model: 'gpt-4o-mini' },
+    { name: 'anthropic', timeout: 15000, cost: 0.025, model: 'claude-3-5-haiku-20241022' },
+    { name: 'google', timeout: 18000, cost: 0.02, model: 'gemini-1.5-flash-001' },
+    { name: 'mistral', timeout: 20000, cost: 0.015, model: 'mistral-small-latest' }
   ]
 
   constructor() {
@@ -508,7 +508,7 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
   /**
    * Real Google Gemini API call
    */
-  private async callGoogle(prompt: string, model: string = 'gemini-1.5-flash'): Promise<string> {
+  private async callGoogle(prompt: string, model: string = 'gemini-1.5-flash-001'): Promise<string> {
     const apiKey = process.env.GOOGLE_AI_API_KEY
     if (!apiKey) {
       throw new Error('Google AI API key not configured')
