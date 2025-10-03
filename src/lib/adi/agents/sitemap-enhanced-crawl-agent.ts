@@ -1097,7 +1097,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       if (hasChanged) {
         console.log(`📸 [Evolution] Content changed for ${url}, storing new snapshot`);
 
-        // Store new snapshot
+        // Store new snapshot - FIXED: Map to existing columns in website_snapshots table
         const newSnapshotResult = await db.insert(websiteSnapshots).values({
           brandId,
           evaluationId,
@@ -1105,15 +1105,28 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
           pageType,
           contentHash,
           rawHtml: html.substring(0, 1000000),
-          structuredContent: {},
-          metadata: metaData,
+          structuredContent: {
+            // Store sitemap data and analysis results in structured_content JSONB field
+            sitemapData: metaData.sitemapAnalysis || {},
+            hasTitle: !!metaData.title,
+            hasMetaDescription: !!metaData.description,
+            hasStructuredData: !!metaData.structuredData,
+            structuredDataTypes: metaData.structuredData?.length || 0,
+            qualityScore: metaData.qualityScore || 0,
+            wordCount: metaData.wordCount || 0,
+            seoScore: metaData.seoScore || 0
+          },
+          metadata: {
+            ...metaData,
+            // Store additional sitemap analysis in metadata JSONB field
+            sitemapAnalysis: metaData.sitemapAnalysis || {},
+            robotsAnalysis: metaData.robotsAnalysis || {},
+            enhancedParser: metaData.enhancedParser || {}
+          },
           crawlTimestamp: new Date(),
           contentSizeBytes: html.length,
           title: metaData.title || '',
-          metaDescription: metaData.description || '',
-          hasTitle: !!metaData.title,
-          hasMetaDescription: !!metaData.description,
-          hasStructuredData: !!metaData.structuredData,
+          metaDescription: metaData.description || ''
         }).returning({ id: websiteSnapshots.id });
 
         const newSnapshotId = newSnapshotResult[0]?.id;
@@ -1727,15 +1740,14 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     
     // Store snapshots with evolution tracking (async, don't wait)
     if (evidence.html && evidence.html.length > 0 && data.pages && data.pages.length > 0) {
-      // 📸 [Evolution] Store snapshots for evolution tracking - TEMPORARILY DISABLED due to schema mismatch
-      // TODO: Re-enable after database schema is updated with missing columns
+      // 📸 [Evolution] Store snapshots for evolution tracking - RE-ENABLED with existing column mapping
       try {
-        // this.storeEvolutionSnapshots(data, metadata).catch(error => {
-        //   console.error('❌ [Evolution] Failed to store snapshots:', error)
-        // })
-        console.log('📸 [Evolution] Snapshot storage temporarily disabled - schema update needed')
+        this.storeEvolutionSnapshots(data, metadata).catch(error => {
+          console.error('❌ [Evolution] Failed to store snapshots:', error)
+        })
+        console.log('📸 [Evolution] Snapshot storage enabled - using existing columns with JSONB mapping')
       } catch (error) {
-        console.warn('📸 [Evolution] Snapshot storage skipped:', error)
+        console.warn('📸 [Evolution] Snapshot storage failed:', error)
       }
     }
     
