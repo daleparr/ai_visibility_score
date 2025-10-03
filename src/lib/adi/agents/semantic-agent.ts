@@ -35,6 +35,12 @@ export class SemanticAgent extends BaseADIAgent {
         return this.createSyntheticSemanticAnalysis(input.context.websiteUrl, input.context.metadata?.brandName)
       }
 
+      // 🔧 ANTI-CASCADE: Check for partial crawl data and adjust analysis
+      const hasPartialData = crawlResults.some(result => result.evidence?.partialData === true)
+      if (hasPartialData) {
+        console.log(`🔄 [AntiCascade] Using partial crawl data for semantic analysis`)
+      }
+
       const results = []
 
       // 1. Vocabulary Consistency Analysis

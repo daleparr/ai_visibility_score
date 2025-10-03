@@ -47,6 +47,17 @@ interface SitemapData {
 export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   private cache: Map<string, { data: any, timestamp: number }> = new Map()
   private readonly CACHE_TTL = 15 * 60 * 1000 // 15 minutes
+  
+  // 🔧 ANTI-CASCADE: Track partial crawl data for failure recovery
+  private partialCrawlState = {
+    sitemapsProcessed: 0,
+    pagesCollected: 0,
+    htmlContent: [] as any[],
+    sitemapData: null as SitemapData | null,
+    robotsData: null as any,
+    lastSuccessfulUrl: '',
+    collectedData: {} as any
+  }
   // OPTIMIZED TIMEOUT CONFIGURATION - Balanced for data quality vs speed
   private readonly MAX_URLS_TO_CRAWL = 2 // Focus on quality over quantity
   private readonly SITEMAP_TIMEOUT = 3000 // 3 seconds for sitemap discovery (balanced)
@@ -271,7 +282,37 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
 
     const executionPromise = this.executeInternal(input);
     
-    return Promise.race([executionPromise, hardTimeoutPromise]);
+    try {
+      return await Promise.race([executionPromise, hardTimeoutPromise]);
+    } catch (error) {
+      // 🔧 ANTI-CASCADE: Return any partial data collected before timeout/failure
+      const partialData = this.getPartialCrawlData()
+      if (partialData.hasData) {
+        console.log(`🔄 [AntiCascade] Returning partial crawl data: ${partialData.pagesCollected} pages, ${partialData.sitemapsProcessed} sitemaps`)
+        const partialResult = this.createResult(
+          'partial_crawl_success',
+          Math.min(partialData.qualityScore, 60), // Cap at 60 for partial data
+          partialData.qualityScore,
+          0.7, // Reduced confidence for partial data
+          {
+            ...partialData.data,
+            partialCrawl: true,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            timestamp: new Date().toISOString(),
+            method: 'sitemap_enhanced_partial'
+          }
+        )
+        
+        return this.createOutput('completed', [partialResult], 0, undefined, {
+          partialCrawl: true,
+          pagesCollected: partialData.pagesCollected,
+          sitemapsProcessed: partialData.sitemapsProcessed
+        })
+      }
+      
+      // If no partial data, throw the original error
+      throw error
+    }
   }
 
   private async executeInternal(input: ADIAgentInput): Promise<ADIAgentOutput> {
@@ -281,8 +322,9 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     const evaluationId = input.context.evaluationId
     const brandId = input.context.brandId
     
-    // Reset attempt counter for each execution
+    // Reset attempt counter and partial state for each execution
     this.totalSitemapAttempts = 0;
+    this.resetPartialCrawlState();
     
     console.log(`🗺️ Executing Sitemap-Enhanced Crawl Agent for ${brandName} (${websiteUrl})`)
     console.log(`📋 [Evolution] Context IDs - Brand: ${brandId}, Evaluation: ${evaluationId}`)
@@ -301,6 +343,13 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       // PHASE 1: Sitemap Discovery and Analysis
       console.log('🔍 Phase 1: Sitemap Discovery')
       const sitemapData = await this.discoverAndParseSitemap(websiteUrl)
+      
+      // 🔧 ANTI-CASCADE: Track sitemap discovery for partial data
+      if (sitemapData) {
+        this.partialCrawlState.sitemapData = sitemapData
+        this.partialCrawlState.sitemapsProcessed = 1
+        this.partialCrawlState.lastSuccessfulUrl = websiteUrl
+      }
       
       if (sitemapData && sitemapData.urls.length > 0) {
         console.log(`✅ Found sitemap with ${sitemapData.totalUrls} URLs`)
@@ -868,31 +917,37 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       console.log(`✅ [CrawlPage] Successfully extracted ${html.length} chars from ${url.loc}`)
       
       // Progressive HTML processing with timeout
-      const metaData = await this.processHTMLWithTimeout(html, url.loc)
-      
-      return this.createResult(
-        `${url.contentType}_page`,
-        85, // Good score for successful sitemap-based crawl
-        85,
-        0.9,
-        {
-          url: url.loc,
-          websiteUrl: url.loc,
-          html: html.substring(0, 100000), // First 100k chars for storage
-          htmlContent: html, // Full HTML for processing
-          contentType: response.headers.get('content-type') || 'text/html',
-          contentSize: html.length,
-          metaData,
-          sitemapMetadata: {
-            priority: url.priority,
-            lastmod: url.lastmod,
-            changefreq: url.changefreq,
-            contentType: url.contentType,
-            businessValue: url.businessValue,
-            freshnessScore: url.freshnessScore
-          }
+    const metaData = await this.processHTMLWithTimeout(html, url.loc)
+    
+    // 🔧 ANTI-CASCADE: Track successful page crawl for partial data
+    this.partialCrawlState.pagesCollected++
+    this.partialCrawlState.htmlContent.push(html)
+    this.partialCrawlState.lastSuccessfulUrl = url.loc
+    this.partialCrawlState.collectedData.brandName = this.extractBrandName(url.loc)
+    
+    return this.createResult(
+      `${url.contentType}_page`,
+      85, // Good score for successful sitemap-based crawl
+      85,
+      0.9,
+      {
+        url: url.loc,
+        websiteUrl: url.loc,
+        html: html.substring(0, 100000), // First 100k chars for storage
+        htmlContent: html, // Full HTML for processing
+        contentType: response.headers.get('content-type') || 'text/html',
+        contentSize: html.length,
+        metaData,
+        sitemapMetadata: {
+          priority: url.priority,
+          lastmod: url.lastmod,
+          changefreq: url.changefreq,
+          contentType: url.contentType,
+          businessValue: url.businessValue,
+          freshnessScore: url.freshnessScore
         }
-      )
+      }
+    )
     } catch (error) {
       console.log(`❌ [CrawlPage] Failed to crawl ${url.loc}: ${error instanceof Error ? error.message : 'Unknown error'}`)
       return null
@@ -1678,6 +1733,65 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     )
     
     return this.createOutput('completed', [result], executionTime, undefined, metadata)
+  }
+
+  // 🔧 ANTI-CASCADE: Partial crawl data management
+  private resetPartialCrawlState(): void {
+    this.partialCrawlState = {
+      sitemapsProcessed: 0,
+      pagesCollected: 0,
+      htmlContent: [],
+      sitemapData: null,
+      robotsData: null,
+      lastSuccessfulUrl: '',
+      collectedData: {}
+    }
+  }
+
+  private getPartialCrawlData(): { hasData: boolean; pagesCollected: number; sitemapsProcessed: number; qualityScore: number; data: any } {
+    const hasData = this.partialCrawlState.pagesCollected > 0 || 
+                   this.partialCrawlState.sitemapData !== null ||
+                   this.partialCrawlState.htmlContent.length > 0
+
+    if (!hasData) {
+      return { hasData: false, pagesCollected: 0, sitemapsProcessed: 0, qualityScore: 0, data: {} }
+    }
+
+    // Calculate quality score based on partial data
+    let qualityScore = 0
+    if (this.partialCrawlState.sitemapData) qualityScore += 30 // Sitemap discovery
+    if (this.partialCrawlState.pagesCollected > 0) qualityScore += Math.min(this.partialCrawlState.pagesCollected * 20, 40) // Page content
+    if (this.partialCrawlState.robotsData) qualityScore += 10 // Robots.txt
+
+    const combinedData = {
+      brandName: this.partialCrawlState.collectedData.brandName || 'Unknown',
+      websiteUrl: this.partialCrawlState.lastSuccessfulUrl || '',
+      method: 'sitemap_enhanced_partial',
+      qualityScore: qualityScore,
+      siteExists: true,
+      statusCode: 200,
+      html: this.partialCrawlState.htmlContent.join('\n').substring(0, 100000),
+      htmlContent: this.partialCrawlState.htmlContent.join('\n'),
+      content: this.partialCrawlState.htmlContent.join('\n'),
+      contentSize: this.partialCrawlState.htmlContent.join('').length,
+      pages: this.partialCrawlState.pagesCollected,
+      sitemapAnalysis: this.partialCrawlState.sitemapData,
+      robotsAnalysis: this.partialCrawlState.robotsData,
+      crawlTimestamp: new Date().toISOString(),
+      totalResults: this.partialCrawlState.pagesCollected,
+      pagesCrawled: this.partialCrawlState.pagesCollected,
+      analysisCompleted: false,
+      sitemapEnhanced: true,
+      partialData: true
+    }
+
+    return {
+      hasData: true,
+      pagesCollected: this.partialCrawlState.pagesCollected,
+      sitemapsProcessed: this.partialCrawlState.sitemapsProcessed,
+      qualityScore,
+      data: combinedData
+    }
   }
 }
 

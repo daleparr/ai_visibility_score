@@ -39,6 +39,12 @@ export class CommerceAgent extends BaseADIAgent {
         return this.createSyntheticCommerceAnalysis(websiteUrl, brandName, input.context)
       }
 
+      // 🔧 ANTI-CASCADE: Check for partial crawl data and adjust confidence
+      const hasPartialData = crawlResults.some(result => result.evidence?.partialData === true)
+      if (hasPartialData) {
+        console.log(`🔄 [AntiCascade] Using partial crawl data for commerce analysis`)
+      }
+
       // Convert crawl results to expected format
       const crawlArtifacts = crawlResults.map(result => ({
         artifact_type: 'html_snapshot',

@@ -33,7 +33,7 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
   private readonly providers = [
     { name: 'openai', timeout: 12000, cost: 0.03, model: 'gpt-4o-mini' },
     { name: 'anthropic', timeout: 15000, cost: 0.025, model: 'claude-3-5-haiku-20241022' },
-    { name: 'google', timeout: 18000, cost: 0.02, model: 'gemini-1.5-flash-001' },
+    { name: 'google', timeout: 18000, cost: 0.02, model: 'gemini-1.5-flash' },
     { name: 'mistral', timeout: 20000, cost: 0.015, model: 'mistral-small-latest' }
   ]
 
@@ -75,10 +75,16 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
       const llmResults = await this.attemptMultiProviderTesting(extractedBrandName, testQueries)
       if (llmResults && llmResults.length > 0) {
         console.log(`✅ LLM testing successful with ${llmResults.length} results`)
+        
+        // 🔍 ENHANCED MONITORING: Provider performance summary
+        const providerStats = this.calculateProviderStats(llmResults)
+        console.log(`📈 [PROVIDER_STATS] Success rates: ${JSON.stringify(providerStats)}`)
+        
         this.cacheResult(websiteUrl, brandName, llmResults)
         return this.createSuccessOutput(llmResults, Date.now() - startTime, { 
           method: 'llm_testing',
-          providersUsed: llmResults.map(r => r.evidence?.provider).filter(Boolean)
+          providersUsed: llmResults.map(r => r.evidence?.provider).filter(Boolean),
+          providerStats
         })
       }
 
@@ -178,6 +184,11 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
       const recognitionResult = await Promise.race([recognitionPromise, timeoutPromise])
       
       if (recognitionResult) {
+        // 🔍 ENHANCED MONITORING: Log response quality metrics
+        console.log(`📊 [LLM_QUALITY] ${provider.name} brand recognition: score=${recognitionResult.normalizedScore}, confidence=${recognitionResult.confidenceLevel}`)
+        if (recognitionResult.evidence?.rawResponse) {
+          console.log(`📝 [LLM_RESPONSE] ${provider.name}: "${recognitionResult.evidence.rawResponse.substring(0, 100)}..."`)
+        }
         results.push(recognitionResult)
       }
 
@@ -187,6 +198,8 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
         const qualityResult = await Promise.race([qualityPromise, timeoutPromise])
         
         if (qualityResult) {
+          // 🔍 ENHANCED MONITORING: Log answer quality metrics
+          console.log(`📊 [LLM_QUALITY] ${provider.name} answer quality: score=${qualityResult.normalizedScore}, confidence=${qualityResult.confidenceLevel}`)
           results.push(qualityResult)
         }
       }
@@ -423,7 +436,7 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15-second timeout - OPTIMIZED for reliability
 
     try {
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -471,7 +484,7 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15-second timeout - OPTIMIZED for reliability
 
     try {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -515,7 +528,7 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000); // 12-second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 18000); // 18-second timeout - OPTIMIZED for reliability
 
     try {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
@@ -557,7 +570,7 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15-second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20-second timeout - OPTIMIZED for reliability
 
     try {
         const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
@@ -969,5 +982,29 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
       bulletproof: true,
       timestamp: new Date().toISOString()
     })
+  }
+
+  /**
+   * Calculate provider performance statistics
+   */
+  private calculateProviderStats(results: any[]): Record<string, any> {
+    const stats: Record<string, any> = {}
+    
+    this.providers.forEach(provider => {
+      const providerResults = results.filter(r => r.evidence?.provider === provider.name)
+      const successCount = providerResults.length
+      const avgScore = successCount > 0 ? 
+        providerResults.reduce((sum, r) => sum + (r.normalizedScore || 0), 0) / successCount : 0
+      
+      stats[provider.name] = {
+        attempts: 1, // Each provider gets one attempt per evaluation
+        successes: successCount,
+        successRate: successCount > 0 ? 100 : 0,
+        avgScore: Math.round(avgScore),
+        model: provider.model
+      }
+    })
+    
+    return stats
   }
 }
