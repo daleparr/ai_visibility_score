@@ -11,7 +11,7 @@ let JSDOM: any = null;
 const initJSDOM = async () => {
   if (typeof window === 'undefined' && !JSDOM) {
     try {
-      const jsdomModule = await import('jsdom');
+      const jsdomModule = await import('jsdom' as any);
       JSDOM = jsdomModule.JSDOM;
     } catch (error) {
       console.warn('JSDOM not available, enhanced HTML parsing disabled:', error);
