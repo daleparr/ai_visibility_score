@@ -167,6 +167,7 @@ export default function EvaluatePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [evaluationData, setEvaluationData] = useState<EvaluationData | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [currentEvaluationId, setCurrentEvaluationId] = useState<string | null>(null) // Store evaluation ID for progress tracking
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null)
   const [brandCategory, setBrandCategory] = useState<any>(null)
   const [performanceProfile, setPerformanceProfile] = useState<AIDIPerformanceProfile | null>(null)
@@ -660,6 +661,7 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
 
         const { evaluationId } = await response.json()
         console.log('Started evaluation:', evaluationId)
+        setCurrentEvaluationId(evaluationId) // Store evaluation ID for progress component
 
         // Poll for completion
         let attempts = 0;
@@ -787,7 +789,7 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
             <EnhancedProgressDisplay 
               tier={tier} 
               url={url || 'https://example.com'}
-              evaluationId={evaluationData?.id} // Pass real evaluation ID for status polling
+              evaluationId={currentEvaluationId} // Pass real evaluation ID for status polling - FIXED!
             />
           </div>
         </div>
