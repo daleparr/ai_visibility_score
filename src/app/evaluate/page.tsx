@@ -67,6 +67,7 @@ interface ProfessionalInsights {
 }
 
 interface EvaluationData {
+  id?: string // Add evaluation ID for progress tracking
   url: string
   tier: string
   isDemo: boolean
@@ -687,7 +688,12 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
             if (statusData.status === 'completed' || statusData.overallScore > 0) {
               clearInterval(intervalId);
               console.log('✅ Evaluation complete, setting final data.');
-              setEvaluationData(statusData.results || statusData);
+              // Ensure evaluation ID is included in the data
+              const finalData = statusData.results || statusData;
+              if (finalData && !finalData.id && statusData.id) {
+                finalData.id = statusData.id; // Pass through evaluation ID for progress tracking
+              }
+              setEvaluationData(finalData);
               setIsLoading(false);
             } else if (statusData.status === 'failed') {
               clearInterval(intervalId);
