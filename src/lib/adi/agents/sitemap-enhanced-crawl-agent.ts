@@ -42,9 +42,9 @@ interface SitemapData {
 export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   private cache: Map<string, { data: any, timestamp: number }> = new Map()
   private readonly CACHE_TTL = 15 * 60 * 1000 // 15 minutes
-  private readonly MAX_URLS_TO_CRAWL = 2 // EMERGENCY SPEED: Only 2 pages
+  private readonly MAX_URLS_TO_CRAWL = 4 // QUALITY FOCUSED: More pages for better data
   private readonly SITEMAP_TIMEOUT = 3000 // 3 seconds for sitemap discovery (ultra-fast)
-  private readonly CRAWL_TIMEOUT = 5000 // 5 seconds per page (emergency speed)
+  private readonly CRAWL_TIMEOUT = 12000 // 12 seconds per page (quality focused)
   private readonly MAX_SITEMAPS_TO_PROCESS = 1 // Only 1 sitemap for speed
 
   constructor() {
@@ -53,7 +53,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       version: 'v5.0-sitemap-enhanced',
       description: 'Sitemap-driven crawling with intelligent URL prioritization and comprehensive content discovery',
       dependencies: [],
-      timeout: 20000, // 20 seconds total - EMERGENCY SPEED
+      timeout: 45000, // 45 seconds total - QUALITY FOCUSED
       retryLimit: 2,
       parallelizable: false
     }
@@ -64,8 +64,11 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     const startTime = Date.now()
     const websiteUrl = input.context.websiteUrl
     const brandName = input.context.metadata?.brandName || this.extractBrandName(websiteUrl)
+    const evaluationId = input.context.evaluationId
+    const brandId = input.context.brandId
     
     console.log(`🗺️ Executing Sitemap-Enhanced Crawl Agent for ${brandName} (${websiteUrl})`)
+    console.log(`📋 [Evolution] Context IDs - Brand: ${brandId}, Evaluation: ${evaluationId}`)
 
     try {
       // Check cache first
@@ -123,7 +126,9 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
         method: 'sitemap_enhanced',
         sitemapFound: !!sitemapData,
         urlsCrawled: results.filter(r => r.resultType.includes('page')).length,
-        totalSitemapUrls: sitemapData?.totalUrls || 0
+        totalSitemapUrls: sitemapData?.totalUrls || 0,
+        brandId,
+        evaluationId
       })
 
     } catch (error) {
@@ -133,7 +138,9 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       const fallbackData = await this.createIntelligentFallback(websiteUrl, brandName)
       return this.createSuccessOutput(fallbackData, Date.now() - startTime, { 
         method: 'intelligent_fallback',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
+        brandId,
+        evaluationId
       })
     }
   }
@@ -572,9 +579,9 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
           results.push(pageResult)
         }
 
-        // Rate limiting: EMERGENCY SPEED - minimal delay
+        // Rate limiting: QUALITY FOCUSED - reasonable delay for stability
         if (i < urls.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 100)) // 0.1s delay only
+          await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400)) // 0.8-1.2s delay
         }
 
       } catch (error) {
@@ -595,6 +602,8 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     const timeoutId = setTimeout(() => controller.abort(), this.CRAWL_TIMEOUT)
 
     try {
+      console.log(`🔍 [CrawlPage] Starting crawl of ${url.loc}`)
+      
       const response = await fetch(url.loc, {
         method: 'GET',
         signal: controller.signal,
@@ -613,11 +622,16 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
         }
       })
 
+      console.log(`📊 [CrawlPage] Response status: ${response.status} for ${url.loc}`)
+
       if (!response.ok) {
+        console.log(`❌ [CrawlPage] HTTP error ${response.status} for ${url.loc}`)
         throw new Error(`HTTP ${response.status}`)
       }
 
       const html = await response.text()
+      console.log(`✅ [CrawlPage] Successfully extracted ${html.length} chars from ${url.loc}`)
+      
       const metaData = this.extractEnhancedMeta(html)
 
       return this.createResult(
@@ -649,9 +663,159 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       )
 
     } catch (error) {
-      throw error
+      console.log(`❌ [CrawlPage] Failed to crawl ${url.loc}:`, error instanceof Error ? error.message : 'Unknown error')
+      
+      // Return null instead of throwing to allow other pages to continue
+      return null
     } finally {
       clearTimeout(timeoutId)
+    }
+  }
+
+  /**
+   * Store website snapshot with evolution tracking
+   */
+  private async storeSnapshotWithEvolution(
+    brandId: string, 
+    evaluationId: string, 
+    url: string, 
+    html: string, 
+    metaData: any,
+    pageType: string = 'homepage'
+  ): Promise<void> {
+    try {
+      const crypto = require('crypto')
+      const contentHash = crypto.createHash('sha256').update(html).digest('hex')
+      
+      // Check for existing snapshots to detect changes
+      const { sql } = await import('@/lib/database')
+      
+      // Get the latest 3 snapshots for this brand/URL combination
+      const existingSnapshots = await sql`
+        SELECT content_hash, created_at, id
+        FROM production.website_snapshots 
+        WHERE brand_id = ${brandId} AND url = ${url}
+        ORDER BY created_at DESC 
+        LIMIT 3
+      `
+      
+      // Check if content has changed
+      const hasChanged = !existingSnapshots.some(snapshot => snapshot.content_hash === contentHash)
+      
+      if (hasChanged) {
+        console.log(`📸 [Evolution] Content changed for ${url}, storing new snapshot`)
+        
+        // Store new snapshot
+        const newSnapshot = await sql`
+          INSERT INTO production.website_snapshots (
+            brand_id, evaluation_id, url, page_type, content_hash, 
+            raw_html, structured_content, metadata, crawl_timestamp,
+            content_size_bytes, title, meta_description, 
+            has_title, has_meta_description, has_structured_data
+          ) VALUES (
+            ${brandId}, ${evaluationId}, ${url}, ${pageType}, ${contentHash},
+            ${html.substring(0, 1000000)}, ${JSON.stringify({})}, ${JSON.stringify(metaData)}, NOW(),
+            ${html.length}, ${metaData.title || ''}, ${metaData.description || ''},
+            ${!!metaData.title}, ${!!metaData.description}, ${!!metaData.structuredData}
+          ) RETURNING id
+        `
+        
+        // If we have previous snapshots, record the change
+        if (existingSnapshots.length > 0) {
+          const previousSnapshot = existingSnapshots[0]
+          
+          await sql`
+            INSERT INTO production.content_changes (
+              website_snapshot_id, change_type, change_description, 
+              impact_score, previous_snapshot_id
+            ) VALUES (
+              ${newSnapshot[0].id}, 'content_update', 
+              'Content hash changed from sitemap crawl', 
+              ${this.calculateChangeImpact(html, existingSnapshots)}, 
+              ${previousSnapshot.id}
+            )
+          `
+        }
+        
+        // Clean up old snapshots (keep only latest 3)
+        if (existingSnapshots.length >= 3) {
+          const oldestSnapshot = existingSnapshots[existingSnapshots.length - 1]
+          await sql`
+            DELETE FROM production.website_snapshots 
+            WHERE brand_id = ${brandId} AND url = ${url} 
+            AND created_at < ${oldestSnapshot.created_at}
+          `
+        }
+        
+        console.log(`✅ [Evolution] Stored snapshot with hash ${contentHash.substring(0, 8)}...`)
+      } else {
+        console.log(`📋 [Evolution] No content changes detected for ${url}`)
+      }
+      
+    } catch (error) {
+      console.error(`❌ [Evolution] Failed to store snapshot:`, error)
+    }
+  }
+  
+  /**
+   * Calculate impact score of content changes
+   */
+  private calculateChangeImpact(newHtml: string, existingSnapshots: any[]): number {
+    if (existingSnapshots.length === 0) return 10 // New content = high impact
+    
+    const sizeDiff = Math.abs(newHtml.length - (existingSnapshots[0].raw_html?.length || 0))
+    const sizeChangePercent = sizeDiff / Math.max(newHtml.length, 1000)
+    
+    // Impact score 1-10 based on size change
+    return Math.min(10, Math.max(1, Math.round(sizeChangePercent * 10)))
+  }
+  
+  /**
+   * Store evolution snapshots for all crawled pages
+   */
+  private async storeEvolutionSnapshots(data: any, metadata: any): Promise<void> {
+    try {
+      // Extract brand and evaluation IDs from context (these should be passed in metadata)
+      const brandId = metadata.brandId || metadata.context?.brandId
+      const evaluationId = metadata.evaluationId || metadata.context?.evaluationId
+      
+      if (!brandId || !evaluationId) {
+        console.log('⚠️ [Evolution] Missing brandId or evaluationId, skipping snapshot storage')
+        return
+      }
+      
+      console.log(`📸 [Evolution] Storing snapshots for ${data.pages?.length || 0} pages`)
+      
+      // Store snapshot for each crawled page
+      if (data.pages && data.pages.length > 0) {
+        for (const page of data.pages) {
+          if (page.url && page.html) {
+            await this.storeSnapshotWithEvolution(
+              brandId,
+              evaluationId,
+              page.url,
+              page.html,
+              page.metaData || {},
+              page.contentType || 'homepage'
+            )
+          }
+        }
+      }
+      
+      // Also store the main website snapshot if we have combined HTML
+      if (data.html && data.html.length > 0) {
+        await this.storeSnapshotWithEvolution(
+          brandId,
+          evaluationId,
+          data.websiteUrl,
+          data.html,
+          data.metaData || {},
+          'combined'
+        )
+      }
+      
+    } catch (error) {
+      console.error('❌ [Evolution] Error in storeEvolutionSnapshots:', error)
     }
   }
 
@@ -779,8 +943,8 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
               results.push(pageResult)
             }
             
-            // Rate limiting: EMERGENCY SPEED - minimal delay
-            await new Promise(resolve => setTimeout(resolve, 200))
+            // Rate limiting: QUALITY FOCUSED - reasonable delay for stability
+            await new Promise(resolve => setTimeout(resolve, 1500))
             
           } catch (error) {
             console.log(`❌ Failed to crawl discovered page ${discoveredUrls[i].loc}:`, error instanceof Error ? error.message : 'Unknown error')
@@ -984,9 +1148,10 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       htmlContent: allHtml,
       contentSize: allHtml.length,
       
-      // Page-specific data
+      // Page-specific data (include HTML for evolution tracking)
       pages: pageResults.map(r => ({
         url: r.evidence?.url,
+        html: r.evidence?.html || '',
         contentType: r.evidence?.contentType,
         contentSize: r.evidence?.contentSize,
         metaData: r.evidence?.metaData,
@@ -1100,6 +1265,13 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       pagesCrawled: data.pagesCrawled || 0,
       sitemapFound: data.sitemapAnalysis?.found || false
     })
+    
+    // Store snapshots with evolution tracking (async, don't wait)
+    if (evidence.html && evidence.html.length > 0 && data.pages && data.pages.length > 0) {
+      this.storeEvolutionSnapshots(data, metadata).catch(error => {
+        console.error('❌ [Evolution] Failed to store snapshots:', error)
+      })
+    }
     
     const result = this.createResult(
       'sitemap_enhanced_crawl',
