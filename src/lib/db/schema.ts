@@ -15,6 +15,7 @@ export const adiIndustryCategoryEnum = pgEnum('adi_industry_category', [
   'luxury', 'mass_market', 'b2b', 'services'
 ])
 export const agentStatusEnum = pgEnum('agent_status', ['pending', 'running', 'completed', 'failed', 'skipped'])
+export const backendAgentStatusEnum = pgEnum('backend_agent_status', ['pending', 'running', 'completed', 'failed'])
 
 // Enums (public schema - for shared types)
 export const pageTypeEnum = pgEnum('page_type', ['homepage', 'product', 'about', 'contact', 'blog', 'search_results', 'faq'])
@@ -638,6 +639,21 @@ export const adiAgentResultsRelations = relations(adiAgentResults, ({ one }) => 
   })
 }))
 
+// Backend Agent Executions Table - For tracking long-running agents
+export const backendAgentExecutions = productionSchema.table('backend_agent_executions', {
+  id: varchar('id', { length: 255 }).primaryKey(),
+  evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
+  agentName: varchar('agent_name', { length: 100 }).notNull(),
+  status: backendAgentStatusEnum('status').notNull().default('pending'),
+  startedAt: timestamp('started_at').notNull().defaultNow(),
+  completedAt: timestamp('completed_at'),
+  result: jsonb('result'),
+  error: text('error'),
+  executionTime: integer('execution_time'), // milliseconds
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+})
+
 // Type Exports
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
@@ -673,6 +689,8 @@ export type ADIAgent = typeof adiAgents.$inferSelect
 export type NewADIAgent = typeof adiAgents.$inferInsert
 export type ADIAgentResult = typeof adiAgentResults.$inferSelect
 export type NewADIAgentResult = typeof adiAgentResults.$inferInsert
+export type BackendAgentExecution = typeof backendAgentExecutions.$inferSelect
+export type NewBackendAgentExecution = typeof backendAgentExecutions.$inferInsert
 export type WebsiteSnapshot = typeof websiteSnapshots.$inferSelect;
 export type NewWebsiteSnapshot = typeof websiteSnapshots.$inferInsert;
 export type ContentChange = typeof contentChanges.$inferSelect;

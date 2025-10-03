@@ -6,8 +6,8 @@ import { normalizeBrandUrl } from '@/lib/brand-normalize'
 import { getBrand } from '@/lib/database'
 // REMOVE THIS - Wrong system
 // import { EvaluationEngine, createEvaluationEngine } from '@/lib/evaluation-engine'
-// ADD THIS - Correct system
-import { ADIService } from '@/lib/adi/adi-service'
+// ADD THIS - Hybrid system for better performance
+import { HybridADIService } from '@/lib/adi/hybrid-adi-service'
 import { ensureGuestUser, createBrand as upsertBrand, createEvaluation } from '@/lib/database'
 import { safeHostname } from '@/lib/url'
 
@@ -29,14 +29,22 @@ function extractBrandNameFromUrl(url: string): string {
 // URL validation helper
 function validateAndSuggestUrl(url: string): { isValid: boolean; normalizedUrl?: string; suggestion?: string; error?: string } {
   try {
-    // Basic format check
+    // Basic format check with helpful guidance
     if (!url || typeof url !== 'string') {
-      return { isValid: false, error: 'URL is required' }
+      return { 
+        isValid: false, 
+        error: 'Website URL is required',
+        suggestion: 'Please enter a website URL to analyze (like "example.com" or "https://mycompany.co.uk")'
+      }
     }
 
     const trimmedUrl = url.trim()
     if (!trimmedUrl) {
-      return { isValid: false, error: 'URL cannot be empty' }
+      return { 
+        isValid: false, 
+        error: 'Please enter a website URL',
+        suggestion: 'Enter the domain name of the website you want to analyze (like "nike.com" or "newbalance.co.uk")'
+      }
     }
 
     // Add protocol if missing
@@ -46,46 +54,74 @@ function validateAndSuggestUrl(url: string): { isValid: boolean; normalizedUrl?:
     const parsedUrl = new URL(urlWithProtocol)
     const hostname = parsedUrl.hostname.toLowerCase()
 
-    // Check for common typos
-    const commonTypos: Record<string, string> = {
-      '.come': '.com',
-      '.co.': '.com',
-      '.comm': '.com',
-      '.coom': '.com',
-      '.con': '.com',
-      '.cmo': '.com'
-    }
+    // Check for common typos with helpful corrections
+    const commonTypos: Array<{pattern: string, correction: string, description: string}> = [
+      { pattern: '.come', correction: '.com', description: 'common typo' },
+      { pattern: '.comm', correction: '.com', description: 'extra letter' },
+      { pattern: '.coom', correction: '.com', description: 'typo' },
+      { pattern: '.con', correction: '.com', description: 'missing letter' },
+      { pattern: '.cmo', correction: '.com', description: 'letter order' },
+      { pattern: '.ogr', correction: '.org', description: 'letter order' },
+      { pattern: '.rog', correction: '.org', description: 'letter order' },
+      { pattern: '.nte', correction: '.net', description: 'letter order' }
+    ]
 
-    let suggestion: string | undefined
-    for (const [typo, correction] of Object.entries(commonTypos)) {
-      if (hostname.includes(typo)) {
-        const correctedHostname = hostname.replace(typo, correction)
-        suggestion = `Did you mean: https://${correctedHostname}?`
+    for (const typo of commonTypos) {
+      if (hostname.endsWith(typo.pattern)) {
+        const correctedHostname = hostname.replace(typo.pattern, typo.correction)
         return { 
           isValid: false, 
-          error: `Invalid domain detected: "${hostname}"`, 
-          suggestion 
+          error: `Possible typo in domain: "${hostname}"`, 
+          suggestion: `Did you mean "https://${correctedHostname}"? (${typo.description})`
         }
       }
     }
 
-    // Check for valid TLD (basic check)
-    const validTlds = ['.com', '.org', '.net', '.edu', '.gov', '.co.uk', '.co', '.io', '.ai', '.app', '.dev']
+    // Check for valid TLD (comprehensive check)
+    const validTlds = [
+      '.com', '.org', '.net', '.edu', '.gov', '.mil', '.int',
+      '.co.uk', '.co.nz', '.co.za', '.co.jp', '.co.kr', '.co.in', '.co.au',
+      '.uk', '.de', '.fr', '.it', '.es', '.nl', '.be', '.ch', '.at', '.se', '.no', '.dk', '.fi',
+      '.ca', '.mx', '.br', '.ar', '.cl', '.pe', '.co', '.us',
+      '.au', '.nz', '.jp', '.kr', '.cn', '.in', '.sg', '.hk', '.tw', '.th', '.my', '.ph', '.id', '.vn',
+      '.ru', '.pl', '.cz', '.hu', '.ro', '.bg', '.hr', '.si', '.sk', '.lt', '.lv', '.ee',
+      '.io', '.ai', '.app', '.dev', '.tech', '.online', '.store', '.shop', '.site', '.website',
+      '.info', '.biz', '.name', '.pro', '.mobi', '.travel', '.museum', '.aero', '.coop'
+    ]
     const hasValidTld = validTlds.some(tld => hostname.endsWith(tld))
     
     if (!hasValidTld) {
+      // Provide specific suggestions based on the domain
+      let specificSuggestion = 'Make sure the domain has a valid extension.'
+      
+      if (hostname.includes('.')) {
+        const currentTld = hostname.substring(hostname.lastIndexOf('.'))
+        if (currentTld === '.cm') {
+          specificSuggestion = `Did you mean "${hostname.replace('.cm', '.com')}"?`
+        } else if (currentTld === '.om') {
+          specificSuggestion = `Did you mean "${hostname.replace('.om', '.com')}"?`
+        } else if (currentTld === '.co') {
+          specificSuggestion = `Did you mean "${hostname}.uk" or "${hostname}m"?`
+        } else {
+          specificSuggestion = `"${currentTld}" is not a recognized domain extension. Try .com, .org, .co.uk, or other standard extensions.`
+        }
+      } else {
+        specificSuggestion = `Add a domain extension like "${hostname}.com" or "${hostname}.org"`
+      }
+      
       return { 
         isValid: false, 
-        error: `Invalid domain: "${hostname}". Please check the URL and try again.`,
-        suggestion: 'Make sure the domain has a valid extension like .com, .org, .net, etc.'
+        error: `Invalid domain extension in "${hostname}"`,
+        suggestion: specificSuggestion
       }
     }
 
-    // Check for localhost or invalid domains
-    if (hostname === 'localhost' || hostname.startsWith('127.') || hostname.startsWith('192.168.')) {
+    // Check for localhost or private network domains
+    if (hostname === 'localhost' || hostname.startsWith('127.') || hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.endsWith('.local')) {
       return { 
         isValid: false, 
-        error: 'Local URLs are not supported. Please provide a public website URL.' 
+        error: 'Local or private network URLs cannot be analyzed',
+        suggestion: 'Please enter a public website URL that can be accessed from the internet (like "example.com" or "mycompany.co.uk")'
       }
     }
 
@@ -93,9 +129,24 @@ function validateAndSuggestUrl(url: string): { isValid: boolean; normalizedUrl?:
     return { isValid: true, normalizedUrl }
 
   } catch (error) {
+    // Provide helpful error messages for common URL format issues
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    
+    let userFriendlyError = 'Invalid URL format'
+    let suggestion = 'Please check your URL and try again'
+    
+    if (errorMessage.includes('Invalid URL')) {
+      userFriendlyError = 'URL format is not recognized'
+      suggestion = 'Try entering just the domain name (like "example.com") or include "https://" at the beginning'
+    } else if (errorMessage.includes('hostname')) {
+      userFriendlyError = 'Domain name appears to be invalid'
+      suggestion = 'Make sure the domain name is spelled correctly and includes a valid extension like .com, .org, or .co.uk'
+    }
+    
     return { 
       isValid: false, 
-      error: `Invalid URL format: ${error instanceof Error ? error.message : 'Unknown error'}` 
+      error: userFriendlyError,
+      suggestion: suggestion
     }
   }
 }
@@ -172,24 +223,25 @@ export async function POST(request: NextRequest) {
 
     console.log(`[ROUTE_HANDLER] Created evaluation: ${evaluation.id}`)
 
-    // 2. Use PROPER ADI orchestration system with the database evaluation ID
-    console.log(`🔍 [ROUTE_DEBUG] Creating ADI Service instance`)
-    const adiService = new ADIService()
-    console.log(`🔍 [ROUTE_DEBUG] ADI Service instance created`)
+    // 2. Use HYBRID ADI orchestration system for better performance
+    console.log(`🔍 [ROUTE_DEBUG] Creating Hybrid ADI Service instance`)
+    const hybridAdiService = new HybridADIService()
+    console.log(`🔍 [ROUTE_DEBUG] Hybrid ADI Service instance created`)
 
-    // Start evaluation in background - don't await it
-    console.log(`🔍 [ROUTE_DEBUG] Starting evaluateBrand call`)
-    adiService.evaluateBrand(brand.id, brand.websiteUrl, undefined, guestUser.id, {
-      persistToDb: true,
-      evaluationId: evaluation.id,  // ← USE THE DATABASE EVALUATION ID
-      userTier: tier as 'free' | 'index-pro' | 'enterprise'
-    }).then(result => {
-      console.log(`[ROUTE_HANDLER] Completed evaluation: ${result.adiScore.overall}/100`)
+    // Start hybrid evaluation - returns fast results immediately, slow agents run in background
+    console.log(`🔍 [ROUTE_DEBUG] Starting hybrid evaluateBrand call`)
+    hybridAdiService.evaluateBrand(
+      brand.id, 
+      brand.websiteUrl, 
+      tier as 'free' | 'index-pro' | 'enterprise'
+    ).then(result => {
+      console.log(`[ROUTE_HANDLER] Fast phase completed: ${Object.keys(result.agentResults).length} agents, status: ${result.overallStatus}`)
+      // Note: Slow agents continue running in background
     }).catch(error => {
-      console.error(`[ROUTE_HANDLER] Evaluation failed: ${error.message}`)
+      console.error(`[ROUTE_HANDLER] Hybrid evaluation failed: ${error.message}`)
       console.error(`[ROUTE_HANDLER] Error stack:`, error.stack)
     })
-    console.log(`🔍 [ROUTE_DEBUG] evaluateBrand call initiated (background)`)
+    console.log(`🔍 [ROUTE_DEBUG] Hybrid evaluateBrand call initiated (fast + background)`)
 
     // 3. Return immediate response
     // The response should include evaluationId for polling

@@ -173,48 +173,56 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
       return () => clearTimeout(progressTimer)
     }
 
-    // REAL STATUS POLLING - Only show 100% when evaluation is actually completed
+    // HYBRID STATUS POLLING - Shows real progress from fast + slow agents
     const pollEvaluationStatus = async () => {
       try {
-        const response = await fetch(`/api/evaluation/${evaluationId}/status?tier=${tier}`)
+        const response = await fetch(`/api/evaluation/${evaluationId}/hybrid-status`)
         if (response.ok) {
           const data = await response.json()
           
-          if (data.status === 'completed' && data.overallScore !== null) {
-            // REAL COMPLETION - evaluation has finished and has a score
+          if (data.status === 'completed') {
+            // REAL COMPLETION - all agents finished
             setEvaluationStatus('completed')
             setOverallProgress(100)
             setRealProgress(100)
             updateAgentStatus(AGENTS.map(a => a.id), 'completed')
             setCurrentPhase('aggregation')
+            console.log(`✅ Hybrid evaluation completed: ${data.slowAgentsCompleted}/${data.slowAgentsTotal} slow agents`)
             return true // Stop polling
           } else if (data.status === 'failed') {
             setEvaluationStatus('failed')
+            console.log(`❌ Hybrid evaluation failed: ${data.slowAgentsFailed} agents failed`)
             return true // Stop polling
           } else {
-            // Still running - show progressive simulation but DON'T reach 100%
-            const elapsed = elapsedTime
-            if (elapsed < 30) {
+            // Still running - show real hybrid progress
+            const progress = data.progress || 0
+            setRealProgress(progress)
+            setOverallProgress(progress)
+            
+            // Update agent statuses based on hybrid progress
+            if (progress < 50) {
+              // Fast agents still running
               setCurrentPhase('phase1')
-              updateAgentStatus(['crawl_agent', 'citation_agent', 'brand_heritage_agent'], 'running')
-              setRealProgress(Math.min(25, elapsed * 0.8))
-            } else if (elapsed < 60) {
+              updateAgentStatus(['crawl_agent', 'schema_agent', 'brand_heritage_agent'], 'running')
+            } else if (progress < 95) {
+              // Fast agents done, slow agents running
               setCurrentPhase('phase2')
-              updateAgentStatus(['crawl_agent', 'citation_agent', 'brand_heritage_agent'], 'completed')
+              updateAgentStatus(['crawl_agent', 'schema_agent', 'brand_heritage_agent'], 'completed')
               updateAgentStatus([
-                'llm_test_agent', 'schema_agent', 'semantic_agent', 
-                'geo_visibility_agent', 'sentiment_agent', 'commerce_agent'
+                'llm_test_agent', 'sentiment_agent', 'citation_agent', 
+                'geo_visibility_agent', 'commerce_agent'
               ], 'running')
-              setRealProgress(Math.min(85, 25 + (elapsed - 30) * 2)) // Cap at 85% until real completion
             } else {
+              // Almost done, final aggregation
               setCurrentPhase('aggregation')
               updateAgentStatus([
-                'llm_test_agent', 'schema_agent', 'semantic_agent', 
-                'geo_visibility_agent', 'sentiment_agent', 'commerce_agent'
+                'llm_test_agent', 'sentiment_agent', 'citation_agent', 
+                'geo_visibility_agent', 'commerce_agent'
               ], 'completed')
               updateAgentStatus(['score_aggregator'], 'running')
-              setRealProgress(Math.min(95, 85 + (elapsed - 60) * 0.2)) // Cap at 95% until real completion
             }
+            
+            console.log(`🔄 Hybrid evaluation: ${progress}% complete, ${data.estimatedTimeRemaining}s remaining`)
             return false // Continue polling
           }
         }
