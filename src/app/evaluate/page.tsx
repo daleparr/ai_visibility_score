@@ -789,7 +789,7 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
             <EnhancedProgressDisplay 
               tier={tier} 
               url={url || 'https://example.com'}
-              evaluationId={currentEvaluationId} // Pass real evaluation ID for status polling - FIXED!
+              evaluationId={currentEvaluationId || undefined} // Pass real evaluation ID for status polling - FIXED!
             />
           </div>
         </div>
