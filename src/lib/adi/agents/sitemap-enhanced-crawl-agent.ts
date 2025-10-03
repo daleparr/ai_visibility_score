@@ -50,6 +50,8 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   private readonly MAX_403_FAILURES = 2 // Circuit breaker: fail fast after 2x 403s
   private readonly CRAWL_TIMEOUT = 8000 // 8 seconds per page (speed focused)
   private readonly MAX_SITEMAPS_TO_PROCESS = 5 // Maximum 5 sitemaps for history
+  private readonly MAX_TOTAL_SITEMAP_ATTEMPTS = 10 // EMERGENCY: Kill after 10 total attempts
+  private totalSitemapAttempts = 0 // Track total attempts across all locations
 
   // Enhanced Anti-Bot Evasion Configuration - SPEED OPTIMIZED
   private readonly MIN_REQUEST_DELAY = 500 // 0.5-2 second randomized delays (much faster)
@@ -117,10 +119,10 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   constructor() {
     const config: ADIAgentConfig = {
       name: 'crawl_agent',
-      version: 'v6.1-speed-optimized-evasion',
-      description: 'Speed-optimized anti-bot evasion with realistic fingerprints and fast delays',
+      version: 'v6.2-zombie-killer',
+      description: 'Emergency zombie process killer with hard timeouts and circuit breakers',
       dependencies: [],
-      timeout: 30000, // 30 seconds total - SPEED FOCUSED
+      timeout: 25000, // 25 seconds total - EMERGENCY FOCUSED
       retryLimit: 1,
       parallelizable: false
     }
@@ -253,11 +255,28 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   }
 
   async execute(input: ADIAgentInput): Promise<ADIAgentOutput> {
+    // EMERGENCY HARD TIMEOUT: Kill zombie processes
+    const hardTimeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        console.log(`🚨 HARD TIMEOUT: Crawl agent killed after 25 seconds to prevent zombie process`);
+        reject(new Error('Hard timeout: Agent execution terminated'));
+      }, 25000);
+    });
+
+    const executionPromise = this.executeInternal(input);
+    
+    return Promise.race([executionPromise, hardTimeoutPromise]);
+  }
+
+  private async executeInternal(input: ADIAgentInput): Promise<ADIAgentOutput> {
     const startTime = Date.now()
     const websiteUrl = input.context.websiteUrl
     const brandName = input.context.metadata?.brandName || this.extractBrandName(websiteUrl)
     const evaluationId = input.context.evaluationId
     const brandId = input.context.brandId
+    
+    // Reset attempt counter for each execution
+    this.totalSitemapAttempts = 0;
     
     console.log(`🗺️ Executing Sitemap-Enhanced Crawl Agent for ${brandName} (${websiteUrl})`)
     console.log(`📋 [Evolution] Context IDs - Brand: ${brandId}, Evaluation: ${evaluationId}`)
@@ -368,6 +387,12 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     let consecutiveFailures = 0;
 
     for (const sitemapUrl of sitemapLocations) {
+      // EMERGENCY CIRCUIT BREAKER: Kill zombie process
+      if (this.totalSitemapAttempts >= this.MAX_TOTAL_SITEMAP_ATTEMPTS) {
+        console.log(`🚨 EMERGENCY STOP: Reached ${this.MAX_TOTAL_SITEMAP_ATTEMPTS} total sitemap attempts. Terminating to prevent zombie process.`);
+        break;
+      }
+
       try {
         const sitemapData = await this.fetchAndParseSitemap(sitemapUrl);
         if (sitemapData && sitemapData.urls.length > 0) {
@@ -451,6 +476,12 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     const session = this.getOrCreateSession(domain)
     
     for (let i = 0; i < this.userAgents.length; i++) {
+        // EMERGENCY CIRCUIT BREAKER: Track total attempts
+        this.totalSitemapAttempts++;
+        if (this.totalSitemapAttempts > this.MAX_TOTAL_SITEMAP_ATTEMPTS) {
+          console.log(`🚨 EMERGENCY STOP: Exceeded ${this.MAX_TOTAL_SITEMAP_ATTEMPTS} total attempts. Aborting sitemap fetch.`);
+          throw new Error('Emergency circuit breaker activated');
+        }
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), this.SITEMAP_TIMEOUT);
 
