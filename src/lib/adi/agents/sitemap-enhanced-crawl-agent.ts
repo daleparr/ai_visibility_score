@@ -42,9 +42,10 @@ interface SitemapData {
 export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   private cache: Map<string, { data: any, timestamp: number }> = new Map()
   private readonly CACHE_TTL = 15 * 60 * 1000 // 15 minutes
-  private readonly MAX_URLS_TO_CRAWL = 12 // Increased from typical 5-6
-  private readonly SITEMAP_TIMEOUT = 10000 // 10 seconds for sitemap discovery
-  private readonly CRAWL_TIMEOUT = 25000 // 25 seconds per page
+  private readonly MAX_URLS_TO_CRAWL = 8 // Reduced for faster execution
+  private readonly SITEMAP_TIMEOUT = 5000 // 5 seconds for sitemap discovery (reduced)
+  private readonly CRAWL_TIMEOUT = 15000 // 15 seconds per page (reduced)
+  private readonly MAX_SITEMAPS_TO_PROCESS = 2 // Limit sitemap processing
 
   constructor() {
     const config: ADIAgentConfig = {
@@ -52,7 +53,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       version: 'v5.0-sitemap-enhanced',
       description: 'Sitemap-driven crawling with intelligent URL prioritization and comprehensive content discovery',
       dependencies: [],
-      timeout: 120000, // 2 minutes total - allows for comprehensive sitemap-based crawling
+      timeout: 45000, // 45 seconds total - optimized for production
       retryLimit: 2,
       parallelizable: false
     }
@@ -322,15 +323,21 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
 
       console.log(`📋 Sitemap index contains ${indexSitemaps.length} sitemaps`)
 
-      // Fetch and parse individual sitemaps (limit to first 3 for performance)
-      const sitemapsToFetch = indexSitemaps.slice(0, 3)
+      // Fetch and parse individual sitemaps (limit to first 2 for performance)
+      const sitemapsToFetch = indexSitemaps.slice(0, this.MAX_SITEMAPS_TO_PROCESS)
       
       for (const sitemapUrl of sitemapsToFetch) {
         try {
           const sitemapData = await this.fetchAndParseSitemap(sitemapUrl)
           if (sitemapData && sitemapData.urls.length > 0) {
             allUrls.push(...sitemapData.urls)
-            console.log(`✅ Parsed ${sitemapData.urls.length} URLs from ${sitemapUrl}`)
+            console.log(`✅ Found and processed sitemap at ${sitemapUrl}, adding ${sitemapData.urls.length} URLs. Total URLs: ${allUrls.length}`)
+            
+            // Early exit if we have enough URLs
+            if (allUrls.length >= 500) {
+              console.log(`⚡ Early exit: Found ${allUrls.length} URLs, stopping sitemap processing for performance`)
+              break
+            }
           }
         } catch (error) {
           console.log(`⚠️ Failed to fetch sitemap ${sitemapUrl}:`, error instanceof Error ? error.message : 'Unknown error')
@@ -565,9 +572,9 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
           results.push(pageResult)
         }
 
-        // Rate limiting: wait between requests
+        // Rate limiting: wait between requests (reduced for performance)
         if (i < urls.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000)) // 1.5-2.5s delay
+          await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400)) // 0.8-1.2s delay
         }
 
       } catch (error) {
