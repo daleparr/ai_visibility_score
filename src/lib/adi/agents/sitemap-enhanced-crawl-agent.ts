@@ -239,7 +239,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       }
 
       const xmlContent = await response.text()
-      return this.parseSitemapXml(xmlContent, sitemapUrl)
+      return await this.parseSitemapXml(xmlContent, sitemapUrl)
 
     } catch (error) {
       throw error
@@ -251,11 +251,11 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   /**
    * Parse sitemap XML content and extract URLs with metadata
    */
-  private parseSitemapXml(xmlContent: string, sitemapUrl: string): SitemapData | null {
+  private async parseSitemapXml(xmlContent: string, sitemapUrl: string): Promise<SitemapData | null> {
     try {
       // Check if this is a sitemap index
       if (xmlContent.includes('<sitemapindex')) {
-        return this.parseSitemapIndex(xmlContent, sitemapUrl)
+        return await this.parseSitemapIndex(xmlContent, sitemapUrl)
       }
 
       // Parse regular sitemap
