@@ -281,7 +281,7 @@ export class PerformanceOptimizedADIOrchestrator {
   ): Promise<Record<string, ADIAgentOutput>> {
     
     const agentTimeouts: Record<string, number> = {
-      'crawl_agent': 90000,          // 90 seconds (was 60s) - Allow extra buffer for serverless crawl
+      'crawl_agent': 30000,          // 30 seconds - ULTRA-FAST sitemap crawl agent
       'schema_agent': 15000,         // 15 seconds for schema analysis  
       'semantic_agent': 15000,       // 15 seconds for semantic analysis
       'knowledge_graph_agent': 15000, // 15 seconds for KG analysis

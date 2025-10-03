@@ -42,9 +42,9 @@ interface SitemapData {
 export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   private cache: Map<string, { data: any, timestamp: number }> = new Map()
   private readonly CACHE_TTL = 15 * 60 * 1000 // 15 minutes
-  private readonly MAX_URLS_TO_CRAWL = 4 // ULTRA-FAST: Only 4 pages
+  private readonly MAX_URLS_TO_CRAWL = 2 // EMERGENCY SPEED: Only 2 pages
   private readonly SITEMAP_TIMEOUT = 3000 // 3 seconds for sitemap discovery (ultra-fast)
-  private readonly CRAWL_TIMEOUT = 8000 // 8 seconds per page (ultra-fast)
+  private readonly CRAWL_TIMEOUT = 5000 // 5 seconds per page (emergency speed)
   private readonly MAX_SITEMAPS_TO_PROCESS = 1 // Only 1 sitemap for speed
 
   constructor() {
@@ -53,7 +53,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       version: 'v5.0-sitemap-enhanced',
       description: 'Sitemap-driven crawling with intelligent URL prioritization and comprehensive content discovery',
       dependencies: [],
-      timeout: 25000, // 25 seconds total - ULTRA-FAST for emergency
+      timeout: 20000, // 20 seconds total - EMERGENCY SPEED
       retryLimit: 2,
       parallelizable: false
     }
@@ -572,9 +572,9 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
           results.push(pageResult)
         }
 
-        // Rate limiting: wait between requests (ULTRA-FAST)
+        // Rate limiting: EMERGENCY SPEED - minimal delay
         if (i < urls.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 200)) // 0.5-0.7s delay
+          await new Promise(resolve => setTimeout(resolve, 100)) // 0.1s delay only
         }
 
       } catch (error) {
@@ -779,8 +779,8 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
               results.push(pageResult)
             }
             
-            // Rate limiting
-            await new Promise(resolve => setTimeout(resolve, 2000))
+            // Rate limiting: EMERGENCY SPEED - minimal delay
+            await new Promise(resolve => setTimeout(resolve, 200))
             
           } catch (error) {
             console.log(`❌ Failed to crawl discovered page ${discoveredUrls[i].loc}:`, error instanceof Error ? error.message : 'Unknown error')
