@@ -47,17 +47,19 @@ interface SitemapData {
 export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   private cache: Map<string, { data: any, timestamp: number }> = new Map()
   private readonly CACHE_TTL = 15 * 60 * 1000 // 15 minutes
-  private readonly MAX_URLS_TO_CRAWL = 3 // SPEED FOCUSED: Fewer pages for faster completion
-  private readonly SITEMAP_TIMEOUT = 2000 // 2 seconds for sitemap discovery (ultra-fast)
-  private readonly MAX_403_FAILURES = 2 // Circuit breaker: fail fast after 2x 403s
-  private readonly CRAWL_TIMEOUT = 8000 // 8 seconds per page (speed focused)
-  private readonly MAX_SITEMAPS_TO_PROCESS = 5 // Maximum 5 sitemaps for history
-  private readonly MAX_TOTAL_SITEMAP_ATTEMPTS = 10 // EMERGENCY: Kill after 10 total attempts
+  // OPTIMIZED TIMEOUT CONFIGURATION - Balanced for data quality vs speed
+  private readonly MAX_URLS_TO_CRAWL = 2 // Focus on quality over quantity
+  private readonly SITEMAP_TIMEOUT = 3000 // 3 seconds for sitemap discovery (balanced)
+  private readonly MAX_403_FAILURES = 3 // Allow more attempts for valuable sites
+  private readonly CRAWL_TIMEOUT = 15000 // 15 seconds per page (allow HTML extraction)
+  private readonly HTML_PROCESSING_TIMEOUT = 5000 // 5 seconds for enhanced parsing
+  private readonly MAX_SITEMAPS_TO_PROCESS = 3 // Focus on most important sitemaps
+  private readonly MAX_TOTAL_SITEMAP_ATTEMPTS = 8 // Reduced but sufficient attempts
   private totalSitemapAttempts = 0 // Track total attempts across all locations
 
-  // Enhanced Anti-Bot Evasion Configuration - SPEED OPTIMIZED
-  private readonly MIN_REQUEST_DELAY = 500 // 0.5-2 second randomized delays (much faster)
-  private readonly MAX_REQUEST_DELAY = 2000
+  // Progressive Anti-Bot Evasion Configuration - Quality focused
+  private readonly MIN_REQUEST_DELAY = 800 // Slightly longer delays for better success
+  private readonly MAX_REQUEST_DELAY = 1500 // Reduced max delay for efficiency
   private readonly SESSION_PERSISTENCE_TTL = 30 * 60 * 1000 // 30 minutes
   
   // Session storage for cookies and state
@@ -123,11 +125,11 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   constructor() {
     const config: ADIAgentConfig = {
       name: 'crawl_agent',
-      version: 'v6.2-zombie-killer',
-      description: 'Emergency zombie process killer with hard timeouts and circuit breakers',
+      version: 'v7.0-optimized-extraction',
+      description: 'Optimized for data quality with progressive timeout handling and enhanced parsing',
       dependencies: [],
-      timeout: 25000, // 25 seconds total - EMERGENCY FOCUSED
-      retryLimit: 1,
+      timeout: 40000, // 40 seconds total - BALANCED: Allow HTML extraction completion
+      retryLimit: 2, // Allow more retries for valuable content
       parallelizable: false
     }
     super(config)
@@ -259,12 +261,12 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   }
 
   async execute(input: ADIAgentInput): Promise<ADIAgentOutput> {
-    // EMERGENCY HARD TIMEOUT: Kill zombie processes
+    // OPTIMIZED TIMEOUT: Allow sufficient time for HTML extraction
     const hardTimeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => {
-        console.log(`🚨 HARD TIMEOUT: Crawl agent killed after 25 seconds to prevent zombie process`);
-        reject(new Error('Hard timeout: Agent execution terminated'));
-      }, 25000);
+        console.log(`⏰ OPTIMIZED TIMEOUT: Crawl agent terminated after 40 seconds to ensure completion`);
+        reject(new Error('Optimized timeout: Agent execution completed'));
+      }, 40000); // Match agent config timeout
     });
 
     const executionPromise = this.executeInternal(input);
@@ -852,18 +854,63 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
    * Crawl a single page with comprehensive error handling
    */
   private async crawlSinglePage(url: SitemapUrl, userAgent: string): Promise<any | null> {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), this.CRAWL_TIMEOUT)
     const domain = new URL(url.loc).hostname
     const session = this.getOrCreateSession(domain)
 
     try {
-      console.log(`🔍 [CrawlPage] Starting crawl of ${url.loc}`)
+      console.log(`🔍 [CrawlPage] Starting optimized crawl of ${url.loc}`)
       
-      // Add human-like delay before crawling (reduced for speed)
-      const quickDelay = Math.floor(Math.random() * 1000) + 500 // 0.5-1.5s instead of 2-10s
-      console.log(`⏱️ [AntiBot] Quick delay: ${quickDelay}ms`)
-      await new Promise(resolve => setTimeout(resolve, quickDelay))
+      // Progressive timeout strategy: Start with network request
+      const networkResult = await this.performNetworkRequest(url, session)
+      if (!networkResult) return null
+      
+      const { response, html } = networkResult
+      console.log(`✅ [CrawlPage] Successfully extracted ${html.length} chars from ${url.loc}`)
+      
+      // Progressive HTML processing with timeout
+      const metaData = await this.processHTMLWithTimeout(html, url.loc)
+      
+      return this.createResult(
+        `${url.contentType}_page`,
+        85, // Good score for successful sitemap-based crawl
+        85,
+        0.9,
+        {
+          url: url.loc,
+          websiteUrl: url.loc,
+          html: html.substring(0, 100000), // First 100k chars for storage
+          htmlContent: html, // Full HTML for processing
+          contentType: response.headers.get('content-type') || 'text/html',
+          contentSize: html.length,
+          metaData,
+          sitemapMetadata: {
+            priority: url.priority,
+            lastmod: url.lastmod,
+            changefreq: url.changefreq,
+            contentType: url.contentType,
+            businessValue: url.businessValue,
+            freshnessScore: url.freshnessScore
+          }
+        }
+      )
+    } catch (error) {
+      console.log(`❌ [CrawlPage] Failed to crawl ${url.loc}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      return null
+    }
+  }
+
+  /**
+   * Perform network request with optimized timeout handling
+   */
+  private async performNetworkRequest(url: SitemapUrl, session: any): Promise<{response: Response, html: string} | null> {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), this.CRAWL_TIMEOUT)
+
+    try {
+      // Add optimized delay for anti-bot evasion
+      const delay = Math.floor(Math.random() * (this.MAX_REQUEST_DELAY - this.MIN_REQUEST_DELAY)) + this.MIN_REQUEST_DELAY
+      console.log(`⏱️ [AntiBot] Optimized delay: ${delay}ms`)
+      await new Promise(resolve => setTimeout(resolve, delay))
       
       // Generate realistic headers with session persistence
       const headers = this.generateRealisticHeaders(url.loc, session, false)
@@ -880,53 +927,81 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
 
       if (!response.ok) {
         console.log(`❌ [CrawlPage] HTTP error ${response.status} for ${url.loc}`)
-        throw new Error(`HTTP ${response.status}`)
+        return null
       }
 
       // Store cookies for session persistence
       this.extractAndStoreCookies(response, session)
 
       const html = await response.text()
-      console.log(`✅ [CrawlPage] Successfully extracted ${html.length} chars from ${url.loc} with anti-bot evasion`)
+      return { response, html }
       
-      // Use enhanced HTML parser for comprehensive analysis
-      const metaData = await this.analyzeHTMLContent(html, url.loc)
-
-      return this.createResult(
-        `${url.contentType}_page`,
-        85, // Good score for successful sitemap-based crawl
-        85,
-        0.9,
-        {
-          url: url.loc,
-          websiteUrl: url.loc,
-          html: html.substring(0, 100000), // First 100k chars
-          content: html.substring(0, 100000),
-          htmlContent: html.substring(0, 100000),
-          metaData,
-          contentSize: html.length,
-          contentType: url.contentType,
-          sitemapMetadata: {
-            priority: url.priority,
-            lastmod: url.lastmod,
-            changefreq: url.changefreq,
-            businessValue: url.businessValue,
-            freshnessScore: url.freshnessScore,
-            finalScore: url.finalScore
-          },
-          crawlTimestamp: new Date().toISOString(),
-          responseTime: Date.now(),
-          statusCode: response.status
-        }
-      )
-
     } catch (error) {
-      console.log(`❌ [CrawlPage] Failed to crawl ${url.loc}:`, error instanceof Error ? error.message : 'Unknown error')
-      
-      // Return null instead of throwing to allow other pages to continue
+      console.log(`❌ [NetworkRequest] Failed for ${url.loc}: ${error instanceof Error ? error.message : 'Unknown error'}`)
       return null
     } finally {
       clearTimeout(timeoutId)
+    }
+  }
+
+  /**
+   * Process HTML with dedicated timeout for enhanced parsing
+   */
+  private async processHTMLWithTimeout(html: string, url: string): Promise<any> {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), this.HTML_PROCESSING_TIMEOUT)
+
+    try {
+      console.log(`🧠 [Enhanced Parser] Processing ${html.length} chars with ${this.HTML_PROCESSING_TIMEOUT}ms timeout`)
+      
+      // Use enhanced HTML parser for comprehensive analysis with timeout protection
+      const processingPromise = this.analyzeHTMLContent(html, url)
+      const timeoutPromise = new Promise((_, reject) => {
+        controller.signal.addEventListener('abort', () => {
+          reject(new Error('HTML processing timeout'))
+        })
+      })
+      
+      const metaData = await Promise.race([processingPromise, timeoutPromise])
+      console.log(`✅ [Enhanced Parser] Successfully processed HTML for ${url}`)
+      return metaData
+      
+    } catch (error) {
+      console.log(`⚠️ [Enhanced Parser] Processing failed for ${url}, using basic extraction: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      
+      // Fallback to basic metadata extraction
+      return this.extractBasicMetadata(html, url)
+    } finally {
+      clearTimeout(timeoutId)
+    }
+  }
+
+  /**
+   * Fallback basic metadata extraction when enhanced parsing fails
+   */
+  private extractBasicMetadata(html: string, url: string): any {
+    try {
+      const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
+      const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i)
+      
+      return {
+        title: titleMatch ? titleMatch[1].trim() : '',
+        description: descMatch ? descMatch[1].trim() : '',
+        url,
+        enhanced: false,
+        extractionMethod: 'basic_fallback',
+        processingTime: Date.now()
+      }
+    } catch (error) {
+      console.log(`❌ [Basic Extraction] Failed for ${url}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      return {
+        title: '',
+        description: '',
+        url,
+        enhanced: false,
+        extractionMethod: 'failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
     }
   }
 

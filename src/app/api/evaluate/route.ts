@@ -26,6 +26,80 @@ function extractBrandNameFromUrl(url: string): string {
   }
 }
 
+// URL validation helper
+function validateAndSuggestUrl(url: string): { isValid: boolean; normalizedUrl?: string; suggestion?: string; error?: string } {
+  try {
+    // Basic format check
+    if (!url || typeof url !== 'string') {
+      return { isValid: false, error: 'URL is required' }
+    }
+
+    const trimmedUrl = url.trim()
+    if (!trimmedUrl) {
+      return { isValid: false, error: 'URL cannot be empty' }
+    }
+
+    // Add protocol if missing
+    const urlWithProtocol = trimmedUrl.startsWith('http') ? trimmedUrl : `https://${trimmedUrl}`
+    
+    // Parse URL
+    const parsedUrl = new URL(urlWithProtocol)
+    const hostname = parsedUrl.hostname.toLowerCase()
+
+    // Check for common typos
+    const commonTypos: Record<string, string> = {
+      '.come': '.com',
+      '.co.': '.com',
+      '.comm': '.com',
+      '.coom': '.com',
+      '.con': '.com',
+      '.cmo': '.com'
+    }
+
+    let suggestion: string | undefined
+    for (const [typo, correction] of Object.entries(commonTypos)) {
+      if (hostname.includes(typo)) {
+        const correctedHostname = hostname.replace(typo, correction)
+        suggestion = `Did you mean: https://${correctedHostname}?`
+        return { 
+          isValid: false, 
+          error: `Invalid domain detected: "${hostname}"`, 
+          suggestion 
+        }
+      }
+    }
+
+    // Check for valid TLD (basic check)
+    const validTlds = ['.com', '.org', '.net', '.edu', '.gov', '.co.uk', '.co', '.io', '.ai', '.app', '.dev']
+    const hasValidTld = validTlds.some(tld => hostname.endsWith(tld))
+    
+    if (!hasValidTld) {
+      return { 
+        isValid: false, 
+        error: `Invalid domain: "${hostname}". Please check the URL and try again.`,
+        suggestion: 'Make sure the domain has a valid extension like .com, .org, .net, etc.'
+      }
+    }
+
+    // Check for localhost or invalid domains
+    if (hostname === 'localhost' || hostname.startsWith('127.') || hostname.startsWith('192.168.')) {
+      return { 
+        isValid: false, 
+        error: 'Local URLs are not supported. Please provide a public website URL.' 
+      }
+    }
+
+    const normalizedUrl = normalizeBrandUrl(url)
+    return { isValid: true, normalizedUrl }
+
+  } catch (error) {
+    return { 
+      isValid: false, 
+      error: `Invalid URL format: ${error instanceof Error ? error.message : 'Unknown error'}` 
+    }
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body: { url?: string; tier?: string } = await request.json()
@@ -36,7 +110,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 })
     }
 
-    const normalizedUrl = normalizeBrandUrl(url)
+    // Validate URL and provide helpful suggestions
+    const validation = validateAndSuggestUrl(url)
+    if (!validation.isValid) {
+      return NextResponse.json({ 
+        error: validation.error,
+        suggestion: validation.suggestion,
+        code: 'INVALID_URL'
+      }, { status: 400 })
+    }
+
+    const normalizedUrl = validation.normalizedUrl!
 
     // 1. Ensure a user and brand exist
     const guestUser = await ensureGuestUser()
