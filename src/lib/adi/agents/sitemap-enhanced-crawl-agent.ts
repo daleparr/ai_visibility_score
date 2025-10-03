@@ -59,13 +59,13 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     collectedData: {} as any
   }
   // OPTIMIZED TIMEOUT CONFIGURATION - Balanced for data quality vs speed
-  private readonly MAX_URLS_TO_CRAWL = 2 // Focus on quality over quantity
-  private readonly SITEMAP_TIMEOUT = 3000 // 3 seconds for sitemap discovery (balanced)
+  private readonly MAX_URLS_TO_CRAWL = 1 // FOCUS: Just get homepage HTML - prioritize extraction over discovery
+  private readonly SITEMAP_TIMEOUT = 2000 // 2 seconds for sitemap discovery - REDUCED to prioritize HTML extraction
   private readonly MAX_403_FAILURES = 3 // Allow more attempts for valuable sites
-  private readonly CRAWL_TIMEOUT = 25000 // 25 seconds per page (allow complex sites like Nike)
+  private readonly CRAWL_TIMEOUT = 30000 // 30 seconds per page - INCREASED for reliable HTML extraction
   private readonly HTML_PROCESSING_TIMEOUT = 5000 // 5 seconds for enhanced parsing
-  private readonly MAX_SITEMAPS_TO_PROCESS = 3 // Focus on most important sitemaps
-  private readonly MAX_TOTAL_SITEMAP_ATTEMPTS = 8 // Reduced but sufficient attempts
+  private readonly MAX_SITEMAPS_TO_PROCESS = 1 // MINIMAL sitemap processing - prioritize HTML extraction
+  private readonly MAX_TOTAL_SITEMAP_ATTEMPTS = 3 // MINIMAL attempts - prioritize HTML extraction over sitemap discovery
   private totalSitemapAttempts = 0 // Track total attempts across all locations
 
   // Progressive Anti-Bot Evasion Configuration - Quality focused
@@ -358,18 +358,26 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
         console.log('🎯 Phase 2: URL Prioritization')
         const prioritizedUrls = this.prioritizeUrls(sitemapData.urls, brandName)
         
-        // PHASE 3: Strategic Crawling
-        console.log('🚀 Phase 3: Strategic Crawling')
-        const crawlResults = await this.crawlPrioritizedUrls(prioritizedUrls.slice(0, this.MAX_URLS_TO_CRAWL))
+        // PHASE 3: Strategic Crawling - ENSURE HOMEPAGE IS ALWAYS FIRST
+        console.log('🚀 Phase 3: Strategic Crawling - Prioritizing homepage HTML extraction')
+        
+        // CRITICAL: Always ensure homepage is crawled first
+        const homepageUrl = prioritizedUrls.find(url => url.contentType === 'homepage') || 
+                           prioritizedUrls.find(url => url.loc === websiteUrl || url.loc === websiteUrl + '/') ||
+                           { loc: websiteUrl, contentType: 'homepage', businessValue: 100, freshnessScore: 50 }
+        
+        console.log(`🏠 Prioritizing homepage: ${homepageUrl.loc}`)
+        const crawlResults = await this.crawlPrioritizedUrls([homepageUrl])
         results.push(...crawlResults)
 
         // Add sitemap analysis result
         results.push(this.createSitemapAnalysisResult(sitemapData, prioritizedUrls))
         
       } else {
-        console.log('⚠️ No sitemap found, falling back to traditional crawling')
+        console.log('⚠️ No sitemap found, falling back to homepage crawling - PRIORITIZING HTML EXTRACTION')
         
-        // FALLBACK: Traditional crawling approach
+        // FALLBACK: Focus all resources on homepage HTML extraction
+        console.log('🏠 FALLBACK: Focusing all resources on homepage HTML extraction')
         const fallbackResults = await this.performFallbackCrawling(websiteUrl)
         results.push(...fallbackResults)
       }

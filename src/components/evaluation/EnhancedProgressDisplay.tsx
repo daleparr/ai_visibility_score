@@ -35,6 +35,7 @@ interface Agent {
 interface EnhancedProgressDisplayProps {
   tier: 'free' | 'index-pro' | 'enterprise'
   url: string
+  evaluationId?: string // Add evaluation ID for real status polling
 }
 
 const AGENTS: Agent[] = [
@@ -120,11 +121,13 @@ const AGENTS: Agent[] = [
   }
 ]
 
-export function EnhancedProgressDisplay({ tier, url }: EnhancedProgressDisplayProps) {
+export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedProgressDisplayProps) {
   const [agents, setAgents] = useState<Agent[]>(AGENTS)
   const [currentPhase, setCurrentPhase] = useState<'phase1' | 'phase2' | 'aggregation'>('phase1')
   const [overallProgress, setOverallProgress] = useState(0)
   const [elapsedTime, setElapsedTime] = useState(0)
+  const [evaluationStatus, setEvaluationStatus] = useState<'running' | 'completed' | 'failed'>('running')
+  const [realProgress, setRealProgress] = useState(0)
 
   // Simulate agent progression
   useEffect(() => {
@@ -135,43 +138,106 @@ export function EnhancedProgressDisplay({ tier, url }: EnhancedProgressDisplayPr
     return () => clearInterval(timer)
   }, [])
 
-  // Simulate realistic agent progression based on logs
+  // Real evaluation status polling - REPLACES SIMULATION
   useEffect(() => {
-    const progressTimer = setTimeout(() => {
-      // Phase 1: Parallel agents (crawl, citation, brand_heritage)
-      setCurrentPhase('phase1')
-      updateAgentStatus(['crawl_agent', 'citation_agent', 'brand_heritage_agent'], 'running')
-      
-      setTimeout(() => {
-        updateAgentStatus(['crawl_agent', 'citation_agent', 'brand_heritage_agent'], 'completed')
-        
-        // Phase 2: Remaining agents in parallel
-        setCurrentPhase('phase2')
-        updateAgentStatus([
-          'llm_test_agent', 'schema_agent', 'semantic_agent', 
-          'geo_visibility_agent', 'sentiment_agent', 'commerce_agent'
-        ], 'running')
+    if (!evaluationId) {
+      // Fallback to simulation if no evaluation ID provided
+      const progressTimer = setTimeout(() => {
+        setCurrentPhase('phase1')
+        updateAgentStatus(['crawl_agent', 'citation_agent', 'brand_heritage_agent'], 'running')
         
         setTimeout(() => {
+          updateAgentStatus(['crawl_agent', 'citation_agent', 'brand_heritage_agent'], 'completed')
+          setCurrentPhase('phase2')
           updateAgentStatus([
             'llm_test_agent', 'schema_agent', 'semantic_agent', 
             'geo_visibility_agent', 'sentiment_agent', 'commerce_agent'
-          ], 'completed')
-          
-          // Final aggregation
-          setCurrentPhase('aggregation')
-          updateAgentStatus(['score_aggregator'], 'running')
+          ], 'running')
           
           setTimeout(() => {
-            updateAgentStatus(['score_aggregator'], 'completed')
-            setOverallProgress(100)
-          }, 3000)
-        }, 12000)
-      }, 25000)
-    }, 2000)
+            updateAgentStatus([
+              'llm_test_agent', 'schema_agent', 'semantic_agent', 
+              'geo_visibility_agent', 'sentiment_agent', 'commerce_agent'
+            ], 'completed')
+            setCurrentPhase('aggregation')
+            updateAgentStatus(['score_aggregator'], 'running')
+            
+            setTimeout(() => {
+              updateAgentStatus(['score_aggregator'], 'completed')
+              setOverallProgress(100)
+              setEvaluationStatus('completed')
+            }, 3000)
+          }, 12000)
+        }, 25000)
+      }, 2000)
+      return () => clearTimeout(progressTimer)
+    }
 
-    return () => clearTimeout(progressTimer)
-  }, [])
+    // REAL STATUS POLLING - Only show 100% when evaluation is actually completed
+    const pollEvaluationStatus = async () => {
+      try {
+        const response = await fetch(`/api/evaluation/${evaluationId}/status?tier=${tier}`)
+        if (response.ok) {
+          const data = await response.json()
+          
+          if (data.status === 'completed' && data.overallScore !== null) {
+            // REAL COMPLETION - evaluation has finished and has a score
+            setEvaluationStatus('completed')
+            setOverallProgress(100)
+            setRealProgress(100)
+            updateAgentStatus(AGENTS.map(a => a.id), 'completed')
+            setCurrentPhase('aggregation')
+            return true // Stop polling
+          } else if (data.status === 'failed') {
+            setEvaluationStatus('failed')
+            return true // Stop polling
+          } else {
+            // Still running - show progressive simulation but DON'T reach 100%
+            const elapsed = elapsedTime
+            if (elapsed < 30) {
+              setCurrentPhase('phase1')
+              updateAgentStatus(['crawl_agent', 'citation_agent', 'brand_heritage_agent'], 'running')
+              setRealProgress(Math.min(25, elapsed * 0.8))
+            } else if (elapsed < 60) {
+              setCurrentPhase('phase2')
+              updateAgentStatus(['crawl_agent', 'citation_agent', 'brand_heritage_agent'], 'completed')
+              updateAgentStatus([
+                'llm_test_agent', 'schema_agent', 'semantic_agent', 
+                'geo_visibility_agent', 'sentiment_agent', 'commerce_agent'
+              ], 'running')
+              setRealProgress(Math.min(85, 25 + (elapsed - 30) * 2)) // Cap at 85% until real completion
+            } else {
+              setCurrentPhase('aggregation')
+              updateAgentStatus([
+                'llm_test_agent', 'schema_agent', 'semantic_agent', 
+                'geo_visibility_agent', 'sentiment_agent', 'commerce_agent'
+              ], 'completed')
+              updateAgentStatus(['score_aggregator'], 'running')
+              setRealProgress(Math.min(95, 85 + (elapsed - 60) * 0.2)) // Cap at 95% until real completion
+            }
+            return false // Continue polling
+          }
+        }
+      } catch (error) {
+        console.error('Failed to poll evaluation status:', error)
+        return false // Continue polling on error
+      }
+      return false
+    }
+
+    // Start polling immediately, then every 3 seconds
+    const pollInterval = setInterval(async () => {
+      const shouldStop = await pollEvaluationStatus()
+      if (shouldStop) {
+        clearInterval(pollInterval)
+      }
+    }, 3000)
+
+    // Initial poll
+    pollEvaluationStatus()
+
+    return () => clearInterval(pollInterval)
+  }, [evaluationId, tier, elapsedTime])
 
   const updateAgentStatus = (agentIds: string[], status: Agent['status']) => {
     setAgents(prev => prev.map(agent => 
@@ -221,7 +287,7 @@ export function EnhancedProgressDisplay({ tier, url }: EnhancedProgressDisplayPr
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
                 <div className="text-2xl font-bold text-brand-600">
-                  {Math.round((completedAgents / totalAgents) * 100)}%
+                  {evaluationId ? Math.round(realProgress) : Math.round((completedAgents / totalAgents) * 100)}%
                 </div>
                 <div className="text-xs text-gray-500">
                   {formatTime(elapsedTime)}
@@ -232,11 +298,25 @@ export function EnhancedProgressDisplay({ tier, url }: EnhancedProgressDisplayPr
         </div>
 
         <div>
-          <h2 className="text-2xl font-bold mb-2">Analyzing {safeHostname(url) || 'website'}</h2>
+          <h2 className="text-2xl font-bold mb-2">
+            {evaluationStatus === 'completed' ? 'Analysis Complete!' : `Analyzing ${safeHostname(url) || 'website'}`}
+          </h2>
           <p className="text-gray-600">{getTierDescription()}</p>
-          <Badge variant="outline" className="mt-2">
-            Phase {currentPhase === 'phase1' ? '1' : currentPhase === 'phase2' ? '2' : '3'} of 3
-          </Badge>
+          <div className="flex gap-2 mt-2">
+            <Badge variant="outline">
+              Phase {currentPhase === 'phase1' ? '1' : currentPhase === 'phase2' ? '2' : '3'} of 3
+            </Badge>
+            {evaluationStatus === 'completed' && (
+              <Badge variant="default" className="bg-green-600">
+                ✅ Score Available
+              </Badge>
+            )}
+            {evaluationStatus === 'running' && evaluationId && (
+              <Badge variant="secondary" className="animate-pulse">
+                🔄 Real-time Analysis
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
 
@@ -249,7 +329,7 @@ export function EnhancedProgressDisplay({ tier, url }: EnhancedProgressDisplayPr
               {completedAgents} of {totalAgents} agents completed
             </span>
           </div>
-          <Progress value={(completedAgents / totalAgents) * 100} className="h-2" />
+          <Progress value={evaluationId ? realProgress : (completedAgents / totalAgents) * 100} className="h-2" />
         </CardContent>
       </Card>
 

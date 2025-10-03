@@ -780,7 +780,8 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
           <div className="max-w-4xl mx-auto">
             <EnhancedProgressDisplay 
               tier={tier} 
-              url={url || 'https://example.com'} 
+              url={url || 'https://example.com'}
+              evaluationId={evaluationData?.id} // Pass real evaluation ID for status polling
             />
           </div>
         </div>
