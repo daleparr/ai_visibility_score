@@ -422,6 +422,9 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
       throw new Error('OpenAI API key not configured')
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -443,7 +446,9 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
         max_tokens: 300,
         temperature: 0.3
       })
-    })
+    });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`)
@@ -462,6 +467,9 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
       throw new Error('Anthropic API key not configured')
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -479,7 +487,9 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
           }
         ]
       })
-    })
+    });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`Anthropic API error: ${response.status} ${response.statusText}`)
@@ -537,6 +547,9 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
       throw new Error('Mistral API key not configured')
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15-second timeout
+
     const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -554,7 +567,9 @@ export class BulletproofLLMTestAgent extends BaseADIAgent {
         max_tokens: 300,
         temperature: 0.3
       })
-    })
+    });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`Mistral API error: ${response.status} ${response.statusText}`)
