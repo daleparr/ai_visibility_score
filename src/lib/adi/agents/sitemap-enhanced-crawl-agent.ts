@@ -163,22 +163,36 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
 
     console.log(`🔍 Checking ${sitemapLocations.length} potential sitemap locations`)
 
-    // Try each location until we find a valid sitemap
+    const allUrls: SitemapUrl[] = [];
+    let sitemapCount = 0;
+
     for (const sitemapUrl of sitemapLocations) {
       try {
-        const sitemapData = await this.fetchAndParseSitemap(sitemapUrl)
+        const sitemapData = await this.fetchAndParseSitemap(sitemapUrl);
         if (sitemapData && sitemapData.urls.length > 0) {
-          console.log(`✅ Found valid sitemap at ${sitemapUrl} with ${sitemapData.totalUrls} URLs`)
-          return sitemapData
+          allUrls.push(...sitemapData.urls);
+          sitemapCount++;
+          console.log(`✅ Found and processed sitemap at ${sitemapUrl}, adding ${sitemapData.urls.length} URLs. Total URLs: ${allUrls.length}`);
         }
       } catch (error) {
-        console.log(`❌ Failed to fetch sitemap from ${sitemapUrl}:`, error instanceof Error ? error.message : 'Unknown error')
-        continue
+        console.log(`❌ Failed to fetch sitemap from ${sitemapUrl}:`, error instanceof Error ? error.message : 'Unknown error');
+        continue;
       }
     }
 
-    console.log('❌ No valid sitemap found at any standard location')
-    return null
+    if (allUrls.length === 0) {
+      console.log('❌ No valid URLs found in any sitemap at any standard location');
+      return null;
+    }
+
+    console.log(`✅ Combined ${sitemapCount} sitemaps to find ${allUrls.length} URLs`);
+
+    return {
+      sitemapUrl: 'Multiple sitemaps combined',
+      urls: allUrls,
+      totalUrls: allUrls.length,
+      hasIndex: sitemapCount > 1,
+    };
   }
 
   /**
