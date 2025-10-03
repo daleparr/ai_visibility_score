@@ -661,43 +661,47 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
         console.log('Started evaluation:', evaluationId)
 
         // Poll for completion
-        const pollForCompletion = async () => {
-          const maxAttempts = 60 // 2 minutes max
-          let attempts = 0
-
-          const poll = async (): Promise<void> => {
-            if (attempts >= maxAttempts) {
-              throw new Error('Evaluation timed out')
-            }
-
-            console.log(`Polling attempt ${attempts + 1} for evaluation ${evaluationId}`)
-            
-            const statusResponse = await fetch(`/api/evaluation/${evaluationId}/status?tier=${tier}`)
-            const statusData = await statusResponse.json()
-
-            console.log('Status response:', statusData)
-
-            if (statusData.status === 'completed') {
-              // Evaluation completed - set the results
-              console.log('Evaluation completed, setting results:', statusData.results)
-              setEvaluationData(statusData.results)
-              setIsLoading(false)
-              return
-            }
-
-            if (statusData.status === 'failed') {
-              throw new Error('Evaluation failed')
-            }
-
-            // Still running - poll again in 2 seconds
-            attempts++
-            setTimeout(poll, 2000)
+        let attempts = 0;
+        const maxAttempts = 90; // 3 minutes max
+        const intervalId = setInterval(async () => {
+          if (attempts >= maxAttempts) {
+            clearInterval(intervalId);
+            setError('Evaluation timed out after 3 minutes.');
+            setIsLoading(false);
+            return;
           }
 
-          await poll()
-        }
+          try {
+            const statusResponse = await fetch(`/api/evaluation/${evaluationId}/status?tier=${tier}`);
+            if (!statusResponse.ok) {
+              // Stop polling on server errors
+              clearInterval(intervalId);
+              setError('An error occurred while fetching evaluation status.');
+              setIsLoading(false);
+              return;
+            }
 
-        await pollForCompletion()
+            const statusData = await statusResponse.json();
+            console.log(`[Attempt ${attempts + 1}] Polling status:`, statusData);
+
+            if (statusData.status === 'completed' || statusData.overallScore > 0) {
+              clearInterval(intervalId);
+              console.log('✅ Evaluation complete, setting final data.');
+              setEvaluationData(statusData.results || statusData);
+              setIsLoading(false);
+            } else if (statusData.status === 'failed') {
+              clearInterval(intervalId);
+              setError('Evaluation process failed.');
+              setIsLoading(false);
+            }
+          } catch (err) {
+            clearInterval(intervalId);
+            setError('Failed to fetch status.');
+            setIsLoading(false);
+          }
+
+          attempts++;
+        }, 2000);
 
         // Fetch leaderboard data for professional tier using detected category
         if (tier === 'index-pro') {
