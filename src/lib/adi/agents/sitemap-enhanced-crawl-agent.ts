@@ -45,10 +45,10 @@ interface SitemapData {
 export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   private cache: Map<string, { data: any, timestamp: number }> = new Map()
   private readonly CACHE_TTL = 15 * 60 * 1000 // 15 minutes
-  private readonly MAX_URLS_TO_CRAWL = 4 // QUALITY FOCUSED: More pages for better data
-  private readonly SITEMAP_TIMEOUT = 3000 // 3 seconds for sitemap discovery (ultra-fast)
-  private readonly CRAWL_TIMEOUT = 12000 // 12 seconds per page (quality focused)
-  private readonly MAX_SITEMAPS_TO_PROCESS = 1 // Only 1 sitemap for speed
+  private readonly MAX_URLS_TO_CRAWL = 3 // SPEED FOCUSED: Fewer pages for faster completion
+  private readonly SITEMAP_TIMEOUT = 2000 // 2 seconds for sitemap discovery (ultra-fast)
+  private readonly CRAWL_TIMEOUT = 8000 // 8 seconds per page (speed focused)
+  private readonly MAX_SITEMAPS_TO_PROCESS = 5 // Maximum 5 sitemaps for history
 
   private userAgents = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
@@ -59,11 +59,11 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   constructor() {
     const config: ADIAgentConfig = {
       name: 'crawl_agent',
-      version: 'v5.1-resilient-sitemap',
-      description: 'Resilient sitemap-driven crawling with rotating user-agents and retries',
+      version: 'v5.2-speed-optimized',
+      description: 'Speed-optimized sitemap crawling with aggressive timeouts',
       dependencies: [],
-      timeout: 60000,
-      retryLimit: 3,
+      timeout: 30000, // 30 seconds total - SPEED FOCUSED
+      retryLimit: 1,
       parallelizable: false
     }
     super(config)
@@ -344,7 +344,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
 
       console.log(`📋 Sitemap index contains ${indexSitemaps.length} sitemaps`)
 
-      // Fetch and parse individual sitemaps (limit to first 2 for performance)
+      // Fetch and parse individual sitemaps (limit to MAX_SITEMAPS_TO_PROCESS for performance)
       const sitemapsToFetch = indexSitemaps.slice(0, this.MAX_SITEMAPS_TO_PROCESS)
       
       for (const sitemapUrl of sitemapsToFetch) {
@@ -593,9 +593,9 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
           results.push(pageResult)
         }
 
-        // Rate limiting: QUALITY FOCUSED - reasonable delay for stability
+        // Rate limiting: SPEED FOCUSED - minimal delay for faster completion
         if (i < urls.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 400)) // 0.8-1.2s delay
+          await new Promise(resolve => setTimeout(resolve, 200 + Math.random() * 200)) // 0.2-0.4s delay
         }
 
       } catch (error) {
@@ -950,8 +950,8 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
               results.push(pageResult)
             }
             
-            // Rate limiting: QUALITY FOCUSED - reasonable delay for stability
-            await new Promise(resolve => setTimeout(resolve, 1500))
+            // Rate limiting: SPEED FOCUSED - minimal delay for faster completion
+            await new Promise(resolve => setTimeout(resolve, 300))
             
           } catch (error) {
             console.log(`❌ Failed to crawl discovered page ${discoveredUrls[i].loc}:`, error instanceof Error ? error.message : 'Unknown error')
