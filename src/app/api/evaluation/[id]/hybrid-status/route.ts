@@ -26,6 +26,10 @@ export async function GET(
     
     // Get slow agent execution status
     const executions = await tracker.getEvaluationExecutions(evaluationId)
+    console.log(`🔍 [DEBUG] Found ${executions.length} executions for ${evaluationId}:`)
+    executions.forEach(e => {
+      console.log(`  - ${e.agentName}: ${e.status} (started: ${e.startedAt}, completed: ${e.completedAt})`)
+    })
     
     // Classify executions by status
     const pending = executions.filter(e => e.status === 'pending')
@@ -33,16 +37,21 @@ export async function GET(
     const completed = executions.filter(e => e.status === 'completed')
     const failed = executions.filter(e => e.status === 'failed')
     
+    console.log(`🔍 [DEBUG] Status breakdown: ${pending.length} pending, ${running.length} running, ${completed.length} completed, ${failed.length} failed`)
+    
     // Calculate progress
     const totalSlowAgents = 6 // UPDATED: SitemapEnhancedCrawlAgent, BulletproofLLMTestAgent, SentimentAgent, CitationAgent, GeoVisibilityAgent, CommerceAgent
     const finishedCount = completed.length + failed.length
     const isAllComplete = finishedCount >= totalSlowAgents
+    
+    console.log(`🔍 [DEBUG] Progress calculation: ${finishedCount}/${totalSlowAgents} agents finished, allComplete: ${isAllComplete}`)
     
     // Progress calculation:
     // - Fast agents (6): contribute 50%
     // - Slow agents (6): contribute remaining 50%
     const slowProgress = totalSlowAgents > 0 ? (finishedCount / totalSlowAgents) * 50 : 0
     const totalProgress = isAllComplete ? 100 : Math.min(95, 50 + slowProgress)
+    console.log(`🔍 [DEBUG] Calculated progress: ${slowProgress}% from slow agents, total: ${totalProgress}%`)
     
     // Determine overall status
     let overallStatus: 'running' | 'completed' | 'failed'
@@ -71,8 +80,8 @@ export async function GET(
       progress: Math.round(totalProgress),
       
       // Agent counts
-      totalAgents: 12, // 7 fast + 5 slow
-      fastAgentsCompleted: 7, // Fast agents complete immediately
+      totalAgents: 12, // 6 fast + 6 slow agents
+      fastAgentsCompleted: 6, // Fast agents complete immediately (updated count)
       slowAgentsTotal: totalSlowAgents,
       slowAgentsPending: pending.length,
       slowAgentsRunning: running.length,
