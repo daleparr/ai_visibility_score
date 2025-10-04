@@ -85,7 +85,6 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@netlify/functions": "^4.2.7",
     "@testing-library/jest-dom": "^6.8.0",
     "@types/jest": "^30.0.0",
     "@types/jsdom": "^21.1.7",
