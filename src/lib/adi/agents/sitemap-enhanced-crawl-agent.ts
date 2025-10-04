@@ -136,10 +136,10 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   constructor() {
     const config: ADIAgentConfig = {
       name: 'crawl_agent',
-      version: 'v7.0-optimized-extraction',
+      version: 'v7.1-extended-timeout',
       description: 'Optimized for data quality with progressive timeout handling and enhanced parsing',
       dependencies: [],
-      timeout: 60000, // 60 seconds total - INCREASED: Allow for more sitemap processing
+      timeout: 80000, // 80 seconds total - INCREASED: Allow for more sitemap processing
       retryLimit: 2, // Allow more retries for valuable content
       parallelizable: false
     }
@@ -275,9 +275,9 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     // OPTIMIZED TIMEOUT: Allow sufficient time for HTML extraction
     const hardTimeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => {
-        console.log(`⏰ OPTIMIZED TIMEOUT: Crawl agent terminated after 40 seconds to ensure completion`);
+        console.log(`⏰ OPTIMIZED TIMEOUT: Crawl agent terminated after 70 seconds to ensure completion`);
         reject(new Error('Optimized timeout: Agent execution completed'));
-      }, 40000); // Match agent config timeout
+      }, 70000); // Match agent config timeout
     });
 
     const executionPromise = this.executeInternal(input);
