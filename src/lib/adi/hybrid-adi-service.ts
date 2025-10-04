@@ -43,8 +43,7 @@ export class HybridADIService {
   private registerFastAgents(): void {
     console.log('📦 Registering fast agents...')
     
-    // Fast agents (low to medium LLM intensity)
-    this.orchestrator.registerFastAgent(new SitemapEnhancedCrawlAgent())
+    // Fast agents (low to medium LLM intensity) - REMOVED crawl_agent (moved to slow)
     this.orchestrator.registerFastAgent(new BulletproofSchemaAgent())
     this.orchestrator.registerFastAgent(new SemanticAgent())
     this.orchestrator.registerFastAgent(new KnowledgeGraphAgent())

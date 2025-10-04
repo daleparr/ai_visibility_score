@@ -27,6 +27,7 @@ export class HybridADIOrchestrator {
 
   // Agent classification based on LLM intensity and execution time
   private readonly SLOW_AGENTS = [
+    'crawl_agent',         // Needs 45s for quality sitemap processing and HTML extraction
     'llm_test_agent',      // Multiple AI model calls
     'sentiment_agent',     // LLM sentiment analysis  
     'citation_agent',      // Media mention analysis
@@ -35,7 +36,6 @@ export class HybridADIOrchestrator {
   ]
 
   private readonly FAST_AGENTS = [
-    'crawl_agent',              // Web scraping
     'schema_agent',             // Structured data parsing
     'semantic_agent',           // Text analysis (medium LLM)
     'conversational_copy_agent', // Content analysis (medium LLM)

@@ -1,4 +1,5 @@
 import { Handler } from '@netlify/functions'
+import { SitemapEnhancedCrawlAgent } from '../../src/lib/adi/agents/sitemap-enhanced-crawl-agent'
 import { BulletproofLLMTestAgent } from '../../src/lib/adi/agents/bulletproof-llm-test-agent'
 import { SentimentAgent } from '../../src/lib/adi/agents/sentiment-agent'
 import { CitationAgent } from '../../src/lib/adi/agents/citation-agent'
@@ -41,6 +42,9 @@ export const handler: Handler = async (event) => {
     // Initialize the requested agent
     let agent
     switch (agentName) {
+      case 'crawl_agent':
+        agent = new SitemapEnhancedCrawlAgent()
+        break
       case 'llm_test_agent':
         agent = new BulletproofLLMTestAgent()
         break

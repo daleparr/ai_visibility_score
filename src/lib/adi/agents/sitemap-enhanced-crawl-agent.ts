@@ -58,14 +58,14 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     lastSuccessfulUrl: '',
     collectedData: {} as any
   }
-  // INTELLIGENT CIRCUIT BREAKER CONFIGURATION - Enterprise-friendly
+  // QUALITY-FOCUSED CONFIGURATION - Proper time for data extraction
   private readonly MAX_URLS_TO_CRAWL = 1 // FOCUS: Just get homepage HTML - prioritize extraction over discovery
-  private readonly SITEMAP_TIMEOUT = 8000 // 8 seconds for sitemap discovery
-  private readonly MAX_403_FAILURES = 3 // Allow more attempts for valuable sites
-  private readonly CRAWL_TIMEOUT = 30000 // 30 seconds per page - INCREASED for reliable HTML extraction
+  private readonly SITEMAP_TIMEOUT = 8000 // 8 seconds for sitemap discovery - PROPER TIME
+  private readonly MAX_403_FAILURES = 3 // Allow retries for valuable sites
+  private readonly CRAWL_TIMEOUT = 30000 // 30 seconds per page - PROPER TIME for reliable HTML extraction
   private readonly HTML_PROCESSING_TIMEOUT = 5000 // 5 seconds for enhanced parsing
-  private readonly MAX_SITEMAPS_TO_PROCESS = 10 // Process up to 10 sitemaps (increased for enterprise sites)
-  private readonly MAX_SITEMAP_URLS_TO_PROCESS = 50 // Stop after finding 50 sitemap URLs (smart limit)
+  private readonly MAX_SITEMAPS_TO_PROCESS = 10 // Process up to 10 sitemaps for enterprise sites
+  private readonly MAX_SITEMAP_URLS_TO_PROCESS = 50 // Stop after finding 50 sitemap URLs
   private readonly MAX_TOTAL_URLS_DISCOVERED = 15000 // Stop after discovering 15k URLs total
   private totalSitemapsFetched = 0 // Track successful sitemap fetches
   private totalUrlsDiscovered = 0 // Track total URLs found
@@ -141,7 +141,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       version: 'v7.1-extended-timeout',
       description: 'Optimized for data quality with progressive timeout handling and enhanced parsing',
       dependencies: [],
-      timeout: 80000, // 80 seconds total - INCREASED: Allow for more sitemap processing
+      timeout: 45000, // 45 seconds - PROPER TIME for quality sitemap processing and HTML extraction
       retryLimit: 2, // Allow more retries for valuable content
       parallelizable: false
     }
@@ -475,9 +475,9 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
           sitemapCount++;
           console.log(`✅ Found and processed sitemap at ${sitemapUrl}, adding ${sitemapData.urls.length} URLs. Total URLs: ${allUrls.length}`);
           
-          // ULTRA-FAST exit if we have plenty of URLs (LOWERED THRESHOLD for enterprise sites)
-          if (sitemapData.urls.length > 500 || allUrls.length > 8000) {
-            console.log(`⚡ ULTRA-FAST exit: Found ${sitemapData.urls.length} URLs from sitemap or ${allUrls.length} total URLs, stopping sitemap processing`);
+          // Smart exit when we have sufficient URLs for analysis
+          if (sitemapData.urls.length > 1000 || allUrls.length > 8000) {
+            console.log(`⚡ Smart exit: Found ${sitemapData.urls.length} URLs from sitemap or ${allUrls.length} total URLs, sufficient for analysis`);
             break;
           }
         }
@@ -680,9 +680,9 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
             allUrls.push(...sitemapData.urls)
             console.log(`✅ Found and processed sitemap at ${sitemapUrl}, adding ${sitemapData.urls.length} URLs. Total URLs: ${allUrls.length}`)
             
-            // ULTRA-FAST exit if we have plenty of URLs from one sitemap (LOWERED THRESHOLD for enterprise sites)
-            if (sitemapData.urls.length > 1000 || allUrls.length > 8000) {
-              console.log(`⚡ ULTRA-FAST exit: Found ${sitemapData.urls.length} URLs from sitemap or ${allUrls.length} total URLs, stopping sitemap processing`)
+            // Smart exit when we have sufficient URLs from sitemap index
+            if (sitemapData.urls.length > 3000 || allUrls.length > 8000) {
+              console.log(`⚡ Smart exit: Found ${sitemapData.urls.length} URLs from sitemap or ${allUrls.length} total URLs, sufficient for analysis`)
               break
             }
           }

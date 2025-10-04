@@ -34,13 +34,13 @@ export async function GET(
     const failed = executions.filter(e => e.status === 'failed')
     
     // Calculate progress
-    const totalSlowAgents = 5 // BulletproofLLMTestAgent, SentimentAgent, CitationAgent, GeoVisibilityAgent, CommerceAgent
+    const totalSlowAgents = 6 // UPDATED: SitemapEnhancedCrawlAgent, BulletproofLLMTestAgent, SentimentAgent, CitationAgent, GeoVisibilityAgent, CommerceAgent
     const finishedCount = completed.length + failed.length
     const isAllComplete = finishedCount >= totalSlowAgents
     
     // Progress calculation:
-    // - Fast agents complete immediately: 50%
-    // - Slow agents contribute remaining 50%
+    // - Fast agents (6): contribute 50%
+    // - Slow agents (6): contribute remaining 50%
     const slowProgress = totalSlowAgents > 0 ? (finishedCount / totalSlowAgents) * 50 : 0
     const totalProgress = isAllComplete ? 100 : Math.min(95, 50 + slowProgress)
     
