@@ -1,8 +1,9 @@
 import { BaseADIAgent } from './agents/base-agent'
 import { BackendAgentTracker } from './backend-agent-tracker'
-import type { 
-  ADIEvaluationContext, 
-  ADIOrchestrationResult, 
+import { getAbsoluteUrl } from '@/lib/url'
+import type {
+  ADIEvaluationContext,
+  ADIOrchestrationResult,
   ADIAgentOutput
 } from '../../types/adi'
 
@@ -191,7 +192,7 @@ export class HybridADIOrchestrator {
         }
 
         // Make API call to Netlify background function (don't wait for completion)
-        const response = await fetch('/.netlify/functions/background-agents', {
+        const response = await fetch(getAbsoluteUrl('/.netlify/functions/background-agents'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

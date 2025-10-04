@@ -60,7 +60,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   }
   // OPTIMIZED TIMEOUT CONFIGURATION - Balanced for data quality vs speed
   private readonly MAX_URLS_TO_CRAWL = 1 // FOCUS: Just get homepage HTML - prioritize extraction over discovery
-  private readonly SITEMAP_TIMEOUT = 2000 // 2 seconds for sitemap discovery - REDUCED to prioritize HTML extraction
+  private readonly SITEMAP_TIMEOUT = 1000 // 1 second for sitemap discovery - AGGRESSIVE TIMEOUT
   private readonly MAX_403_FAILURES = 3 // Allow more attempts for valuable sites
   private readonly CRAWL_TIMEOUT = 30000 // 30 seconds per page - INCREASED for reliable HTML extraction
   private readonly HTML_PROCESSING_TIMEOUT = 5000 // 5 seconds for enhanced parsing
@@ -342,7 +342,11 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
 
       // PHASE 1: Sitemap Discovery and Analysis
       console.log('🔍 Phase 1: Sitemap Discovery')
-      const sitemapData = await this.discoverAndParseSitemap(websiteUrl)
+      // AGGRESSIVE TIMEOUT: Limit sitemap discovery to 1 second
+      const sitemapData = await Promise.race([
+        this.discoverAndParseSitemap(websiteUrl),
+        new Promise<null>(resolve => setTimeout(() => resolve(null), this.SITEMAP_TIMEOUT))
+      ]);
       
       // 🔧 ANTI-CASCADE: Track sitemap discovery for partial data
       if (sitemapData) {
@@ -1624,7 +1628,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       pages: pageResults.map(r => ({
         url: r.evidence?.url,
         html: r.evidence?.html || '',
-        contentType: r.evidence?.contentType,
+        contentType: r.evidence?.sitemapMetadata?.contentType || 'homepage',
         contentSize: r.evidence?.contentSize,
         metaData: r.evidence?.metaData,
         sitemapMetadata: r.evidence?.sitemapMetadata
