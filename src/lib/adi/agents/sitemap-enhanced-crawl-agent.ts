@@ -475,9 +475,9 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
           sitemapCount++;
           console.log(`✅ Found and processed sitemap at ${sitemapUrl}, adding ${sitemapData.urls.length} URLs. Total URLs: ${allUrls.length}`);
           
-          // ULTRA-FAST exit if we have plenty of URLs
-          if (sitemapData.urls.length > 1000) {
-            console.log(`⚡ ULTRA-FAST exit: Found ${sitemapData.urls.length} URLs, stopping sitemap processing`);
+          // ULTRA-FAST exit if we have plenty of URLs (LOWERED THRESHOLD for enterprise sites)
+          if (sitemapData.urls.length > 500 || allUrls.length > 8000) {
+            console.log(`⚡ ULTRA-FAST exit: Found ${sitemapData.urls.length} URLs from sitemap or ${allUrls.length} total URLs, stopping sitemap processing`);
             break;
           }
         }
@@ -680,9 +680,9 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
             allUrls.push(...sitemapData.urls)
             console.log(`✅ Found and processed sitemap at ${sitemapUrl}, adding ${sitemapData.urls.length} URLs. Total URLs: ${allUrls.length}`)
             
-            // ULTRA-FAST exit if we have plenty of URLs from one sitemap
-            if (sitemapData.urls.length > 3000) {
-              console.log(`⚡ ULTRA-FAST exit: Found ${sitemapData.urls.length} URLs, stopping sitemap processing`)
+            // ULTRA-FAST exit if we have plenty of URLs from one sitemap (LOWERED THRESHOLD for enterprise sites)
+            if (sitemapData.urls.length > 1000 || allUrls.length > 8000) {
+              console.log(`⚡ ULTRA-FAST exit: Found ${sitemapData.urls.length} URLs from sitemap or ${allUrls.length} total URLs, stopping sitemap processing`)
               break
             }
           }
