@@ -7,6 +7,7 @@
 // Dynamic import for JSDOM (Node.js only)
 let JSDOM: any = null;
 let VirtualConsole: any = null;
+let ResourceLoader: any = null;
 
 // Initialize JSDOM only in Node.js environment
 const initJSDOM = async () => {
@@ -15,6 +16,7 @@ const initJSDOM = async () => {
       const jsdomModule = await import('jsdom' as any);
       JSDOM = jsdomModule.JSDOM;
       VirtualConsole = jsdomModule.VirtualConsole;
+      ResourceLoader = jsdomModule.ResourceLoader;
     } catch (error) {
       console.warn('JSDOM not available, enhanced HTML parsing disabled:', error);
     }
@@ -93,15 +95,15 @@ export class EnhancedHTMLParser {
         contentType: 'text/html',
         includeNodeLocations: true,
         storageQuota: 10000000,
-        resources: {
-          fetch(url: string, options: any) {
-            // Block all CSS requests to speed up parsing and prevent errors
+        resources: new ResourceLoader({
+          // Block all CSS requests to speed up parsing and prevent errors
+          fetch: (url: string, options: any) => {
             if (url.endsWith('.css')) {
               return Promise.resolve(Buffer.from(''));
             }
             return null;
-          }
-        },
+          },
+        }),
         virtualConsole,
       });
       this.document = this.dom.window.document;
