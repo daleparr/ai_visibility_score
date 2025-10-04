@@ -35,7 +35,21 @@ CREATE TABLE IF NOT EXISTS production.backend_agent_executions (
 );
 
 -- =====================================================
--- 3. ADD MISSING WEBSITE_SNAPSHOTS COLUMNS (IF NEEDED)
+-- 3. CREATE MISSING CONTENT_CHANGES TABLE
+-- =====================================================
+CREATE TABLE IF NOT EXISTS production.content_changes (
+    id serial PRIMARY KEY,
+    website_snapshot_id uuid NOT NULL REFERENCES production.website_snapshots(id) ON DELETE CASCADE,
+    change_type varchar(50) NOT NULL,
+    change_description text,
+    impact_score integer,
+    detected_at timestamp NOT NULL DEFAULT now(),
+    previous_snapshot_id uuid REFERENCES production.website_snapshots(id),
+    created_at timestamp DEFAULT now()
+);
+
+-- =====================================================
+-- 4. ADD MISSING WEBSITE_SNAPSHOTS COLUMNS (IF NEEDED)
 -- =====================================================
 ALTER TABLE production.website_snapshots 
 ADD COLUMN IF NOT EXISTS title varchar(255),
@@ -47,7 +61,7 @@ ADD COLUMN IF NOT EXISTS structured_data_types_count integer,
 ADD COLUMN IF NOT EXISTS quality_score integer;
 
 -- =====================================================
--- 4. CREATE INDEXES FOR PERFORMANCE
+-- 5. CREATE INDEXES FOR PERFORMANCE
 -- =====================================================
 CREATE INDEX IF NOT EXISTS idx_backend_agent_executions_evaluation_id 
     ON production.backend_agent_executions (evaluation_id);
@@ -58,8 +72,14 @@ CREATE INDEX IF NOT EXISTS idx_backend_agent_executions_status
 CREATE INDEX IF NOT EXISTS idx_backend_agent_executions_agent_name 
     ON production.backend_agent_executions (agent_name);
 
+CREATE INDEX IF NOT EXISTS idx_content_changes_website_snapshot_id 
+    ON production.content_changes (website_snapshot_id);
+
+CREATE INDEX IF NOT EXISTS idx_content_changes_detected_at 
+    ON production.content_changes (detected_at);
+
 -- =====================================================
--- 5. VERIFY TABLES EXIST
+-- 6. VERIFY TABLES EXIST
 -- =====================================================
 SELECT 
     'backend_agent_executions' as table_name,
@@ -71,13 +91,23 @@ WHERE table_schema = 'production'
 UNION ALL
 
 SELECT 
+    'content_changes' as table_name,
+    COUNT(*) as column_count
+FROM information_schema.columns 
+WHERE table_schema = 'production' 
+  AND table_name = 'content_changes'
+
+UNION ALL
+
+SELECT 
     'website_snapshots' as table_name,
     COUNT(*) as column_count
 FROM information_schema.columns 
 WHERE table_schema = 'production' 
   AND table_name = 'website_snapshots';
 
--- Show the new table structure
+-- Show the new table structures
 \d production.backend_agent_executions;
+\d production.content_changes;
 
 COMMIT;

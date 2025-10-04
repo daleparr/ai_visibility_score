@@ -192,7 +192,12 @@ export class HybridADIOrchestrator {
         }
 
         // Make API call to Netlify background function (don't wait for completion)
-        const response = await fetch(apiUrl('/.netlify/functions/background-agents'), {
+        const functionUrl = typeof window === 'undefined' 
+          ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://ai-discoverability-index.netlify.app'}/.netlify/functions/background-agents`
+          : '/.netlify/functions/background-agents'
+        
+        console.log(`🔗 [Hybrid] Calling background function: ${functionUrl}`)
+        const response = await fetch(functionUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -204,9 +209,14 @@ export class HybridADIOrchestrator {
         })
 
         if (!response.ok) {
-          throw new Error(`Backend API call failed: ${response.statusText}`)
+          const errorBody = await response.text()
+          console.error(`❌ [Hybrid] Background function call failed: ${response.status} ${response.statusText}`)
+          console.error(`❌ [Hybrid] Error response body:`, errorBody)
+          throw new Error(`Backend API call failed: ${response.status} - ${errorBody}`)
         }
 
+        const result = await response.json()
+        console.log(`✅ [Hybrid] Background function response:`, result)
         console.log(`🚀 [Hybrid] Triggered slow agent: ${agentName}`)
 
       } catch (error) {
