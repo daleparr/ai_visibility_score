@@ -78,11 +78,28 @@ export class EnhancedHTMLParser {
     }
     
     try {
+      const virtualConsole = new JSDOM().window.console;
+      virtualConsole.on("jsdomError", (e: Error) => {
+        if (!e.message.includes("Could not parse CSS stylesheet")) {
+          console.error(e);
+        }
+      });
+
       this.dom = new JSDOM(html, {
         url: url || 'https://example.com',
         contentType: 'text/html',
         includeNodeLocations: true,
-        storageQuota: 10000000
+        storageQuota: 10000000,
+        resources: {
+          fetch(url: string, options: any) {
+            // Block all CSS requests to speed up parsing
+            if (url.endsWith('.css')) {
+              return Promise.resolve(Buffer.from(''));
+            }
+            return null;
+          }
+        },
+        virtualConsole,
       });
       this.document = this.dom.window.document;
     } catch (error) {
