@@ -665,11 +665,11 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
 
         // Poll for completion
         let attempts = 0;
-        const maxAttempts = 90; // 3 minutes max
+        const maxAttempts = 150; // 5 minutes max for comprehensive evals
         const intervalId = setInterval(async () => {
           if (attempts >= maxAttempts) {
             clearInterval(intervalId);
-            setError('Evaluation timed out after 3 minutes.');
+            setError('Evaluation is taking longer than expected. Your report will be available on your dashboard when complete.');
             setIsLoading(false);
             return;
           }
@@ -690,12 +690,10 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
             if (statusData.status === 'completed' || statusData.overallScore > 0) {
               clearInterval(intervalId);
               console.log('✅ Evaluation complete, setting final data.');
-              // Ensure evaluation ID is included in the data
-              const finalData = statusData.results || statusData;
-              if (finalData && !finalData.id && statusData.id) {
-                finalData.id = statusData.id; // Pass through evaluation ID for progress tracking
+              setEvaluationData(statusData.report || statusData.results || statusData);
+              if(statusData.report?.performanceProfile) {
+                setPerformanceProfile(statusData.report.performanceProfile);
               }
-              setEvaluationData(finalData);
               setIsLoading(false);
             } else if (statusData.status === 'failed') {
               clearInterval(intervalId);
