@@ -19,8 +19,13 @@ interface BackgroundAgentRequest {
 }
 
 export const handler: Handler = async (event) => {
+  console.log(`🌐 [Background] Function invoked with method: ${event.httpMethod}`)
+  console.log(`🌐 [Background] Event body length: ${event.body?.length || 0}`)
+  console.log(`🌐 [Background] Headers:`, event.headers)
+  
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
+    console.log(`❌ [Background] Method not allowed: ${event.httpMethod}`)
     return {
       statusCode: 405,
       body: JSON.stringify({ error: 'Method not allowed' })
@@ -31,10 +36,12 @@ export const handler: Handler = async (event) => {
   const tracker = new BackendAgentTracker()
   
   try {
+    console.log(`🔍 [Background] Parsing request body...`)
     const body: BackgroundAgentRequest = JSON.parse(event.body || '{}')
     const { agentName, input, evaluationId, executionId } = body
 
-    console.log(`🚀 [Background] Starting ${agentName} for evaluation ${evaluationId}`)
+    console.log(`🚀 [Background] Starting ${agentName} for evaluation ${evaluationId} with execution ID ${executionId}`)
+    console.log(`🚀 [Background] Input context keys:`, input?.context ? Object.keys(input.context) : 'no context')
 
     // Mark as running in database
     await tracker.markRunning(executionId)

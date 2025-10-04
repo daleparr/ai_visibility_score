@@ -197,6 +197,13 @@ export class HybridADIOrchestrator {
           : '/.netlify/functions/background-agents'
         
         console.log(`🔗 [Hybrid] Calling background function: ${functionUrl}`)
+        console.log(`🔗 [Hybrid] Request payload:`, {
+          agentName,
+          evaluationId: context.evaluationId,
+          executionId,
+          inputKeys: Object.keys(agentInput)
+        })
+        
         const response = await fetch(functionUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -208,16 +215,20 @@ export class HybridADIOrchestrator {
           })
         })
 
+        console.log(`📡 [Hybrid] Background function response status: ${response.status} ${response.statusText}`)
+        console.log(`📡 [Hybrid] Response headers:`, Object.fromEntries(response.headers.entries()))
+
         if (!response.ok) {
           const errorBody = await response.text()
           console.error(`❌ [Hybrid] Background function call failed: ${response.status} ${response.statusText}`)
           console.error(`❌ [Hybrid] Error response body:`, errorBody)
+          console.error(`❌ [Hybrid] Request URL was: ${functionUrl}`)
           throw new Error(`Backend API call failed: ${response.status} - ${errorBody}`)
         }
 
         const result = await response.json()
         console.log(`✅ [Hybrid] Background function response:`, result)
-        console.log(`🚀 [Hybrid] Triggered slow agent: ${agentName}`)
+        console.log(`🚀 [Hybrid] Successfully triggered slow agent: ${agentName} with execution ID: ${executionId}`)
 
       } catch (error) {
         console.error(`❌ [Hybrid] Failed to trigger slow agent ${agentName}:`, error)
