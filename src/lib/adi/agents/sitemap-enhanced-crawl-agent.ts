@@ -60,12 +60,12 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   }
   // OPTIMIZED TIMEOUT CONFIGURATION - Balanced for data quality vs speed
   private readonly MAX_URLS_TO_CRAWL = 1 // FOCUS: Just get homepage HTML - prioritize extraction over discovery
-  private readonly SITEMAP_TIMEOUT = 1000 // 1 second for sitemap discovery - AGGRESSIVE TIMEOUT
+  private readonly SITEMAP_TIMEOUT = 8000 // 8 seconds for sitemap discovery
   private readonly MAX_403_FAILURES = 3 // Allow more attempts for valuable sites
   private readonly CRAWL_TIMEOUT = 30000 // 30 seconds per page - INCREASED for reliable HTML extraction
   private readonly HTML_PROCESSING_TIMEOUT = 5000 // 5 seconds for enhanced parsing
-  private readonly MAX_SITEMAPS_TO_PROCESS = 1 // MINIMAL sitemap processing - prioritize HTML extraction
-  private readonly MAX_TOTAL_SITEMAP_ATTEMPTS = 3 // MINIMAL attempts - prioritize HTML extraction over sitemap discovery
+  private readonly MAX_SITEMAPS_TO_PROCESS = 5 // Process up to 5 sitemaps
+  private readonly MAX_TOTAL_SITEMAP_ATTEMPTS = 10 // Increase total attempts
   private totalSitemapAttempts = 0 // Track total attempts across all locations
 
   // Progressive Anti-Bot Evasion Configuration - Quality focused
@@ -139,7 +139,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       version: 'v7.0-optimized-extraction',
       description: 'Optimized for data quality with progressive timeout handling and enhanced parsing',
       dependencies: [],
-      timeout: 40000, // 40 seconds total - BALANCED: Allow HTML extraction completion
+      timeout: 60000, // 60 seconds total - INCREASED: Allow for more sitemap processing
       retryLimit: 2, // Allow more retries for valuable content
       parallelizable: false
     }
@@ -343,10 +343,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       // PHASE 1: Sitemap Discovery and Analysis
       console.log('🔍 Phase 1: Sitemap Discovery')
       // AGGRESSIVE TIMEOUT: Limit sitemap discovery to 1 second
-      const sitemapData = await Promise.race([
-        this.discoverAndParseSitemap(websiteUrl),
-        new Promise<null>(resolve => setTimeout(() => resolve(null), this.SITEMAP_TIMEOUT))
-      ]);
+      const sitemapData = await this.discoverAndParseSitemap(websiteUrl)
       
       // 🔧 ANTI-CASCADE: Track sitemap discovery for partial data
       if (sitemapData) {
