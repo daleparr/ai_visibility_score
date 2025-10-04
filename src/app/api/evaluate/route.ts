@@ -231,9 +231,10 @@ export async function POST(request: NextRequest) {
     // Start hybrid evaluation - returns fast results immediately, slow agents run in background
     console.log(`🔍 [ROUTE_DEBUG] Starting hybrid evaluateBrand call`)
     hybridAdiService.evaluateBrand(
-      brand.id, 
-      brand.websiteUrl, 
-      tier as 'free' | 'index-pro' | 'enterprise'
+      brand.id,
+      brand.websiteUrl,
+      tier as 'free' | 'index-pro' | 'enterprise',
+      evaluation.id
     ).then(result => {
       console.log(`[ROUTE_HANDLER] Fast phase completed: ${Object.keys(result.agentResults).length} agents, status: ${result.overallStatus}`)
       // Note: Slow agents continue running in background

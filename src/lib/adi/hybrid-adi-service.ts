@@ -71,9 +71,9 @@ export class HybridADIService {
   async evaluateBrand(
     brandId: string,
     websiteUrl: string,
-    tier: 'free' | 'index-pro' | 'enterprise' = 'free'
+    tier: 'free' | 'index-pro' | 'enterprise' = 'free',
+    evaluationId: string
   ): Promise<ADIOrchestrationResult> {
-    const evaluationId = `eval_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     
     console.log(`🚀 [Hybrid] Starting brand evaluation: ${brandId}`)
     console.log(`📊 [Hybrid] Tier: ${tier}, URL: ${websiteUrl}`)
