@@ -58,15 +58,17 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     lastSuccessfulUrl: '',
     collectedData: {} as any
   }
-  // OPTIMIZED TIMEOUT CONFIGURATION - Balanced for data quality vs speed
+  // INTELLIGENT CIRCUIT BREAKER CONFIGURATION - Enterprise-friendly
   private readonly MAX_URLS_TO_CRAWL = 1 // FOCUS: Just get homepage HTML - prioritize extraction over discovery
   private readonly SITEMAP_TIMEOUT = 8000 // 8 seconds for sitemap discovery
   private readonly MAX_403_FAILURES = 3 // Allow more attempts for valuable sites
   private readonly CRAWL_TIMEOUT = 30000 // 30 seconds per page - INCREASED for reliable HTML extraction
   private readonly HTML_PROCESSING_TIMEOUT = 5000 // 5 seconds for enhanced parsing
-  private readonly MAX_SITEMAPS_TO_PROCESS = 5 // Process up to 5 sitemaps
-  private readonly MAX_TOTAL_SITEMAP_ATTEMPTS = 10 // Increase total attempts
-  private totalSitemapAttempts = 0 // Track total attempts across all locations
+  private readonly MAX_SITEMAPS_TO_PROCESS = 10 // Process up to 10 sitemaps (increased for enterprise sites)
+  private readonly MAX_SITEMAP_URLS_TO_PROCESS = 50 // Stop after finding 50 sitemap URLs (smart limit)
+  private readonly MAX_TOTAL_URLS_DISCOVERED = 15000 // Stop after discovering 15k URLs total
+  private totalSitemapsFetched = 0 // Track successful sitemap fetches
+  private totalUrlsDiscovered = 0 // Track total URLs found
 
   // Progressive Anti-Bot Evasion Configuration - Quality focused
   private readonly MIN_REQUEST_DELAY = 800 // Slightly longer delays for better success
@@ -323,7 +325,8 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     const brandId = input.context.brandId
     
     // Reset attempt counter and partial state for each execution
-    this.totalSitemapAttempts = 0;
+    this.totalSitemapsFetched = 0;
+    this.totalUrlsDiscovered = 0;
     this.resetPartialCrawlState();
     
     console.log(`🗺️ Executing Sitemap-Enhanced Crawl Agent for ${brandName} (${websiteUrl})`)
@@ -451,9 +454,14 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     let consecutiveFailures = 0;
 
     for (const sitemapUrl of sitemapLocations) {
-      // EMERGENCY CIRCUIT BREAKER: Kill zombie process
-      if (this.totalSitemapAttempts >= this.MAX_TOTAL_SITEMAP_ATTEMPTS) {
-        console.log(`🚨 EMERGENCY STOP: Reached ${this.MAX_TOTAL_SITEMAP_ATTEMPTS} total sitemap attempts. Terminating to prevent zombie process.`);
+      // INTELLIGENT CIRCUIT BREAKER: Stop if we have enough data
+      if (this.totalSitemapsFetched >= this.MAX_SITEMAPS_TO_PROCESS) {
+        console.log(`⚡ SMART STOP: Processed ${this.totalSitemapsFetched} sitemaps, sufficient for analysis`);
+        break;
+      }
+      
+      if (this.totalUrlsDiscovered >= this.MAX_TOTAL_URLS_DISCOVERED) {
+        console.log(`⚡ SMART STOP: Discovered ${this.totalUrlsDiscovered} URLs, sufficient for analysis`);
         break;
       }
 
@@ -461,9 +469,17 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
         const sitemapData = await this.fetchAndParseSitemap(sitemapUrl);
         if (sitemapData && sitemapData.urls.length > 0) {
           allUrls.push(...sitemapData.urls);
+          this.totalSitemapsFetched++;
+          this.totalUrlsDiscovered += sitemapData.urls.length;
           consecutiveFailures = 0; // Reset failure count on success
           sitemapCount++;
           console.log(`✅ Found and processed sitemap at ${sitemapUrl}, adding ${sitemapData.urls.length} URLs. Total URLs: ${allUrls.length}`);
+          
+          // ULTRA-FAST exit if we have plenty of URLs
+          if (sitemapData.urls.length > 1000) {
+            console.log(`⚡ ULTRA-FAST exit: Found ${sitemapData.urls.length} URLs, stopping sitemap processing`);
+            break;
+          }
         }
       } catch (error) {
         console.log(`❌ Failed to fetch sitemap from ${sitemapUrl}:`, error instanceof Error ? error.message : 'Unknown error');
@@ -540,12 +556,6 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     const session = this.getOrCreateSession(domain)
     
     for (let i = 0; i < this.userAgents.length; i++) {
-        // EMERGENCY CIRCUIT BREAKER: Track total attempts
-        this.totalSitemapAttempts++;
-        if (this.totalSitemapAttempts > this.MAX_TOTAL_SITEMAP_ATTEMPTS) {
-          console.log(`🚨 EMERGENCY STOP: Exceeded ${this.MAX_TOTAL_SITEMAP_ATTEMPTS} total attempts. Aborting sitemap fetch.`);
-          throw new Error('Emergency circuit breaker activated');
-        }
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), this.SITEMAP_TIMEOUT);
 
@@ -652,19 +662,27 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
 
       console.log(`📋 Sitemap index contains ${indexSitemaps.length} sitemaps`)
 
-      // Fetch and parse individual sitemaps (limit to MAX_SITEMAPS_TO_PROCESS for performance)
-      const sitemapsToFetch = indexSitemaps.slice(0, this.MAX_SITEMAPS_TO_PROCESS)
+      // SMART PROCESSING: Limit sitemaps to process based on available data
+      const maxToProcess = Math.min(indexSitemaps.length, this.MAX_SITEMAP_URLS_TO_PROCESS)
+      const sitemapsToFetch = indexSitemaps.slice(0, maxToProcess)
+      console.log(`🎯 Processing ${sitemapsToFetch.length} of ${indexSitemaps.length} available sitemaps`)
       
       for (const sitemapUrl of sitemapsToFetch) {
+        // SMART STOP: Check if we have enough URLs already
+        if (allUrls.length >= this.MAX_TOTAL_URLS_DISCOVERED) {
+          console.log(`⚡ SMART STOP: Already discovered ${allUrls.length} URLs, sufficient for analysis`)
+          break
+        }
+        
         try {
           const sitemapData = await this.fetchAndParseSitemap(sitemapUrl)
           if (sitemapData && sitemapData.urls.length > 0) {
             allUrls.push(...sitemapData.urls)
             console.log(`✅ Found and processed sitemap at ${sitemapUrl}, adding ${sitemapData.urls.length} URLs. Total URLs: ${allUrls.length}`)
             
-            // Early exit if we have enough URLs (ULTRA-FAST)
-            if (allUrls.length >= 100) {
-              console.log(`⚡ ULTRA-FAST exit: Found ${allUrls.length} URLs, stopping sitemap processing`)
+            // ULTRA-FAST exit if we have plenty of URLs from one sitemap
+            if (sitemapData.urls.length > 3000) {
+              console.log(`⚡ ULTRA-FAST exit: Found ${sitemapData.urls.length} URLs, stopping sitemap processing`)
               break
             }
           }
