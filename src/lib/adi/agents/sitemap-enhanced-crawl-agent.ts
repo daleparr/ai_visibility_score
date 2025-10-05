@@ -65,11 +65,11 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   private readonly CRAWL_TIMEOUT = 30000 // 30 seconds per page - PROPER TIME for reliable HTML extraction
   private readonly HTML_PROCESSING_TIMEOUT = 5000 // 5 seconds for enhanced parsing
   
-  // TWO-TIERED SITEMAP PROCESSING LIMITS
-  private readonly MAX_SITEMAP_INDEXES_TO_PROCESS = 5 // Limit for sitemap index files (high-level structure)
-  private readonly MAX_CONTENT_SITEMAPS_TO_PROCESS = 15 // Limit for content-bearing sitemaps
+  // TWO-TIERED SITEMAP PROCESSING LIMITS - CONSERVATIVE FOR LARGE SITES
+  private readonly MAX_SITEMAP_INDEXES_TO_PROCESS = 3 // Reduced: Limit for sitemap index files (high-level structure)
+  private readonly MAX_CONTENT_SITEMAPS_TO_PROCESS = 8 // Reduced: Limit for content-bearing sitemaps
   private readonly MAX_SITEMAP_URLS_TO_PROCESS = 50 // Stop after finding 50 sitemap URLs within a single sitemap
-  private readonly MAX_TOTAL_URLS_DISCOVERED = 15000 // Stop after discovering 15k URLs total
+  private readonly MAX_TOTAL_URLS_DISCOVERED = 8000 // Reduced: Stop after discovering 8k URLs total
   
   // SEPARATE TRACKING FOR INDEXES VS CONTENT SITEMAPS
   private sitemapIndexesFetched = 0 // Track sitemap index files processed
@@ -147,7 +147,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       version: 'v7.1-extended-timeout',
       description: 'Optimized for data quality with progressive timeout handling and enhanced parsing',
       dependencies: [],
-      timeout: 45000, // 45 seconds - PROPER TIME for quality sitemap processing and HTML extraction
+      timeout: 800000, // 800 seconds (13+ minutes) - BACKGROUND FUNCTION timeout for comprehensive sitemap processing
       retryLimit: 2, // Allow more retries for valuable content
       parallelizable: false
     }
@@ -442,8 +442,11 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
    * 1. First, explore sitemap indexes to understand site structure (breadth-first)
    * 2. Then, process the most promising content sitemaps for URL discovery
    * 3. Use separate limits for indexes vs content sitemaps
+   * 4. Add timeout circuit breaker for large sites
    */
   private async discoverAndParseSitemap(websiteUrl: string): Promise<SitemapData | null> {
+    const startTime = Date.now()
+    const MAX_SITEMAP_PROCESSING_TIME = 10 * 60 * 1000 // 10 minutes timeout for sitemap processing
     const baseUrl = new URL(websiteUrl).origin
     
     // Standard sitemap locations to check
@@ -476,6 +479,12 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     console.log(`📋 [BFS] Phase 1: Processing up to ${this.MAX_SITEMAP_INDEXES_TO_PROCESS} sitemap indexes`)
     
     while (indexQueue.length > 0 && this.sitemapIndexesFetched < this.MAX_SITEMAP_INDEXES_TO_PROCESS) {
+      // Timeout circuit breaker
+      if (Date.now() - startTime > MAX_SITEMAP_PROCESSING_TIME) {
+        console.log(`⏰ [BFS] Timeout circuit breaker: Sitemap processing exceeded ${MAX_SITEMAP_PROCESSING_TIME / 1000}s`)
+        break
+      }
+      
       const sitemapUrl = indexQueue.shift()!
       
       if (processedUrls.has(sitemapUrl)) {
@@ -512,8 +521,8 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
             this.contentSitemapsFetched++
           }
           
-          // Smart exit if we have sufficient URLs from index exploration
-          if (allUrls.length > 8000) {
+          // Conservative smart exit if we have sufficient URLs from index exploration
+          if (allUrls.length > 4000) {
             console.log(`⚡ [BFS] Phase 1 early exit: Found ${allUrls.length} URLs from index exploration`)
             break
           }
@@ -532,6 +541,12 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     while (contentQueue.length > 0 && 
            this.contentSitemapsFetched < this.MAX_CONTENT_SITEMAPS_TO_PROCESS && 
            this.totalUrlsDiscovered < this.MAX_TOTAL_URLS_DISCOVERED) {
+      
+      // Timeout circuit breaker
+      if (Date.now() - startTime > MAX_SITEMAP_PROCESSING_TIME) {
+        console.log(`⏰ [BFS] Timeout circuit breaker: Sitemap processing exceeded ${MAX_SITEMAP_PROCESSING_TIME / 1000}s`)
+        break
+      }
       
       const sitemapUrl = contentQueue.shift()!
       
@@ -554,8 +569,8 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
           
           console.log(`✅ [BFS] Added ${sitemapData.urls.length} URLs from content sitemap. Total: ${allUrls.length}`)
           
-          // Smart exit when we have sufficient URLs
-          if (sitemapData.urls.length > 3000 || allUrls.length > 10000) {
+          // Conservative smart exit when we have sufficient URLs
+          if (sitemapData.urls.length > 2000 || allUrls.length > 6000) {
             console.log(`⚡ [BFS] Phase 2 smart exit: Found ${sitemapData.urls.length} URLs from sitemap or ${allUrls.length} total URLs`)
             break
           }
