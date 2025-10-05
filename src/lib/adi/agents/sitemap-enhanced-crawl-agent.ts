@@ -64,10 +64,16 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   private readonly MAX_403_FAILURES = 3 // Allow retries for valuable sites
   private readonly CRAWL_TIMEOUT = 30000 // 30 seconds per page - PROPER TIME for reliable HTML extraction
   private readonly HTML_PROCESSING_TIMEOUT = 5000 // 5 seconds for enhanced parsing
-  private readonly MAX_SITEMAPS_TO_PROCESS = 10 // Process up to 10 sitemaps for enterprise sites
-  private readonly MAX_SITEMAP_URLS_TO_PROCESS = 50 // Stop after finding 50 sitemap URLs
+  
+  // TWO-TIERED SITEMAP PROCESSING LIMITS
+  private readonly MAX_SITEMAP_INDEXES_TO_PROCESS = 5 // Limit for sitemap index files (high-level structure)
+  private readonly MAX_CONTENT_SITEMAPS_TO_PROCESS = 15 // Limit for content-bearing sitemaps
+  private readonly MAX_SITEMAP_URLS_TO_PROCESS = 50 // Stop after finding 50 sitemap URLs within a single sitemap
   private readonly MAX_TOTAL_URLS_DISCOVERED = 15000 // Stop after discovering 15k URLs total
-  private totalSitemapsFetched = 0 // Track successful sitemap fetches
+  
+  // SEPARATE TRACKING FOR INDEXES VS CONTENT SITEMAPS
+  private sitemapIndexesFetched = 0 // Track sitemap index files processed
+  private contentSitemapsFetched = 0 // Track content-bearing sitemaps processed
   private totalUrlsDiscovered = 0 // Track total URLs found
 
   // Progressive Anti-Bot Evasion Configuration - Quality focused
@@ -324,8 +330,9 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     const evaluationId = input.context.evaluationId
     const brandId = input.context.brandId
     
-    // Reset attempt counter and partial state for each execution
-    this.totalSitemapsFetched = 0;
+    // Reset attempt counters and partial state for each execution
+    this.sitemapIndexesFetched = 0;
+    this.contentSitemapsFetched = 0;
     this.totalUrlsDiscovered = 0;
     this.resetPartialCrawlState();
     
@@ -401,10 +408,15 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       console.log(`✅ Sitemap-enhanced crawl completed in ${executionTime}ms with ${results.length} results`)
 
       return this.createSuccessOutput(combinedData, executionTime, {
-        method: 'sitemap_enhanced',
+        method: 'sitemap_enhanced_bfs',
         sitemapFound: !!sitemapData,
         urlsCrawled: results.filter(r => r.resultType.includes('page')).length,
         totalSitemapUrls: sitemapData?.totalUrls || 0,
+        bfsStats: {
+          sitemapIndexesFetched: this.sitemapIndexesFetched,
+          contentSitemapsFetched: this.contentSitemapsFetched,
+          totalUrlsDiscovered: this.totalUrlsDiscovered
+        },
         brandId,
         evaluationId
       })
@@ -415,7 +427,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       // Intelligent fallback with basic crawling
       const fallbackData = await this.createIntelligentFallback(websiteUrl, brandName)
       return this.createSuccessOutput(fallbackData, Date.now() - startTime, { 
-        method: 'intelligent_fallback',
+        method: 'intelligent_fallback_bfs',
         error: error instanceof Error ? error.message : 'Unknown error',
         brandId,
         evaluationId
@@ -424,7 +436,12 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   }
 
   /**
-   * PHASE 1: Discover and parse sitemap.xml files
+   * PHASE 1: Discover and parse sitemap.xml files using BFS approach
+   * 
+   * NEW ARCHITECTURE:
+   * 1. First, explore sitemap indexes to understand site structure (breadth-first)
+   * 2. Then, process the most promising content sitemaps for URL discovery
+   * 3. Use separate limits for indexes vs content sitemaps
    */
   private async discoverAndParseSitemap(websiteUrl: string): Promise<SitemapData | null> {
     const baseUrl = new URL(websiteUrl).origin
@@ -447,68 +464,134 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       sitemapLocations.unshift(...robotsSitemaps)
     }
 
-    console.log(`🔍 Checking ${sitemapLocations.length} potential sitemap locations`)
+    console.log(`🔍 [BFS] Starting breadth-first sitemap discovery with ${sitemapLocations.length} potential locations`)
 
-    const allUrls: SitemapUrl[] = [];
-    let sitemapCount = 0;
-    let consecutiveFailures = 0;
+    // BFS QUEUE: Separate queues for indexes and content sitemaps
+    const indexQueue: string[] = [...sitemapLocations] // Start with potential index locations
+    const contentQueue: string[] = [] // Will be populated from index processing
+    const allUrls: SitemapUrl[] = []
+    const processedUrls = new Set<string>() // Prevent duplicate processing
 
-    for (const sitemapUrl of sitemapLocations) {
-      // INTELLIGENT CIRCUIT BREAKER: Stop if we have enough data
-      if (this.totalSitemapsFetched >= this.MAX_SITEMAPS_TO_PROCESS) {
-        console.log(`⚡ SMART STOP: Processed ${this.totalSitemapsFetched} sitemaps, sufficient for analysis`);
-        break;
+    // PHASE 1: Process sitemap indexes first (breadth-first exploration)
+    console.log(`📋 [BFS] Phase 1: Processing up to ${this.MAX_SITEMAP_INDEXES_TO_PROCESS} sitemap indexes`)
+    
+    while (indexQueue.length > 0 && this.sitemapIndexesFetched < this.MAX_SITEMAP_INDEXES_TO_PROCESS) {
+      const sitemapUrl = indexQueue.shift()!
+      
+      if (processedUrls.has(sitemapUrl)) {
+        console.log(`⏭️ [BFS] Skipping already processed: ${sitemapUrl}`)
+        continue
       }
       
-      if (this.totalUrlsDiscovered >= this.MAX_TOTAL_URLS_DISCOVERED) {
-        console.log(`⚡ SMART STOP: Discovered ${this.totalUrlsDiscovered} URLs, sufficient for analysis`);
-        break;
-      }
-
+      processedUrls.add(sitemapUrl)
+      
       try {
-        const sitemapData = await this.fetchAndParseSitemap(sitemapUrl);
+        console.log(`🔍 [BFS] Processing potential index ${this.sitemapIndexesFetched + 1}/${this.MAX_SITEMAP_INDEXES_TO_PROCESS}: ${sitemapUrl}`)
+        
+        const sitemapData = await this.fetchAndParseSitemap(sitemapUrl)
+        
         if (sitemapData && sitemapData.urls.length > 0) {
-          allUrls.push(...sitemapData.urls);
-          this.totalSitemapsFetched++;
-          this.totalUrlsDiscovered += sitemapData.urls.length;
-          consecutiveFailures = 0; // Reset failure count on success
-          sitemapCount++;
-          console.log(`✅ Found and processed sitemap at ${sitemapUrl}, adding ${sitemapData.urls.length} URLs. Total URLs: ${allUrls.length}`);
+          this.sitemapIndexesFetched++
           
-          // Smart exit when we have sufficient URLs for analysis
-          if (sitemapData.urls.length > 1000 || allUrls.length > 8000) {
-            console.log(`⚡ Smart exit: Found ${sitemapData.urls.length} URLs from sitemap or ${allUrls.length} total URLs, sufficient for analysis`);
-            break;
+          if (sitemapData.hasIndex && sitemapData.indexSitemaps) {
+            // This is a sitemap index - add its sitemaps to content queue
+            console.log(`📋 [BFS] Found sitemap index with ${sitemapData.indexSitemaps.length} sub-sitemaps`)
+            
+            for (const subSitemapUrl of sitemapData.indexSitemaps) {
+              if (!processedUrls.has(subSitemapUrl) && !contentQueue.includes(subSitemapUrl)) {
+                contentQueue.push(subSitemapUrl)
+              }
+            }
+            
+            console.log(`📋 [BFS] Added ${sitemapData.indexSitemaps.length} sitemaps to content queue (total: ${contentQueue.length})`)
+          } else {
+            // This is a content sitemap - add URLs directly
+            console.log(`✅ [BFS] Found content sitemap with ${sitemapData.urls.length} URLs`)
+            allUrls.push(...sitemapData.urls)
+            this.totalUrlsDiscovered += sitemapData.urls.length
+            this.contentSitemapsFetched++
+          }
+          
+          // Smart exit if we have sufficient URLs from index exploration
+          if (allUrls.length > 8000) {
+            console.log(`⚡ [BFS] Phase 1 early exit: Found ${allUrls.length} URLs from index exploration`)
+            break
           }
         }
       } catch (error) {
-        console.log(`❌ Failed to fetch sitemap from ${sitemapUrl}:`, error instanceof Error ? error.message : 'Unknown error');
+        console.log(`❌ [BFS] Failed to process index ${sitemapUrl}:`, error instanceof Error ? error.message : 'Unknown error')
+        continue
+      }
+    }
+
+    // PHASE 2: Process content sitemaps from indexes (prioritized by discovery order)
+    console.log(`📄 [BFS] Phase 2: Processing up to ${this.MAX_CONTENT_SITEMAPS_TO_PROCESS} content sitemaps from ${contentQueue.length} discovered`)
+    
+    let consecutiveFailures = 0
+    
+    while (contentQueue.length > 0 && 
+           this.contentSitemapsFetched < this.MAX_CONTENT_SITEMAPS_TO_PROCESS && 
+           this.totalUrlsDiscovered < this.MAX_TOTAL_URLS_DISCOVERED) {
+      
+      const sitemapUrl = contentQueue.shift()!
+      
+      if (processedUrls.has(sitemapUrl)) {
+        continue
+      }
+      
+      processedUrls.add(sitemapUrl)
+      
+      try {
+        console.log(`📄 [BFS] Processing content sitemap ${this.contentSitemapsFetched + 1}/${this.MAX_CONTENT_SITEMAPS_TO_PROCESS}: ${sitemapUrl}`)
+        
+        const sitemapData = await this.fetchAndParseSitemap(sitemapUrl)
+        
+        if (sitemapData && sitemapData.urls.length > 0) {
+          allUrls.push(...sitemapData.urls)
+          this.contentSitemapsFetched++
+          this.totalUrlsDiscovered += sitemapData.urls.length
+          consecutiveFailures = 0 // Reset failure count on success
+          
+          console.log(`✅ [BFS] Added ${sitemapData.urls.length} URLs from content sitemap. Total: ${allUrls.length}`)
+          
+          // Smart exit when we have sufficient URLs
+          if (sitemapData.urls.length > 3000 || allUrls.length > 10000) {
+            console.log(`⚡ [BFS] Phase 2 smart exit: Found ${sitemapData.urls.length} URLs from sitemap or ${allUrls.length} total URLs`)
+            break
+          }
+        }
+      } catch (error) {
+        console.log(`❌ [BFS] Failed to process content sitemap ${sitemapUrl}:`, error instanceof Error ? error.message : 'Unknown error')
         
         // Circuit breaker: detect 403 patterns and fail fast
         if (error instanceof Error && (error.message.includes('403') || error.message.includes('Forbidden'))) {
-          consecutiveFailures++;
+          consecutiveFailures++
           if (consecutiveFailures >= this.MAX_403_FAILURES) {
-            console.log(`🚨 Circuit breaker triggered: ${consecutiveFailures} consecutive 403 errors. Skipping remaining sitemaps.`);
-            break;
+            console.log(`🚨 [BFS] Circuit breaker: ${consecutiveFailures} consecutive 403 errors. Stopping content sitemap processing.`)
+            break
           }
         }
-        continue;
+        continue
       }
     }
 
     if (allUrls.length === 0) {
-      console.log('❌ No valid URLs found in any sitemap at any standard location');
-      return null;
+      console.log('❌ [BFS] No valid URLs found in any sitemap using BFS approach')
+      return null
     }
 
-    console.log(`✅ Combined ${sitemapCount} sitemaps to find ${allUrls.length} URLs`);
+    console.log(`✅ [BFS] BFS sitemap discovery completed:`)
+    console.log(`   📋 Sitemap indexes processed: ${this.sitemapIndexesFetched}/${this.MAX_SITEMAP_INDEXES_TO_PROCESS}`)
+    console.log(`   📄 Content sitemaps processed: ${this.contentSitemapsFetched}/${this.MAX_CONTENT_SITEMAPS_TO_PROCESS}`)
+    console.log(`   🔗 Total URLs discovered: ${allUrls.length}`)
 
     return {
-      sitemapUrl: 'Multiple sitemaps combined',
+      sitemapUrl: 'BFS Multi-sitemap Discovery',
       urls: allUrls,
       totalUrls: allUrls.length,
-      hasIndex: sitemapCount > 1,
-    };
+      hasIndex: this.sitemapIndexesFetched > 0,
+      indexSitemaps: contentQueue // Remaining unprocessed sitemaps
+    }
   }
 
   /**
@@ -644,13 +727,13 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   }
 
   /**
-   * Parse sitemap index and fetch individual sitemaps
+   * Parse sitemap index and extract individual sitemap URLs (no longer recursive)
+   * Returns the index structure - actual sitemap fetching is handled by BFS queue
    */
   private async parseSitemapIndex(xmlContent: string, indexUrl: string): Promise<SitemapData | null> {
     try {
       const sitemapMatches = xmlContent.match(/<sitemap[^>]*>[\s\S]*?<\/sitemap>/g) || []
       const indexSitemaps: string[] = []
-      const allUrls: SitemapUrl[] = []
 
       // Extract individual sitemap URLs
       for (const sitemapMatch of sitemapMatches) {
@@ -660,46 +743,13 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
         }
       }
 
-      console.log(`📋 Sitemap index contains ${indexSitemaps.length} sitemaps`)
+      console.log(`📋 [BFS] Sitemap index contains ${indexSitemaps.length} sitemaps (will be processed by BFS queue)`)
 
-      // SMART PROCESSING: Limit sitemaps to process based on available data
-      const maxToProcess = Math.min(indexSitemaps.length, this.MAX_SITEMAP_URLS_TO_PROCESS)
-      const sitemapsToFetch = indexSitemaps.slice(0, maxToProcess)
-      console.log(`🎯 Processing ${sitemapsToFetch.length} of ${indexSitemaps.length} available sitemaps`)
-      
-      for (const sitemapUrl of sitemapsToFetch) {
-        // SMART STOP: Check if we have enough URLs already
-        if (allUrls.length >= this.MAX_TOTAL_URLS_DISCOVERED) {
-          console.log(`⚡ SMART STOP: Already discovered ${allUrls.length} URLs, sufficient for analysis`)
-          break
-        }
-        
-        try {
-          const sitemapData = await this.fetchAndParseSitemap(sitemapUrl)
-          if (sitemapData && sitemapData.urls.length > 0) {
-            allUrls.push(...sitemapData.urls)
-            console.log(`✅ Found and processed sitemap at ${sitemapUrl}, adding ${sitemapData.urls.length} URLs. Total URLs: ${allUrls.length}`)
-            
-            // Smart exit when we have sufficient URLs from sitemap index
-            if (sitemapData.urls.length > 3000 || allUrls.length > 8000) {
-              console.log(`⚡ Smart exit: Found ${sitemapData.urls.length} URLs from sitemap or ${allUrls.length} total URLs, sufficient for analysis`)
-              break
-            }
-          }
-        } catch (error) {
-          console.log(`⚠️ Failed to fetch sitemap ${sitemapUrl}:`, error instanceof Error ? error.message : 'Unknown error')
-          continue
-        }
-      }
-
-      if (allUrls.length === 0) {
-        return null
-      }
-
+      // Return index metadata - no recursive processing
       return {
         sitemapUrl: indexUrl,
-        urls: allUrls,
-        totalUrls: allUrls.length,
+        urls: [], // No URLs directly from index
+        totalUrls: 0,
         hasIndex: true,
         indexSitemaps
       }
@@ -1626,7 +1676,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     return {
       brandName,
       websiteUrl,
-      method: 'sitemap_enhanced',
+      method: 'sitemap_enhanced_bfs',
       qualityScore,
       
       // Site validation
@@ -1649,12 +1699,17 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
         sitemapMetadata: r.evidence?.sitemapMetadata
       })),
       
-      // Sitemap data
+      // Sitemap data with BFS stats
       sitemapAnalysis: sitemapData ? {
         found: true,
         totalUrls: sitemapData.totalUrls,
         hasIndex: sitemapData.hasIndex,
-        urlsCrawled: pageResults.length
+        urlsCrawled: pageResults.length,
+        bfsStats: {
+          sitemapIndexesFetched: this.sitemapIndexesFetched,
+          contentSitemapsFetched: this.contentSitemapsFetched,
+          totalUrlsDiscovered: this.totalUrlsDiscovered
+        }
       } : { found: false },
       
       // Analysis results
@@ -1812,7 +1867,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
     const combinedData = {
       brandName: this.partialCrawlState.collectedData.brandName || 'Unknown',
       websiteUrl: this.partialCrawlState.lastSuccessfulUrl || '',
-      method: 'sitemap_enhanced_partial',
+      method: 'sitemap_enhanced_partial_bfs',
       qualityScore: qualityScore,
       siteExists: true,
       statusCode: 200,
@@ -1828,13 +1883,18 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
       pagesCrawled: this.partialCrawlState.pagesCollected,
       analysisCompleted: false,
       sitemapEnhanced: true,
-      partialData: true
+      partialData: true,
+      bfsStats: {
+        sitemapIndexesFetched: this.sitemapIndexesFetched,
+        contentSitemapsFetched: this.contentSitemapsFetched,
+        totalUrlsDiscovered: this.totalUrlsDiscovered
+      }
     }
 
     return {
       hasData: true,
       pagesCollected: this.partialCrawlState.pagesCollected,
-      sitemapsProcessed: this.partialCrawlState.sitemapsProcessed,
+      sitemapsProcessed: this.sitemapIndexesFetched + this.contentSitemapsFetched,
       qualityScore,
       data: combinedData
     }
