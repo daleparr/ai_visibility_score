@@ -23,10 +23,34 @@ export async function GET(
   try {
     console.log(`📊 [API] Checking hybrid status for evaluation: ${evaluationId}`)
     
+    // Test database connectivity immediately
+    console.log(`🔍 [API] Testing database connectivity...`)
+    try {
+      await withSchema(async () => {
+        const { sql } = await import('../../../../../lib/db')
+        const testResult = await sql`SELECT 1 as test_connection, current_schema() as current_schema`
+        console.log(`✅ [API] Database connection test successful:`, testResult[0])
+      })
+    } catch (dbTestError) {
+      console.error(`❌ [API] Database connection test failed:`, dbTestError)
+      return NextResponse.json(
+        { 
+          error: 'Database connection test failed',
+          details: dbTestError instanceof Error ? dbTestError.message : String(dbTestError),
+          evaluationId,
+          status: 'failed',
+          progress: 0
+        },
+        { status: 500 }
+      )
+    }
+    
     const tracker = new BackendAgentTracker()
     
     // Get slow agent execution status with retry logic for database consistency
+    console.log(`🔍 [API] Fetching executions for evaluation ${evaluationId}...`)
     let executions = await tracker.getEvaluationExecutions(evaluationId)
+    console.log(`🔍 [API] Initial query returned ${executions.length} executions`)
     
     // If we get fewer executions than expected, wait and retry once
     // This handles potential database consistency issues
@@ -36,6 +60,19 @@ export async function GET(
       executions = await tracker.getEvaluationExecutions(evaluationId)
       console.log(`🔄 [API] Retry found ${executions.length} executions`)
     }
+    
+    // Add detailed logging of what we found in the database
+    console.log(`🔍 [DEBUG] Raw execution data from database:`)
+    executions.forEach((e, index) => {
+      console.log(`  [${index}] ID: ${e.id}`)
+      console.log(`      Agent: ${e.agentName}`)
+      console.log(`      Status: ${e.status}`)
+      console.log(`      Started: ${e.startedAt}`)  
+      console.log(`      Completed: ${e.completedAt}`)
+      console.log(`      Execution Time: ${e.executionTime}ms`)
+      console.log(`      Error: ${e.error || 'none'}`)
+    })
+    
     console.log(`🔍 [DEBUG] Found ${executions.length} executions for ${evaluationId}:`)
     executions.forEach(e => {
       console.log(`  - ${e.agentName}: ${e.status} (started: ${e.startedAt}, completed: ${e.completedAt})`)

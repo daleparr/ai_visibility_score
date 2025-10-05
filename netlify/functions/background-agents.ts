@@ -6,6 +6,7 @@ import { CitationAgent } from '../../src/lib/adi/agents/citation-agent'
 import { GeoVisibilityAgent } from '../../src/lib/adi/agents/geo-visibility-agent'
 import { CommerceAgent } from '../../src/lib/adi/agents/commerce-agent'
 import { BackendAgentTracker } from '../../src/lib/adi/backend-agent-tracker'
+import { withSchema } from '../../src/lib/db'
 import type { ADIAgentInput } from '../../src/types/adi'
 
 // Netlify Background Function for LLM-intensive agents
@@ -33,6 +34,28 @@ export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResp
     CONTEXT: process.env.CONTEXT,
     hasDatabase: !!process.env.DATABASE_URL || !!process.env.NEON_DATABASE_URL
   })
+
+  // Test database connectivity immediately
+  console.log(`🔍 [Background-${requestId}] Testing database connectivity...`)
+  try {
+    await withSchema(async () => {
+      const { sql } = await import('../../src/lib/db')
+      const testResult = await sql`SELECT 1 as test_connection, current_schema() as current_schema`
+      console.log(`✅ [Background-${requestId}] Database connection test successful:`, testResult[0])
+    })
+  } catch (dbTestError) {
+    console.error(`❌ [Background-${requestId}] Database connection test failed:`, dbTestError)
+    return {
+      statusCode: 500,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        success: false,
+        error: 'Database connection test failed',
+        details: dbTestError instanceof Error ? dbTestError.message : String(dbTestError),
+        requestId
+      })
+    }
+  }
   
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
@@ -204,10 +227,23 @@ export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResp
       let retryCount = 0
       const maxRetries = 3
       
+      console.log(`🔍 [Background-${requestId}] Initial verification result:`, {
+        found: !!verification,
+        status: verification?.status,
+        executionId: verification?.id,
+        completedAt: verification?.completedAt
+      })
+      
       while ((!verification || verification.status !== 'completed') && retryCount < maxRetries) {
         console.log(`🔄 [Background-${requestId}] Verification attempt ${retryCount + 1}/${maxRetries}...`)
         await new Promise(resolve => setTimeout(resolve, 500)) // Wait 500ms
         verification = await tracker.getExecution(executionId)
+        console.log(`🔄 [Background-${requestId}] Retry ${retryCount + 1} result:`, {
+          found: !!verification,
+          status: verification?.status,
+          executionId: verification?.id,
+          completedAt: verification?.completedAt
+        })
         retryCount++
       }
       
@@ -218,6 +254,14 @@ export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResp
         throw new Error(`Execution ${executionId} status is ${verification.status}, expected 'completed' after ${maxRetries} retries`)
       }
       console.log(`✅ [Background-${requestId}] Completion verified after ${retryCount} attempts: ${verification.status}`)
+      console.log(`✅ [Background-${requestId}] Final verification details:`, {
+        id: verification.id,
+        status: verification.status,
+        agentName: verification.agentName,
+        startedAt: verification.startedAt,
+        completedAt: verification.completedAt,
+        executionTime: verification.executionTime
+      })
       
     } catch (completionError) {
       console.error(`❌ [Background-${requestId}] Failed to complete execution ${executionId}:`, completionError)
