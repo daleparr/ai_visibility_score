@@ -328,7 +328,14 @@ export class HybridADIOrchestrator {
     try {
       console.log(`🔍 [Hybrid] Ensuring evaluation record exists for ${context.evaluationId}`)
       
-      // First, ensure the brand exists or create a placeholder
+      // First, check if evaluation already exists
+      const existingEvaluation = await db.select().from(evaluations).where(eq(evaluations.id, context.evaluationId)).limit(1)
+      if (existingEvaluation.length > 0) {
+        console.log(`✅ [Hybrid] Evaluation record already exists for ${context.evaluationId}`)
+        return
+      }
+      
+      // Ensure the brand exists or create a placeholder
       let brandId = context.brandId
       try {
         // Try to find existing brand
@@ -381,7 +388,7 @@ export class HybridADIOrchestrator {
         }
       }
 
-      // Now create the evaluation record
+      // Now create the evaluation record (only if it doesn't exist)
       console.log(`📝 [Hybrid] Creating evaluation record for ${context.evaluationId}`)
       await db.insert(evaluations).values({
         id: context.evaluationId,
@@ -395,7 +402,7 @@ export class HybridADIOrchestrator {
       
       console.log(`✅ [Hybrid] Evaluation record created successfully`)
     } catch (error) {
-      console.error('❌ [Hybrid] Failed to ensure evaluation record:', error)
+      console.error('❌ [Hybrid] Failed to ensure evaluation record:', error instanceof Error ? error.message : String(error))
       throw error
     }
   }

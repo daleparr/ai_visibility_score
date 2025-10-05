@@ -57,6 +57,28 @@ export async function GET(
     let overallStatus: 'running' | 'completed' | 'failed'
     if (isAllComplete) {
       overallStatus = failed.length === totalSlowAgents ? 'failed' : 'completed'
+      
+      // Update evaluation status in database when all agents complete
+      if (overallStatus === 'completed' || overallStatus === 'failed') {
+        try {
+          console.log(`📝 [API] Updating evaluation ${evaluationId} status to ${overallStatus}`)
+          const { db, evaluations } = await import('../../../../../lib/db/index')
+          const { eq } = await import('drizzle-orm')
+          
+          await db.update(evaluations)
+            .set({ 
+              status: overallStatus,
+              completedAt: new Date(),
+              updatedAt: new Date()
+            })
+            .where(eq(evaluations.id, evaluationId))
+          
+          console.log(`✅ [API] Successfully updated evaluation ${evaluationId} status to ${overallStatus}`)
+        } catch (updateError) {
+          console.error(`❌ [API] Failed to update evaluation status:`, updateError instanceof Error ? updateError.message : String(updateError))
+          // Don't fail the request if status update fails
+        }
+      }
     } else {
       overallStatus = 'running'
     }
