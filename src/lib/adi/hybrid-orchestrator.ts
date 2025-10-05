@@ -365,7 +365,7 @@ export class HybridADIOrchestrator {
           }
         }
       } catch (error) {
-        console.error('⚠️ [Hybrid] Brand creation failed, trying to find existing brand:', error.message)
+        console.error('⚠️ [Hybrid] Brand creation failed, trying to find existing brand:', error instanceof Error ? error.message : String(error))
         // Try to find existing brand by website URL as fallback
         try {
           const existingBrandByUrl = await db.select().from(brands).where(eq(brands.websiteUrl, context.websiteUrl)).limit(1)
@@ -376,7 +376,7 @@ export class HybridADIOrchestrator {
             throw new Error('Could not create or find existing brand')
           }
         } catch (fallbackError) {
-          console.error('❌ [Hybrid] Could not find existing brand either:', fallbackError.message)
+          console.error('❌ [Hybrid] Could not find existing brand either:', fallbackError instanceof Error ? fallbackError.message : String(fallbackError))
           throw error
         }
       }
