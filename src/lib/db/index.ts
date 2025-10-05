@@ -36,14 +36,9 @@ if (typeof window === 'undefined') {
         logger: process.env.NODE_ENV === 'development'
       })
       
-      // Set search path once on connection
+      // Test connection immediately but don't set search_path globally
+      // Each operation should set its own search_path to avoid race conditions
       ;(async () => {
-        try {
-          await sql`SET search_path TO production, public`
-          console.log('✅ [DB] Search path set to production schema')
-        } catch (spErr: any) {
-          console.warn('⚠️ [DB] Failed to set search_path; using schema-qualified tables', spErr)
-        }
         try {
           await sql`SELECT 1 as test`
           console.log('✅ [DB] Database connection test successful')
@@ -85,6 +80,18 @@ const mockDb = {
   delete: (table: any) => ({
     where: (condition: any) => Promise.resolve()
   })
+}
+
+// Helper function to ensure correct schema path is set for database operations
+export async function ensureSchema(): Promise<void> {
+  if (sql) {
+    try {
+      await sql`SET search_path TO production, public`
+      console.log('🔗 [DB] Schema path set to production, public')
+    } catch (error) {
+      console.warn('⚠️ [DB] Could not set schema path:', error instanceof Error ? error.message : String(error))
+    }
+  }
 }
 
 export { sql, db }

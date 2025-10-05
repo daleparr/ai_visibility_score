@@ -192,22 +192,32 @@ export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResp
     const executionTime = Date.now() - startTime
     console.log(`⚡ [Background-${requestId}] Agent ${agentName} completed, execution time: ${executionTime}ms`)
 
-    // Mark as completed in database with verification
+    // Mark as completed in database with enhanced verification
     console.log(`💾 [Background-${requestId}] Saving completion to database...`)
     try {
       await tracker.completeExecution(executionId, result, executionTime)
       console.log(`💾 [Background-${requestId}] Successfully saved completion for ${executionId}`)
       
-      // Verify the completion was actually saved
+      // Enhanced verification with retry to handle potential database consistency issues
       console.log(`🔍 [Background-${requestId}] Verifying completion was saved...`)
-      const verification = await tracker.getExecution(executionId)
+      let verification = await tracker.getExecution(executionId)
+      let retryCount = 0
+      const maxRetries = 3
+      
+      while ((!verification || verification.status !== 'completed') && retryCount < maxRetries) {
+        console.log(`🔄 [Background-${requestId}] Verification attempt ${retryCount + 1}/${maxRetries}...`)
+        await new Promise(resolve => setTimeout(resolve, 500)) // Wait 500ms
+        verification = await tracker.getExecution(executionId)
+        retryCount++
+      }
+      
       if (!verification) {
-        throw new Error(`Execution ${executionId} not found after completion`)
+        throw new Error(`Execution ${executionId} not found after completion even after ${maxRetries} retries`)
       }
       if (verification.status !== 'completed') {
-        throw new Error(`Execution ${executionId} status is ${verification.status}, expected 'completed'`)
+        throw new Error(`Execution ${executionId} status is ${verification.status}, expected 'completed' after ${maxRetries} retries`)
       }
-      console.log(`✅ [Background-${requestId}] Completion verified: ${verification.status}`)
+      console.log(`✅ [Background-${requestId}] Completion verified after ${retryCount} attempts: ${verification.status}`)
       
     } catch (completionError) {
       console.error(`❌ [Background-${requestId}] Failed to complete execution ${executionId}:`, completionError)

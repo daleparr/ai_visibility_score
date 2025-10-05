@@ -1,4 +1,4 @@
-import { db } from '../db'
+import { db, ensureSchema } from '../db'
 import { backendAgentExecutions } from '../db/schema'
 import { eq, and } from 'drizzle-orm'
 
@@ -19,6 +19,8 @@ export class BackendAgentTracker {
    * Start tracking a backend agent execution
    */
   async startExecution(evaluationId: string, agentName: string): Promise<string> {
+    await ensureSchema()
+    
     const executionId = `${evaluationId}-${agentName}-${Date.now()}`
     
     await db.insert(backendAgentExecutions).values({
@@ -41,15 +43,7 @@ export class BackendAgentTracker {
       console.log(`📋 [Tracker] Attempting to mark ${executionId} as running...`)
       
       // Ensure we're using the correct schema
-      try {
-        const { sql } = await import('../db/index')
-        if (sql) {
-          await sql`SET search_path TO production, public`
-          console.log(`🔗 [Tracker] Database search path set to production schema for running update`)
-        }
-      } catch (schemaError) {
-        console.warn(`⚠️ [Tracker] Could not set search path for running update:`, schemaError instanceof Error ? schemaError.message : String(schemaError))
-      }
+      await ensureSchema()
       
       // First verify the execution exists
       const existingExecution = await db.select()
@@ -105,15 +99,7 @@ export class BackendAgentTracker {
       console.log(`📋 [Tracker] Attempting to complete ${executionId} with ${executionTime}ms execution time...`)
       
       // Ensure we're using the correct schema
-      try {
-        const { sql } = await import('../db/index')
-        if (sql) {
-          await sql`SET search_path TO production, public`
-          console.log(`🔗 [Tracker] Database search path set to production schema for completion`)
-        }
-      } catch (schemaError) {
-        console.warn(`⚠️ [Tracker] Could not set search path for completion:`, schemaError instanceof Error ? schemaError.message : String(schemaError))
-      }
+      await ensureSchema()
       
       // First verify the execution exists
       const existingExecution = await db.select()
@@ -169,6 +155,8 @@ export class BackendAgentTracker {
    * Mark execution as failed
    */
   async failExecution(executionId: string, error: string): Promise<void> {
+    await ensureSchema()
+    
     await db.update(backendAgentExecutions)
       .set({
         status: 'failed',
@@ -184,6 +172,8 @@ export class BackendAgentTracker {
    * Get execution status
    */
   async getExecution(executionId: string): Promise<BackendAgentExecution | null> {
+    await ensureSchema()
+    
     const results = await db.select()
       .from(backendAgentExecutions)
       .where(eq(backendAgentExecutions.id, executionId))
@@ -200,15 +190,7 @@ export class BackendAgentTracker {
       console.log(`🔍 [Tracker] Fetching executions for evaluation ${evaluationId}...`)
       
       // Ensure we're using the correct schema
-      try {
-        const { sql } = await import('../db/index')
-        if (sql) {
-          await sql`SET search_path TO production, public`
-          console.log(`🔗 [Tracker] Database search path set to production schema`)
-        }
-      } catch (schemaError) {
-        console.warn(`⚠️ [Tracker] Could not set search path:`, schemaError instanceof Error ? schemaError.message : String(schemaError))
-      }
+      await ensureSchema()
       
       const executions = await db.select()
         .from(backendAgentExecutions)
@@ -282,6 +264,8 @@ export class BackendAgentTracker {
    * Get results for completed agents
    */
   async getCompletedResults(evaluationId: string): Promise<Record<string, any>> {
+    await ensureSchema()
+    
     const executions = await db.select()
       .from(backendAgentExecutions)
       .where(

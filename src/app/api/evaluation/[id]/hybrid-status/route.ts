@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { BackendAgentTracker } from '../../../../../lib/adi/backend-agent-tracker'
+import { ensureSchema } from '../../../../../lib/db'
 
 /**
  * API endpoint for checking hybrid evaluation status
@@ -23,15 +24,7 @@ export async function GET(
     console.log(`📊 [API] Checking hybrid status for evaluation: ${evaluationId}`)
     
     // Ensure database connection is established and using correct schema
-    try {
-      const { sql } = await import('../../../../../lib/db/index')
-      if (sql) {
-        await sql`SET search_path TO production, public`
-        console.log(`🔗 [API] Database search path set to production schema`)
-      }
-    } catch (schemaError) {
-      console.warn(`⚠️ [API] Could not set search path:`, schemaError instanceof Error ? schemaError.message : String(schemaError))
-    }
+    await ensureSchema()
     
     const tracker = new BackendAgentTracker()
     
