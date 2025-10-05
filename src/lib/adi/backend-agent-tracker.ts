@@ -1,4 +1,4 @@
-import { db, ensureSchema } from '../db'
+import { db, ensureSchema, withSchema } from '../db'
 import { backendAgentExecutions } from '../db/schema'
 import { eq, and } from 'drizzle-orm'
 
@@ -19,16 +19,16 @@ export class BackendAgentTracker {
    * Start tracking a backend agent execution
    */
   async startExecution(evaluationId: string, agentName: string): Promise<string> {
-    await ensureSchema()
-    
     const executionId = `${evaluationId}-${agentName}-${Date.now()}`
     
-    await db.insert(backendAgentExecutions).values({
-      id: executionId,
-      evaluationId,
-      agentName,
-      status: 'pending',
-      startedAt: new Date(),
+    await withSchema(async () => {
+      await db.insert(backendAgentExecutions).values({
+        id: executionId,
+        evaluationId,
+        agentName,
+        status: 'pending',
+        startedAt: new Date(),
+      })
     })
 
     console.log(`📋 [Tracker] Started tracking ${agentName} execution: ${executionId}`)
@@ -42,27 +42,26 @@ export class BackendAgentTracker {
     try {
       console.log(`📋 [Tracker] Attempting to mark ${executionId} as running...`)
       
-      // Ensure we're using the correct schema
-      await ensureSchema()
-      
-      // First verify the execution exists
-      const existingExecution = await db.select()
-        .from(backendAgentExecutions)
-        .where(eq(backendAgentExecutions.id, executionId))
-        .limit(1)
-      
-      if (existingExecution.length === 0) {
-        throw new Error(`Execution ${executionId} not found in database`)
-      }
-      
-      console.log(`🔍 [Tracker] Found existing execution ${executionId} with status: ${existingExecution[0].status}`)
-      
-      await db.update(backendAgentExecutions)
-        .set({ 
-          status: 'running',
-          startedAt: new Date() // Update to actual start time
-        })
-        .where(eq(backendAgentExecutions.id, executionId))
+      await withSchema(async () => {
+        // First verify the execution exists
+        const existingExecution = await db.select()
+          .from(backendAgentExecutions)
+          .where(eq(backendAgentExecutions.id, executionId))
+          .limit(1)
+        
+        if (existingExecution.length === 0) {
+          throw new Error(`Execution ${executionId} not found in database`)
+        }
+        
+        console.log(`🔍 [Tracker] Found existing execution ${executionId} with status: ${existingExecution[0].status}`)
+        
+        await db.update(backendAgentExecutions)
+          .set({ 
+            status: 'running',
+            startedAt: new Date() // Update to actual start time
+          })
+          .where(eq(backendAgentExecutions.id, executionId))
+      })
 
       console.log(`🏃 [Tracker] Successfully marked ${executionId} as running`)
       
@@ -98,30 +97,29 @@ export class BackendAgentTracker {
     try {
       console.log(`📋 [Tracker] Attempting to complete ${executionId} with ${executionTime}ms execution time...`)
       
-      // Ensure we're using the correct schema
-      await ensureSchema()
-      
-      // First verify the execution exists
-      const existingExecution = await db.select()
-        .from(backendAgentExecutions)
-        .where(eq(backendAgentExecutions.id, executionId))
-        .limit(1)
-      
-      if (existingExecution.length === 0) {
-        throw new Error(`Execution ${executionId} not found in database`)
-      }
-      
-      console.log(`🔍 [Tracker] Found existing execution ${executionId} with status: ${existingExecution[0].status}`)
-      
-      // Update the execution
-      await db.update(backendAgentExecutions)
-        .set({
-          status: 'completed',
-          completedAt: new Date(),
-          result,
-          executionTime
-        })
-        .where(eq(backendAgentExecutions.id, executionId))
+      await withSchema(async () => {
+        // First verify the execution exists
+        const existingExecution = await db.select()
+          .from(backendAgentExecutions)
+          .where(eq(backendAgentExecutions.id, executionId))
+          .limit(1)
+        
+        if (existingExecution.length === 0) {
+          throw new Error(`Execution ${executionId} not found in database`)
+        }
+        
+        console.log(`🔍 [Tracker] Found existing execution ${executionId} with status: ${existingExecution[0].status}`)
+        
+        // Update the execution
+        await db.update(backendAgentExecutions)
+          .set({
+            status: 'completed',
+            completedAt: new Date(),
+            result,
+            executionTime
+          })
+          .where(eq(backendAgentExecutions.id, executionId))
+      })
 
       console.log(`✅ [Tracker] Successfully completed ${executionId} in ${executionTime}ms`)
       
@@ -155,15 +153,15 @@ export class BackendAgentTracker {
    * Mark execution as failed
    */
   async failExecution(executionId: string, error: string): Promise<void> {
-    await ensureSchema()
-    
-    await db.update(backendAgentExecutions)
-      .set({
-        status: 'failed',
-        completedAt: new Date(),
-        error
-      })
-      .where(eq(backendAgentExecutions.id, executionId))
+    await withSchema(async () => {
+      await db.update(backendAgentExecutions)
+        .set({
+          status: 'failed',
+          completedAt: new Date(),
+          error
+        })
+        .where(eq(backendAgentExecutions.id, executionId))
+    })
 
     console.log(`❌ [Tracker] Failed ${executionId}: ${error}`)
   }
@@ -172,14 +170,14 @@ export class BackendAgentTracker {
    * Get execution status
    */
   async getExecution(executionId: string): Promise<BackendAgentExecution | null> {
-    await ensureSchema()
-    
-    const results = await db.select()
-      .from(backendAgentExecutions)
-      .where(eq(backendAgentExecutions.id, executionId))
-      .limit(1)
+    return await withSchema(async () => {
+      const results = await db.select()
+        .from(backendAgentExecutions)
+        .where(eq(backendAgentExecutions.id, executionId))
+        .limit(1)
 
-    return results[0] || null
+      return results[0] || null
+    })
   }
 
   /**
@@ -189,12 +187,11 @@ export class BackendAgentTracker {
     try {
       console.log(`🔍 [Tracker] Fetching executions for evaluation ${evaluationId}...`)
       
-      // Ensure we're using the correct schema
-      await ensureSchema()
-      
-      const executions = await db.select()
-        .from(backendAgentExecutions)
-        .where(eq(backendAgentExecutions.evaluationId, evaluationId))
+      const executions = await withSchema(async () => {
+        return await db.select()
+          .from(backendAgentExecutions)
+          .where(eq(backendAgentExecutions.evaluationId, evaluationId))
+      })
       
       console.log(`🔍 [Tracker] Found ${executions.length} executions for ${evaluationId}`)
       
@@ -205,10 +202,12 @@ export class BackendAgentTracker {
         // Check if the evaluation exists at all
         try {
           const { evaluations } = await import('../db/schema')
-          const evalCheck = await db.select()
-            .from(evaluations)
-            .where(eq(evaluations.id, evaluationId))
-            .limit(1)
+          const evalCheck = await withSchema(async () => {
+            return await db.select()
+              .from(evaluations)
+              .where(eq(evaluations.id, evaluationId))
+              .limit(1)
+          })
           
           if (evalCheck.length === 0) {
             console.error(`❌ [Tracker] Evaluation ${evaluationId} does not exist in database`)
@@ -264,22 +263,22 @@ export class BackendAgentTracker {
    * Get results for completed agents
    */
   async getCompletedResults(evaluationId: string): Promise<Record<string, any>> {
-    await ensureSchema()
-    
-    const executions = await db.select()
-      .from(backendAgentExecutions)
-      .where(
-        and(
-          eq(backendAgentExecutions.evaluationId, evaluationId),
-          eq(backendAgentExecutions.status, 'completed')
+    return await withSchema(async () => {
+      const executions = await db.select()
+        .from(backendAgentExecutions)
+        .where(
+          and(
+            eq(backendAgentExecutions.evaluationId, evaluationId),
+            eq(backendAgentExecutions.status, 'completed')
+          )
         )
-      )
 
-    const results: Record<string, any> = {}
-    for (const execution of executions) {
-      results[execution.agentName] = execution.result
-    }
+      const results: Record<string, any> = {}
+      for (const execution of executions) {
+        results[execution.agentName] = execution.result
+      }
 
-    return results
+      return results
+    })
   }
 }

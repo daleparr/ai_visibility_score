@@ -94,5 +94,54 @@ export async function ensureSchema(): Promise<void> {
   }
 }
 
+// Helper function to execute queries with guaranteed schema path
+export async function withSchema<T>(queryFn: () => Promise<T>): Promise<T> {
+  if (sql) {
+    try {
+      // Set schema path immediately before the query and verify connection
+      await sql`SET search_path TO production, public`
+      
+      // Test connection to ensure it's still active
+      await sql`SELECT 1 as connection_test`
+      
+      console.log('🔗 [DB] Schema path enforced and connection verified for query')
+      return await queryFn()
+    } catch (error) {
+      console.error('❌ [DB] Query with schema failed:', error instanceof Error ? error.message : String(error))
+      
+      // If it's a connection error, try to reconnect once
+      if (error instanceof Error && (error.message.includes('connection') || error.message.includes('timeout'))) {
+        console.log('🔄 [DB] Attempting to reinitialize connection...')
+        try {
+          // Reinitialize connection
+          const writerUrl = DB_URL.includes('?') 
+            ? `${DB_URL}&target_session_attrs=read-write`
+            : `${DB_URL}?target_session_attrs=read-write`
+          
+          sql = neon(writerUrl)
+          db = drizzle(sql, {
+            schema,
+            logger: process.env.NODE_ENV === 'development'
+          })
+          
+          // Set schema path again and retry
+          await sql`SET search_path TO production, public`
+          await sql`SELECT 1 as connection_test`
+          console.log('✅ [DB] Connection reestablished, retrying query...')
+          
+          return await queryFn()
+        } catch (retryError) {
+          console.error('❌ [DB] Connection retry failed:', retryError instanceof Error ? retryError.message : String(retryError))
+          throw retryError
+        }
+      }
+      
+      throw error
+    }
+  } else {
+    throw new Error('Database connection not available')
+  }
+}
+
 export { sql, db }
 export * from './schema'

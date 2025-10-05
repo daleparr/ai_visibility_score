@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { BackendAgentTracker } from '../../../../../lib/adi/backend-agent-tracker'
-import { ensureSchema } from '../../../../../lib/db'
+import { withSchema } from '../../../../../lib/db'
 
 /**
  * API endpoint for checking hybrid evaluation status
@@ -22,9 +22,6 @@ export async function GET(
 
   try {
     console.log(`📊 [API] Checking hybrid status for evaluation: ${evaluationId}`)
-    
-    // Ensure database connection is established and using correct schema
-    await ensureSchema()
     
     const tracker = new BackendAgentTracker()
     
@@ -75,16 +72,19 @@ export async function GET(
       if (overallStatus === 'completed' || overallStatus === 'failed') {
         try {
           console.log(`📝 [API] Updating evaluation ${evaluationId} status to ${overallStatus}`)
-          const { db, evaluations } = await import('../../../../../lib/db/index')
-          const { eq } = await import('drizzle-orm')
           
-          await db.update(evaluations)
-            .set({ 
-              status: overallStatus,
-              completedAt: new Date(),
-              updatedAt: new Date()
-            })
-            .where(eq(evaluations.id, evaluationId))
+          await withSchema(async () => {
+            const { db, evaluations } = await import('../../../../../lib/db/index')
+            const { eq } = await import('drizzle-orm')
+            
+            await db.update(evaluations)
+              .set({ 
+                status: overallStatus,
+                completedAt: new Date(),
+                updatedAt: new Date()
+              })
+              .where(eq(evaluations.id, evaluationId))
+          })
           
           console.log(`✅ [API] Successfully updated evaluation ${evaluationId} status to ${overallStatus}`)
         } catch (updateError) {
