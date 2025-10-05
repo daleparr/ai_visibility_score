@@ -22,10 +22,30 @@ export async function GET(
   try {
     console.log(`📊 [API] Checking hybrid status for evaluation: ${evaluationId}`)
     
+    // Ensure database connection is established and using correct schema
+    try {
+      const { sql } = await import('../../../../../lib/db/index')
+      if (sql) {
+        await sql`SET search_path TO production, public`
+        console.log(`🔗 [API] Database search path set to production schema`)
+      }
+    } catch (schemaError) {
+      console.warn(`⚠️ [API] Could not set search path:`, schemaError instanceof Error ? schemaError.message : String(schemaError))
+    }
+    
     const tracker = new BackendAgentTracker()
     
-    // Get slow agent execution status
-    const executions = await tracker.getEvaluationExecutions(evaluationId)
+    // Get slow agent execution status with retry logic for database consistency
+    let executions = await tracker.getEvaluationExecutions(evaluationId)
+    
+    // If we get fewer executions than expected, wait and retry once
+    // This handles potential database consistency issues
+    if (executions.length < 6) {
+      console.log(`⚠️ [API] Only found ${executions.length} executions, retrying in 1 second...`)
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      executions = await tracker.getEvaluationExecutions(evaluationId)
+      console.log(`🔄 [API] Retry found ${executions.length} executions`)
+    }
     console.log(`🔍 [DEBUG] Found ${executions.length} executions for ${evaluationId}:`)
     executions.forEach(e => {
       console.log(`  - ${e.agentName}: ${e.status} (started: ${e.startedAt}, completed: ${e.completedAt})`)

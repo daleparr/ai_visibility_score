@@ -120,11 +120,46 @@ export class BackendAgentTracker {
   async getEvaluationExecutions(evaluationId: string): Promise<BackendAgentExecution[]> {
     try {
       console.log(`🔍 [Tracker] Fetching executions for evaluation ${evaluationId}...`)
+      
+      // Ensure we're using the correct schema
+      try {
+        const { sql } = await import('../db/index')
+        if (sql) {
+          await sql`SET search_path TO production, public`
+          console.log(`🔗 [Tracker] Database search path set to production schema`)
+        }
+      } catch (schemaError) {
+        console.warn(`⚠️ [Tracker] Could not set search path:`, schemaError instanceof Error ? schemaError.message : String(schemaError))
+      }
+      
       const executions = await db.select()
         .from(backendAgentExecutions)
         .where(eq(backendAgentExecutions.evaluationId, evaluationId))
       
       console.log(`🔍 [Tracker] Found ${executions.length} executions for ${evaluationId}`)
+      
+      // Enhanced logging for debugging
+      if (executions.length === 0) {
+        console.warn(`⚠️ [Tracker] No executions found for ${evaluationId}. Checking if evaluation exists...`)
+        
+        // Check if the evaluation exists at all
+        try {
+          const { evaluations } = await import('../db/schema')
+          const evalCheck = await db.select()
+            .from(evaluations)
+            .where(eq(evaluations.id, evaluationId))
+            .limit(1)
+          
+          if (evalCheck.length === 0) {
+            console.error(`❌ [Tracker] Evaluation ${evaluationId} does not exist in database`)
+          } else {
+            console.log(`✅ [Tracker] Evaluation ${evaluationId} exists with status: ${evalCheck[0].status}`)
+          }
+        } catch (evalCheckError) {
+          console.error(`❌ [Tracker] Failed to check evaluation existence:`, evalCheckError)
+        }
+      }
+      
       executions.forEach((e: BackendAgentExecution) => {
         console.log(`  - ${e.agentName}: ${e.status} (started: ${e.startedAt}, completed: ${e.completedAt})`)
       })
@@ -132,6 +167,11 @@ export class BackendAgentTracker {
       return executions
     } catch (error) {
       console.error(`❌ [Tracker] Failed to fetch executions for ${evaluationId}:`, error)
+      console.error(`❌ [Tracker] Error details:`, {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      })
       throw error
     }
   }
