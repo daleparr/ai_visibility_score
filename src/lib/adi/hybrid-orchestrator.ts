@@ -1,6 +1,9 @@
 import { BaseADIAgent } from './agents/base-agent'
 import { BackendAgentTracker } from './backend-agent-tracker'
 import { apiUrl } from '@/lib/url'
+import { db, evaluations, brands, users } from '../db/index'
+import { eq } from 'drizzle-orm'
+import { randomUUID } from 'crypto'
 import type {
   ADIEvaluationContext,
   ADIOrchestrationResult,
@@ -72,6 +75,9 @@ export class HybridADIOrchestrator {
     console.log(`🚀 [Hybrid] Starting hybrid evaluation for ${context.evaluationId}`)
 
     try {
+      // Ensure evaluation record exists in database before proceeding
+      await this.ensureEvaluationRecord(context)
+      
       // Phase 1: Execute fast agents in parallel (must complete within 8 seconds)
       const fastResults = await this.executeFastAgents(context)
       
@@ -311,6 +317,86 @@ export class HybridADIOrchestrator {
         totalAgents: fastResults.length + slowAgentStatus.completedAgents.length + slowAgentStatus.failedAgents.length,
         performanceGain: `Hybrid execution: ${fastResults.length} fast + ${slowAgentStatus.completedAgents.length} slow agents completed`
       }
+    }
+  }
+
+  /**
+   * Ensures the evaluation record exists in the database
+   * Creates brand and evaluation records as needed
+   */
+  private async ensureEvaluationRecord(context: ADIEvaluationContext): Promise<void> {
+    try {
+      console.log(`🔍 [Hybrid] Ensuring evaluation record exists for ${context.evaluationId}`)
+      
+      // First, ensure the brand exists or create a placeholder
+      let brandId = context.brandId
+      try {
+        // Try to find existing brand
+        const existingBrand = await db.select().from(brands).where(eq(brands.id, brandId)).limit(1)
+        if (existingBrand.length === 0) {
+          // Try to find existing brand by website URL
+          const existingBrandByUrl = await db.select().from(brands).where(eq(brands.websiteUrl, context.websiteUrl)).limit(1)
+          if (existingBrandByUrl.length > 0) {
+            console.log(`🔍 [Hybrid] Found existing brand by URL, using ${existingBrandByUrl[0].id}`)
+            brandId = existingBrandByUrl[0].id
+          } else {
+            // Create a test user first
+            const testUserId = randomUUID()
+            console.log(`📝 [Hybrid] Creating test user record for ${testUserId}`)
+            await db.insert(users).values({
+              id: testUserId,
+              email: `test-user-${Date.now()}@example.com`,
+              name: 'Test User',
+              createdAt: new Date(),
+              updatedAt: new Date()
+            })
+
+            // Create a minimal brand record for testing
+            console.log(`📝 [Hybrid] Creating placeholder brand record for ${brandId}`)
+            await db.insert(brands).values({
+              id: brandId,
+              userId: testUserId,
+              name: `Test Brand (${context.websiteUrl})`,
+              websiteUrl: context.websiteUrl,
+              // normalizedHost is auto-generated, don't set it manually
+              createdAt: new Date(),
+              updatedAt: new Date()
+            })
+          }
+        }
+      } catch (error) {
+        console.error('⚠️ [Hybrid] Brand creation failed, trying to find existing brand:', error.message)
+        // Try to find existing brand by website URL as fallback
+        try {
+          const existingBrandByUrl = await db.select().from(brands).where(eq(brands.websiteUrl, context.websiteUrl)).limit(1)
+          if (existingBrandByUrl.length > 0) {
+            console.log(`🔍 [Hybrid] Found existing brand by URL as fallback, using ${existingBrandByUrl[0].id}`)
+            brandId = existingBrandByUrl[0].id
+          } else {
+            throw new Error('Could not create or find existing brand')
+          }
+        } catch (fallbackError) {
+          console.error('❌ [Hybrid] Could not find existing brand either:', fallbackError.message)
+          throw error
+        }
+      }
+
+      // Now create the evaluation record
+      console.log(`📝 [Hybrid] Creating evaluation record for ${context.evaluationId}`)
+      await db.insert(evaluations).values({
+        id: context.evaluationId,
+        brandId: brandId,
+        status: 'pending',
+        methodologyVersion: 'ADI-v1.0',
+        startedAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      
+      console.log(`✅ [Hybrid] Evaluation record created successfully`)
+    } catch (error) {
+      console.error('❌ [Hybrid] Failed to ensure evaluation record:', error)
+      throw error
     }
   }
 }
