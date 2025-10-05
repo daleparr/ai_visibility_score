@@ -198,56 +198,109 @@ export class HybridADIOrchestrator {
         }
 
         // Make API call to Netlify background function (don't wait for completion)
-        const functionUrl = typeof window === 'undefined' 
-          ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://ai-discoverability-index.netlify.app'}/.netlify/functions/background-agents`
-          : '/.netlify/functions/background-agents'
+        // Try multiple URL strategies for better reliability
+        const possibleUrls = [
+          // Strategy 1: Use environment variables
+          process.env.NEXT_PUBLIC_APP_URL ? `${process.env.NEXT_PUBLIC_APP_URL}/.netlify/functions/background-agents` : null,
+          process.env.URL ? `${process.env.URL}/.netlify/functions/background-agents` : null,
+          process.env.DEPLOY_PRIME_URL ? `${process.env.DEPLOY_PRIME_URL}/.netlify/functions/background-agents` : null,
+          // Strategy 2: Fallback to production URL
+          'https://ai-discoverability-index.netlify.app/.netlify/functions/background-agents',
+          // Strategy 3: Relative URL (for client-side)
+          typeof window !== 'undefined' ? '/.netlify/functions/background-agents' : null
+        ].filter(Boolean)
         
-        console.log(`🔗 [Hybrid] Calling background function: ${functionUrl}`)
-        console.log(`🔗 [Hybrid] Request payload:`, {
-          agentName,
-          evaluationId: context.evaluationId,
-          executionId,
-          inputKeys: Object.keys(agentInput)
+        console.log(`🔗 [Hybrid] Available environment variables:`, {
+          NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+          URL: process.env.URL,
+          DEPLOY_PRIME_URL: process.env.DEPLOY_PRIME_URL,
+          NODE_ENV: process.env.NODE_ENV
         })
         
-        const response = await fetch(functionUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            agentName,
-            input: agentInput,
-            evaluationId: context.evaluationId,
-            executionId
-          })
-        })
+        console.log(`🔗 [Hybrid] Trying URLs in order:`, possibleUrls)
+        
+        let lastError: Error | null = null
+        let response: Response | null = null
+        
+        for (const functionUrl of possibleUrls as string[]) {
+          try {
+            console.log(`🔗 [Hybrid] Attempting to call: ${functionUrl}`)
+            console.log(`🔗 [Hybrid] Request payload:`, {
+              agentName,
+              evaluationId: context.evaluationId,
+              executionId,
+              inputKeys: Object.keys(agentInput)
+            })
+            
+            response = await fetch(functionUrl, {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'User-Agent': 'ADI-Hybrid-Orchestrator/1.0'
+              },
+              body: JSON.stringify({
+                agentName,
+                input: agentInput,
+                evaluationId: context.evaluationId,
+                executionId
+              }),
+              // Add timeout to prevent hanging
+              signal: AbortSignal.timeout(30000) // 30 second timeout
+            })
 
-        console.log(`📡 [Hybrid] Background function response status: ${response.status} ${response.statusText}`)
-        console.log(`📡 [Hybrid] Response headers:`, Object.fromEntries(response.headers.entries()))
+            console.log(`📡 [Hybrid] Response from ${functionUrl}: ${response.status} ${response.statusText}`)
+            console.log(`📡 [Hybrid] Response headers:`, Object.fromEntries(response.headers.entries()))
 
-        if (!response.ok) {
-          const errorBody = await response.text()
-          console.error(`❌ [Hybrid] Background function call failed: ${response.status} ${response.statusText}`)
-          console.error(`❌ [Hybrid] Error response body:`, errorBody)
-          console.error(`❌ [Hybrid] Request URL was: ${functionUrl}`)
-          throw new Error(`Backend API call failed: ${response.status} - ${errorBody}`)
+            if (response.ok) {
+              const result = await response.json()
+              console.log(`✅ [Hybrid] Background function response:`, result)
+              console.log(`🚀 [Hybrid] Successfully triggered slow agent: ${agentName} with execution ID: ${executionId}`)
+              break // Success! Exit the loop
+            } else {
+              const errorBody = await response.text()
+              console.error(`❌ [Hybrid] Background function call failed for ${functionUrl}: ${response.status} ${response.statusText}`)
+              console.error(`❌ [Hybrid] Error response body:`, errorBody)
+              lastError = new Error(`Backend API call failed: ${response.status} - ${errorBody}`)
+            }
+          } catch (error) {
+            console.error(`❌ [Hybrid] Network error calling ${functionUrl}:`, error instanceof Error ? error.message : String(error))
+            lastError = error instanceof Error ? error : new Error(String(error))
+            continue // Try next URL
+          }
         }
-
-        const result = await response.json()
-        console.log(`✅ [Hybrid] Background function response:`, result)
-        console.log(`🚀 [Hybrid] Successfully triggered slow agent: ${agentName} with execution ID: ${executionId}`)
+        
+        // If we got here and response is not ok, all URLs failed
+        if (!response || !response.ok) {
+          console.error(`❌ [Hybrid] All background function URLs failed for ${agentName}`)
+          throw lastError || new Error('All background function URLs failed')
+        }
 
       } catch (error) {
         console.error(`❌ [Hybrid] Failed to trigger slow agent ${agentName}:`, error)
+        console.error(`❌ [Hybrid] Error details:`, {
+          name: error instanceof Error ? error.name : 'Unknown',
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          evaluationId: context.evaluationId,
+          agentName
+        })
         
-        // Mark as failed in tracker
+        // Mark as failed in tracker - but create a new execution ID since the original might not exist
         try {
-          const executionId = await this.tracker.startExecution(context.evaluationId, agentName)
+          console.log(`📋 [Hybrid] Attempting to mark ${agentName} as failed for evaluation ${context.evaluationId}`)
+          const failedExecutionId = await this.tracker.startExecution(context.evaluationId, agentName)
           await this.tracker.failExecution(
-            executionId, 
-            error instanceof Error ? error.message : 'Failed to trigger'
+            failedExecutionId, 
+            error instanceof Error ? error.message : 'Failed to trigger background function'
           )
+          console.log(`📋 [Hybrid] Successfully marked ${agentName} as failed with execution ID ${failedExecutionId}`)
         } catch (trackingError) {
-          console.error('Failed to track slow agent failure:', trackingError)
+          console.error('❌ [Hybrid] Failed to track slow agent failure:', trackingError)
+          console.error('❌ [Hybrid] Tracking error details:', {
+            name: trackingError instanceof Error ? trackingError.name : 'Unknown',
+            message: trackingError instanceof Error ? trackingError.message : String(trackingError),
+            originalError: error instanceof Error ? error.message : String(error)
+          })
         }
       }
     })
