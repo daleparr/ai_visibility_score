@@ -37,14 +37,24 @@ export class BackendAgentTracker {
    * Update execution status to running
    */
   async markRunning(executionId: string): Promise<void> {
-    await db.update(backendAgentExecutions)
-      .set({ 
-        status: 'running',
-        startedAt: new Date() // Update to actual start time
-      })
-      .where(eq(backendAgentExecutions.id, executionId))
+    try {
+      console.log(`📋 [Tracker] Attempting to mark ${executionId} as running...`)
+      await db.update(backendAgentExecutions)
+        .set({ 
+          status: 'running',
+          startedAt: new Date() // Update to actual start time
+        })
+        .where(eq(backendAgentExecutions.id, executionId))
 
-    console.log(`🏃 [Tracker] Marked ${executionId} as running`)
+      console.log(`🏃 [Tracker] Successfully marked ${executionId} as running`)
+      
+      // Verify the update worked
+      const verification = await this.getExecution(executionId)
+      console.log(`🔍 [Tracker] Verification - ${executionId} status: ${verification?.status}`)
+    } catch (error) {
+      console.error(`❌ [Tracker] Failed to mark ${executionId} as running:`, error)
+      throw error
+    }
   }
 
   /**
@@ -55,16 +65,26 @@ export class BackendAgentTracker {
     result: any, 
     executionTime: number
   ): Promise<void> {
-    await db.update(backendAgentExecutions)
-      .set({
-        status: 'completed',
-        completedAt: new Date(),
-        result,
-        executionTime
-      })
-      .where(eq(backendAgentExecutions.id, executionId))
+    try {
+      console.log(`📋 [Tracker] Attempting to complete ${executionId} with ${executionTime}ms execution time...`)
+      await db.update(backendAgentExecutions)
+        .set({
+          status: 'completed',
+          completedAt: new Date(),
+          result,
+          executionTime
+        })
+        .where(eq(backendAgentExecutions.id, executionId))
 
-    console.log(`✅ [Tracker] Completed ${executionId} in ${executionTime}ms`)
+      console.log(`✅ [Tracker] Successfully completed ${executionId} in ${executionTime}ms`)
+      
+      // Verify the update worked
+      const verification = await this.getExecution(executionId)
+      console.log(`🔍 [Tracker] Verification - ${executionId} status: ${verification?.status}, completed: ${verification?.completedAt}`)
+    } catch (error) {
+      console.error(`❌ [Tracker] Failed to complete ${executionId}:`, error)
+      throw error
+    }
   }
 
   /**
@@ -98,9 +118,22 @@ export class BackendAgentTracker {
    * Get all executions for an evaluation
    */
   async getEvaluationExecutions(evaluationId: string): Promise<BackendAgentExecution[]> {
-    return await db.select()
-      .from(backendAgentExecutions)
-      .where(eq(backendAgentExecutions.evaluationId, evaluationId))
+    try {
+      console.log(`🔍 [Tracker] Fetching executions for evaluation ${evaluationId}...`)
+      const executions = await db.select()
+        .from(backendAgentExecutions)
+        .where(eq(backendAgentExecutions.evaluationId, evaluationId))
+      
+      console.log(`🔍 [Tracker] Found ${executions.length} executions for ${evaluationId}`)
+      executions.forEach((e: BackendAgentExecution) => {
+        console.log(`  - ${e.agentName}: ${e.status} (started: ${e.startedAt}, completed: ${e.completedAt})`)
+      })
+      
+      return executions
+    } catch (error) {
+      console.error(`❌ [Tracker] Failed to fetch executions for ${evaluationId}:`, error)
+      throw error
+    }
   }
 
   /**
