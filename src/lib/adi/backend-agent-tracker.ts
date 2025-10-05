@@ -39,6 +39,30 @@ export class BackendAgentTracker {
   async markRunning(executionId: string): Promise<void> {
     try {
       console.log(`📋 [Tracker] Attempting to mark ${executionId} as running...`)
+      
+      // Ensure we're using the correct schema
+      try {
+        const { sql } = await import('../db/index')
+        if (sql) {
+          await sql`SET search_path TO production, public`
+          console.log(`🔗 [Tracker] Database search path set to production schema for running update`)
+        }
+      } catch (schemaError) {
+        console.warn(`⚠️ [Tracker] Could not set search path for running update:`, schemaError instanceof Error ? schemaError.message : String(schemaError))
+      }
+      
+      // First verify the execution exists
+      const existingExecution = await db.select()
+        .from(backendAgentExecutions)
+        .where(eq(backendAgentExecutions.id, executionId))
+        .limit(1)
+      
+      if (existingExecution.length === 0) {
+        throw new Error(`Execution ${executionId} not found in database`)
+      }
+      
+      console.log(`🔍 [Tracker] Found existing execution ${executionId} with status: ${existingExecution[0].status}`)
+      
       await db.update(backendAgentExecutions)
         .set({ 
           status: 'running',
@@ -50,9 +74,21 @@ export class BackendAgentTracker {
       
       // Verify the update worked
       const verification = await this.getExecution(executionId)
-      console.log(`🔍 [Tracker] Verification - ${executionId} status: ${verification?.status}`)
+      if (!verification) {
+        throw new Error(`Execution ${executionId} not found after running update`)
+      }
+      if (verification.status !== 'running') {
+        throw new Error(`Execution ${executionId} status is still ${verification.status} after running update`)
+      }
+      console.log(`🔍 [Tracker] Verification - ${executionId} status: ${verification.status}`)
     } catch (error) {
       console.error(`❌ [Tracker] Failed to mark ${executionId} as running:`, error)
+      console.error(`❌ [Tracker] Running update error details:`, {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        executionId
+      })
       throw error
     }
   }
@@ -67,6 +103,31 @@ export class BackendAgentTracker {
   ): Promise<void> {
     try {
       console.log(`📋 [Tracker] Attempting to complete ${executionId} with ${executionTime}ms execution time...`)
+      
+      // Ensure we're using the correct schema
+      try {
+        const { sql } = await import('../db/index')
+        if (sql) {
+          await sql`SET search_path TO production, public`
+          console.log(`🔗 [Tracker] Database search path set to production schema for completion`)
+        }
+      } catch (schemaError) {
+        console.warn(`⚠️ [Tracker] Could not set search path for completion:`, schemaError instanceof Error ? schemaError.message : String(schemaError))
+      }
+      
+      // First verify the execution exists
+      const existingExecution = await db.select()
+        .from(backendAgentExecutions)
+        .where(eq(backendAgentExecutions.id, executionId))
+        .limit(1)
+      
+      if (existingExecution.length === 0) {
+        throw new Error(`Execution ${executionId} not found in database`)
+      }
+      
+      console.log(`🔍 [Tracker] Found existing execution ${executionId} with status: ${existingExecution[0].status}`)
+      
+      // Update the execution
       await db.update(backendAgentExecutions)
         .set({
           status: 'completed',
@@ -78,11 +139,28 @@ export class BackendAgentTracker {
 
       console.log(`✅ [Tracker] Successfully completed ${executionId} in ${executionTime}ms`)
       
-      // Verify the update worked
+      // Verify the update worked by reading it back
       const verification = await this.getExecution(executionId)
-      console.log(`🔍 [Tracker] Verification - ${executionId} status: ${verification?.status}, completed: ${verification?.completedAt}`)
+      if (!verification) {
+        throw new Error(`Execution ${executionId} not found after completion update`)
+      }
+      if (verification.status !== 'completed') {
+        throw new Error(`Execution ${executionId} status is still ${verification.status} after completion update`)
+      }
+      if (!verification.completedAt) {
+        throw new Error(`Execution ${executionId} completedAt is null after completion update`)
+      }
+      
+      console.log(`🔍 [Tracker] Verification - ${executionId} status: ${verification.status}, completed: ${verification.completedAt}`)
     } catch (error) {
       console.error(`❌ [Tracker] Failed to complete ${executionId}:`, error)
+      console.error(`❌ [Tracker] Error details:`, {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        executionId,
+        executionTime
+      })
       throw error
     }
   }

@@ -192,10 +192,47 @@ export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResp
     const executionTime = Date.now() - startTime
     console.log(`⚡ [Background-${requestId}] Agent ${agentName} completed, execution time: ${executionTime}ms`)
 
-    // Mark as completed in database
+    // Mark as completed in database with verification
     console.log(`💾 [Background-${requestId}] Saving completion to database...`)
-    await tracker.completeExecution(executionId, result, executionTime)
-    console.log(`💾 [Background-${requestId}] Successfully saved completion for ${executionId}`)
+    try {
+      await tracker.completeExecution(executionId, result, executionTime)
+      console.log(`💾 [Background-${requestId}] Successfully saved completion for ${executionId}`)
+      
+      // Verify the completion was actually saved
+      console.log(`🔍 [Background-${requestId}] Verifying completion was saved...`)
+      const verification = await tracker.getExecution(executionId)
+      if (!verification) {
+        throw new Error(`Execution ${executionId} not found after completion`)
+      }
+      if (verification.status !== 'completed') {
+        throw new Error(`Execution ${executionId} status is ${verification.status}, expected 'completed'`)
+      }
+      console.log(`✅ [Background-${requestId}] Completion verified: ${verification.status}`)
+      
+    } catch (completionError) {
+      console.error(`❌ [Background-${requestId}] Failed to complete execution ${executionId}:`, completionError)
+      console.error(`❌ [Background-${requestId}] Completion error details:`, {
+        name: completionError instanceof Error ? completionError.name : 'Unknown',
+        message: completionError instanceof Error ? completionError.message : String(completionError),
+        executionId,
+        agentName,
+        evaluationId
+      })
+      
+      return {
+        statusCode: 500,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          success: false,
+          error: 'Failed to save completion to database',
+          details: completionError instanceof Error ? completionError.message : String(completionError),
+          agentName,
+          executionId,
+          evaluationId,
+          requestId
+        })
+      }
+    }
 
     console.log(`✅ [Background-${requestId}] ${agentName} completed in ${executionTime}ms`)
 
@@ -209,7 +246,8 @@ export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResp
         agentName,
         result,
         executionTime,
-        evaluationId
+        evaluationId,
+        verificationStatus: 'completed'
       })
     }
 
