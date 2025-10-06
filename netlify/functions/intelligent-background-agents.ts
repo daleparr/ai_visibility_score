@@ -32,66 +32,107 @@ function getQueueManager(): IntelligentQueueManager {
   return queueManager
 }
 
+// --- Queue Processing ---
+const PROCESS_INTERVAL = 2000; // Process every 2 seconds
+let isProcessing = false;
+let intervalId: NodeJS.Timeout | null = null;
+
+async function processQueue() {
+  if (isProcessing) {
+    console.log('🔄 [QueueProcessor] Skipping run, already in progress.');
+    return;
+  }
+  isProcessing = true;
+  console.log('🏃 [QueueProcessor] Starting queue processing run...');
+
+  try {
+    const manager = getQueueManager();
+    const processedJobs = await manager.processNextBatch();
+    if (processedJobs > 0) {
+      console.log(`✅ [QueueProcessor] Processed ${processedJobs} jobs.`);
+    } else {
+      console.log('💨 [QueueProcessor] Queue is empty, nothing to process.');
+    }
+  } catch (error) {
+    console.error('💥 [QueueProcessor] CRITICAL error during queue processing:', error);
+  } finally {
+    isProcessing = false;
+    console.log('🏁 [QueueProcessor] Finished queue processing run.');
+  }
+}
+
+function startQueueProcessor() {
+  if (intervalId) {
+    console.log('✅ [QueueProcessor] Processor already running.');
+    return;
+  }
+  console.log(`⏰ [QueueProcessor] Starting processor with ${PROCESS_INTERVAL}ms interval.`);
+  intervalId = setInterval(processQueue, PROCESS_INTERVAL);
+}
+
+// Start the processor when the function is loaded
+startQueueProcessor();
+
 export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResponse> => {
   const functionStartTime = Date.now()
   const requestId = Math.random().toString(36).substring(7)
   
-  console.log(`🧠 [Intelligent-${requestId}] Function invoked at ${new Date().toISOString()}`)
-  console.log(`🧠 [Intelligent-${requestId}] Method: ${event.httpMethod}`)
-  console.log(`🧠 [Intelligent-${requestId}] Headers:`, JSON.stringify(event.headers, null, 2))
+  // Heartbeat log to confirm invocation
+  console.log(`❤️ [Intelligent-Shell] Heartbeat: Intelligent background function invoked. Request ID: ${requestId}`)
 
-  // Test database connectivity immediately
-  console.log(`🔍 [Intelligent-${requestId}] Testing database connectivity...`)
   try {
+    console.log(`🧠 [Intelligent-${requestId}] Function invoked at ${new Date().toISOString()}`)
+    console.log(`🧠 [Intelligent-${requestId}] Method: ${event.httpMethod}`)
+
+    // Securely test database connectivity
+    console.log(`🔍 [Intelligent-${requestId}] Securely testing database connectivity...`)
     await withSchema(async () => {
       const { sql } = await import('../../src/lib/db')
       const testResult = await sql`SELECT 1 as test_connection, current_schema() as current_schema`
       console.log(`✅ [Intelligent-${requestId}] Database connection test successful:`, testResult[0])
     })
-  } catch (dbTestError) {
-    console.error(`❌ [Intelligent-${requestId}] Database connection test failed:`, dbTestError)
+
+    // Route to appropriate handler based on HTTP method
+    switch (event.httpMethod) {
+      case 'GET':
+        console.log(`➡️ [Intelligent-${requestId}] Routing to handleGetStatus...`)
+        return await handleGetStatus(requestId)
+      case 'POST':
+        console.log(`➡️ [Intelligent-${requestId}] Routing to handleEnqueueAgent...`)
+        return await handleEnqueueAgent(event, requestId)
+      case 'DELETE':
+        console.log(`➡️ [Intelligent-${requestId}] Routing to handleCancelEvaluation...`)
+        return await handleCancelEvaluation(event, requestId)
+      default:
+        console.warn(`⚠️ [Intelligent-${requestId}] Method not allowed: ${event.httpMethod}`)
+        return {
+          statusCode: 405,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: `Method ${event.httpMethod} Not Allowed` })
+        }
+    }
+  } catch (error) {
+    const executionTime = Date.now() - functionStartTime
+    console.error(`💥 [Intelligent-Shell] UNHANDLED CRITICAL ERROR after ${executionTime}ms. Request ID: ${requestId}`, {
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : 'No stack available',
+      errorObject: JSON.stringify(error, null, 2),
+      requestId
+    })
+    
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         success: false,
-        error: 'Database connection test failed',
-        details: dbTestError instanceof Error ? dbTestError.message : String(dbTestError),
+        error: 'Critical unhandled error in intelligent background function shell.',
+        details: error instanceof Error ? error.message : String(error),
         requestId
       })
     }
-  }
-
-  // Handle different HTTP methods
-  if (event.httpMethod === 'GET') {
-    // Return queue status and metrics
-    return await handleGetStatus(requestId)
-  }
-
-  if (event.httpMethod === 'POST') {
-    // Enqueue new agent
-    return await handleEnqueueAgent(event, requestId)
-  }
-
-  if (event.httpMethod === 'DELETE') {
-    // Cancel evaluation
-    return await handleCancelEvaluation(event, requestId)
-  }
-
-  // Method not allowed
-  return {
-    statusCode: 405,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, DELETE',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    },
-    body: JSON.stringify({ 
-      error: 'Method not allowed',
-      allowed: ['GET', 'POST', 'DELETE'],
-      received: event.httpMethod
-    })
+  } finally {
+    const executionTime = Date.now() - functionStartTime
+    console.log(`🔚 [Intelligent-Shell] Execution finished for Request ID: ${requestId}. Total time: ${executionTime}ms`)
   }
 }
 
