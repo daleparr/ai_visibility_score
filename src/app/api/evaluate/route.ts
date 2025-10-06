@@ -7,9 +7,10 @@ import { getBrand } from '@/lib/database'
 // REMOVE THIS - Wrong system
 // import { EvaluationEngine, createEvaluationEngine } from '@/lib/evaluation-engine'
 // ADD THIS - Hybrid system for better performance
-import { HybridADIService } from '@/lib/adi/hybrid-adi-service'
+import { IntelligentHybridADIOrchestrator } from '@/lib/adi/intelligent-hybrid-orchestrator'
 import { ensureGuestUser, createBrand as upsertBrand, createEvaluation } from '@/lib/database'
 import { safeHostname } from '@/lib/url'
+import type { ADIEvaluationContext } from '@/types/adi'
 
 function extractBrandNameFromUrl(url: string): string {
   try {
@@ -223,26 +224,38 @@ export async function POST(request: NextRequest) {
 
     console.log(`[ROUTE_HANDLER] Created evaluation: ${evaluation.id}`)
 
-    // 2. Use HYBRID ADI orchestration system for better performance
-    console.log(`🔍 [ROUTE_DEBUG] Creating Hybrid ADI Service instance`)
-    const hybridAdiService = new HybridADIService()
-    console.log(`🔍 [ROUTE_DEBUG] Hybrid ADI Service instance created`)
+    // 2. Use INTELLIGENT HYBRID ADI orchestration system for better performance
+    console.log(`🔍 [ROUTE_DEBUG] Creating Intelligent Hybrid ADI Orchestrator instance`)
+    const intelligentOrchestrator = new IntelligentHybridADIOrchestrator()
+    console.log(`🔍 [ROUTE_DEBUG] Intelligent Hybrid ADI Orchestrator instance created`)
 
-    // Start hybrid evaluation - returns fast results immediately, slow agents run in background
-    console.log(`🔍 [ROUTE_DEBUG] Starting hybrid evaluateBrand call`)
-    hybridAdiService.evaluateBrand(
-      brand.id,
-      brand.websiteUrl,
-      tier as 'free' | 'index-pro' | 'enterprise',
-      evaluation.id
-    ).then(result => {
+    // Create evaluation context
+    const context: ADIEvaluationContext = {
+      evaluationId: evaluation.id,
+      brandId: brand.id,
+      websiteUrl: brand.websiteUrl,
+      industryId: undefined, // Will be determined during evaluation
+      evaluationType: 'standard', // Default evaluation type
+      queryCanon: [], // Will be populated by crawl agent
+      crawlArtifacts: [], // Will be populated by crawl agent
+      metadata: {
+        brandName: brand.name,
+        tier,
+        userId: guestUser.id,
+        timestamp: new Date()
+      }
+    }
+
+    // Start intelligent hybrid evaluation - returns fast results immediately, slow agents run in intelligent queue
+    console.log(`🔍 [ROUTE_DEBUG] Starting intelligent hybrid executeEvaluation call`)
+    intelligentOrchestrator.executeEvaluation(context).then(result => {
       console.log(`[ROUTE_HANDLER] Fast phase completed: ${Object.keys(result.agentResults).length} agents, status: ${result.overallStatus}`)
-      // Note: Slow agents continue running in background
+      // Note: Slow agents continue running in intelligent background queue
     }).catch(error => {
-      console.error(`[ROUTE_HANDLER] Hybrid evaluation failed: ${error.message}`)
+      console.error(`[ROUTE_HANDLER] Intelligent hybrid evaluation failed: ${error.message}`)
       console.error(`[ROUTE_HANDLER] Error stack:`, error.stack)
     })
-    console.log(`🔍 [ROUTE_DEBUG] Hybrid evaluateBrand call initiated (fast + background)`)
+    console.log(`🔍 [ROUTE_DEBUG] Intelligent hybrid executeEvaluation call initiated (fast + intelligent background)`)
 
     // 3. Return immediate response
     // The response should include evaluationId for polling
