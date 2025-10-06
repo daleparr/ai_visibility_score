@@ -65,11 +65,11 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   private readonly CRAWL_TIMEOUT = 30000 // 30 seconds per page - PROPER TIME for reliable HTML extraction
   private readonly HTML_PROCESSING_TIMEOUT = 5000 // 5 seconds for enhanced parsing
   
-  // TWO-TIERED SITEMAP PROCESSING LIMITS - CONSERVATIVE FOR LARGE SITES
-  private readonly MAX_SITEMAP_INDEXES_TO_PROCESS = 3 // Reduced: Limit for sitemap index files (high-level structure)
-  private readonly MAX_CONTENT_SITEMAPS_TO_PROCESS = 8 // Reduced: Limit for content-bearing sitemaps
-  private readonly MAX_SITEMAP_URLS_TO_PROCESS = 50 // Stop after finding 50 sitemap URLs within a single sitemap
-  private readonly MAX_TOTAL_URLS_DISCOVERED = 8000 // Reduced: Stop after discovering 8k URLs total
+  // TWO-TIERED SITEMAP PROCESSING LIMITS - ULTRA-CONSERVATIVE FOR LARGE SITES LIKE NIKE
+  private readonly MAX_SITEMAP_INDEXES_TO_PROCESS = 2 // Ultra-conservative: Limit for sitemap index files (high-level structure)
+  private readonly MAX_CONTENT_SITEMAPS_TO_PROCESS = 4 // Ultra-conservative: Limit for content-bearing sitemaps
+  private readonly MAX_SITEMAP_URLS_TO_PROCESS = 30 // Reduced: Stop after finding 30 sitemap URLs within a single sitemap
+  private readonly MAX_TOTAL_URLS_DISCOVERED = 3000 // Ultra-conservative: Stop after discovering 3k URLs total
   
   // SEPARATE TRACKING FOR INDEXES VS CONTENT SITEMAPS
   private sitemapIndexesFetched = 0 // Track sitemap index files processed
@@ -446,7 +446,7 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
    */
   private async discoverAndParseSitemap(websiteUrl: string): Promise<SitemapData | null> {
     const startTime = Date.now()
-    const MAX_SITEMAP_PROCESSING_TIME = 10 * 60 * 1000 // 10 minutes timeout for sitemap processing
+    const MAX_SITEMAP_PROCESSING_TIME = 5 * 60 * 1000 // 5 minutes timeout for sitemap processing (ultra-conservative)
     const baseUrl = new URL(websiteUrl).origin
     
     // Standard sitemap locations to check
@@ -521,8 +521,8 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
             this.contentSitemapsFetched++
           }
           
-          // Conservative smart exit if we have sufficient URLs from index exploration
-          if (allUrls.length > 4000) {
+          // Ultra-conservative smart exit if we have sufficient URLs from index exploration
+          if (allUrls.length > 1500) {
             console.log(`⚡ [BFS] Phase 1 early exit: Found ${allUrls.length} URLs from index exploration`)
             break
           }
@@ -569,8 +569,8 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
           
           console.log(`✅ [BFS] Added ${sitemapData.urls.length} URLs from content sitemap. Total: ${allUrls.length}`)
           
-          // Conservative smart exit when we have sufficient URLs
-          if (sitemapData.urls.length > 2000 || allUrls.length > 6000) {
+          // Ultra-conservative smart exit when we have sufficient URLs
+          if (sitemapData.urls.length > 1000 || allUrls.length > 2500) {
             console.log(`⚡ [BFS] Phase 2 smart exit: Found ${sitemapData.urls.length} URLs from sitemap or ${allUrls.length} total URLs`)
             break
           }

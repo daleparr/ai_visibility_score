@@ -124,12 +124,22 @@ export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResp
       }
     }
 
-    // Mark as running in database
-    console.log(`📋 [Background-${requestId}] Marking ${executionId} as running...`)
-    try {
-      await tracker.markRunning(executionId)
-      console.log(`📋 [Background-${requestId}] Successfully marked ${executionId} as running`)
-    } catch (dbError) {
+        // Mark as running in database
+        console.log(`📋 [Background-${requestId}] Marking ${executionId} as running...`)
+        console.log(`📋 [Background-${requestId}] Execution details: agentName=${agentName}, evaluationId=${evaluationId}, executionId=${executionId}`)
+        try {
+          await tracker.markRunning(executionId)
+          console.log(`📋 [Background-${requestId}] Successfully marked ${executionId} as running`)
+          
+          // Immediate verification that the update worked
+          console.log(`🔍 [Background-${requestId}] Verifying running status was saved...`)
+          const runningVerification = await tracker.getExecution(executionId)
+          if (runningVerification) {
+            console.log(`✅ [Background-${requestId}] Running verification successful: ${runningVerification.status}`)
+          } else {
+            console.error(`❌ [Background-${requestId}] Running verification failed: execution not found`)
+          }
+        } catch (dbError) {
       console.error(`❌ [Background-${requestId}] Failed to mark ${executionId} as running:`, dbError)
       console.error(`❌ [Background-${requestId}] Database error details:`, {
         name: dbError instanceof Error ? dbError.name : 'Unknown',
@@ -215,53 +225,70 @@ export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResp
     const executionTime = Date.now() - startTime
     console.log(`⚡ [Background-${requestId}] Agent ${agentName} completed, execution time: ${executionTime}ms`)
 
-    // Mark as completed in database with enhanced verification
-    console.log(`💾 [Background-${requestId}] Saving completion to database...`)
-    try {
-      await tracker.completeExecution(executionId, result, executionTime)
-      console.log(`💾 [Background-${requestId}] Successfully saved completion for ${executionId}`)
-      
-      // Enhanced verification with retry to handle potential database consistency issues
-      console.log(`🔍 [Background-${requestId}] Verifying completion was saved...`)
-      let verification = await tracker.getExecution(executionId)
-      let retryCount = 0
-      const maxRetries = 3
-      
-      console.log(`🔍 [Background-${requestId}] Initial verification result:`, {
-        found: !!verification,
-        status: verification?.status,
-        executionId: verification?.id,
-        completedAt: verification?.completedAt
-      })
-      
-      while ((!verification || verification.status !== 'completed') && retryCount < maxRetries) {
-        console.log(`🔄 [Background-${requestId}] Verification attempt ${retryCount + 1}/${maxRetries}...`)
-        await new Promise(resolve => setTimeout(resolve, 500)) // Wait 500ms
-        verification = await tracker.getExecution(executionId)
-        console.log(`🔄 [Background-${requestId}] Retry ${retryCount + 1} result:`, {
-          found: !!verification,
-          status: verification?.status,
-          executionId: verification?.id,
-          completedAt: verification?.completedAt
-        })
-        retryCount++
-      }
-      
-      if (!verification) {
-        throw new Error(`Execution ${executionId} not found after completion even after ${maxRetries} retries`)
-      }
-      if (verification.status !== 'completed') {
-        throw new Error(`Execution ${executionId} status is ${verification.status}, expected 'completed' after ${maxRetries} retries`)
-      }
-      console.log(`✅ [Background-${requestId}] Completion verified after ${retryCount} attempts: ${verification.status}`)
-      console.log(`✅ [Background-${requestId}] Final verification details:`, {
-        id: verification.id,
-        status: verification.status,
-        agentName: verification.agentName,
-        startedAt: verification.startedAt,
-        completedAt: verification.completedAt,
-        executionTime: verification.executionTime
-      })
+        // Mark as completed in database with enhanced verification
+        console.log(`💾 [Background-${requestId}] Saving completion to database...`)
+        console.log(`💾 [Background-${requestId}] Completion details: executionId=${executionId}, agentName=${agentName}, executionTime=${executionTime}ms`)
+        try {
+          await tracker.completeExecution(executionId, result, executionTime)
+          console.log(`💾 [Background-${requestId}] Successfully saved completion for ${executionId}`)
+          
+          // Enhanced verification with retry to handle potential database consistency issues
+          console.log(`🔍 [Background-${requestId}] Verifying completion was saved...`)
+          let verification = await tracker.getExecution(executionId)
+          let retryCount = 0
+          const maxRetries = 3
+          
+          console.log(`🔍 [Background-${requestId}] Initial verification result:`, {
+            found: !!verification,
+            status: verification?.status,
+            executionId: verification?.id,
+            completedAt: verification?.completedAt,
+            evaluationId: verification?.evaluationId,
+            agentName: verification?.agentName
+          })
+          
+          while ((!verification || verification.status !== 'completed') && retryCount < maxRetries) {
+            console.log(`🔄 [Background-${requestId}] Verification attempt ${retryCount + 1}/${maxRetries}...`)
+            await new Promise(resolve => setTimeout(resolve, 500)) // Wait 500ms
+            verification = await tracker.getExecution(executionId)
+            console.log(`🔄 [Background-${requestId}] Retry ${retryCount + 1} result:`, {
+              found: !!verification,
+              status: verification?.status,
+              executionId: verification?.id,
+              completedAt: verification?.completedAt,
+              evaluationId: verification?.evaluationId,
+              agentName: verification?.agentName
+            })
+            retryCount++
+          }
+          
+          if (!verification) {
+            throw new Error(`Execution ${executionId} not found after completion even after ${maxRetries} retries`)
+          }
+          if (verification.status !== 'completed') {
+            throw new Error(`Execution ${executionId} status is ${verification.status}, expected 'completed' after ${maxRetries} retries`)
+          }
+          console.log(`✅ [Background-${requestId}] Completion verified after ${retryCount} attempts: ${verification.status}`)
+          console.log(`✅ [Background-${requestId}] Final verification details:`, {
+            id: verification.id,
+            status: verification.status,
+            agentName: verification.agentName,
+            evaluationId: verification.evaluationId,
+            startedAt: verification.startedAt,
+            completedAt: verification.completedAt,
+            executionTime: verification.executionTime
+          })
+          
+          // Also test if we can find this execution by evaluationId
+          console.log(`🔍 [Background-${requestId}] Testing if execution can be found by evaluationId...`)
+          const allExecutions = await tracker.getEvaluationExecutions(evaluationId)
+          const foundByEvalId = allExecutions.find(e => e.id === executionId)
+          if (foundByEvalId) {
+            console.log(`✅ [Background-${requestId}] Execution found by evaluationId: ${foundByEvalId.status}`)
+          } else {
+            console.error(`❌ [Background-${requestId}] Execution NOT found by evaluationId despite individual lookup success`)
+            console.error(`❌ [Background-${requestId}] All executions for ${evaluationId}:`, allExecutions.map(e => ({ id: e.id, agentName: e.agentName, status: e.status })))
+          }
       
     } catch (completionError) {
       console.error(`❌ [Background-${requestId}] Failed to complete execution ${executionId}:`, completionError)

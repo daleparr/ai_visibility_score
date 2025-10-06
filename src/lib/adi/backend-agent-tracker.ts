@@ -188,16 +188,44 @@ export class BackendAgentTracker {
       console.log(`🔍 [Tracker] Fetching executions for evaluation ${evaluationId}...`)
       
       const executions = await withSchema(async () => {
-        return await db.select()
+        // Add detailed SQL logging
+        console.log(`🔍 [Tracker] About to execute SQL query for evaluationId: ${evaluationId}`)
+        console.log(`🔍 [Tracker] Query: SELECT * FROM backend_agent_executions WHERE evaluation_id = '${evaluationId}'`)
+        
+        // First, let's check the current schema and connection
+        const { sql } = await import('../db')
+        const schemaCheck = await sql`SELECT current_schema() as current_schema, current_database() as current_database`
+        console.log(`🔍 [Tracker] Current database context:`, schemaCheck[0])
+        
+        // Try a raw SQL query first to see if we get different results
+        const rawResults = await sql`
+          SELECT id, evaluation_id, agent_name, status, started_at, completed_at, result, error, execution_time 
+          FROM backend_agent_executions 
+          WHERE evaluation_id = ${evaluationId}
+        `
+        console.log(`🔍 [Tracker] Raw SQL query returned ${rawResults.length} rows`)
+        if (rawResults.length > 0) {
+          console.log(`🔍 [Tracker] Raw SQL sample:`, rawResults[0])
+        }
+        
+        // Now try the Drizzle query
+        const drizzleResults = await db.select()
           .from(backendAgentExecutions)
           .where(eq(backendAgentExecutions.evaluationId, evaluationId))
+        
+        console.log(`🔍 [Tracker] Drizzle query returned ${drizzleResults.length} rows`)
+        if (drizzleResults.length > 0) {
+          console.log(`🔍 [Tracker] Drizzle sample:`, drizzleResults[0])
+        }
+        
+        return drizzleResults
       })
       
       console.log(`🔍 [Tracker] Found ${executions.length} executions for ${evaluationId}`)
       
       // Enhanced logging for debugging
       if (executions.length === 0) {
-        console.warn(`⚠️ [Tracker] No executions found for ${evaluationId}. Checking if evaluation exists...`)
+        console.warn(`⚠️ [Tracker] No executions found for ${evaluationId}. Performing comprehensive checks...`)
         
         // Check if the evaluation exists at all
         try {
@@ -216,6 +244,26 @@ export class BackendAgentTracker {
           }
         } catch (evalCheckError) {
           console.error(`❌ [Tracker] Failed to check evaluation existence:`, evalCheckError)
+        }
+        
+        // Check if there are ANY backend_agent_executions at all
+        try {
+          await withSchema(async () => {
+            const { sql } = await import('../db')
+            const totalCount = await sql`SELECT COUNT(*) as total FROM backend_agent_executions`
+            console.log(`🔍 [Tracker] Total backend_agent_executions in database: ${totalCount[0].total}`)
+            
+            // Get a sample of recent executions
+            const recentExecutions = await sql`
+              SELECT evaluation_id, agent_name, status, started_at 
+              FROM backend_agent_executions 
+              ORDER BY started_at DESC 
+              LIMIT 5
+            `
+            console.log(`🔍 [Tracker] Recent executions sample:`, recentExecutions)
+          })
+        } catch (countError) {
+          console.error(`❌ [Tracker] Failed to get execution count:`, countError)
         }
       }
       
