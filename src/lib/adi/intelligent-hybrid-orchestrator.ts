@@ -100,12 +100,11 @@ export class IntelligentHybridADIOrchestrator {
         totalExecutionTime: executionTime,
         errors: [],
         warnings: [],
-        metadata: {
-          hybridExecution: true,
-          intelligentQueuing: true,
-          fastAgentsCompleted: fastResults.length,
-          slowAgentsQueued: this.SLOW_AGENTS.length,
-          queueingStrategy: 'progressive_timeout_with_fallbacks'
+        optimizations: {
+          cacheUsed: false,
+          parallelPhases: 2, // Fast phase + slow phase
+          totalAgents: this.FAST_AGENTS.length + this.SLOW_AGENTS.length,
+          performanceGain: 'intelligent_queuing_with_progressive_timeouts'
         }
       }
 
@@ -120,10 +119,11 @@ export class IntelligentHybridADIOrchestrator {
         totalExecutionTime: executionTime,
         errors: [error instanceof Error ? error.message : 'Unknown error'],
         warnings: [],
-        metadata: {
-          hybridExecution: true,
-          intelligentQueuing: true,
-          failedInPhase: 'fast_agents'
+        optimizations: {
+          cacheUsed: false,
+          parallelPhases: 1, // Only reached fast phase
+          totalAgents: this.FAST_AGENTS.length + this.SLOW_AGENTS.length,
+          performanceGain: 'failed_in_fast_phase'
         }
       }
     }
