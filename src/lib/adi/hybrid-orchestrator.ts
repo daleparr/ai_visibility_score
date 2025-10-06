@@ -139,7 +139,7 @@ export class HybridADIOrchestrator {
 
         // Race between agent execution and timeout
         const result = await Promise.race([
-          agent.executeWithTimeout({
+          agent.execute({
             context,
             previousResults: [], // Fast agents run independently
             config: {} // Add required config property
@@ -168,8 +168,8 @@ export class HybridADIOrchestrator {
     // Wait for all fast agents (with individual timeouts)
     const results = await Promise.all(agentPromises)
     
-    const successful = results.filter(r => r.status === 'completed').length
-    const failed = results.filter(r => r.status === 'failed').length
+    const successful = results.filter((r: ADIAgentOutput) => r.status === 'completed').length
+    const failed = results.filter((r: ADIAgentOutput) => r.status === 'failed').length
     
     console.log(`📊 [Hybrid] Fast agents: ${successful} successful, ${failed} failed`)
     

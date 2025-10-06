@@ -144,7 +144,7 @@ export class IntelligentHybridADIOrchestrator {
         }
         
         console.log(`🚀 [IntelligentHybrid] Starting fast agent: ${agent.config.name}`)
-        const result = await agent.executeWithTimeout(input)
+        const result = await agent.execute(input)
         console.log(`✅ [IntelligentHybrid] Fast agent ${agent.config.name} completed`)
         return result
       } catch (error) {

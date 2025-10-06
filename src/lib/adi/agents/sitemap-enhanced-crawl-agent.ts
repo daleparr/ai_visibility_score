@@ -280,47 +280,9 @@ export class SitemapEnhancedCrawlAgent extends BaseADIAgent {
   }
 
   async execute(input: ADIAgentInput): Promise<ADIAgentOutput> {
-    // OPTIMIZED TIMEOUT: Allow sufficient time for HTML extraction
-    const hardTimeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => {
-        console.log(`⏰ OPTIMIZED TIMEOUT: Crawl agent terminated after 70 seconds to ensure completion`);
-        reject(new Error('Optimized timeout: Agent execution completed'));
-      }, 70000); // Match agent config timeout
-    });
-
-    const executionPromise = this.executeInternal(input);
-    
-    try {
-      return await Promise.race([executionPromise, hardTimeoutPromise]);
-    } catch (error) {
-      // 🔧 ANTI-CASCADE: Return any partial data collected before timeout/failure
-      const partialData = this.getPartialCrawlData()
-      if (partialData.hasData) {
-        console.log(`🔄 [AntiCascade] Returning partial crawl data: ${partialData.pagesCollected} pages, ${partialData.sitemapsProcessed} sitemaps`)
-        const partialResult = this.createResult(
-          'partial_crawl_success',
-          Math.min(partialData.qualityScore, 60), // Cap at 60 for partial data
-          partialData.qualityScore,
-          0.7, // Reduced confidence for partial data
-          {
-            ...partialData.data,
-            partialCrawl: true,
-            error: error instanceof Error ? error.message : 'Unknown error',
-            timestamp: new Date().toISOString(),
-            method: 'sitemap_enhanced_partial'
-          }
-        )
-        
-        return this.createOutput('completed', [partialResult], 0, undefined, {
-          partialCrawl: true,
-          pagesCollected: partialData.pagesCollected,
-          sitemapsProcessed: partialData.sitemapsProcessed
-        })
-      }
-      
-      // If no partial data, throw the original error
-      throw error
-    }
+    // The shell now handles timeouts and top-level errors.
+    // This method directly calls the internal execution logic.
+    return this.executeInternal(input);
   }
 
   private async executeInternal(input: ADIAgentInput): Promise<ADIAgentOutput> {

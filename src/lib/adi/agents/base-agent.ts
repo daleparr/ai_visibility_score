@@ -101,59 +101,6 @@ export abstract class BaseADIAgent implements IADIAgent {
     }
   }
 
-  /**
-   * Execute with timeout protection
-   */
-  async executeWithTimeout(input: ADIAgentInput): Promise<ADIAgentOutput> {
-    const startTime = Date.now()
-    console.log(`🚀 Starting agent: ${this.config.name} for evaluation: ${input.context.evaluationId}`)
-    
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => {
-        reject(new AIDIAgentError(
-          this.config.name,
-          `Agent execution timed out after ${this.config.timeout}ms`,
-          this.config
-        ))
-      }, this.config.timeout)
-    })
-
-    try {
-      const result = await Promise.race([
-        this.execute(input),
-        timeoutPromise
-      ])
-
-      if (!this.validate(result)) {
-        const executionTime = Date.now() - startTime
-        console.error(`❌ Agent ${this.config.name} validation failed after ${executionTime}ms`)
-        throw new AIDIAgentError(
-          this.config.name,
-          'Agent output failed validation',
-          this.config,
-          { output: result }
-        )
-      }
-
-      const executionTime = Date.now() - startTime
-      console.log(`✅ Agent ${this.config.name} completed successfully in ${executionTime}ms`)
-      return result
-    } catch (error) {
-      const executionTime = Date.now() - startTime
-      console.error(`❌ Agent ${this.config.name} failed after ${executionTime}ms:`, error)
-      
-      if (error instanceof AIDIAgentError) {
-        throw error
-      }
-      
-      throw new AIDIAgentError(
-        this.config.name,
-        `Execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        this.config,
-        { originalError: error }
-      )
-    }
-  }
 
   /**
    * Helper method to create standardized output

@@ -7,11 +7,13 @@ import { GeoVisibilityAgent } from '../../src/lib/adi/agents/geo-visibility-agen
 import { CommerceAgent } from '../../src/lib/adi/agents/commerce-agent'
 import { BackendAgentTracker } from '../../src/lib/adi/backend-agent-tracker'
 import { withSchema } from '../../src/lib/db'
-import type { ADIAgentInput } from '../../src/types/adi'
+import type { ADIAgentInput, ADIAgent } from '../../src/types/adi'
 
 // Netlify Background Function for LLM-intensive agents
 // Timeout: 15 minutes (much longer than regular functions)
 
+// Define a constant for unknown agent scenarios
+const UNKNOWN_AGENT = 'unknown-agent';
 interface BackgroundAgentRequest {
   agentName: string
   input: ADIAgentInput
@@ -163,75 +165,61 @@ export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResp
       }
     }
 
-    // Initialize the requested agent
-    console.log(`🔧 [Background-${requestId}] Initializing agent: ${agentName}`)
-    let agent
-    switch (agentName) {
-      case 'crawl_agent':
-        console.log(`🔧 [Background-${requestId}] Creating SitemapEnhancedCrawlAgent...`)
-        agent = new SitemapEnhancedCrawlAgent()
-        break
-      case 'llm_test_agent':
-        console.log(`🔧 [Background-${requestId}] Creating BulletproofLLMTestAgent...`)
-        agent = new BulletproofLLMTestAgent()
-        break
-      case 'sentiment_agent':
-        console.log(`🔧 [Background-${requestId}] Creating SentimentAgent...`)
-        agent = new SentimentAgent()
-        break
-      case 'citation_agent':
-        console.log(`🔧 [Background-${requestId}] Creating CitationAgent...`)
-        agent = new CitationAgent()
-        break
-      case 'geo_visibility_agent':
-        console.log(`🔧 [Background-${requestId}] Creating GeoVisibilityAgent...`)
-        agent = new GeoVisibilityAgent()
-        break
-      case 'commerce_agent':
-        console.log(`🔧 [Background-${requestId}] Creating CommerceAgent...`)
-        agent = new CommerceAgent()
-        break
-      default:
-        console.error(`❌ [Background-${requestId}] Unknown agent: ${agentName}`)
-        console.error(`❌ [Background-${requestId}] Available agents: crawl_agent, llm_test_agent, sentiment_agent, citation_agent, geo_visibility_agent, commerce_agent`)
-        
-        try {
-          await tracker.failExecution(executionId, `Unknown agent: ${agentName}`)
-          console.log(`📋 [Background-${requestId}] Marked ${executionId} as failed due to unknown agent`)
-        } catch (failError) {
-          console.error(`❌ [Background-${requestId}] Failed to mark execution as failed:`, failError)
-        }
-        
-        return {
-          statusCode: 400,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            success: false,
-            error: `Unknown agent: ${agentName}`,
-            availableAgents: ['crawl_agent', 'llm_test_agent', 'sentiment_agent', 'citation_agent', 'geo_visibility_agent', 'commerce_agent'],
-            agentName,
-            executionTime: Date.now() - startTime,
-            evaluationId,
-            requestId
-          })
-        }
+    // --- Start of Bulletproof Agent Shell ---
+    const { agent, errorResponse } = initializeAgent(agentName, requestId);
+
+    if (errorResponse) {
+      try {
+        await tracker.failExecution(executionId, `Unknown agent: ${agentName}`);
+        console.log(`📋 [Background-${requestId}] Marked ${executionId} as failed due to unknown agent.`);
+      } catch (failError) {
+        console.error(`❌ [Background-${requestId}] Failed to mark execution as failed:`, failError);
+      }
+      return errorResponse;
     }
     
-    console.log(`✅ [Background-${requestId}] Successfully initialized ${agentName} agent`)
+    console.log(`✅ [Background-${requestId}] Successfully initialized ${agentName} agent`);
 
-    // Execute the agent with full timeout allowance (15 minutes)
-    console.log(`⚡ [Background-${requestId}] Executing ${agentName} agent...`)
-    const result = await agent.executeWithTimeout(input)
-    const executionTime = Date.now() - startTime
-    console.log(`⚡ [Background-${requestId}] Agent ${agentName} completed, execution time: ${executionTime}ms`)
+    // Execute the agent within the secure shell
+    if (!agent) {
+      // This should not happen due to the errorResponse check, but it satisfies TypeScript's strictness
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Agent initialization failed unexpectedly.' }),
+      };
+    }
+    const { result, executionTime, verificationStatus, error } = await executeAgentSecurely(
+      agent,
+      input,
+      tracker,
+      executionId,
+      requestId
+    );
 
-        // Mark as completed in database with enhanced verification
-        console.log(`💾 [Background-${requestId}] Saving completion to database...`)
-        console.log(`💾 [Background-${requestId}] Completion details: executionId=${executionId}, agentName=${agentName}, executionTime=${executionTime}ms`)
-        try {
-          await tracker.completeExecution(executionId, result, executionTime)
-          console.log(`💾 [Background-${requestId}] Successfully saved completion for ${executionId}`)
-          
+    if (error) {
+      // The shell ensures the DB is updated, so we just return the error response
+      return {
+        statusCode: 500,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          success: false,
+          error: `Agent execution failed: ${error}`,
+          agentName,
+          executionId,
+          evaluationId,
+          requestId,
+        }),
+      };
+    }
+
+    // Mark as completed in database with enhanced verification
+    console.log(`💾 [Background-${requestId}] Saving completion to database...`)
+    const finalExecutionTime = executionTime || 0;
+    console.log(`💾 [Background-${requestId}] Completion details: executionId=${executionId}, agentName=${agentName}, executionTime=${finalExecutionTime}ms`)
+    try {
+      await tracker.completeExecution(executionId, result, finalExecutionTime)
+      console.log(`💾 [Background-${requestId}] Successfully saved completion for ${executionId}`)
+      
           // Enhanced verification with retry to handle potential database consistency issues
           console.log(`🔍 [Background-${requestId}] Verifying completion was saved...`)
           let verification = await tracker.getExecution(executionId)
@@ -381,6 +369,101 @@ export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResp
         executionTime,
         evaluationId: 'unknown'
       })
+    }
+  }
+  function initializeAgent(agentName: string, requestId: string): { agent?: ADIAgent; errorResponse?: HandlerResponse } {
+    const agentMap: Record<string, () => ADIAgent> = {
+      'crawl_agent': () => new SitemapEnhancedCrawlAgent(),
+      'llm_test_agent': () => new BulletproofLLMTestAgent(),
+      'sentiment_agent': () => new SentimentAgent(),
+      'citation_agent': () => new CitationAgent(),
+      'geo_visibility_agent': () => new GeoVisibilityAgent(),
+      'commerce_agent': () => new CommerceAgent(),
+    };
+  
+    const agentBuilder = agentMap[agentName];
+  
+    if (!agentBuilder) {
+      console.error(`❌ [Background-${requestId}] Unknown agent: ${agentName}`);
+      const availableAgents = Object.keys(agentMap);
+      console.error(`❌ [Background-${requestId}] Available agents: ${availableAgents.join(', ')}`);
+      return {
+        errorResponse: {
+          statusCode: 400,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            success: false,
+            error: `Unknown agent: ${agentName}`,
+            availableAgents,
+            requestId,
+          }),
+        },
+      };
+    }
+  
+    console.log(`🔧 [Background-${requestId}] Creating ${agentName}...`);
+    const agent = agentBuilder();
+    return { agent };
+  }
+  
+  async function executeAgentSecurely(
+    agent: ADIAgent,
+    input: ADIAgentInput,
+    tracker: BackendAgentTracker,
+    executionId: string,
+    requestId: string
+  ): Promise<{ result?: any; executionTime?: number; verificationStatus?: string; error?: string }> {
+    const startTime = Date.now();
+    let statusUpdated = false;
+  
+    try {
+      console.log(`⚡ [Shell-${requestId}] Executing ${agent.config.name} with timeout of ${agent.config.timeout}ms`);
+      
+      // The shell now calls execute() directly. The timeout is handled by the shell.
+      const result = await agent.execute(input);
+      const executionTime = Date.now() - startTime;
+      
+      console.log(`✅ [Shell-${requestId}] Agent ${agent.config.name} completed in ${executionTime}ms`);
+      
+      await tracker.completeExecution(executionId, result, executionTime);
+      statusUpdated = true;
+      
+      console.log(`💾 [Shell-${requestId}] Marked ${executionId} as completed`);
+      
+      return { result, executionTime, verificationStatus: 'completed' };
+  
+    } catch (error) {
+      const executionTime = Date.now() - startTime;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error during execution';
+      
+      console.error(`❌ [Shell-${requestId}] Agent ${agent.config.name} failed after ${executionTime}ms:`, error);
+      // This catch block is the primary failure handler
+      await tracker.failExecution(executionId, errorMessage);
+      statusUpdated = true;
+      
+      
+      console.log(`💾 [Shell-${requestId}] Marked ${executionId} as failed due to: ${errorMessage}`);
+      
+      return { error: errorMessage };
+  
+    } finally {
+      // The "Bulletproof" part: Ensure status is never left pending
+      if (!statusUpdated) {
+        const executionTime = Date.now() - startTime;
+        console.warn(`🚨 [Shell-${requestId}] FINALLY block triggered: Status was not updated for ${executionId}.`);
+        try {
+          const currentStatus = await tracker.getExecution(executionId);
+          if (currentStatus && currentStatus.status === 'running') {
+            console.warn(`🚨 [Shell-${requestId}] Forcing failure status for ${executionId} to prevent hanging.`);
+            await tracker.failExecution(executionId, 'Unhandled shell exit');
+            console.log(`💾 [Shell-${requestId}] Successfully marked ${executionId} as failed in finally block.`);
+          } else {
+               console.log(`ℹ️ [Shell-${requestId}] Status for ${executionId} was already updated to ${currentStatus?.status}. No action needed.`);
+          }
+        } catch (finalError) {
+          console.error(`❌ [Shell-${requestId}] CRITICAL: Could not fail execution ${executionId} in finally block:`, finalError);
+        }
+      }
     }
   }
 }

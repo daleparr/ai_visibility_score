@@ -26,6 +26,8 @@ export interface ADIIndustry {
   updated_at: string
 }
 
+// This is a generic agent interface for use in the application
+export type ADIAgent = IADIAgent;
 export interface AIDIAgent {
   id: string
   evaluation_id: string
