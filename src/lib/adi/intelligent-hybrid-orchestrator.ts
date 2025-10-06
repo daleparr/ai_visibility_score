@@ -1,4 +1,10 @@
 import { BaseADIAgent } from './agents/base-agent'
+import { SchemaAgent } from './agents/schema-agent'
+import { SemanticAgent } from './agents/semantic-agent'
+import { ConversationalCopyAgent } from './agents/conversational-copy-agent'
+import { KnowledgeGraphAgent } from './agents/knowledge-graph-agent'
+import { BrandHeritageAgent } from './agents/brand-heritage-agent'
+import { ScoreAggregatorAgent as ScoreAggregator } from './agents/score-aggregator-agent'
 import { BackendAgentTracker } from './backend-agent-tracker'
 import { apiUrl } from '@/lib/url'
 import { db, evaluations, brands, users } from '../db/index'
@@ -52,9 +58,15 @@ export class IntelligentHybridADIOrchestrator {
 
   constructor() {
     this.tracker = new BackendAgentTracker()
-    
-    // Initialize slow agent names set
     this.SLOW_AGENTS.forEach(name => this.slowAgentNames.add(name))
+    
+    // Auto-register agents for self-sufficiency
+    this.registerFastAgent(new SchemaAgent())
+    this.registerFastAgent(new SemanticAgent())
+    this.registerFastAgent(new ConversationalCopyAgent())
+    this.registerFastAgent(new KnowledgeGraphAgent())
+    this.registerFastAgent(new BrandHeritageAgent())
+    this.registerFastAgent(new ScoreAggregator())
   }
 
   /**

@@ -44,7 +44,7 @@ export class HybridADIOrchestrator {
     'conversational_copy_agent', // Content analysis (medium LLM)
     'knowledge_graph_agent',    // Entity linking (medium LLM)
     'brand_heritage_agent',     // Pattern matching
-    'score_aggregator'          // Mathematical calculations
+    'score_aggregator_agent'    // Mathematical calculations
   ]
 
   constructor() {
