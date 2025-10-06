@@ -182,12 +182,7 @@ export class IntelligentHybridADIOrchestrator {
         // Create execution record in database
         const executionId = await this.tracker.startExecution(
           context.evaluationId,
-          agentName,
-          { 
-            intelligentQueuing: true,
-            enqueuedAt: new Date().toISOString(),
-            fastResults: fastResults.length
-          }
+          agentName
         )
 
         // Prepare agent input with fast results
