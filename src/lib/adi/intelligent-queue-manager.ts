@@ -1,4 +1,5 @@
 import { BackendAgentTracker } from './backend-agent-tracker'
+import { EvaluationFinalizer } from './evaluation-finalizer'
 import { withSchema } from '../db'
 import type { ADIAgentInput, ADIAgentOutput } from '../../types/adi'
 
@@ -82,6 +83,7 @@ export class IntelligentQueueManager {
   private runningAgents: Map<string, QueuedAgent> = new Map()
   private completedAgents: Map<string, QueuedAgent> = new Map()
   private tracker: BackendAgentTracker
+  private finalizer: EvaluationFinalizer
   
   // Resource management
   private readonly MAX_CONCURRENT_AGENTS = 3  // Limit concurrent background functions
@@ -202,6 +204,7 @@ export class IntelligentQueueManager {
 
   constructor() {
     this.tracker = new BackendAgentTracker()
+    this.finalizer = new EvaluationFinalizer()
     
     // Start periodic cleanup
     setInterval(() => this.cleanupCompletedAgents(), this.QUEUE_CLEANUP_INTERVAL)
@@ -440,6 +443,17 @@ export class IntelligentQueueManager {
     
     console.log(`✅ [Queue] Agent ${agent.agentName} completed successfully in ${executionTime}ms`)
     
+    // Check if evaluation should be finalized
+    try {
+      const finalized = await this.finalizer.checkAndFinalizeEvaluation(agent.evaluationId)
+      if (finalized) {
+        console.log(`🏁 [Queue] Evaluation ${agent.evaluationId} finalized after ${agent.agentName} completion`)
+      }
+    } catch (error) {
+      console.error(`❌ [Queue] Failed to check finalization for ${agent.evaluationId}:`, error)
+      // Don't throw - continue processing other agents
+    }
+    
     // Process queue for dependent agents
     await this.processQueue()
   }
@@ -522,6 +536,17 @@ export class IntelligentQueueManager {
     )
     
     console.log(`⏭️ [Queue] Agent ${agent.agentName} skipped, continuing evaluation`)
+    
+    // Check if evaluation should be finalized (even with skipped agents)
+    try {
+      const finalized = await this.finalizer.checkAndFinalizeEvaluation(agent.evaluationId)
+      if (finalized) {
+        console.log(`🏁 [Queue] Evaluation ${agent.evaluationId} finalized after ${agent.agentName} was skipped`)
+      }
+    } catch (error) {
+      console.error(`❌ [Queue] Failed to check finalization for ${agent.evaluationId}:`, error)
+      // Don't throw - continue processing other agents
+    }
     
     // Process queue for other agents
     await this.processQueue()
