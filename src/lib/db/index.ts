@@ -103,16 +103,32 @@ export async function withSchema<T>(queryFn: () => Promise<T>): Promise<T> {
     while (retryCount <= maxRetries) {
       try {
         // Force a fresh connection for each critical operation to avoid pooling issues
+        // Add explicit transaction isolation and connection parameters
+        const connectionParams = [
+          'target_session_attrs=read-write',
+          'connect_timeout=10',
+          'application_name=adi-hybrid-system',
+          'statement_timeout=30000', // 30 second statement timeout
+          'idle_in_transaction_session_timeout=60000' // 1 minute idle timeout
+        ].join('&')
+        
         const freshSql = neon(DB_URL.includes('?') 
-          ? `${DB_URL}&target_session_attrs=read-write&connect_timeout=10`
-          : `${DB_URL}?target_session_attrs=read-write&connect_timeout=10`)
+          ? `${DB_URL}&${connectionParams}`
+          : `${DB_URL}?${connectionParams}`)
         
         // Set schema path and verify connection in a single transaction-like operation
         await freshSql`SET search_path TO production, public`
         
-        // Test connection and schema
-        const schemaTest = await freshSql`SELECT current_schema() as schema, current_database() as db, pg_backend_pid() as pid`
-        console.log(`🔗 [DB] Fresh connection established - Schema: ${schemaTest[0].schema}, DB: ${schemaTest[0].db}, PID: ${schemaTest[0].pid}`)
+        // Test connection and schema with explicit transaction isolation
+        const schemaTest = await freshSql`
+          SELECT 
+            current_schema() as schema, 
+            current_database() as db, 
+            pg_backend_pid() as pid,
+            current_setting('transaction_isolation') as isolation_level,
+            now() as connection_time
+        `
+        console.log(`🔗 [DB] Fresh connection established - Schema: ${schemaTest[0].schema}, DB: ${schemaTest[0].db}, PID: ${schemaTest[0].pid}, Isolation: ${schemaTest[0].isolation_level}`)
         
         // Create a fresh Drizzle instance with the new connection
         const freshDb = drizzle(freshSql, {
@@ -129,8 +145,22 @@ export async function withSchema<T>(queryFn: () => Promise<T>): Promise<T> {
         try {
           const result = await queryFn()
           
-          // Ensure any writes are committed by doing a final verification query
-          await freshSql`SELECT 1 as commit_check`
+          // CRITICAL: Force explicit commit and read-after-write consistency
+          // This ensures writes are immediately visible to subsequent reads
+          await freshSql`COMMIT`
+          await freshSql`BEGIN`
+          
+          // Verify the connection is still active and can see recent writes
+          const commitVerification = await freshSql`
+            SELECT 
+              1 as commit_check,
+              pg_backend_pid() as verify_pid,
+              now() as verify_time,
+              current_setting('transaction_isolation') as verify_isolation
+          `
+          console.log(`✅ [DB] Transaction commit verified - PID: ${commitVerification[0].verify_pid}, Time: ${commitVerification[0].verify_time}`)
+          
+          await freshSql`COMMIT`
           
           return result
         } finally {
@@ -159,6 +189,55 @@ export async function withSchema<T>(queryFn: () => Promise<T>): Promise<T> {
   } else {
     throw new Error('Database connection not available')
   }
+}
+
+// Helper function to verify database write visibility across connections
+export async function verifyWriteVisibility<T>(
+  writeOperation: () => Promise<T>,
+  verificationQuery: () => Promise<any>,
+  maxRetries: number = 5,
+  baseDelay: number = 1000
+): Promise<T> {
+  console.log(`🔍 [DB] Starting write operation with visibility verification...`)
+  
+  // Perform the write operation
+  const writeResult = await writeOperation()
+  console.log(`✅ [DB] Write operation completed`)
+  
+  // Verify the write is visible with exponential backoff
+  let retryCount = 0
+  while (retryCount < maxRetries) {
+    try {
+      console.log(`🔍 [DB] Verification attempt ${retryCount + 1}/${maxRetries}...`)
+      
+      // Use a completely fresh connection for verification
+      await withSchema(async () => {
+        const verificationResult = await verificationQuery()
+        if (!verificationResult || (Array.isArray(verificationResult) && verificationResult.length === 0)) {
+          throw new Error('Verification failed: write not visible')
+        }
+        console.log(`✅ [DB] Write visibility verified on attempt ${retryCount + 1}`)
+      })
+      
+      // If we get here, verification succeeded
+      return writeResult
+      
+    } catch (verifyError) {
+      console.log(`⚠️ [DB] Verification attempt ${retryCount + 1} failed:`, verifyError instanceof Error ? verifyError.message : String(verifyError))
+      
+      if (retryCount < maxRetries - 1) {
+        const delay = baseDelay * Math.pow(2, retryCount) // Exponential backoff: 1s, 2s, 4s, 8s, 16s
+        console.log(`🔄 [DB] Retrying verification in ${delay}ms...`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+        retryCount++
+      } else {
+        console.error(`❌ [DB] Write visibility verification failed after ${maxRetries} attempts`)
+        throw new Error(`Write visibility verification failed after ${maxRetries} attempts: ${verifyError instanceof Error ? verifyError.message : String(verifyError)}`)
+      }
+    }
+  }
+  
+  return writeResult
 }
 
 export { sql, db }

@@ -1,4 +1,4 @@
-import { db, ensureSchema, withSchema } from '../db'
+import { db, ensureSchema, withSchema, verifyWriteVisibility } from '../db'
 import { backendAgentExecutions } from '../db/schema'
 import { eq, and } from 'drizzle-orm'
 
@@ -42,38 +42,56 @@ export class BackendAgentTracker {
     try {
       console.log(`📋 [Tracker] Attempting to mark ${executionId} as running...`)
       
-      await withSchema(async () => {
-        // First verify the execution exists
-        const existingExecution = await db.select()
-          .from(backendAgentExecutions)
-          .where(eq(backendAgentExecutions.id, executionId))
-          .limit(1)
-        
-        if (existingExecution.length === 0) {
-          throw new Error(`Execution ${executionId} not found in database`)
-        }
-        
-        console.log(`🔍 [Tracker] Found existing execution ${executionId} with status: ${existingExecution[0].status}`)
-        
-        await db.update(backendAgentExecutions)
-          .set({ 
-            status: 'running',
-            startedAt: new Date() // Update to actual start time
+      // Use write visibility verification to ensure the update is immediately visible
+      await verifyWriteVisibility(
+        // Write operation
+        async () => {
+          return await withSchema(async () => {
+            // First verify the execution exists
+            const existingExecution = await db.select()
+              .from(backendAgentExecutions)
+              .where(eq(backendAgentExecutions.id, executionId))
+              .limit(1)
+            
+            if (existingExecution.length === 0) {
+              throw new Error(`Execution ${executionId} not found in database`)
+            }
+            
+            console.log(`🔍 [Tracker] Found existing execution ${executionId} with status: ${existingExecution[0].status}`)
+            
+            await db.update(backendAgentExecutions)
+              .set({ 
+                status: 'running',
+                startedAt: new Date() // Update to actual start time
+              })
+              .where(eq(backendAgentExecutions.id, executionId))
+              
+            return { executionId, status: 'running' }
           })
-          .where(eq(backendAgentExecutions.id, executionId))
-      })
+        },
+        // Verification query
+        async () => {
+          return await withSchema(async () => {
+            const verification = await db.select()
+              .from(backendAgentExecutions)
+              .where(and(
+                eq(backendAgentExecutions.id, executionId),
+                eq(backendAgentExecutions.status, 'running')
+              ))
+              .limit(1)
+            
+            if (verification.length === 0) {
+              throw new Error(`Execution ${executionId} not found with running status`)
+            }
+            
+            return verification[0]
+          })
+        },
+        3, // maxRetries (fewer for running status)
+        500 // baseDelay (0.5 seconds)
+      )
 
-      console.log(`🏃 [Tracker] Successfully marked ${executionId} as running`)
-      
-      // Verify the update worked
-      const verification = await this.getExecution(executionId)
-      if (!verification) {
-        throw new Error(`Execution ${executionId} not found after running update`)
-      }
-      if (verification.status !== 'running') {
-        throw new Error(`Execution ${executionId} status is still ${verification.status} after running update`)
-      }
-      console.log(`🔍 [Tracker] Verification - ${executionId} status: ${verification.status}`)
+      console.log(`🏃 [Tracker] Successfully marked ${executionId} as running with verified visibility`)
     } catch (error) {
       console.error(`❌ [Tracker] Failed to mark ${executionId} as running:`, error)
       console.error(`❌ [Tracker] Running update error details:`, {
@@ -97,45 +115,59 @@ export class BackendAgentTracker {
     try {
       console.log(`📋 [Tracker] Attempting to complete ${executionId} with ${executionTime}ms execution time...`)
       
-      await withSchema(async () => {
-        // First verify the execution exists
-        const existingExecution = await db.select()
-          .from(backendAgentExecutions)
-          .where(eq(backendAgentExecutions.id, executionId))
-          .limit(1)
-        
-        if (existingExecution.length === 0) {
-          throw new Error(`Execution ${executionId} not found in database`)
-        }
-        
-        console.log(`🔍 [Tracker] Found existing execution ${executionId} with status: ${existingExecution[0].status}`)
-        
-        // Update the execution
-        await db.update(backendAgentExecutions)
-          .set({
-            status: 'completed',
-            completedAt: new Date(),
-            result,
-            executionTime
+      // Use write visibility verification to ensure the update is immediately visible
+      await verifyWriteVisibility(
+        // Write operation
+        async () => {
+          return await withSchema(async () => {
+            // First verify the execution exists
+            const existingExecution = await db.select()
+              .from(backendAgentExecutions)
+              .where(eq(backendAgentExecutions.id, executionId))
+              .limit(1)
+            
+            if (existingExecution.length === 0) {
+              throw new Error(`Execution ${executionId} not found in database`)
+            }
+            
+            console.log(`🔍 [Tracker] Found existing execution ${executionId} with status: ${existingExecution[0].status}`)
+            
+            // Update the execution
+            await db.update(backendAgentExecutions)
+              .set({
+                status: 'completed',
+                completedAt: new Date(),
+                result,
+                executionTime
+              })
+              .where(eq(backendAgentExecutions.id, executionId))
+              
+            return { executionId, status: 'completed' }
           })
-          .where(eq(backendAgentExecutions.id, executionId))
-      })
+        },
+        // Verification query
+        async () => {
+          return await withSchema(async () => {
+            const verification = await db.select()
+              .from(backendAgentExecutions)
+              .where(and(
+                eq(backendAgentExecutions.id, executionId),
+                eq(backendAgentExecutions.status, 'completed')
+              ))
+              .limit(1)
+            
+            if (verification.length === 0) {
+              throw new Error(`Execution ${executionId} not found with completed status`)
+            }
+            
+            return verification[0]
+          })
+        },
+        5, // maxRetries
+        1000 // baseDelay (1 second)
+      )
 
-      console.log(`✅ [Tracker] Successfully completed ${executionId} in ${executionTime}ms`)
-      
-      // Verify the update worked by reading it back
-      const verification = await this.getExecution(executionId)
-      if (!verification) {
-        throw new Error(`Execution ${executionId} not found after completion update`)
-      }
-      if (verification.status !== 'completed') {
-        throw new Error(`Execution ${executionId} status is still ${verification.status} after completion update`)
-      }
-      if (!verification.completedAt) {
-        throw new Error(`Execution ${executionId} completedAt is null after completion update`)
-      }
-      
-      console.log(`🔍 [Tracker] Verification - ${executionId} status: ${verification.status}, completed: ${verification.completedAt}`)
+      console.log(`✅ [Tracker] Successfully completed ${executionId} in ${executionTime}ms with verified visibility`)
     } catch (error) {
       console.error(`❌ [Tracker] Failed to complete ${executionId}:`, error)
       console.error(`❌ [Tracker] Error details:`, {
