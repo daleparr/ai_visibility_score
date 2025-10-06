@@ -665,11 +665,12 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
 
         // Poll for completion
         let attempts = 0;
-        const maxAttempts = 150; // 5 minutes max for comprehensive evals
+        const maxAttempts = tier === 'index-pro' || tier === 'enterprise' ? 300 : 150; // 10 minutes for professional tiers, 5 minutes for free
         const intervalId = setInterval(async () => {
           if (attempts >= maxAttempts) {
             clearInterval(intervalId);
-            setError('Evaluation is taking longer than expected. Your report will be available on your dashboard when complete.');
+            const timeoutMinutes = Math.round(maxAttempts * 2 / 60);
+            setError(`Evaluation is taking longer than expected (>${timeoutMinutes} minutes). This can happen with complex websites or during high traffic. Your report will be available on your dashboard when complete, or you can try again later.`);
             setIsLoading(false);
             return;
           }
@@ -697,8 +698,14 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
               setIsLoading(false);
             } else if (statusData.status === 'failed') {
               clearInterval(intervalId);
-              setError('Evaluation process failed.');
+              setError('Evaluation process failed. Please try again or contact support if the issue persists.');
               setIsLoading(false);
+            } else if (statusData.status === 'running' || statusData.status === 'partial') {
+              // Continue polling - evaluation is still in progress
+              console.log(`[Attempt ${attempts + 1}] Evaluation still running...`, {
+                status: statusData.status,
+                progress: statusData.progress || 'unknown'
+              });
             }
           } catch (err) {
             clearInterval(intervalId);
