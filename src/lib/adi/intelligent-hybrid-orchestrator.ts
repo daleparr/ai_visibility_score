@@ -345,7 +345,7 @@ export class IntelligentHybridADIOrchestrator {
         brandId = randomUUID()
         await db.insert(brands).values({
           id: brandId,
-          name: context.brandName || 'Unknown Brand',
+          name: context.metadata?.brandName || 'Unknown Brand',
           websiteUrl: context.websiteUrl,
           // normalizedHost is a generated column, don't insert it
           createdAt: new Date(),

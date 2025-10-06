@@ -23,10 +23,16 @@ async function testIntelligentQueue() {
     // Create test evaluation context
     const context: ADIEvaluationContext = {
       evaluationId: randomUUID(),
-      brandName: 'Nike Inc.',
+      brandId: randomUUID(),
       websiteUrl: 'https://nike.com',
-      userId: 'test-user',
-      timestamp: new Date().toISOString()
+      evaluationType: 'standard' as const,
+      queryCanon: [],
+      crawlArtifacts: [],
+      metadata: {
+        brandName: 'Nike Inc.',
+        userId: 'test-user',
+        timestamp: new Date().toISOString()
+      }
     }
 
     console.log(`🚀 Starting intelligent evaluation for: ${context.websiteUrl}`)
