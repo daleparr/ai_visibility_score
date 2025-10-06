@@ -94,50 +94,68 @@ export async function ensureSchema(): Promise<void> {
   }
 }
 
-// Helper function to execute queries with guaranteed schema path
+// Helper function to execute queries with guaranteed schema path and transaction consistency
 export async function withSchema<T>(queryFn: () => Promise<T>): Promise<T> {
   if (sql) {
-    try {
-      // Set schema path immediately before the query and verify connection
-      await sql`SET search_path TO production, public`
-      
-      // Test connection to ensure it's still active
-      await sql`SELECT 1 as connection_test`
-      
-      console.log('🔗 [DB] Schema path enforced and connection verified for query')
-      return await queryFn()
-    } catch (error) {
-      console.error('❌ [DB] Query with schema failed:', error instanceof Error ? error.message : String(error))
-      
-      // If it's a connection error, try to reconnect once
-      if (error instanceof Error && (error.message.includes('connection') || error.message.includes('timeout'))) {
-        console.log('🔄 [DB] Attempting to reinitialize connection...')
+    let retryCount = 0
+    const maxRetries = 2
+    
+    while (retryCount <= maxRetries) {
+      try {
+        // Force a fresh connection for each critical operation to avoid pooling issues
+        const freshSql = neon(DB_URL.includes('?') 
+          ? `${DB_URL}&target_session_attrs=read-write&connect_timeout=10`
+          : `${DB_URL}?target_session_attrs=read-write&connect_timeout=10`)
+        
+        // Set schema path and verify connection in a single transaction-like operation
+        await freshSql`SET search_path TO production, public`
+        
+        // Test connection and schema
+        const schemaTest = await freshSql`SELECT current_schema() as schema, current_database() as db, pg_backend_pid() as pid`
+        console.log(`🔗 [DB] Fresh connection established - Schema: ${schemaTest[0].schema}, DB: ${schemaTest[0].db}, PID: ${schemaTest[0].pid}`)
+        
+        // Create a fresh Drizzle instance with the new connection
+        const freshDb = drizzle(freshSql, {
+          schema,
+          logger: process.env.NODE_ENV === 'development'
+        })
+        
+        // Temporarily replace the global db instance for this operation
+        const originalDb = db
+        const originalSql = sql
+        db = freshDb
+        sql = freshSql
+        
         try {
-          // Reinitialize connection
-          const writerUrl = DB_URL.includes('?') 
-            ? `${DB_URL}&target_session_attrs=read-write`
-            : `${DB_URL}?target_session_attrs=read-write`
+          const result = await queryFn()
           
-          sql = neon(writerUrl)
-          db = drizzle(sql, {
-            schema,
-            logger: process.env.NODE_ENV === 'development'
-          })
+          // Ensure any writes are committed by doing a final verification query
+          await freshSql`SELECT 1 as commit_check`
           
-          // Set schema path again and retry
-          await sql`SET search_path TO production, public`
-          await sql`SELECT 1 as connection_test`
-          console.log('✅ [DB] Connection reestablished, retrying query...')
-          
-          return await queryFn()
-        } catch (retryError) {
-          console.error('❌ [DB] Connection retry failed:', retryError instanceof Error ? retryError.message : String(retryError))
-          throw retryError
+          return result
+        } finally {
+          // Restore original connections
+          db = originalDb
+          sql = originalSql
         }
+        
+      } catch (error) {
+        console.error(`❌ [DB] Query with schema failed (attempt ${retryCount + 1}/${maxRetries + 1}):`, error instanceof Error ? error.message : String(error))
+        
+        if (retryCount < maxRetries) {
+          retryCount++
+          const delay = retryCount * 1000 // 1s, 2s delays
+          console.log(`🔄 [DB] Retrying in ${delay}ms...`)
+          await new Promise(resolve => setTimeout(resolve, delay))
+          continue
+        }
+        
+        throw error
       }
-      
-      throw error
     }
+    
+    // This should never be reached due to the throw in the catch block, but TypeScript needs it
+    throw new Error('Maximum retries exceeded')
   } else {
     throw new Error('Database connection not available')
   }

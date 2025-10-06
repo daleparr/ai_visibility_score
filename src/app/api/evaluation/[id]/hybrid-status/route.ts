@@ -52,32 +52,47 @@ export async function GET(
     let executions = await tracker.getEvaluationExecutions(evaluationId)
     console.log(`🔍 [API] Initial query returned ${executions.length} executions`)
     
-    // Enhanced retry logic - try up to 3 times with increasing delays
-    let retryAttempt = 0
-    const maxRetries = 3
-    while (executions.length < 6 && retryAttempt < maxRetries) {
-      const delay = (retryAttempt + 1) * 1000 // 1s, 2s, 3s delays
-      console.log(`⚠️ [API] Only found ${executions.length} executions, retrying in ${delay}ms (attempt ${retryAttempt + 1}/${maxRetries})...`)
-      await new Promise(resolve => setTimeout(resolve, delay))
-      
-      // Force a new database connection by creating a fresh tracker
-      const freshTracker = new BackendAgentTracker()
-      executions = await freshTracker.getEvaluationExecutions(evaluationId)
-      console.log(`🔄 [API] Retry ${retryAttempt + 1} found ${executions.length} executions`)
-      retryAttempt++
-    }
-    
-    // Additional retry for status consistency - check if all agents are still showing as pending
-    const pendingCount = executions.filter(e => e.status === 'pending').length
-    if (pendingCount === executions.length && executions.length > 0) {
-      console.log(`⚠️ [API] All ${executions.length} executions are pending, doing final status refresh...`)
-      await new Promise(resolve => setTimeout(resolve, 2000)) // Wait 2 seconds
-      
-      const finalTracker = new BackendAgentTracker()
-      executions = await finalTracker.getEvaluationExecutions(evaluationId)
-      console.log(`🔄 [API] Final status refresh found ${executions.length} executions with statuses:`, 
-        executions.map(e => `${e.agentName}:${e.status}`).join(', '))
-    }
+         // Enhanced retry logic - try up to 5 times with increasing delays and fresh connections
+         let retryAttempt = 0
+         const maxRetries = 5
+         while (executions.length < 6 && retryAttempt < maxRetries) {
+           const delay = Math.min((retryAttempt + 1) * 1500, 8000) // 1.5s, 3s, 4.5s, 6s, 8s delays (capped at 8s)
+           console.log(`⚠️ [API] Only found ${executions.length} executions, retrying in ${delay}ms (attempt ${retryAttempt + 1}/${maxRetries})...`)
+           await new Promise(resolve => setTimeout(resolve, delay))
+           
+           // Force a completely fresh database connection to bypass any pooling issues
+           console.log(`🔄 [API] Creating fresh tracker with new connection for retry ${retryAttempt + 1}...`)
+           const freshTracker = new BackendAgentTracker()
+           executions = await freshTracker.getEvaluationExecutions(evaluationId)
+           console.log(`🔄 [API] Retry ${retryAttempt + 1} found ${executions.length} executions`)
+           
+           // If we found some executions but not all, check if any are completed
+           if (executions.length > 0) {
+             const completedCount = executions.filter(e => e.status === 'completed').length
+             const runningCount = executions.filter(e => e.status === 'running').length
+             console.log(`🔄 [API] Retry ${retryAttempt + 1} status breakdown: ${completedCount} completed, ${runningCount} running, ${executions.length - completedCount - runningCount} pending`)
+             
+             // If we have some progress, be more patient
+             if (completedCount > 0 || runningCount > 0) {
+               console.log(`🔄 [API] Found progress (${completedCount + runningCount} active), continuing retries...`)
+             }
+           }
+           
+           retryAttempt++
+         }
+         
+         // Additional retry for status consistency - check if all agents are still showing as pending
+         const pendingCount = executions.filter(e => e.status === 'pending').length
+         if (pendingCount === executions.length && executions.length > 0) {
+           console.log(`⚠️ [API] All ${executions.length} executions are pending, doing final status refresh...`)
+           await new Promise(resolve => setTimeout(resolve, 3000)) // Wait 3 seconds
+           
+           console.log(`🔄 [API] Creating final fresh tracker for status consistency check...`)
+           const finalTracker = new BackendAgentTracker()
+           executions = await finalTracker.getEvaluationExecutions(evaluationId)
+           console.log(`🔄 [API] Final status refresh found ${executions.length} executions with statuses:`, 
+             executions.map(e => `${e.agentName}:${e.status}`).join(', '))
+         }
     
     // Add detailed logging of what we found in the database
     console.log(`🔍 [DEBUG] Raw execution data from database:`)

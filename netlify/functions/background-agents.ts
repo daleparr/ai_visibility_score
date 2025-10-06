@@ -289,6 +289,25 @@ export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResp
             console.error(`❌ [Background-${requestId}] Execution NOT found by evaluationId despite individual lookup success`)
             console.error(`❌ [Background-${requestId}] All executions for ${evaluationId}:`, allExecutions.map(e => ({ id: e.id, agentName: e.agentName, status: e.status })))
           }
+          
+          // CRITICAL: Cross-connection verification to ensure write visibility across serverless functions
+          console.log(`🔍 [Background-${requestId}] Performing cross-connection verification...`)
+          try {
+            const crossVerificationTracker = new BackendAgentTracker()
+            const crossVerification = await crossVerificationTracker.getEvaluationExecutions(evaluationId)
+            const thisExecution = crossVerification.find(e => e.id === executionId)
+            
+            console.log(`🔍 [Background-${requestId}] Cross-verification found ${crossVerification.length} total executions for ${evaluationId}`)
+            if (thisExecution) {
+              console.log(`✅ [Background-${requestId}] Cross-verification SUCCESS: ${executionId} found with status ${thisExecution.status}`)
+            } else {
+              console.error(`❌ [Background-${requestId}] Cross-verification FAILED: ${executionId} not found in evaluation executions`)
+              throw new Error(`Cross-verification failed: execution ${executionId} not visible to fresh connection`)
+            }
+          } catch (crossVerifyError) {
+            console.error(`❌ [Background-${requestId}] Cross-verification error:`, crossVerifyError)
+            throw new Error(`Cross-verification failed: ${crossVerifyError instanceof Error ? crossVerifyError.message : String(crossVerifyError)}`)
+          }
       
     } catch (completionError) {
       console.error(`❌ [Background-${requestId}] Failed to complete execution ${executionId}:`, completionError)
