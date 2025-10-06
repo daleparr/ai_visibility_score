@@ -190,7 +190,7 @@ export async function GET(
         currentTimeout: agentConfig.currentTimeout,
         estimatedTimeRemaining: agentConfig.estimatedDuration,
         fallbackApplied: false, // TODO: Get from queue manager
-        lastError: execution.errorMessage,
+        lastError: execution.error,
         executionTime: execution.executionTime
       }
     })
