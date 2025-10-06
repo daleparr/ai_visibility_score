@@ -47,12 +47,9 @@ async function processQueue() {
 
   try {
     const manager = getQueueManager();
-    const processedJobs = await manager.processNextBatch();
-    if (processedJobs > 0) {
-      console.log(`✅ [QueueProcessor] Processed ${processedJobs} jobs.`);
-    } else {
-      console.log('💨 [QueueProcessor] Queue is empty, nothing to process.');
-    }
+    await manager.processQueue();
+    const metrics = manager.getMetrics();
+    console.log(`✅ [QueueProcessor] Queue processed. Running: ${metrics.totalRunning}, Queued: ${metrics.totalQueued}, Completed: ${metrics.totalCompleted}`);
   } catch (error) {
     console.error('💥 [QueueProcessor] CRITICAL error during queue processing:', error);
   } finally {
