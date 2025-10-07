@@ -15,6 +15,14 @@
 [functions."background-agents"]
   timeout = 900  # 15 minutes for LLM processing
 
+# Bridge Enqueue function (standard function)
+[functions."bridge-enqueue"]
+  timeout = 10 # Short timeout for enqueueing
+
+# Bridge Callback function (standard function)
+[functions."bridge-callback-api"]
+  timeout = 10 # Short timeout for callback processing
+
 # Scheduled function to process the leaderboard evaluation queue every 30 minutes
 [functions."scheduled-leaderboard-queue"]
   schedule = "*/30 * * * *"
