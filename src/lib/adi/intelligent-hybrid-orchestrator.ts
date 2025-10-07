@@ -7,6 +7,7 @@ import { BrandHeritageAgent } from './agents/brand-heritage-agent'
 import { ScoreAggregatorAgent as ScoreAggregator } from './agents/score-aggregator-agent'
 import { BackendAgentTracker } from './backend-agent-tracker'
 import { apiUrl } from '@/lib/url'
+import { getSystemRouting, isAdvancedLoggingEnabled } from '../feature-flags'
 import { db, evaluations, brands, users } from '../db/index'
 import { eq } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
@@ -93,11 +94,31 @@ export class IntelligentHybridADIOrchestrator {
       // Ensure evaluation record exists in database before proceeding
       await this.ensureEvaluationRecord(context)
       
+      // Determine system routing based on feature flags
+      const tier = context.metadata?.tier || 'free'
+      const allAgents = [...this.FAST_AGENTS, ...this.SLOW_AGENTS]
+      const routing = getSystemRouting(tier, allAgents)
+      
+      if (isAdvancedLoggingEnabled()) {
+        console.log(`🎯 [IntelligentHybrid] System routing decision:`, {
+          evaluationId: context.evaluationId,
+          tier,
+          routing,
+          allAgents
+        })
+      }
+      
       // Phase 1: Execute fast agents in parallel (must complete within 8 seconds)
       const fastResults = await this.executeFastAgents(context)
       
-      // Phase 2: Use intelligent queue manager for slow agents
-      await this.enqueueSlowAgentsIntelligently(context, fastResults)
+      // Phase 2: Route slow agents based on feature flags
+      if (routing.useRailwayBridge) {
+        console.log(`🌉 [IntelligentHybrid] Using Railway bridge: ${routing.reason}`)
+        await this.enqueueSlowAgentsIntelligently(context, fastResults)
+      } else {
+        console.log(`🔄 [IntelligentHybrid] Using legacy system: ${routing.reason}`)
+        await this.enqueueSlowAgentsLegacy(context, fastResults)
+      }
 
       const executionTime = Date.now() - startTime
       console.log(`⚡ [IntelligentHybrid] Fast phase completed in ${executionTime}ms`)
@@ -181,13 +202,80 @@ export class IntelligentHybridADIOrchestrator {
   }
 
   /**
-   * Enqueue slow agents using intelligent queue manager
+   * Enqueue slow agents to Railway bridge for background processing
    */
   private async enqueueSlowAgentsIntelligently(
     context: ADIEvaluationContext, 
     fastResults: ADIAgentOutput[]
   ): Promise<void> {
-    console.log(`🧠 [IntelligentHybrid] Enqueueing ${this.SLOW_AGENTS.length} slow agents with intelligent scheduling`)
+    console.log(`🌉 [IntelligentHybrid] Enqueueing ${this.SLOW_AGENTS.length} slow agents to Railway bridge...`)
+
+    try {
+      // Import Railway bridge client
+      const { getRailwayBridgeClient } = await import('../bridge/railway-client')
+      const bridgeClient = getRailwayBridgeClient()
+
+      // Track agent execution start for all agents
+      for (const agentName of this.SLOW_AGENTS) {
+        await this.tracker.startExecution(context.evaluationId, agentName)
+      }
+
+      // Determine priority based on tier
+      let priority: 'high' | 'normal' | 'low' = 'normal'
+      if (context.metadata?.tier === 'enterprise') {
+        priority = 'high'
+      } else if (context.metadata?.tier === 'free') {
+        priority = 'low'
+      }
+
+      // Enqueue all slow agents as a single job to Railway
+      const bridgeResponse = await bridgeClient.enqueueAgents({
+        evaluationId: context.evaluationId,
+        websiteUrl: context.websiteUrl,
+        tier: context.metadata?.tier || 'free',
+        agents: this.SLOW_AGENTS,
+        callbackUrl: '', // Will be set by bridge client
+        priority,
+        metadata: {
+          fastResultsAvailable: fastResults.length > 0,
+          fastAgents: fastResults.map(r => r.agentName),
+          enqueuedAt: new Date().toISOString(),
+          hybridOrchestration: true
+        }
+      })
+
+      console.log(`✅ [IntelligentHybrid] Successfully enqueued ${this.SLOW_AGENTS.length} agents to Railway`, {
+        evaluationId: context.evaluationId,
+        jobId: bridgeResponse.jobId,
+        queuePosition: bridgeResponse.queuePosition,
+        estimatedStartTime: bridgeResponse.estimatedStartTime
+      })
+
+    } catch (error) {
+      console.error(`❌ [IntelligentHybrid] Failed to enqueue agents to Railway:`, error)
+      
+      // Fallback: Mark agents as failed so evaluation can still complete
+      for (const agentName of this.SLOW_AGENTS) {
+        try {
+          const executionId = await this.tracker.startExecution(context.evaluationId, agentName)
+          await this.tracker.failExecution(executionId, `Railway bridge failed: ${error instanceof Error ? error.message : String(error)}`)
+        } catch (trackingError) {
+          console.error(`❌ [IntelligentHybrid] Failed to mark ${agentName} as failed:`, trackingError)
+        }
+      }
+      
+      throw error
+    }
+  }
+
+  /**
+   * Enqueue slow agents using legacy system (fallback)
+   */
+  private async enqueueSlowAgentsLegacy(
+    context: ADIEvaluationContext, 
+    fastResults: ADIAgentOutput[]
+  ): Promise<void> {
+    console.log(`🔄 [IntelligentHybrid] Enqueueing ${this.SLOW_AGENTS.length} slow agents to legacy system...`)
 
     const enqueuingPromises = this.SLOW_AGENTS.map(async (agentName) => {
       try {
@@ -212,11 +300,12 @@ export class IntelligentHybridADIOrchestrator {
           })),
           config: {
             intelligentQueuing: true,
-            fastResultsAvailable: true
+            fastResultsAvailable: true,
+            legacyMode: true
           }
         }
 
-        // Call intelligent background function
+        // Call intelligent background function (legacy)
         await this.callIntelligentBackgroundFunction({
           agentName,
           input,
@@ -224,17 +313,17 @@ export class IntelligentHybridADIOrchestrator {
           executionId
         })
 
-        console.log(`✅ [IntelligentHybrid] Enqueued ${agentName} with execution ID: ${executionId}`)
+        console.log(`✅ [IntelligentHybrid] Enqueued ${agentName} to legacy system with execution ID: ${executionId}`)
 
       } catch (error) {
-        console.error(`❌ [IntelligentHybrid] Failed to enqueue ${agentName}:`, error)
+        console.error(`❌ [IntelligentHybrid] Failed to enqueue ${agentName} to legacy system:`, error)
         // Don't throw - continue with other agents
       }
     })
 
     // Wait for all agents to be enqueued (but not executed)
     await Promise.allSettled(enqueuingPromises)
-    console.log(`🧠 [IntelligentHybrid] All slow agents enqueued in intelligent queue`)
+    console.log(`🔄 [IntelligentHybrid] All slow agents enqueued to legacy system`)
   }
 
   /**

@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+/railway-workers/node_modules
+/railway-workers/dist
 /.pnp
 .pnp.js
 

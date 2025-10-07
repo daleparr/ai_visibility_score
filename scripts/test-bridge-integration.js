@@ -151,7 +151,7 @@ async function testBridgeEndpoints() {
   
   // Test Netlify bridge enqueue endpoint
   try {
-    const response = await makeRequest(`${NETLIFY_URL}/api/bridge/enqueue`, {
+    const response = await makeRequest(`${NETLIFY_URL}/.netlify/functions/bridge-enqueue`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     })
@@ -170,7 +170,7 @@ async function testBridgeEndpoints() {
   
   // Test Netlify callback endpoint
   try {
-    const response = await makeRequest(`${NETLIFY_URL}/api/bridge/callback`, {
+    const response = await makeRequest(`${NETLIFY_URL}/.netlify/functions/bridge-callback-api`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     })
@@ -202,7 +202,7 @@ async function testEndToEndFlow() {
   }
   
   try {
-    const response = await makeRequest(`${NETLIFY_URL}/api/bridge/enqueue`, {
+    const response = await makeRequest(`${NETLIFY_URL}/.netlify/functions/bridge-enqueue`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(testEvaluation)

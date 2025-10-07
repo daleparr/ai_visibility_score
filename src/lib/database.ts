@@ -468,7 +468,7 @@ export const getUser = async (userId: string): Promise<User | undefined> => {
  * Returns the existing guest user or creates one if missing.
  */
 export const ensureGuestUser = async (): Promise<User> => {
-  const guestEmail = 'guest@ai-visibility-score.app'
+  const guestEmail = 'guest@ai-visibility-score.netlify.app'
   try {
     const existing = await db.select().from(users).where(eq(users.email as any, guestEmail as any)).limit(1)
     if (existing.length > 0) {

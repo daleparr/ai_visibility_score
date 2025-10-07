@@ -30,7 +30,7 @@ export default function ApiDocsPage() {
             
             <div className="bg-gray-50 rounded-lg p-6 mb-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Base URL</h3>
-              <code className="text-blue-600 font-mono">https://ai-discoverability-index.netlify.app/api</code>
+              <code className="text-blue-600 font-mono">https://ai-visibility-score.netlify.app/api</code>
             </div>
 
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-6">
