@@ -1,6 +1,3 @@
-# Netlify Function Redirects
-/.netlify/functions/background-agents  /.netlify/functions/background-agents  200
-/.netlify/functions/scheduled-leaderboard-queue  /.netlify/functions/scheduled-leaderboard-queue  200
-
-# Next.js API Routes
-/api/*  /api/:splat  200
+# Force routing for bridge API endpoints
+/api/bridge/enqueue /api/bridge/enqueue 200
+/api/bridge/callback /api/bridge/callback 200
