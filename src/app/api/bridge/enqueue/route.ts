@@ -1,58 +1,30 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getRailwayBridgeClient, BridgeError } from '@/lib/bridge/railway-client'
-import { withSchema } from '@/lib/db'
+﻿import { NextRequest, NextResponse } from 'next/server'
+import { getRailwayBridgeClient } from '@/lib/bridge/railway-client'
+import { getFeatureFlags } from '@/lib/feature-flags'
+import { createLogger } from '@/lib/utils/logger'
+
+const logger = createLogger('bridge-enqueue-api')
 
 export const dynamic = 'force-dynamic'
 
 /**
- * Bridge API: Enqueue agents to Railway for background processing
+ * Bridge API: Enqueue agents for processing on Railway
  * POST /api/bridge/enqueue
  */
 export async function POST(request: NextRequest) {
-  const requestId = `bridge_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-  
   try {
-    console.log(`🌉 [Bridge-${requestId}] Enqueueing agents to Railway...`)
-    
     const body = await request.json()
-    const {
-      evaluationId,
-      websiteUrl,
-      tier,
-      agents,
-      priority = 'normal',
-      metadata = {}
-    } = body
+    const { evaluationId, websiteUrl, tier, agents, priority = 'normal', metadata = {} } = body
 
     // Validate required fields
-    if (!evaluationId || !websiteUrl || !agents || !Array.isArray(agents)) {
+    if (!evaluationId || !websiteUrl || !tier || !agents || !Array.isArray(agents)) {
       return NextResponse.json({
         success: false,
-        error: 'Missing required fields: evaluationId, websiteUrl, agents',
-        requestId
+        error: 'Missing required fields: evaluationId, websiteUrl, tier, agents'
       }, { status: 400 })
     }
 
-    // Validate agents array
-    if (agents.length === 0) {
-      return NextResponse.json({
-        success: false,
-        error: 'At least one agent must be specified',
-        requestId
-      }, { status: 400 })
-    }
-
-    // Validate tier
-    const validTiers = ['free', 'index-pro', 'enterprise']
-    if (!validTiers.includes(tier)) {
-      return NextResponse.json({
-        success: false,
-        error: `Invalid tier: ${tier}. Must be one of: ${validTiers.join(', ')}`,
-        requestId
-      }, { status: 400 })
-    }
-
-    console.log(`🔄 [Bridge-${requestId}] Validation passed`, {
+    logger.info('Bridge enqueue request received', {
       evaluationId,
       websiteUrl,
       tier,
@@ -60,130 +32,84 @@ export async function POST(request: NextRequest) {
       priority
     })
 
-    // Get Railway bridge client
-    const bridgeClient = getRailwayBridgeClient()
+    // Check feature flags
+    const featureFlags = getFeatureFlags()
+    const routing = featureFlags.getSystemRouting(tier, agents)
 
-    // Enqueue agents to Railway
-    const bridgeResponse = await bridgeClient.enqueueAgents({
+    if (!routing.useRailwayBridge) {
+      return NextResponse.json({
+        success: false,
+        error: 'Railway bridge not enabled for this request',
+        reason: routing.reason,
+        fallback: 'Use legacy system'
+      }, { status: 503 })
+    }
+
+    // Enqueue to Railway
+    const bridgeClient = getRailwayBridgeClient()
+    const result = await bridgeClient.enqueueAgents({
       evaluationId,
       websiteUrl,
       tier,
       agents,
-      callbackUrl: '', // Will be set by the bridge client
+      callbackUrl: '', // Will be set by the client
       priority,
-      metadata: {
-        ...metadata,
-        netlifyRequestId: requestId,
-        enqueuedAt: new Date().toISOString()
-      }
+      metadata
     })
 
-    console.log(`✅ [Bridge-${requestId}] Agents successfully enqueued to Railway`, {
+    logger.info('Successfully enqueued to Railway', {
       evaluationId,
-      jobId: bridgeResponse.jobId,
-      queuePosition: bridgeResponse.queuePosition
-    })
-
-    // Update evaluation status in database
-    await withSchema(async () => {
-      const { evaluations } = await import('@/lib/db/schema')
-      const { eq } = await import('drizzle-orm')
-      const { db } = await import('@/lib/db')
-
-      await db.update(evaluations)
-        .set({
-          status: 'processing',
-          updatedAt: new Date()
-        })
-        .where(eq(evaluations.id, evaluationId))
+      jobId: result.jobId,
+      queuePosition: result.queuePosition
     })
 
     return NextResponse.json({
       success: true,
-      message: 'Agents successfully enqueued to Railway',
-      data: {
-        evaluationId,
-        jobId: bridgeResponse.jobId,
-        queuePosition: bridgeResponse.queuePosition,
-        estimatedStartTime: bridgeResponse.estimatedStartTime,
-        agents,
-        priority
-      },
-      requestId
+      ...result,
+      routing: routing.reason
     })
 
   } catch (error) {
-    console.error(`❌ [Bridge-${requestId}] Failed to enqueue agents:`, error)
-
-    if (error instanceof BridgeError) {
-      return NextResponse.json({
-        success: false,
-        error: 'Bridge communication failed',
-        message: error instanceof Error ? error.message : String(error),
-        code: error.code,
-        requestId
-      }, { status: error.statusCode || 500 })
-    }
+    logger.error('Bridge enqueue failed', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    })
 
     return NextResponse.json({
       success: false,
-      error: 'Internal server error',
-      message: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : 'Failed to enqueue agents',
-      requestId
+      error: 'Failed to enqueue agents to Railway',
+      message: error instanceof Error ? error.message : String(error)
     }, { status: 500 })
   }
 }
 
 /**
- * Bridge API: Get Railway queue status
+ * Bridge API: Get enqueue status/health
  * GET /api/bridge/enqueue
  */
 export async function GET(request: NextRequest) {
-  const requestId = `status_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-  
   try {
-    console.log(`📊 [Bridge-${requestId}] Getting Railway queue status...`)
-    
+    const featureFlags = getFeatureFlags()
     const bridgeClient = getRailwayBridgeClient()
     
-    // Get queue metrics and health status
-    const [queueMetrics, healthStatus] = await Promise.all([
-      bridgeClient.getQueueStatus(),
-      bridgeClient.getHealthStatus()
-    ])
-
-    console.log(`✅ [Bridge-${requestId}] Railway status retrieved`, {
-      queueMetrics,
-      healthStatus: healthStatus.status
-    })
-
+    // Get Railway health status
+    const healthStatus = await bridgeClient.getHealthStatus()
+    
     return NextResponse.json({
       success: true,
-      data: {
-        queue: queueMetrics,
-        health: healthStatus,
-        timestamp: new Date().toISOString()
+      status: 'operational',
+      bridge: {
+        enabled: featureFlags.isRailwayBridgeEnabled(),
+        tiers: featureFlags.getFlags().railwayBridgeTiers,
+        railway: healthStatus
       },
-      requestId
+      timestamp: new Date().toISOString()
     })
-
   } catch (error) {
-    console.error(`❌ [Bridge-${requestId}] Failed to get Railway status:`, error)
-
-    if (error instanceof BridgeError) {
-      return NextResponse.json({
-        success: false,
-        error: 'Railway service unavailable',
-        message: error instanceof Error ? error.message : String(error),
-        requestId
-      }, { status: 503 })
-    }
-
     return NextResponse.json({
       success: false,
-      error: 'Failed to get status',
-      message: error instanceof Error ? error.message : String(error),
-      requestId
-    }, { status: 500 })
+      error: 'Bridge health check failed',
+      message: error instanceof Error ? error.message : String(error)
+    }, { status: 503 })
   }
 }

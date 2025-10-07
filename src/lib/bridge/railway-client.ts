@@ -139,7 +139,7 @@ export class RailwayBridgeClient {
 
   async enqueueAgents(request: BridgeRequest): Promise<BridgeResponse> {
     return this.withRetry(async () => {
-      const callbackUrl = `${process.env.NETLIFY_URL || process.env.URL || 'https://ai-visibility-score.netlify.app'}/.netlify/functions/bridge-callback-api`
+      const callbackUrl = `${process.env.NETLIFY_URL || process.env.URL || 'https://ai-visibility-score.netlify.app'}/.netlify/functions/bridge-callback`
       
       // Generate authentication token
       const authToken = this.generateBridgeToken(

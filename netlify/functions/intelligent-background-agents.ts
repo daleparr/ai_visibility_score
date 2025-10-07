@@ -58,17 +58,12 @@ async function processQueue() {
   }
 }
 
+// SERVERLESS FIX: Don't use intervals in serverless environment
+// Instead, process queue on each function invocation
 function startQueueProcessor() {
-  if (intervalId) {
-    console.log('✅ [QueueProcessor] Processor already running.');
-    return;
-  }
-  console.log(`⏰ [QueueProcessor] Starting processor with ${PROCESS_INTERVAL}ms interval.`);
-  intervalId = setInterval(processQueue, PROCESS_INTERVAL);
+  // No-op in serverless environment - queue processing happens on invocation
+  console.log('✅ [QueueProcessor] Serverless mode - queue processed on invocation.');
 }
-
-// Start the processor when the function is loaded
-startQueueProcessor();
 
 export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResponse> => {
   const functionStartTime = Date.now()
@@ -89,6 +84,29 @@ export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResp
       console.log(`✅ [Intelligent-${requestId}] Database connection test successful:`, testResult[0])
     })
 
+    // SERVERLESS FIX: Process queue on every invocation
+    console.log(`🔄 [Intelligent-${requestId}] Processing queue before handling request...`)
+    await processQueue()
+    
+    // Self-trigger mechanism: Schedule next queue processing if there are pending agents
+    const manager = getQueueManager()
+    const metrics = manager.getMetrics()
+    if (metrics.totalQueued > 0 || metrics.totalRunning > 0) {
+      console.log(`⏰ [Intelligent-${requestId}] Scheduling next queue check (${metrics.totalQueued} queued, ${metrics.totalRunning} running)`)
+      // Use setTimeout to trigger another queue processing cycle
+      setTimeout(async () => {
+        try {
+          const functionUrl = `${process.env.URL || 'https://ai-visibility-score.netlify.app'}/.netlify/functions/intelligent-background-agents`
+          await fetch(functionUrl, {
+            method: 'GET',
+            headers: { 'User-Agent': 'QueueProcessor/1.0' }
+          })
+        } catch (error) {
+          console.error('Failed to self-trigger queue processing:', error)
+        }
+      }, 5000) // Check again in 5 seconds
+    }
+
     // Route to appropriate handler based on HTTP method
     switch (event.httpMethod) {
       case 'GET':
@@ -96,7 +114,11 @@ export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResp
         return await handleGetStatus(requestId)
       case 'POST':
         console.log(`➡️ [Intelligent-${requestId}] Routing to handleEnqueueAgent...`)
-        return await handleEnqueueAgent(event, requestId)
+        const postResult = await handleEnqueueAgent(event, requestId)
+        // Process queue again after enqueueing to start new agents immediately
+        console.log(`🔄 [Intelligent-${requestId}] Processing queue after enqueue...`)
+        await processQueue()
+        return postResult
       case 'DELETE':
         console.log(`➡️ [Intelligent-${requestId}] Routing to handleCancelEvaluation...`)
         return await handleCancelEvaluation(event, requestId)
