@@ -125,7 +125,8 @@ class FeatureFlagManager {
     }
 
     // Check for slow agents that benefit from Railway
-    const slowAgents = ['crawl_agent', 'commerce_agent', 'sentiment_agent']
+    // These should match the SLOW_AGENTS in IntelligentHybridADIOrchestrator
+    const slowAgents = ['crawl_agent', 'llm_test_agent', 'geo_visibility_agent', 'citation_agent', 'commerce_agent']
     const hasSlowAgents = agentNames.some(agent => slowAgents.includes(agent))
 
     if (hasSlowAgents) {
