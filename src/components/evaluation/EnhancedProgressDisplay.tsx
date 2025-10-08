@@ -173,56 +173,75 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
       return () => clearTimeout(progressTimer)
     }
 
-    // HYBRID STATUS POLLING - Shows real progress from fast + slow agents
+    // INTELLIGENT STATUS POLLING - Shows Railway bridge + agent details
     const pollEvaluationStatus = async () => {
       try {
-        const response = await fetch(`/api/evaluation/${evaluationId}/hybrid-status`)
+        const response = await fetch(`/api/evaluation/${evaluationId}/intelligent-status`)
         if (response.ok) {
           const data = await response.json()
           
-          if (data.status === 'completed') {
+          console.log('🔍 [Progress] Intelligent status:', {
+            overallStatus: data.overallStatus,
+            totalAgents: data.progress?.totalAgents,
+            completed: data.progress?.completedAgents,
+            running: data.progress?.runningAgents,
+            failed: data.progress?.failedAgents
+          })
+          
+          if (data.overallStatus === 'completed') {
             // REAL COMPLETION - all agents finished
             setEvaluationStatus('completed')
             setOverallProgress(100)
             setRealProgress(100)
             updateAgentStatus(AGENTS.map(a => a.id), 'completed')
             setCurrentPhase('aggregation')
-            console.log(`✅ Hybrid evaluation completed: ${data.slowAgentsCompleted}/${data.slowAgentsTotal} slow agents`)
+            console.log(`✅ Intelligent evaluation completed: ${data.progress?.completedAgents}/${data.progress?.totalAgents} agents`)
             return true // Stop polling
-          } else if (data.status === 'failed') {
+          } else if (data.overallStatus === 'failed') {
             setEvaluationStatus('failed')
-            console.log(`❌ Hybrid evaluation failed: ${data.slowAgentsFailed} agents failed`)
+            console.log(`❌ Intelligent evaluation failed: ${data.progress?.failedAgents} agents failed`)
             return true // Stop polling
           } else {
-            // Still running - show real hybrid progress
-            const progress = data.progress || 0
+            // Still running - show real progress from agent details
+            const totalAgents = data.progress?.totalAgents || 12
+            const completedAgents = data.progress?.completedAgents || 0
+            const progress = Math.round((completedAgents / totalAgents) * 100)
+            
             setRealProgress(progress)
             setOverallProgress(progress)
             
-            // Update agent statuses based on hybrid progress
-            if (progress < 50) {
-              // Fast agents still running
-              setCurrentPhase('phase1')
-              updateAgentStatus(['crawl_agent', 'schema_agent', 'brand_heritage_agent'], 'running')
-            } else if (progress < 95) {
-              // Fast agents done, slow agents running
-              setCurrentPhase('phase2')
-              updateAgentStatus(['crawl_agent', 'schema_agent', 'brand_heritage_agent'], 'completed')
-              updateAgentStatus([
-                'llm_test_agent', 'sentiment_agent', 'citation_agent', 
-                'geo_visibility_agent', 'commerce_agent'
-              ], 'running')
-            } else {
-              // Almost done, final aggregation
-              setCurrentPhase('aggregation')
-              updateAgentStatus([
-                'llm_test_agent', 'sentiment_agent', 'citation_agent', 
-                'geo_visibility_agent', 'commerce_agent'
-              ], 'completed')
-              updateAgentStatus(['score_aggregator'], 'running')
+            // Update individual agent statuses from actual agent details
+            if (data.agentDetails && Array.isArray(data.agentDetails)) {
+              data.agentDetails.forEach((agentDetail: any) => {
+                const status = agentDetail.status === 'pending' ? 'pending' :
+                               agentDetail.status === 'running' ? 'running' :
+                               agentDetail.status === 'completed' ? 'completed' : 'pending'
+                
+                updateAgentStatus([agentDetail.agentName], status as any)
+                
+                // Log Railway vs Netlify execution
+                if (agentDetail.status === 'running' || agentDetail.status === 'completed') {
+                  const isSlowAgent = ['crawl_agent', 'llm_test_agent', 'citation_agent', 'sentiment_agent', 'commerce_agent', 'geo_visibility_agent'].includes(agentDetail.agentName)
+                  console.log(`🔍 [Agent] ${agentDetail.agentName}: ${agentDetail.status} (${isSlowAgent ? 'Railway 🛤️' : 'Netlify ⚡'})`)
+                }
+              })
             }
             
-            console.log(`🔄 Hybrid evaluation: ${progress}% complete, ${data.estimatedTimeRemaining}s remaining`)
+            // Set phase based on progress
+            if (progress < 30) {
+              setCurrentPhase('phase1')
+            } else if (progress < 95) {
+              setCurrentPhase('phase2')
+            } else {
+              setCurrentPhase('aggregation')
+            }
+            
+            // Show Railway bridge metrics if available
+            if (data.performance?.slowAgentsInProgress > 0) {
+              console.log(`🛤️  [Railway] ${data.performance.slowAgentsInProgress} agents processing in background`)
+            }
+            
+            console.log(`🔄 Intelligent evaluation: ${progress}% complete (${completedAgents}/${totalAgents} agents)`)
             return false // Continue polling
           }
         }
