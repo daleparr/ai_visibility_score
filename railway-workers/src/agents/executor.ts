@@ -82,11 +82,13 @@ export class AgentExecutor {
     this.agents.set('citation_agent', new PlaceholderAgent('citation_agent'))
     this.agents.set('commerce_agent', new PlaceholderAgent('commerce_agent'))
     this.agents.set('sentiment_agent', new PlaceholderAgent('sentiment_agent'))
+    this.agents.set('llm_test_agent', new PlaceholderAgent('llm_test_agent'))
+    this.agents.set('geo_visibility_agent', new PlaceholderAgent('geo_visibility_agent'))
 
     logger.info('Agent executor initialized', {
       availableAgents: Array.from(this.agents.keys()),
       realAgents: ['crawl_agent'],
-      placeholderAgents: ['citation_agent', 'commerce_agent', 'sentiment_agent']
+      placeholderAgents: ['citation_agent', 'commerce_agent', 'sentiment_agent', 'llm_test_agent', 'geo_visibility_agent']
     })
   }
 
