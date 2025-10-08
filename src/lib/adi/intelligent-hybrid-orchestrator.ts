@@ -58,16 +58,30 @@ export class IntelligentHybridADIOrchestrator {
   ]
 
   constructor() {
-    this.tracker = new BackendAgentTracker()
-    this.SLOW_AGENTS.forEach(name => this.slowAgentNames.add(name))
+    console.log('🏗️ [IntelligentHybrid] Constructor starting...')
     
-    // Auto-register agents for self-sufficiency
-    this.registerFastAgent(new SchemaAgent())
-    this.registerFastAgent(new SemanticAgent())
-    this.registerFastAgent(new ConversationalCopyAgent())
-    this.registerFastAgent(new KnowledgeGraphAgent())
-    this.registerFastAgent(new BrandHeritageAgent())
-    this.registerFastAgent(new ScoreAggregator())
+    try {
+      this.tracker = new BackendAgentTracker()
+      console.log('✅ [IntelligentHybrid] BackendAgentTracker initialized')
+      
+      this.SLOW_AGENTS.forEach(name => this.slowAgentNames.add(name))
+      console.log(`✅ [IntelligentHybrid] Slow agents registered: ${this.SLOW_AGENTS.length}`)
+      
+      // Auto-register agents for self-sufficiency
+      console.log('🔧 [IntelligentHybrid] Starting agent registration...')
+      
+      this.registerFastAgent(new SchemaAgent())
+      this.registerFastAgent(new SemanticAgent())
+      this.registerFastAgent(new ConversationalCopyAgent())
+      this.registerFastAgent(new KnowledgeGraphAgent())
+      this.registerFastAgent(new BrandHeritageAgent())
+      this.registerFastAgent(new ScoreAggregator())
+      
+      console.log(`✅ [IntelligentHybrid] Constructor completed. Fast agents: ${this.fastAgents.size}, Slow agents: ${this.slowAgentNames.size}`)
+    } catch (error) {
+      console.error('❌ [IntelligentHybrid] Constructor failed:', error)
+      throw error
+    }
   }
 
   /**
@@ -89,10 +103,14 @@ export class IntelligentHybridADIOrchestrator {
   async executeEvaluation(context: ADIEvaluationContext): Promise<ADIOrchestrationResult> {
     const startTime = Date.now()
     console.log(`🧠 [IntelligentHybrid] Starting intelligent hybrid evaluation for ${context.evaluationId}`)
+    console.log(`🔍 [IntelligentHybrid] Fast agents available: ${this.fastAgents.size}`)
+    console.log(`🔍 [IntelligentHybrid] Slow agents available: ${this.slowAgentNames.size}`)
 
     try {
       // Ensure evaluation record exists in database before proceeding
+      console.log(`📝 [IntelligentHybrid] Ensuring evaluation record exists...`)
       await this.ensureEvaluationRecord(context)
+      console.log(`✅ [IntelligentHybrid] Evaluation record confirmed`)
       
       // Determine system routing based on feature flags
       const tier = context.metadata?.tier || 'free'
