@@ -102,7 +102,7 @@ export const createBrand = async (brand: NewBrand): Promise<Brand | null> => {
         (user_id, name, website_url, industry, description, competitors)
       VALUES
         (${brand.userId}, ${brand.name}, ${normalizedUrl}, ${brand.industry ?? null}, ${ (brand as any).description ?? null }, ${JSON.stringify(competitorsJson)}::jsonb)
-      ON CONFLICT (user_id, normalized_host)
+      ON CONFLICT (normalized_host)
       DO UPDATE SET
         name = EXCLUDED.name,
         website_url = EXCLUDED.website_url,
