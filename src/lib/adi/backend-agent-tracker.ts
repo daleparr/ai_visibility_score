@@ -21,18 +21,47 @@ export class BackendAgentTracker {
   async startExecution(evaluationId: string, agentName: string): Promise<string> {
     const executionId = `${evaluationId}-${agentName}-${Date.now()}`
     
-    await withSchema(async () => {
-      await db.insert(backendAgentExecutions).values({
-        id: executionId,
-        evaluationId,
-        agentName,
-        status: 'pending',
-        startedAt: new Date(),
-      })
-    })
+    try {
+      // Use write verification to ensure INSERT is immediately visible
+      await verifyWriteVisibility(
+        // Write operation
+        async () => {
+          return await withSchema(async () => {
+            await db.insert(backendAgentExecutions).values({
+              id: executionId,
+              evaluationId,
+              agentName,
+              status: 'pending',
+              startedAt: new Date(),
+            })
+            return { executionId, agentName }
+          })
+        },
+        // Verification query
+        async () => {
+          return await withSchema(async () => {
+            const verification = await db.select()
+              .from(backendAgentExecutions)
+              .where(eq(backendAgentExecutions.id, executionId))
+              .limit(1)
+            
+            if (verification.length === 0) {
+              throw new Error(`Execution record ${executionId} not found after INSERT`)
+            }
+            
+            return verification[0]
+          })
+        },
+        5, // maxRetries - be aggressive to ensure record exists
+        300 // baseDelay - 300ms between retries
+      )
 
-    console.log(`📋 [Tracker] Started tracking ${agentName} execution: ${executionId}`)
-    return executionId
+      console.log(`📋 [Tracker] Started tracking ${agentName} execution: ${executionId} (verified)`)
+      return executionId
+    } catch (error) {
+      console.error(`❌ [Tracker] Failed to start tracking ${agentName}:`, error)
+      throw error
+    }
   }
 
   /**
