@@ -10,7 +10,7 @@ const crypto = require('crypto')
 
 // Configuration
 const NETLIFY_URL = process.env.NETLIFY_URL || process.env.URL || 'https://ai-visibility-score.netlify.app'
-const RAILWAY_URL = process.env.RAILWAY_API_URL || 'https://aidi-railway-workers-production.up.railway.app'
+const RAILWAY_URL = process.env.RAILWAY_API_URL || 'https://your-railway-service.up.railway.app'
 
 console.log('🧪 AIDI Bridge Integration Test Suite')
 console.log('====================================')
