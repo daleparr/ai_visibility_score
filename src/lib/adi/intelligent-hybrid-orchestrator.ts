@@ -39,13 +39,14 @@ export class IntelligentHybridADIOrchestrator {
   private tracker: BackendAgentTracker
 
   // Agent classification based on complexity and execution time
+  // These must match the agents registered in Railway's AgentExecutor
   private readonly SLOW_AGENTS = [
-    'crawl_agent',         // Critical: Needs progressive timeouts for sitemap processing
-    'llm_test_agent',      // High: Multiple AI model calls with fallback
-    'sentiment_agent',     // Medium: LLM sentiment analysis with graceful degradation
-    'citation_agent',      // Low: Media mention analysis, can be skipped
-    'geo_visibility_agent', // High: Location-based LLM testing
-    'commerce_agent'       // Medium: Product analysis with LLM, can be skipped
+    'crawl_agent',         // Critical: Real implementation in Railway
+    'citation_agent',      // Low: Placeholder implementation in Railway
+    'commerce_agent',      // Medium: Placeholder implementation in Railway
+    'sentiment_agent',     // Medium: Placeholder implementation in Railway
+    'llm_test_agent',      // High: Placeholder implementation in Railway
+    'geo_visibility_agent' // High: Placeholder implementation in Railway
   ]
 
   private readonly FAST_AGENTS = [

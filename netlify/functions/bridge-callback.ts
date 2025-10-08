@@ -75,7 +75,7 @@ async function updateAgentStatus(
         `
       } else if (status === 'completed') {
         const resultJson = result ? JSON.stringify(result) : null
-        const executionTime = result?.executionTime || null
+        const executionTime = result?.executionTime ? Math.round(result.executionTime) : null
 
         await sql`
           UPDATE production.backend_agent_executions
@@ -104,7 +104,7 @@ async function updateAgentStatus(
         `
       } else if (status === 'completed') {
         const resultJson = result ? JSON.stringify(result) : null
-        const executionTime = result?.executionTime || null
+        const executionTime = result?.executionTime ? Math.round(result.executionTime) : null
 
         await sql`
           INSERT INTO production.backend_agent_executions 
