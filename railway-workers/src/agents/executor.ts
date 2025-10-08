@@ -1,6 +1,6 @@
 import { createLogger } from '../utils/logger'
 import { AgentContext, AgentExecutionError } from '../types'
-import { CrawlAgent } from './crawl-agent'
+import { AdvancedCrawlAgent } from './advanced-crawl-agent'
 
 const logger = createLogger('agent-executor')
 
@@ -77,8 +77,8 @@ export class AgentExecutor {
   private agents: Map<string, AgentInterface> = new Map()
 
   constructor() {
-    // Initialize real and placeholder agents
-    this.agents.set('crawl_agent', new CrawlAgent()) // Real implementation
+    // Initialize advanced and placeholder agents
+    this.agents.set('crawl_agent', new AdvancedCrawlAgent()) // Advanced implementation with anti-bot features
     this.agents.set('citation_agent', new PlaceholderAgent('citation_agent'))
     this.agents.set('commerce_agent', new PlaceholderAgent('commerce_agent'))
     this.agents.set('sentiment_agent', new PlaceholderAgent('sentiment_agent'))
@@ -87,7 +87,7 @@ export class AgentExecutor {
 
     logger.info('Agent executor initialized', {
       availableAgents: Array.from(this.agents.keys()),
-      realAgents: ['crawl_agent'],
+      advancedAgents: ['crawl_agent'],
       placeholderAgents: ['citation_agent', 'commerce_agent', 'sentiment_agent', 'llm_test_agent', 'geo_visibility_agent']
     })
   }
