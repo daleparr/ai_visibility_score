@@ -66,14 +66,13 @@ export class RailwayBridgeClient {
 
   private getRailwayUrl(): string {
     const possibleUrls = [
-      process.env.RAILWAY_API_URL,
       process.env.RAILWAY_URL,
       process.env.NEXT_PUBLIC_RAILWAY_URL,
-      'https://aidi-railway-workers.railway.app' // Default fallback
+      'https://aidi-railway-workers-production.up.railway.app' // Default fallback
     ].filter(Boolean)
 
     if (possibleUrls.length === 0) {
-      throw new BridgeError('No Railway URL configured. Set RAILWAY_API_URL environment variable.')
+      throw new BridgeError('No Railway URL configured. Set RAILWAY_URL environment variable.')
     }
 
     const url = possibleUrls[0]!
@@ -87,7 +86,7 @@ export class RailwayBridgeClient {
     callbackUrl: string,
     expiresIn: string = '1h'
   ): string {
-    const jwtSecret = process.env.JWT_SECRET || process.env.RAILWAY_JWT_SECRET
+    const jwtSecret = process.env.JWT_SECRET
     if (!jwtSecret) {
       throw new BridgeError('JWT_SECRET not configured for bridge authentication')
     }
