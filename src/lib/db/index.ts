@@ -104,12 +104,13 @@ export async function withSchema<T>(queryFn: () => Promise<T>): Promise<T> {
       try {
         // Force a fresh connection for each critical operation to avoid pooling issues
         // Add explicit transaction isolation and connection parameters
+        // CRITICAL: Add timestamp to force new connection (prevents stale connection reuse)
         const connectionParams = [
           'target_session_attrs=read-write',
           'connect_timeout=10',
-          'application_name=adi-hybrid-system',
+          `application_name=adi-${Date.now()}`, // Unique app name forces new connection
           'statement_timeout=30000', // 30 second statement timeout
-          'idle_in_transaction_session_timeout=60000' // 1 minute idle timeout
+          'idle_in_transaction_session_timeout=5000' // 5 second idle timeout (force quick cleanup)
         ].join('&')
         
         const freshSql = neon(DB_URL.includes('?') 
