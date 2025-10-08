@@ -8,9 +8,13 @@
 SET search_path TO production, public;
 
 -- =====================================================
--- 1. CREATE BACKEND AGENT STATUS ENUM
+-- 1. CREATE BACKEND AGENT STATUS ENUM IN PRODUCTION SCHEMA
 -- =====================================================
-CREATE TYPE IF NOT EXISTS public.backend_agent_status AS ENUM(
+-- Drop the public enum if it exists (to avoid conflicts)
+DROP TYPE IF EXISTS public.backend_agent_status CASCADE;
+
+-- Create enum in production schema to match table location
+CREATE TYPE IF NOT EXISTS production.backend_agent_status AS ENUM(
     'pending', 
     'running', 
     'completed', 
@@ -24,7 +28,7 @@ CREATE TABLE IF NOT EXISTS production.backend_agent_executions (
     id varchar(255) PRIMARY KEY,
     evaluation_id uuid NOT NULL REFERENCES production.evaluations(id) ON DELETE CASCADE,
     agent_name varchar(100) NOT NULL,
-    status public.backend_agent_status NOT NULL DEFAULT 'pending',
+    status production.backend_agent_status NOT NULL DEFAULT 'pending',
     started_at timestamp NOT NULL DEFAULT now(),
     completed_at timestamp,
     result jsonb,

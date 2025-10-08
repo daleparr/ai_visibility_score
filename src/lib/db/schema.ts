@@ -644,7 +644,8 @@ export const backendAgentExecutions = productionSchema.table('backend_agent_exec
   id: varchar('id', { length: 255 }).primaryKey(),
   evaluationId: uuid('evaluation_id').notNull().references(() => evaluations.id, { onDelete: 'cascade' }),
   agentName: varchar('agent_name', { length: 100 }).notNull(),
-  status: backendAgentStatusEnum('status').notNull().default('pending'),
+  // Use varchar instead of enum to avoid schema mismatch issues
+  status: varchar('status', { length: 20 }).notNull().default('pending').$type<'pending' | 'running' | 'completed' | 'failed'>(),
   startedAt: timestamp('started_at').notNull().defaultNow(),
   completedAt: timestamp('completed_at'),
   result: jsonb('result'),
