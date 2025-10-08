@@ -56,54 +56,75 @@ async function updateAgentStatus(
 ): Promise<void> {
   try {
     // Import database modules dynamically
-    const { withSchema } = await import('../../src/lib/db')
-    const { backendAgentExecutions } = await import('../../src/lib/db/schema')
-    const { eq, and } = await import('drizzle-orm')
-    const { db } = await import('../../src/lib/db')
+    const { sql } = await import('../../src/lib/db')
 
-    await withSchema(async () => {
+    // Check if record exists
+    const existing = await sql`
+      SELECT id FROM production.backend_agent_executions
+      WHERE evaluation_id = ${evaluationId} AND agent_name = ${agentName}
+      LIMIT 1
+    `
+
+    if (existing.length > 0) {
+      // Record exists - UPDATE
       if (status === 'running') {
-        await db.update(backendAgentExecutions)
-          .set({
-            status: 'running',
-            startedAt: new Date(),
-            updatedAt: new Date()
-          })
-          .where(and(
-            eq(backendAgentExecutions.evaluationId, evaluationId),
-            eq(backendAgentExecutions.agentName, agentName)
-          ))
+        await sql`
+          UPDATE production.backend_agent_executions
+          SET status = 'running', started_at = now(), updated_at = now()
+          WHERE evaluation_id = ${evaluationId} AND agent_name = ${agentName}
+        `
       } else if (status === 'completed') {
-        await db.update(backendAgentExecutions)
-          .set({
-            status: 'completed',
-            completedAt: new Date(),
-            result: result ? JSON.stringify(result) : null,
-            executionTime: result?.executionTime || null,
-            updatedAt: new Date()
-          })
-          .where(and(
-            eq(backendAgentExecutions.evaluationId, evaluationId),
-            eq(backendAgentExecutions.agentName, agentName)
-          ))
-      } else if (status === 'failed') {
-        await db.update(backendAgentExecutions)
-          .set({
-            status: 'failed',
-            completedAt: new Date(),
-            error: error || 'Unknown error',
-            updatedAt: new Date()
-          })
-          .where(and(
-            eq(backendAgentExecutions.evaluationId, evaluationId),
-            eq(backendAgentExecutions.agentName, agentName)
-          ))
-      }
-    })
+        const resultJson = result ? JSON.stringify(result) : null
+        const executionTime = result?.executionTime || null
 
-    console.log(`✅ [BridgeCallback] Agent status updated: ${agentName} -> ${status}`)
+        await sql`
+          UPDATE production.backend_agent_executions
+          SET status = 'completed', completed_at = now(), result = ${resultJson}, 
+              execution_time = ${executionTime}, updated_at = now()
+          WHERE evaluation_id = ${evaluationId} AND agent_name = ${agentName}
+        `
+      } else if (status === 'failed') {
+        await sql`
+          UPDATE production.backend_agent_executions
+          SET status = 'failed', completed_at = now(), error = ${error || 'Unknown error'}, 
+              updated_at = now()
+          WHERE evaluation_id = ${evaluationId} AND agent_name = ${agentName}
+        `
+      }
+    } else {
+      // Record doesn't exist - INSERT
+      const id = `${evaluationId}-${agentName}-${Date.now()}`
+      
+      if (status === 'running') {
+        await sql`
+          INSERT INTO production.backend_agent_executions 
+            (id, evaluation_id, agent_name, status, started_at, created_at, updated_at)
+          VALUES 
+            (${id}, ${evaluationId}, ${agentName}, 'running', now(), now(), now())
+        `
+      } else if (status === 'completed') {
+        const resultJson = result ? JSON.stringify(result) : null
+        const executionTime = result?.executionTime || null
+
+        await sql`
+          INSERT INTO production.backend_agent_executions 
+            (id, evaluation_id, agent_name, status, completed_at, result, execution_time, created_at, updated_at)
+          VALUES 
+            (${id}, ${evaluationId}, ${agentName}, 'completed', now(), ${resultJson}, ${executionTime}, now(), now())
+        `
+      } else if (status === 'failed') {
+        await sql`
+          INSERT INTO production.backend_agent_executions 
+            (id, evaluation_id, agent_name, status, completed_at, error, created_at, updated_at)
+          VALUES 
+            (${id}, ${evaluationId}, ${agentName}, 'failed', now(), ${error || 'Unknown error'}, now(), now())
+        `
+      }
+    }
+
+    console.log(`✅ [BridgeCallback] Agent status saved: ${agentName} -> ${status} (${existing.length > 0 ? 'updated' : 'inserted'})`)
   } catch (dbError) {
-    console.error(`❌ [BridgeCallback] Database update failed:`, dbError)
+    console.error(`❌ [BridgeCallback] Database operation failed:`, dbError)
     throw dbError
   }
 }
