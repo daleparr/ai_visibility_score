@@ -13,21 +13,39 @@ export async function GET() {
     const brandName = 'Canary Test Brand';
     const websiteUrl = 'https://canary-test.example.com';
     
-    // TRANSACTIONAL FIX: Brand → Evaluation
+    // TRANSACTIONAL FIX: User → Brand → Evaluation
     await sql`BEGIN`;
     try {
-      // 1) Try to find existing brand
+      // 1) Create or find a test user first
+      let userResult = await sql`
+        SELECT id FROM production.users 
+        WHERE email = 'canary-test@example.com'
+        LIMIT 1
+      `;
+
+      if (userResult.length === 0) {
+        userResult = await sql`
+          INSERT INTO production.users (id, email, name, email_verified)
+          VALUES (gen_random_uuid(), 'canary-test@example.com', 'Canary Test User', now())
+          RETURNING id
+        `;
+      }
+
+      const userId = userResult[0].id;
+      console.log(`[${correlationId}] Test user ready:`, userId);
+
+      // 2) Try to find existing brand
       let brandResult = await sql`
         SELECT id FROM production.brands 
         WHERE website_url = ${websiteUrl}
         LIMIT 1
       `;
 
-      // 2) Create if doesn't exist
+      // 3) Create brand if doesn't exist (with valid user_id)
       if (brandResult.length === 0) {
         brandResult = await sql`
           INSERT INTO production.brands (name, website_url, industry, user_id)
-          VALUES (${brandName}, ${websiteUrl}, 'test', gen_random_uuid())
+          VALUES (${brandName}, ${websiteUrl}, 'test', ${userId})
           RETURNING id
         `;
       }
@@ -56,7 +74,7 @@ export async function GET() {
         correlationId,
         brandId,
         evaluation: evalResult[0],
-        message: 'Canary test passed - transactional brand→evaluation works'
+        message: 'Canary test passed - transactional user→brand→evaluation works'
       });
       
     } catch (error) {
