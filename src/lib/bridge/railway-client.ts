@@ -65,24 +65,15 @@ export class RailwayBridgeClient {
   }
 
   private getRailwayUrl(): string {
-    // Use environment variable indirection to avoid scanner detection
-    const envVars = [
-      'RAILWAY_ENDPOINT',
-      'RAILWAY_' + 'URL',
-      'NEXT_PUBLIC_RAILWAY_' + 'URL'
-    ]
+    // TEMPORARY FIX: Hardcode URL to bypass escaping issue
+    const hardcodedUrl = 'https://aidi-railway-workers-production.up.railway.app'
     
-    const possibleUrls = envVars
-      .map(varName => process.env[varName])
-      .filter(Boolean)
+    logger.info('Using hardcoded Railway endpoint (temporary fix)', { 
+      url: hardcodedUrl, 
+      source: 'hardcoded' 
+    })
     
-    if (possibleUrls.length === 0) {
-      possibleUrls.push('https://aidi-railway-workers-production.up.railway.app')
-    }
-
-    const url = possibleUrls[0]!
-    logger.info('Using Railway endpoint', { url, source: 'environment' })
-    return url
+    return hardcodedUrl
   }
 
   private generateBridgeToken(
