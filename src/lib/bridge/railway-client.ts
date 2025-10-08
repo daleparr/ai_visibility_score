@@ -169,14 +169,25 @@ export class RailwayBridgeClient {
       logger.info('Enqueueing agents to Railway', {
         evaluationId: request.evaluationId,
         agents: request.agents,
-        railwayUrl: this.baseUrl
+        railwayUrl: this.baseUrl,
+        fullEndpoint: `${this.baseUrl}/queue/enqueue`,
+        baseUrlType: typeof this.baseUrl,
+        baseUrlLength: this.baseUrl.length
       })
 
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), this.retryConfig.timeoutMs)
 
       try {
-        const response = await fetch(`${this.baseUrl}/queue/enqueue`, {
+        const fetchUrl = `${this.baseUrl}/queue/enqueue`
+        logger.info('About to fetch Railway endpoint', {
+          fetchUrl,
+          fetchUrlType: typeof fetchUrl,
+          fetchUrlLength: fetchUrl.length,
+          baseUrl: this.baseUrl
+        })
+        
+        const response = await fetch(fetchUrl, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${authToken}`,
