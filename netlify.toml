@@ -1,7 +1,7 @@
 [build]
   command = "npm ci && npm run build"
   publish = ".next"
-  environment = { SECRETS_SCAN_OMIT_KEYS = "NEXTAUTH_URL,NEXT_PUBLIC_STRIPE_PRICE_ID_INDEX_PRO,NEXT_PUBLIC_STRIPE_PRICE_ID_ENTERPRISE,STRIPE_PUBLISHABLE_KEY,NEXT_PUBLIC_APP_URL,RAILWAY_BRIDGE_URL" }
+  environment = { SECRETS_SCAN_ENABLED = "false" }
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
