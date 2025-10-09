@@ -105,11 +105,11 @@ export async function GET(
       tier: evaluation.tier,
       status: evaluation.status,
       overallScore: finalScore,
-      pillarScores: pillarScores.reduce((acc, p) => ({
+      pillarScores: pillarScores.reduce((acc: Record<string, number>, p: any) => ({
         ...acc,
         [p.pillar]: p.score
-      }), {}),
-      dimensionScores: dimensionScores.map(d => ({
+      }), {} as Record<string, number>),
+      dimensionScores: dimensionScores.map((d: any) => ({
         name: d.name,
         score: d.score,
         description: d.description,
