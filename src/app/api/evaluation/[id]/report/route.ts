@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withSchema, sql } from '@/lib/db'
-import { getFeatureFlags } from '@/lib/feature-flags'
 import { BackendAgentTracker } from '@/lib/adi/backend-agent-tracker'
-import { EvaluationFinalizer } from '@/lib/adi/evaluation-finalizer'
-import { ADIScoringEngine } from '@/lib/adi/scoring-engine'
 
 export const dynamic = 'force-dynamic'
 
@@ -97,39 +94,8 @@ export async function GET(
         metadata: e.result.metadata || {}
       }))
 
-    // Calculate final score if not already set
-    let finalScore = evaluation.overall_score
-    if (!finalScore && executions.every(e => e.status === 'completed')) {
-      try {
-        const orchestrationResult = {
-          evaluationId,
-          agentResults,
-          dimensionScores,
-          pillarScores,
-          brandCategory,
-          performanceProfile
-        }
-
-        const adiScore = ADIScoringEngine.calculateADIScore(orchestrationResult)
-        finalScore = Math.round(adiScore.overall)
-
-        // Update evaluation with final score
-        await withSchema(async () => {
-          await sql`
-            UPDATE production.evaluations
-            SET 
-              overall_score = ${finalScore},
-              status = 'completed',
-              updated_at = now()
-            WHERE id = ${evaluationId}
-          `
-        })
-      } catch (error) {
-        console.error('Failed to calculate final score:', error)
-        // Use fallback score
-        finalScore = 45
-      }
-    }
+    // Use the score from the evaluation record
+    let finalScore = evaluation.overall_score || 0
 
     // Build comprehensive report
     const report = {
