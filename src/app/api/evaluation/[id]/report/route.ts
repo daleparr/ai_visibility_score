@@ -41,7 +41,7 @@ export async function GET(
 
     // Get agent execution results
     const tracker = new BackendAgentTracker()
-    const executions = await tracker.getExecutions(evaluationId)
+    const executions = await tracker.getEvaluationExecutions(evaluationId)
 
     // Get dimension scores
     const dimensionScores = await withSchema(async () => {
