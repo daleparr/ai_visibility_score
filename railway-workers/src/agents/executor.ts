@@ -1,6 +1,11 @@
 import { createLogger } from '../utils/logger'
 import { AgentContext, AgentExecutionError } from '../types'
 import { AdvancedCrawlAgent } from './advanced-crawl-agent'
+import { RealLLMTestAgent } from './real-llm-test-agent'
+import { RealSentimentAgent } from './real-sentiment-agent'
+import { RealCommerceAgent } from './real-commerce-agent'
+import { RealCitationAgent } from './real-citation-agent'
+import { RealGeoVisibilityAgent } from './real-geo-visibility-agent'
 
 const logger = createLogger('agent-executor')
 
@@ -8,87 +13,22 @@ interface AgentInterface {
   execute(context: AgentContext): Promise<any>
 }
 
-class PlaceholderAgent implements AgentInterface {
-  constructor(private agentName: string) {}
-
-  async execute(context: AgentContext): Promise<any> {
-    logger.info(`Executing placeholder agent: ${this.agentName}`, {
-      evaluationId: context.evaluationId,
-      websiteUrl: context.websiteUrl
-    })
-
-    // Simulate agent processing time
-    const processingTime = Math.random() * 5000 + 2000 // 2-7 seconds
-    await new Promise(resolve => setTimeout(resolve, processingTime))
-
-    if (this.agentName === 'citation_agent') {
-      return {
-        agentName: this.agentName,
-        status: 'completed',
-        results: [
-          {
-            resultType: 'citation_analysis',
-            rawValue: 75,
-            normalizedScore: 75,
-            confidenceLevel: 0.8,
-            evidence: {
-              websiteUrl: context.websiteUrl,
-              citationSources: ['example.com', 'news.com'],
-              authorityScore: 75,
-              reasoning: 'Found moderate citation presence'
-            }
-          }
-        ],
-        executionTime: processingTime,
-        metadata: {
-          placeholder: true,
-          timestamp: new Date().toISOString()
-        }
-      }
-    }
-
-    // Default response for other agents
-    return {
-      agentName: this.agentName,
-      status: 'completed',
-      results: [
-        {
-          resultType: `${this.agentName}_analysis`,
-          rawValue: Math.floor(Math.random() * 40) + 60, // Random score 60-100
-          normalizedScore: Math.floor(Math.random() * 40) + 60,
-          confidenceLevel: 0.7,
-          evidence: {
-            websiteUrl: context.websiteUrl,
-            reasoning: `Placeholder analysis for ${this.agentName}`,
-            placeholder: true
-          }
-        }
-      ],
-      executionTime: processingTime,
-      metadata: {
-        placeholder: true,
-        timestamp: new Date().toISOString()
-      }
-    }
-  }
-}
-
 export class AgentExecutor {
   private agents: Map<string, AgentInterface> = new Map()
 
   constructor() {
-    // Initialize advanced and placeholder agents
-    this.agents.set('crawl_agent', new AdvancedCrawlAgent()) // Advanced implementation with anti-bot features
-    this.agents.set('citation_agent', new PlaceholderAgent('citation_agent'))
-    this.agents.set('commerce_agent', new PlaceholderAgent('commerce_agent'))
-    this.agents.set('sentiment_agent', new PlaceholderAgent('sentiment_agent'))
-    this.agents.set('llm_test_agent', new PlaceholderAgent('llm_test_agent'))
-    this.agents.set('geo_visibility_agent', new PlaceholderAgent('geo_visibility_agent'))
+    // Initialize REAL agents with LLM API integration
+    this.agents.set('crawl_agent', new AdvancedCrawlAgent()) // Advanced crawling with anti-bot features
+    this.agents.set('citation_agent', new RealCitationAgent()) // Real citation analysis with Brave Search + LLM
+    this.agents.set('commerce_agent', new RealCommerceAgent()) // Real commerce analysis with LLM
+    this.agents.set('sentiment_agent', new RealSentimentAgent()) // Real sentiment analysis with LLM
+    this.agents.set('llm_test_agent', new RealLLMTestAgent()) // Real LLM testing with GPT-4
+    this.agents.set('geo_visibility_agent', new RealGeoVisibilityAgent()) // Real geo visibility with LLM
 
-    logger.info('Agent executor initialized', {
+    logger.info('Agent executor initialized with REAL AGENTS', {
       availableAgents: Array.from(this.agents.keys()),
-      advancedAgents: ['crawl_agent'],
-      placeholderAgents: ['citation_agent', 'commerce_agent', 'sentiment_agent', 'llm_test_agent', 'geo_visibility_agent']
+      realAgents: ['crawl_agent', 'citation_agent', 'commerce_agent', 'sentiment_agent', 'llm_test_agent', 'geo_visibility_agent'],
+      note: 'All agents will use real LLM APIs if keys are configured, fallback to heuristics otherwise'
     })
   }
 

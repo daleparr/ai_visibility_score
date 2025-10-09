@@ -33,7 +33,7 @@ class FeatureFlagManager {
       
       // Fallback Systems
       enableHybridFallback: this.getBooleanFlag('ENABLE_HYBRID_FALLBACK', true),
-      enableSyntheticData: this.getBooleanFlag('ENABLE_SYNTHETIC_DATA', false),
+      enableSyntheticData: this.getBooleanFlag('ENABLE_SYNTHETIC_DATA', false), // Force disable synthetic data
       
       // Debugging
       enableAdvancedLogging: this.getBooleanFlag('ENABLE_ADVANCED_LOGGING', false)

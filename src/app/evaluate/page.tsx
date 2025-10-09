@@ -690,12 +690,42 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
 
             if (statusData.status === 'completed' || statusData.overallScore > 0) {
               clearInterval(intervalId);
-              console.log('✅ Evaluation complete, setting final data.');
-              setEvaluationData(statusData.report || statusData.results || statusData);
-              if(statusData.report?.performanceProfile) {
-                setPerformanceProfile(statusData.report.performanceProfile);
+              console.log('✅ Evaluation complete, fetching final report...');
+              
+              // Fetch final report data
+              try {
+                const reportResponse = await fetch(`/api/evaluation/${evaluationId}/report`);
+                if (reportResponse.ok) {
+                  const reportData = await reportResponse.json();
+                  console.log('✅ Final report data:', reportData);
+                  
+                  // Use report data if available, fallback to status data
+                  const finalData = reportData.report || reportData || statusData.report || statusData.results || statusData;
+                  console.log('✅ Setting final evaluation data:', finalData);
+                  
+                  setEvaluationData(finalData);
+                  if(finalData.performanceProfile) {
+                    setPerformanceProfile(finalData.performanceProfile);
+                  }
+                  setIsLoading(false);
+                } else {
+                  console.error('❌ Failed to fetch final report:', await reportResponse.text());
+                  // Fallback to status data
+                  setEvaluationData(statusData.report || statusData.results || statusData);
+                  if(statusData.report?.performanceProfile) {
+                    setPerformanceProfile(statusData.report.performanceProfile);
+                  }
+                  setIsLoading(false);
+                }
+              } catch (reportError) {
+                console.error('❌ Error fetching final report:', reportError);
+                // Fallback to status data
+                setEvaluationData(statusData.report || statusData.results || statusData);
+                if(statusData.report?.performanceProfile) {
+                  setPerformanceProfile(statusData.report.performanceProfile);
+                }
+                setIsLoading(false);
               }
-              setIsLoading(false);
             } else if (statusData.status === 'failed') {
               clearInterval(intervalId);
               setError('Evaluation process failed. Please try again or contact support if the issue persists.');
