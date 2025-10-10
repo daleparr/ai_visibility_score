@@ -34,26 +34,30 @@ export async function GET() {
       const userId = userResult[0].id;
       console.log(`[${correlationId}] Test user ready:`, userId);
 
-      // 2) Try to find existing brand
-      let brandResult = await sql`
-        SELECT id FROM production.brands 
-        WHERE website_url = ${websiteUrl}
-        LIMIT 1
+      // 2) Upsert brand record (normalized_host dedupe)
+      const brandResult = await sql`
+        INSERT INTO production.brands (name, website_url, industry, user_id)
+        VALUES (${brandName}, ${websiteUrl}, 'test', ${userId})
+        ON CONFLICT (user_id, normalized_host)
+        DO UPDATE SET
+          name = EXCLUDED.name,
+          website_url = EXCLUDED.website_url,
+          industry = EXCLUDED.industry,
+          updated_at = now()
+        RETURNING id
       `;
 
-      // 3) Create brand if doesn't exist (with valid user_id)
-      if (brandResult.length === 0) {
-        brandResult = await sql`
-          INSERT INTO production.brands (name, website_url, industry, user_id)
-          VALUES (${brandName}, ${websiteUrl}, 'test', ${userId})
-          RETURNING id
-        `;
-      }
-
       const brandId = brandResult[0].id;
-      console.log(`[${correlationId}] Brand upserted:`, brandId);
-      
-      // 2) Insert evaluation with valid brand_id
+      console.log(`[${correlationId}] Brand ready:`, brandId);
+
+      // 3) Remove prior canary evaluations to keep state clean
+      await sql`
+        DELETE FROM production.evaluations
+        WHERE brand_id = ${brandId}
+      `;
+      console.log(`[${correlationId}] Cleared prior canary evaluations`);
+
+      // 4) Insert evaluation with valid brand_id
       const evalResult = await sql`
         INSERT INTO production.evaluations(
           id, brand_id, status, created_at, updated_at
