@@ -153,8 +153,19 @@ async function handleCompletion(
 ): Promise<HandlerResponse> {
   const { evaluationId, status, results, error, summary } = payload
 
+  console.log(``)
+  console.log(`╔═══════════════════════════════════════════════════════════╗`)
+  console.log(`║  🔔 COMPLETION CALLBACK RECEIVED (API ROUTE)              ║`)
+  console.log(`╚═══════════════════════════════════════════════════════════╝`)
+  console.log(`🏁 [Callback-API-${requestId}] Evaluation: ${evaluationId}`)
+  console.log(`🏁 [Callback-API-${requestId}] Status: ${status}`)
+  console.log(`🏁 [Callback-API-${requestId}] Results count: ${results?.length || 0}`)
+  console.log(`🏁 [Callback-API-${requestId}] Summary:`, JSON.stringify(summary, null, 2))
+  console.log(``)
+
   // Verify token
   if (!verifyBridgeToken(token, evaluationId)) {
+    console.error(`❌ [Callback-API-${requestId}] TOKEN VERIFICATION FAILED!`)
     return {
       statusCode: 401,
       headers: { 'Content-Type': 'application/json' },
@@ -162,22 +173,22 @@ async function handleCompletion(
     }
   }
 
-  console.log(`🏁 [Callback-${requestId}] Completion notification`, {
-    evaluationId,
-    status,
-    summary
-  })
+  console.log(`✅ [Callback-API-${requestId}] Token verified successfully`)
+  console.log(`🏁 [Callback-API-${requestId}] Proceeding to finalization...`)
 
   try {
     // Import the evaluation finalizer
+    console.log(`🏁 [Callback-API-${requestId}] Importing EvaluationFinalizer...`)
     const { EvaluationFinalizer } = await import('../../src/lib/adi/evaluation-finalizer')
     const finalizer = new EvaluationFinalizer()
+    console.log(`🏁 [Callback-API-${requestId}] EvaluationFinalizer instantiated`)
 
     if (status === 'completed' || status === 'failed') {
       // Trigger evaluation finalization
-      await finalizer.checkAndFinalizeEvaluation(evaluationId)
+      console.log(`🏁 [Callback-API-${requestId}] Calling checkAndFinalizeEvaluation...`)
+      const wasFinalized = await finalizer.checkAndFinalizeEvaluation(evaluationId)
       
-      console.log(`✅ [Callback-${requestId}] Evaluation finalized`, {
+      console.log(`✅ [Callback-API-${requestId}] Finalization ${wasFinalized ? 'COMPLETED' : 'NOT READY'}`, {
         evaluationId,
         status,
         agentCount: results?.length || 0
