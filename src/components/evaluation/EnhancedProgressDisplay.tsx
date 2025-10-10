@@ -282,10 +282,10 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
               })
             }
             
-            // Set phase based on progress
-            if (progress < 30) {
+            // Set phase based on target progress
+            if (targetProgress < 30) {
               setCurrentPhase('phase1')
-            } else if (progress < 80) {
+            } else if (targetProgress < 80) {
               setCurrentPhase('phase2')
             } else {
               setCurrentPhase('aggregation')
@@ -296,7 +296,7 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
               console.log(`🛤️  [Railway] ${data.performance.slowAgentsInProgress} agents processing in background`)
             }
             
-            console.log(`🔄 Intelligent evaluation: ${progress}% complete (${completedAgents}/${totalAgents} agents)`)
+            console.log(`🔄 Intelligent evaluation: ${Math.round(displayProgress)}% complete (${completedAgents}/${totalAgents} agents)`)
             return false // Continue polling
           }
         }
