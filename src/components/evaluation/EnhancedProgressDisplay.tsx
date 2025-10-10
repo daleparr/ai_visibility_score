@@ -124,13 +124,30 @@ const AGENTS: Agent[] = [
 export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedProgressDisplayProps) {
   const [agents, setAgents] = useState<Agent[]>(AGENTS)
   const [currentPhase, setCurrentPhase] = useState<'phase1' | 'phase2' | 'aggregation' | 'finalizing'>('phase1')
-  const [overallProgress, setOverallProgress] = useState(0)
+  const [displayProgress, setDisplayProgress] = useState(5) // What user sees - always increases
+  const [targetProgress, setTargetProgress] = useState(5) // Target from server - can fluctuate
   const [elapsedTime, setElapsedTime] = useState(0)
   const [evaluationStatus, setEvaluationStatus] = useState<'running' | 'finalizing' | 'completed' | 'failed'>('running')
-  const [realProgress, setRealProgress] = useState(0)
   const [allAgentsCompleted, setAllAgentsCompleted] = useState(false)
 
-  // Simulate agent progression
+  // Smooth progress animation - displayProgress always increases toward targetProgress
+  useEffect(() => {
+    const smoothingInterval = setInterval(() => {
+      setDisplayProgress(prev => {
+        // Always move toward target, never backward
+        if (prev < targetProgress) {
+          // Smooth increment - move 1-2% at a time
+          const increment = Math.min(2, targetProgress - prev)
+          return Math.min(prev + increment, targetProgress)
+        }
+        return prev // Already at or past target
+      })
+    }, 150) // Update every 150ms for smooth animation
+
+    return () => clearInterval(smoothingInterval)
+  }, [targetProgress])
+
+  // Elapsed time ticker
   useEffect(() => {
     const timer = setInterval(() => {
       setElapsedTime(prev => prev + 1)
@@ -138,6 +155,24 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
 
     return () => clearInterval(timer)
   }, [])
+
+  // Minimum progress guarantee - always trickle forward even without server updates
+  useEffect(() => {
+    if (evaluationStatus === 'running' && displayProgress < 90) {
+      const trickleTimer = setInterval(() => {
+        setTargetProgress(prev => {
+          // Slowly increase target even without server updates
+          // This ensures progress never stalls completely
+          if (prev < 20) return prev + 0.5  // Slower initial crawl
+          if (prev < 60) return prev + 0.3  // Medium pace during agent execution
+          if (prev < 85) return prev + 0.2  // Slower near the end
+          return prev // Stop trickling near 90%
+        })
+      }, 2000) // Update every 2 seconds
+
+      return () => clearInterval(trickleTimer)
+    }
+  }, [evaluationStatus, displayProgress])
 
   // Real evaluation status polling - REPLACES SIMULATION
   useEffect(() => {
@@ -175,8 +210,6 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
     }
 
     // Show initial progress to avoid sitting at 0%
-    setRealProgress(5)
-    setOverallProgress(5)
     setCurrentPhase('phase1')
     console.log('🚀 Starting real-time evaluation progress tracking...')
 
@@ -198,8 +231,7 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
           if (data.overallStatus === 'completed') {
             // REAL COMPLETION - all agents finished and finalized
             setEvaluationStatus('completed')
-            setOverallProgress(100)
-            setRealProgress(100)
+            setTargetProgress(100)
             updateAgentStatus(AGENTS.map(a => a.id), 'completed')
             setCurrentPhase('finalizing')
             setAllAgentsCompleted(false) // Reset for next run
@@ -221,28 +253,17 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
               setAllAgentsCompleted(true)
               setCurrentPhase('finalizing')
               setEvaluationStatus('finalizing')
-              setRealProgress(95) // Show 95% during finalization
-              setOverallProgress(95)
+              setTargetProgress(95) // Set target to 95%, smooth animation will catch up
               updateAgentStatus(AGENTS.map(a => a.id), 'completed')
-              
-              // Animate from 95% to 100% over 3 seconds to show finalization progress
-              let finalizationProgress = 95
-              const finalizationInterval = setInterval(() => {
-                finalizationProgress = Math.min(100, finalizationProgress + 1)
-                setRealProgress(finalizationProgress)
-                setOverallProgress(finalizationProgress)
-                if (finalizationProgress >= 100) {
-                  clearInterval(finalizationInterval)
-                }
-              }, 600) // 3 seconds total (5 steps * 600ms)
               
               return false // Continue polling until status changes to 'completed'
             }
             
-            const progress = Math.round((completedAgents / totalAgents) * 90) // Cap at 90% until finalization
+            // Calculate raw progress from server (0-90% range during agent execution)
+            const rawProgress = Math.round((completedAgents / totalAgents) * 90)
             
-            setRealProgress(progress)
-            setOverallProgress(progress)
+            // Only update target if it's HIGHER than current target (never go backward)
+            setTargetProgress(prev => Math.max(prev, rawProgress))
             
             // Update individual agent statuses from actual agent details
             if (data.agentDetails && Array.isArray(data.agentDetails)) {
@@ -348,7 +369,7 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
                 <div className="text-2xl font-bold text-brand-600">
-                  {evaluationId ? Math.round(realProgress) : Math.round((completedAgents / totalAgents) * 100)}%
+                  {Math.round(displayProgress)}%
                 </div>
                 <div className="text-xs text-gray-500">
                   {formatTime(elapsedTime)}
@@ -404,7 +425,7 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
               {completedAgents} of {totalAgents} agents completed
             </span>
           </div>
-          <Progress value={evaluationId ? realProgress : (completedAgents / totalAgents) * 100} className="h-2" />
+          <Progress value={displayProgress} className="h-2" />
         </CardContent>
       </Card>
 
