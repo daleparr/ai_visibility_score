@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withSchema, sql } from '@/lib/db'
 import { BackendAgentTracker } from '@/lib/adi/backend-agent-tracker'
+import { ADI_DIMENSION_PILLARS } from '@/types/adi'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,18 +51,32 @@ export async function GET(
         WHERE evaluation_id = ${evaluationId}
         ORDER BY created_at ASC
       `
+      console.log(`📊 [Report] Found ${result.length} dimension scores in database`)
+      if (result.length > 0) {
+        console.log(`📊 [Report] Sample dimension score:`, {
+          dimension_name: result[0].dimension_name,
+          score: result[0].score,
+          hasExplanation: !!result[0].explanation
+        })
+      }
       return result
     })
 
-    // Get pillar scores
-    const pillarScores = await withSchema(async () => {
-      const result = await sql`
-        SELECT * FROM production.pillar_scores
-        WHERE evaluation_id = ${evaluationId}
-        ORDER BY created_at ASC
-      `
-      return result
-    })
+    // Get pillar scores (handle missing table gracefully)
+    let pillarScores: any[] = []
+    try {
+      pillarScores = await withSchema(async () => {
+        const result = await sql`
+          SELECT * FROM production.pillar_scores
+          WHERE evaluation_id = ${evaluationId}
+          ORDER BY created_at ASC
+        `
+        return result
+      })
+    } catch (pillarError: any) {
+      console.warn(`⚠️ [Report] pillar_scores table query failed, will derive from dimensions:`, pillarError.message)
+      // This is okay - we'll derive pillar scores from dimension scores
+    }
 
     // Get brand category
     const brandCategory = await withSchema(async () => {
@@ -100,6 +115,56 @@ export async function GET(
     // Use the score from the evaluation record
     let finalScore = evaluation.overall_score || 0
 
+    // Process dimension scores with proper mapping
+    const processedDimensionScores = dimensionScores.map((d: any) => {
+      const dimensionName = d.dimension_name || d.dimensionName || d.name
+      const pillar = dimensionName ? ADI_DIMENSION_PILLARS[dimensionName as keyof typeof ADI_DIMENSION_PILLARS] || 'infrastructure' : 'infrastructure'
+      
+      return {
+        name: dimensionName,
+        score: d.score || 0,
+        description: d.explanation || d.description || '',
+        pillar: pillar
+      }
+    })
+
+    // Calculate or retrieve pillar scores
+    const calculatedPillarScores = pillarScores.length > 0 
+      ? pillarScores.reduce((acc: Record<string, number>, p: any) => ({
+          ...acc,
+          [p.pillar]: p.score
+        }), {} as Record<string, number>)
+      : (() => {
+          // Derive pillar scores from dimension scores if pillar_scores table doesn't exist
+          console.log(`📊 [Report] Deriving pillar scores from ${processedDimensionScores.length} dimension scores`)
+          const derivedPillars: Record<string, number[]> = {
+            infrastructure: [],
+            perception: [],
+            commerce: []
+          }
+          
+          processedDimensionScores.forEach((d: any) => {
+            if (d.pillar && derivedPillars[d.pillar]) {
+              derivedPillars[d.pillar].push(d.score || 0)
+            }
+          })
+          
+          const result = {
+            infrastructure: derivedPillars.infrastructure.length > 0 
+              ? Math.round(derivedPillars.infrastructure.reduce((a, b) => a + b, 0) / derivedPillars.infrastructure.length)
+              : 0,
+            perception: derivedPillars.perception.length > 0
+              ? Math.round(derivedPillars.perception.reduce((a, b) => a + b, 0) / derivedPillars.perception.length)
+              : 0,
+            commerce: derivedPillars.commerce.length > 0
+              ? Math.round(derivedPillars.commerce.reduce((a, b) => a + b, 0) / derivedPillars.commerce.length)
+              : 0
+          }
+          
+          console.log(`✅ [Report] Derived pillar scores:`, result)
+          return result
+        })()
+
     // Build comprehensive report
     const report = {
       id: evaluationId,
@@ -108,16 +173,8 @@ export async function GET(
       tier: evaluation.tier,
       status: evaluation.status,
       overallScore: finalScore,
-      pillarScores: pillarScores.reduce((acc: Record<string, number>, p: any) => ({
-        ...acc,
-        [p.pillar]: p.score
-      }), {} as Record<string, number>),
-      dimensionScores: dimensionScores.map((d: any) => ({
-        name: d.name,
-        score: d.score,
-        description: d.description,
-        pillar: d.pillar
-      })),
+      pillarScores: calculatedPillarScores,
+      dimensionScores: processedDimensionScores,
       brandCategory,
       performanceProfile,
       agentResults,
@@ -134,6 +191,13 @@ export async function GET(
         evaluationTime: evaluation.evaluation_time
       }
     }
+
+    console.log(`✅ [Report] Sending report to frontend:`, {
+      dimensionCount: report.dimensionScores.length,
+      pillarScores: report.pillarScores,
+      agentResultsCount: report.agentResults.length,
+      sampleDimension: report.dimensionScores[0]
+    })
 
     return NextResponse.json({ report })
   } catch (error) {
