@@ -91,7 +91,10 @@ export async function GET(
       .map(e => ({
         agentName: e.agentName,
         results: e.result.results || [],
-        metadata: e.result.metadata || {}
+        metadata: {
+          ...(e.result.metadata || {}),
+          executionTime: e.executionTime || e.result.executionTime || 0
+        }
       }))
 
     // Use the score from the evaluation record

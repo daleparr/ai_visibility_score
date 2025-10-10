@@ -13,6 +13,7 @@ import { UserFriendlyDimensionCard } from '@/components/adi/reporting/UserFriend
 import { PriorityActionCard } from '@/components/adi/reporting/PriorityActionCard'
 import { AIInteractionExample } from '@/components/adi/reporting/AIInteractionExample'
 import { LeaderboardTable } from '@/components/adi/leaderboards/LeaderboardTable'
+import { ProbeResultsPanel } from '@/components/adi/reporting/ProbeResultsPanel'
 import {
   getImprovementPriority,
   getAIInteractionExample,
@@ -156,6 +157,18 @@ interface EvaluationData {
     emoji: string
   }
   brandName?: string
+  agentResults?: Array<{
+    agentName: string
+    results: any[]
+    metadata: {
+      testsRun?: number
+      brandName?: string
+      apiProvider?: string
+      placeholder?: boolean
+      timestamp?: string
+      executionTime?: number
+    }
+  }>
 }
 
 export default function EvaluatePage() {
@@ -980,6 +993,22 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
               )}
             </CardContent>
           </Card>
+
+          {/* Probe Results - Index Pro & Enterprise Only */}
+          {(tier === 'index-pro' || tier === 'enterprise') && evaluationData.agentResults && evaluationData.agentResults.length > 0 && (
+            <div className="mb-8">
+              <ProbeResultsPanel 
+                agentResults={evaluationData.agentResults.map(agent => ({
+                  agentName: agent.agentName,
+                  executionTime: agent.metadata?.executionTime || 0,
+                  status: 'completed',
+                  results: agent.results || [],
+                  metadata: agent.metadata || {}
+                }))}
+                brandName={evaluationData.brandName}
+              />
+            </div>
+          )}
 
           {/* Professional Tier Features */}
           {evaluationData.tier !== 'free' && (
