@@ -121,7 +121,15 @@ export class CallbackClient {
         }
       }
 
-      const response = await this.client.post(`${this.callbackUrl}/complete`, payload)
+      const fullCallbackUrl = `${this.callbackUrl}/complete`
+      logger.info('🔔 SENDING COMPLETION CALLBACK', {
+        evaluationId,
+        fullUrl: fullCallbackUrl,
+        callbackUrl: this.callbackUrl,
+        completedAgents: payload.summary.completedAgents
+      })
+
+      const response = await this.client.post(fullCallbackUrl, payload)
 
       logger.info('Completion notification sent', {
         evaluationId,
