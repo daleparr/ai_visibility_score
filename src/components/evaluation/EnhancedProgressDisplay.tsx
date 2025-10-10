@@ -123,11 +123,12 @@ const AGENTS: Agent[] = [
 
 export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedProgressDisplayProps) {
   const [agents, setAgents] = useState<Agent[]>(AGENTS)
-  const [currentPhase, setCurrentPhase] = useState<'phase1' | 'phase2' | 'aggregation'>('phase1')
+  const [currentPhase, setCurrentPhase] = useState<'phase1' | 'phase2' | 'aggregation' | 'finalizing'>('phase1')
   const [overallProgress, setOverallProgress] = useState(0)
   const [elapsedTime, setElapsedTime] = useState(0)
-  const [evaluationStatus, setEvaluationStatus] = useState<'running' | 'completed' | 'failed'>('running')
+  const [evaluationStatus, setEvaluationStatus] = useState<'running' | 'finalizing' | 'completed' | 'failed'>('running')
   const [realProgress, setRealProgress] = useState(0)
+  const [allAgentsCompleted, setAllAgentsCompleted] = useState(false)
 
   // Simulate agent progression
   useEffect(() => {
@@ -173,6 +174,12 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
       return () => clearTimeout(progressTimer)
     }
 
+    // Show initial progress to avoid sitting at 0%
+    setRealProgress(5)
+    setOverallProgress(5)
+    setCurrentPhase('phase1')
+    console.log('🚀 Starting real-time evaluation progress tracking...')
+
     // INTELLIGENT STATUS POLLING - Shows Railway bridge + agent details
     const pollEvaluationStatus = async () => {
       try {
@@ -189,12 +196,13 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
           })
           
           if (data.overallStatus === 'completed') {
-            // REAL COMPLETION - all agents finished
+            // REAL COMPLETION - all agents finished and finalized
             setEvaluationStatus('completed')
             setOverallProgress(100)
             setRealProgress(100)
             updateAgentStatus(AGENTS.map(a => a.id), 'completed')
-            setCurrentPhase('aggregation')
+            setCurrentPhase('finalizing')
+            setAllAgentsCompleted(false) // Reset for next run
             console.log(`✅ Intelligent evaluation completed: ${data.progress?.completedAgents}/${data.progress?.totalAgents} agents`)
             return true // Stop polling
           } else if (data.overallStatus === 'failed') {
@@ -205,7 +213,33 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
             // Still running - show real progress from agent details
             const totalAgents = data.progress?.totalAgents || 12
             const completedAgents = data.progress?.completedAgents || 0
-            const progress = Math.round((completedAgents / totalAgents) * 100)
+            const runningAgents = data.progress?.runningAgents || 0
+            
+            // Check if all agents are done but evaluation isn't complete yet (finalizing)
+            if (completedAgents === totalAgents && runningAgents === 0 && !allAgentsCompleted) {
+              console.log('🏁 All agents completed, entering finalization phase...')
+              setAllAgentsCompleted(true)
+              setCurrentPhase('finalizing')
+              setEvaluationStatus('finalizing')
+              setRealProgress(95) // Show 95% during finalization
+              setOverallProgress(95)
+              updateAgentStatus(AGENTS.map(a => a.id), 'completed')
+              
+              // Animate from 95% to 100% over 3 seconds to show finalization progress
+              let finalizationProgress = 95
+              const finalizationInterval = setInterval(() => {
+                finalizationProgress = Math.min(100, finalizationProgress + 1)
+                setRealProgress(finalizationProgress)
+                setOverallProgress(finalizationProgress)
+                if (finalizationProgress >= 100) {
+                  clearInterval(finalizationInterval)
+                }
+              }, 600) // 3 seconds total (5 steps * 600ms)
+              
+              return false // Continue polling until status changes to 'completed'
+            }
+            
+            const progress = Math.round((completedAgents / totalAgents) * 90) // Cap at 90% until finalization
             
             setRealProgress(progress)
             setOverallProgress(progress)
@@ -230,7 +264,7 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
             // Set phase based on progress
             if (progress < 30) {
               setCurrentPhase('phase1')
-            } else if (progress < 95) {
+            } else if (progress < 80) {
               setCurrentPhase('phase2')
             } else {
               setCurrentPhase('aggregation')
@@ -326,16 +360,30 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
 
         <div>
           <h2 className="text-2xl font-bold mb-2">
-            {evaluationStatus === 'completed' ? 'Analysis Complete!' : `Analyzing ${safeHostname(url) || 'website'}`}
+            {evaluationStatus === 'completed' ? 'Analysis Complete!' : 
+             evaluationStatus === 'finalizing' ? 'Finalizing Your Score...' :
+             `Analyzing ${safeHostname(url) || 'website'}`}
           </h2>
-          <p className="text-gray-600">{getTierDescription()}</p>
+          <p className="text-gray-600">
+            {evaluationStatus === 'finalizing' 
+              ? 'Calculating dimension scores and generating insights...'
+              : getTierDescription()}
+          </p>
           <div className="flex gap-2 mt-2">
             <Badge variant="outline">
-              Phase {currentPhase === 'phase1' ? '1' : currentPhase === 'phase2' ? '2' : '3'} of 3
+              Phase {currentPhase === 'phase1' ? '1' : 
+                     currentPhase === 'phase2' ? '2' : 
+                     currentPhase === 'aggregation' ? '3' : 
+                     '4 (Final)'} of 4
             </Badge>
             {evaluationStatus === 'completed' && (
               <Badge variant="default" className="bg-green-600">
                 ✅ Score Available
+              </Badge>
+            )}
+            {evaluationStatus === 'finalizing' && (
+              <Badge variant="secondary" className="bg-purple-600 text-white animate-pulse">
+                🧮 Calculating Scores
               </Badge>
             )}
             {evaluationStatus === 'running' && evaluationId && (
@@ -432,7 +480,7 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
       </div>
 
       {/* Current Activity */}
-      {runningAgents.length > 0 && (
+      {runningAgents.length > 0 && evaluationStatus !== 'finalizing' && (
         <Card className="border-brand-200 bg-brand-50">
           <CardContent className="p-4">
             <div className="flex items-center space-x-2 mb-2">
@@ -445,6 +493,24 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
                   • {agent.name}: {agent.description}
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Finalization Phase */}
+      {evaluationStatus === 'finalizing' && (
+        <Card className="border-purple-200 bg-purple-50">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+              <span className="font-medium text-purple-700">Finalizing Results</span>
+            </div>
+            <div className="space-y-1 text-sm text-purple-600">
+              <div>• Aggregating {completedAgents} agent results</div>
+              <div>• Calculating dimension scores</div>
+              <div>• Generating personalized insights</div>
+              <div className="mt-2 text-xs text-purple-500 italic">Almost there...</div>
             </div>
           </CardContent>
         </Card>
