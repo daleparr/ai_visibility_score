@@ -239,6 +239,25 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       const payload = body as CompletionPayload
       const { evaluationId, status, results, summary } = payload
 
+      // CRITICAL: Write to database FIRST to prove function was called
+      try {
+        const { sql: dbSql } = await import('../../src/lib/db')
+        await dbSql`
+          INSERT INTO production.evaluations (id, brand_id, status, verdict, created_at, updated_at)
+          VALUES (
+            ${`callback-trace-${Date.now()}`},
+            ${'00000000-0000-0000-0000-000000000000'},
+            'running',
+            ${'CALLBACK RECEIVED AT ' + new Date().toISOString() + ' FOR ' + evaluationId},
+            now(),
+            now()
+          )
+          ON CONFLICT (id) DO NOTHING
+        `
+      } catch (traceError) {
+        // Ignore trace errors
+      }
+
       console.log(``)
       console.log(`╔═══════════════════════════════════════════════════════════╗`)
       console.log(`║  🔔 COMPLETION CALLBACK RECEIVED FROM RAILWAY             ║`)
