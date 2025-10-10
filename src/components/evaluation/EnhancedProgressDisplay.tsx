@@ -200,7 +200,7 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
             
             setTimeout(() => {
               updateAgentStatus(['score_aggregator'], 'completed')
-              setOverallProgress(100)
+              setTargetProgress(100)
               setEvaluationStatus('completed')
             }, 3000)
           }, 12000)
