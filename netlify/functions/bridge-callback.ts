@@ -131,11 +131,18 @@ async function updateAgentStatus(
 
 async function finalizeEvaluation(evaluationId: string, agentNames: string[]): Promise<void> {
   try {
+    console.log(`🏁 [BridgeCallback] Starting finalization for evaluation ${evaluationId}`, {
+      agentCount: agentNames.length,
+      agents: agentNames
+    })
+
     const { EvaluationFinalizer } = await import('../../src/lib/adi/evaluation-finalizer')
     const finalizer = new EvaluationFinalizer()
     
-    await finalizer.checkAndFinalizeEvaluation(evaluationId)
-    console.log(`✅ [BridgeCallback] Evaluation finalized: ${evaluationId}`)
+    console.log(`🏁 [BridgeCallback] Calling checkAndFinalizeEvaluation...`)
+    const wasFinalized = await finalizer.checkAndFinalizeEvaluation(evaluationId)
+    
+    console.log(`✅ [BridgeCallback] Evaluation ${wasFinalized ? 'FINALIZED' : 'NOT READY'}: ${evaluationId}`)
   } catch (error) {
     console.error(`❌ [BridgeCallback] Finalization failed:`, error)
     throw error
@@ -149,7 +156,8 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
     console.log(`🔄 [BridgeCallback-${requestId}] Received callback from Railway`, {
       method: event.httpMethod,
       path: event.path,
-      headers: Object.keys(event.headers || {})
+      headers: Object.keys(event.headers || {}),
+      bodyPreview: event.body?.substring(0, 200)
     })
 
     // Only handle POST requests

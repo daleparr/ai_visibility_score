@@ -141,7 +141,7 @@ export class RailwayBridgeClient {
     return this.withRetry(async () => {
       // Use environment variable indirection to avoid scanner detection
       const netlifyVar = 'NETLIFY_' + 'URL'
-      const baseUrl = process.env[netlifyVar] || process.env['URL'] || 'https://ai-visibility-score.netlify.app'
+      const baseUrl = process.env[netlifyVar] || process.env['URL'] || 'https://ai-discoverability-index.netlify.app'
       const callbackUrl = `${baseUrl}/.netlify/functions/bridge-callback`
       
       // Generate authentication token
