@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     // Import and call the finalizer!
     console.log(`🏁 [API-Callback] Importing EvaluationFinalizer...`)
-    const { EvaluationFinalizer } = await import('../../../../../lib/adi/evaluation-finalizer')
+    const { EvaluationFinalizer } = await import('@/lib/adi/evaluation-finalizer')
     const finalizer = new EvaluationFinalizer()
     
     console.log(`🏁 [API-Callback] Calling checkAndFinalizeEvaluation...`)
