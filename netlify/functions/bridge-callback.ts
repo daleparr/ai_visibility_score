@@ -239,8 +239,19 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       const payload = body as CompletionPayload
       const { evaluationId, status, results, summary } = payload
 
+      console.log(``)
+      console.log(`╔═══════════════════════════════════════════════════════════╗`)
+      console.log(`║  🔔 COMPLETION CALLBACK RECEIVED FROM RAILWAY             ║`)
+      console.log(`╚═══════════════════════════════════════════════════════════╝`)
+      console.log(`🏁 [BridgeCallback-${requestId}] Evaluation: ${evaluationId}`)
+      console.log(`🏁 [BridgeCallback-${requestId}] Status: ${status}`)
+      console.log(`🏁 [BridgeCallback-${requestId}] Results count: ${results?.length || 0}`)
+      console.log(`🏁 [BridgeCallback-${requestId}] Summary:`, JSON.stringify(summary, null, 2))
+      console.log(``)
+
       // Verify token
       if (!verifyBridgeToken(token, evaluationId)) {
+        console.error(`❌ [BridgeCallback-${requestId}] TOKEN VERIFICATION FAILED!`)
         return {
           statusCode: 401,
           headers: { 'Content-Type': 'application/json' },
@@ -248,11 +259,8 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         }
       }
 
-      console.log(`🏁 [BridgeCallback-${requestId}] Completion notification`, {
-        evaluationId,
-        status,
-        summary
-      })
+      console.log(`✅ [BridgeCallback-${requestId}] Token verified successfully`)
+      console.log(`🏁 [BridgeCallback-${requestId}] Proceeding to finalization...`)
 
       try {
         if (status === 'completed' || status === 'failed') {

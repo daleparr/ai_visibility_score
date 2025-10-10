@@ -33,16 +33,31 @@ export class ADIScoringEngine {
    * Calculate ADI score from orchestration results
    */
   static calculateADIScore(orchestrationResult: ADIOrchestrationResult): ADIScore {
+    console.log(``)
+    console.log(`╔═══════════════════════════════════════════════════════════╗`)
+    console.log(`║  🎯 ADI SCORING ENGINE - calculateADIScore ENTRY          ║`)
+    console.log(`╚═══════════════════════════════════════════════════════════╝`)
+    console.log(`🎯 [ScoringEngine] Agent results count: ${Object.keys(orchestrationResult.agentResults).length}`)
+    console.log(`🎯 [ScoringEngine] Agent names:`, Object.keys(orchestrationResult.agentResults))
+    console.log(``)
+    
     const { agentResults } = orchestrationResult
     
     // Extract dimension scores from agent results
+    console.log(`🎯 [ScoringEngine] Extracting dimension scores...`)
     const dimensionScores = this.extractDimensionScores(agentResults)
+    console.log(`🎯 [ScoringEngine] Extracted ${dimensionScores.length} dimension scores`)
     
     // Calculate pillar scores
+    console.log(`🎯 [ScoringEngine] Calculating pillar scores from ${dimensionScores.length} dimensions...`)
     const pillars = this.calculatePillarScores(dimensionScores)
+    console.log(`🎯 [ScoringEngine] Calculated ${pillars.length} pillar scores`)
+    console.log(`🎯 [ScoringEngine] Pillars:`, pillars.map(p => `${p.pillar}: ${p.score} (${p.dimensions.length} dimensions)`))
     
     // Calculate overall score
+    console.log(`🎯 [ScoringEngine] Calculating overall score...`)
     const overall = this.calculateOverallScore(pillars)
+    console.log(`🎯 [ScoringEngine] Overall score: ${overall}/100`)
     
     // Calculate confidence interval
     const confidenceInterval = this.calculateConfidenceInterval(dimensionScores)
@@ -53,7 +68,7 @@ export class ADIScoringEngine {
     // Determine grade
     const grade = this.getGradeFromScore(overall)
     
-    return {
+    const finalScore = {
       overall,
       grade,
       confidenceInterval,
@@ -61,6 +76,14 @@ export class ADIScoringEngine {
       pillars,
       methodologyVersion: 'ADI-v1.0'
     }
+    
+    console.log(``)
+    console.log(`✅ [ScoringEngine] SCORE CALCULATION COMPLETE`)
+    console.log(`✅ [ScoringEngine] Overall: ${overall}/100, Grade: ${grade}`)
+    console.log(`✅ [ScoringEngine] Pillars: ${pillars.length}, Total dimensions across pillars: ${pillars.reduce((sum, p) => sum + p.dimensions.length, 0)}`)
+    console.log(``)
+    
+    return finalScore
   }
 
   /**

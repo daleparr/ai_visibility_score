@@ -24,11 +24,21 @@ export class EvaluationFinalizer {
    * Check if evaluation should be finalized and do so if ready
    */
   async checkAndFinalizeEvaluation(evaluationId: string): Promise<boolean> {
+    console.log(``)
+    console.log(`═══════════════════════════════════════════════════════════`)
+    console.log(`🏁 [Finalizer] ENTRY POINT - checkAndFinalizeEvaluation called`)
+    console.log(`🏁 [Finalizer] Evaluation ID: ${evaluationId}`)
+    console.log(`🏁 [Finalizer] Timestamp: ${new Date().toISOString()}`)
+    console.log(`═══════════════════════════════════════════════════════════`)
+    console.log(``)
+    
     try {
       console.log(`🔍 [Finalizer] Checking if evaluation ${evaluationId} is ready for finalization`)
 
       // Get all agent executions for this evaluation
+      console.log(`🔍 [Finalizer] Fetching agent executions from database...`)
       const executions = await this.tracker.getEvaluationExecutions(evaluationId)
+      console.log(`🔍 [Finalizer] Retrieved ${executions.length} executions from database`)
       
       if (executions.length === 0) {
         console.log(`⚠️ [Finalizer] No agent executions found for ${evaluationId}`)
@@ -87,8 +97,15 @@ export class EvaluationFinalizer {
    * Finalize the evaluation by calculating scores and updating database
    */
   private async finalizeEvaluation(evaluationId: string, executions: any[]): Promise<void> {
+    console.log(``)
+    console.log(`╔═══════════════════════════════════════════════════════════╗`)
+    console.log(`║  🏁 FINALIZATION PROCESS STARTING                         ║`)
+    console.log(`╚═══════════════════════════════════════════════════════════╝`)
+    console.log(``)
+    
     try {
       console.log(`🏁 [Finalizer] Starting finalization for evaluation ${evaluationId}`)
+      console.log(`🏁 [Finalizer] Processing ${executions.length} agent executions`)
 
       // Get completed agent results
       const completedExecutions = executions.filter(e => e.status === 'completed' && e.result)
