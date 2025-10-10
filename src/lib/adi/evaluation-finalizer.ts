@@ -186,13 +186,23 @@ export class EvaluationFinalizer {
   private async saveDimensionScores(evaluationId: string, adiScore: any): Promise<void> {
     try {
       console.log(`💾 [Finalizer] Saving dimension scores for evaluation ${evaluationId}`)
+      console.log(`💾 [Finalizer] adiScore structure:`, JSON.stringify(adiScore, null, 2))
 
       // Extract dimension scores from ADI score
       const dimensionScoresToSave = []
 
+      // Log pillar count for debugging
+      console.log(`💾 [Finalizer] Number of pillars: ${adiScore.pillars?.length || 0}`)
+
       // Process pillars and their dimensions
       for (const pillar of adiScore.pillars || []) {
+        console.log(`💾 [Finalizer] Processing pillar: ${pillar.pillar}`)
+        console.log(`💾 [Finalizer] Pillar dimensions count: ${pillar.dimensions?.length || 0}`)
+        console.log(`💾 [Finalizer] Pillar dimensions:`, JSON.stringify(pillar.dimensions, null, 2))
+
         for (const dimension of pillar.dimensions || []) {
+          console.log(`💾 [Finalizer] Processing dimension:`, JSON.stringify(dimension, null, 2))
+          
           dimensionScoresToSave.push({
             evaluationId,
             dimensionName: dimension.dimension,
@@ -203,18 +213,23 @@ export class EvaluationFinalizer {
         }
       }
 
+      console.log(`💾 [Finalizer] Dimension scores to save:`, JSON.stringify(dimensionScoresToSave, null, 2))
+
       if (dimensionScoresToSave.length === 0) {
         console.warn(`⚠️ [Finalizer] No dimension scores to save for ${evaluationId}`)
+        console.warn(`⚠️ [Finalizer] This indicates the scoring engine did not produce pillar dimensions`)
         return
       }
 
       // Save dimension scores in batch
+      console.log(`💾 [Finalizer] Attempting to insert ${dimensionScoresToSave.length} dimension scores into database...`)
       await db.insert(dimensionScores).values(dimensionScoresToSave)
       
-      console.log(`✅ [Finalizer] Saved ${dimensionScoresToSave.length} dimension scores`)
+      console.log(`✅ [Finalizer] Successfully saved ${dimensionScoresToSave.length} dimension scores to database`)
 
     } catch (error) {
       console.error(`❌ [Finalizer] Failed to save dimension scores:`, error)
+      console.error(`❌ [Finalizer] Error details:`, JSON.stringify(error, null, 2))
       throw error
     }
   }
