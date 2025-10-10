@@ -363,7 +363,7 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
               className="w-24 h-24 rounded-full border-4 border-brand-600 border-t-transparent animate-spin"
               style={{ 
                 animationDuration: '2s',
-                background: `conic-gradient(from 0deg, transparent, transparent ${overallProgress * 3.6}deg, #e5e7eb ${overallProgress * 3.6}deg)`
+                background: `conic-gradient(from 0deg, transparent, transparent ${displayProgress * 3.6}deg, #e5e7eb ${displayProgress * 3.6}deg)`
               }}
             ></div>
             <div className="absolute inset-0 flex items-center justify-center">
