@@ -132,7 +132,6 @@ Response format: {"score": 0-100, "confidence": 0-1, "is_ecommerce": true/false,
       return {
         type: 'ecommerce_signals',
         score: evaluation.score,
-        score: evaluation.score,
         confidence: evaluation.confidence,
         evidence: {
           brandName,
@@ -150,7 +149,6 @@ Response format: {"score": 0-100, "confidence": 0-1, "is_ecommerce": true/false,
       
       return {
         type: 'ecommerce_signals',
-        score: 50,
         score: 50,
         confidence: 0.4,
         evidence: {
@@ -211,7 +209,6 @@ Response format: {"score": 0-100, "confidence": 0-1, "purchase_clarity": "high/m
       return {
         type: 'purchase_intent',
         score: evaluation.score,
-        score: evaluation.score,
         confidence: evaluation.confidence,
         evidence: {
           brandName,
@@ -228,7 +225,6 @@ Response format: {"score": 0-100, "confidence": 0-1, "purchase_clarity": "high/m
       
       return {
         type: 'purchase_intent',
-        score: 55,
         score: 55,
         confidence: 0.4,
         evidence: {
@@ -289,7 +285,6 @@ Response format: {"score": 0-100, "confidence": 0-1, "discoverability": "excelle
       return {
         type: 'product_discovery',
         score: evaluation.score,
-        score: evaluation.score,
         confidence: evaluation.confidence,
         evidence: {
           brandName,
@@ -305,7 +300,6 @@ Response format: {"score": 0-100, "confidence": 0-1, "discoverability": "excelle
       
       return {
         type: 'product_discovery',
-        score: 50,
         score: 50,
         confidence: 0.4,
         evidence: {
@@ -327,7 +321,6 @@ Response format: {"score": 0-100, "confidence": 0-1, "discoverability": "excelle
         {
           type: 'ecommerce_signals',
           score: 60,
-          score: 60,
           confidence: 0.5,
           evidence: {
             brandName,
@@ -339,7 +332,6 @@ Response format: {"score": 0-100, "confidence": 0-1, "discoverability": "excelle
         {
           type: 'purchase_intent',
           score: 55,
-          score: 55,
           confidence: 0.5,
           evidence: {
             brandName,
@@ -350,7 +342,6 @@ Response format: {"score": 0-100, "confidence": 0-1, "discoverability": "excelle
         },
         {
           type: 'product_discovery',
-          score: 50,
           score: 50,
           confidence: 0.5,
           evidence: {

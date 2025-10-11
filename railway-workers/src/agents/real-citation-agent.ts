@@ -128,7 +128,6 @@ export class RealCitationAgent {
       return {
         type: 'web_citations',
         score: score,
-        score: score,
         confidence: 0.8,
         evidence: {
           brandName,
@@ -150,7 +149,6 @@ export class RealCitationAgent {
       
       return {
         type: 'web_citations',
-        score: 50,
         score: 50,
         confidence: 0.4,
         evidence: {
@@ -280,7 +278,6 @@ Respond with ONLY this JSON structure:
         {
           type: 'web_citations',
           score: 60,
-          score: 60,
           confidence: 0.5,
           evidence: {
             brandName,
@@ -292,7 +289,6 @@ Respond with ONLY this JSON structure:
         {
           type: 'authority_analysis',
           score: 55,
-          score: 55,
           confidence: 0.5,
           evidence: {
             brandName,
@@ -303,7 +299,6 @@ Respond with ONLY this JSON structure:
         },
         {
           type: 'media_presence',
-          score: 65,
           score: 65,
           confidence: 0.5,
           evidence: {

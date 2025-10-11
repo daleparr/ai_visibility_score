@@ -123,7 +123,6 @@ export class AdvancedCrawlAgent {
         results: [{
           type: 'homepage_crawl_fallback',
           score: 50,
-          score: 50,
           confidence: 0.3,
           evidence: {
             websiteUrl,
@@ -182,7 +181,6 @@ export class AdvancedCrawlAgent {
 
     return {
       type: `${pageType}_crawl`,
-      score: analysis.score,
       score: analysis.score,
       confidence: 0.8,
       evidence: {
@@ -296,7 +294,6 @@ export class AdvancedCrawlAgent {
 
         return {
           type: 'robots_analysis',
-          score: hasSitemap ? 80 : 60,
           score: hasSitemap ? 80 : 60,
           confidence: 0.9,
           evidence: {

@@ -352,7 +352,6 @@ Respond with ONLY this JSON structure:
       return {
         type: 'international_availability',
         score: 55,
-        score: 55,
         confidence: 0.4,
         evidence: {
           brandName,
@@ -373,7 +372,6 @@ Respond with ONLY this JSON structure:
         {
           type: 'geographic_reach',
           score: 60,
-          score: 60,
           confidence: 0.5,
           evidence: {
             brandName,
@@ -385,7 +383,6 @@ Respond with ONLY this JSON structure:
         {
           type: 'local_presence',
           score: 50,
-          score: 50,
           confidence: 0.5,
           evidence: {
             brandName,
@@ -396,7 +393,6 @@ Respond with ONLY this JSON structure:
         },
         {
           type: 'international_availability',
-          score: 55,
           score: 55,
           confidence: 0.5,
           evidence: {
