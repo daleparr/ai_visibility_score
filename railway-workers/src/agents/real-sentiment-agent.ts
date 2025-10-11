@@ -149,10 +149,9 @@ Respond with ONLY this JSON structure (no markdown, no code blocks):
       }
 
       return {
-        resultType: 'overall_sentiment',
-        rawValue: evaluation.score,
-        normalizedScore: evaluation.score,
-        confidenceLevel: evaluation.confidence,
+        type: 'overall_sentiment',
+        score: evaluation.score,
+        confidence: evaluation.confidence,
         evidence: {
           brandName,
           websiteUrl,
@@ -160,7 +159,9 @@ Respond with ONLY this JSON structure (no markdown, no code blocks):
           keyAssociations: evaluation.key_associations || [],
           reasoning: evaluation.reasoning,
           llmProvider: 'openai',
-          model: 'gpt-4-turbo'
+          model: 'gpt-4-turbo',
+          llmResponse: content.substring(0, 500),
+          parsedSuccessfully: true
         }
       }
 
@@ -168,15 +169,18 @@ Respond with ONLY this JSON structure (no markdown, no code blocks):
       logger.error('Sentiment analysis failed', { error })
       
       return {
-        resultType: 'overall_sentiment',
-        rawValue: 50,
-        normalizedScore: 50,
-        confidenceLevel: 0.4,
+        type: 'overall_sentiment',
+        score: 50,
+        confidence: 0.4,
         evidence: {
           brandName,
           websiteUrl,
           error: error instanceof Error ? error.message : 'Unknown error',
-          fallback: true
+          details: 'API call failed - network or authentication issue',
+          llmProvider: 'openai',
+          model: 'gpt-4-turbo',
+          parsedSuccessfully: false,
+          errorType: 'api_error'
         }
       }
     }
@@ -245,16 +249,17 @@ Respond with ONLY this JSON structure (no markdown, no code blocks):
       }
 
       return {
-        resultType: 'emotional_associations',
-        rawValue: evaluation.score,
-        normalizedScore: evaluation.score,
-        confidenceLevel: evaluation.confidence,
+        type: 'emotional_associations',
+        score: evaluation.score,
+        confidence: evaluation.confidence,
         evidence: {
           brandName,
           emotions: evaluation.emotions || [],
           summary: evaluation.summary,
           llmProvider: 'openai',
-          model: 'gpt-4-turbo'
+          model: 'gpt-4-turbo',
+          llmResponse: content.substring(0, 500),
+          parsedSuccessfully: true
         }
       }
 
@@ -262,14 +267,17 @@ Respond with ONLY this JSON structure (no markdown, no code blocks):
       logger.error('Emotional associations test failed', { error })
       
       return {
-        resultType: 'emotional_associations',
-        rawValue: 50,
-        normalizedScore: 50,
-        confidenceLevel: 0.4,
+        type: 'emotional_associations',
+        score: 50,
+        confidence: 0.4,
         evidence: {
           brandName,
           error: error instanceof Error ? error.message : 'Unknown error',
-          fallback: true
+          details: 'API call failed - network or authentication issue',
+          llmProvider: 'openai',
+          model: 'gpt-4-turbo',
+          parsedSuccessfully: false,
+          errorType: 'api_error'
         }
       }
     }
@@ -327,17 +335,18 @@ Respond with ONLY this JSON structure (no markdown, no code blocks):
       }
 
       return {
-        resultType: 'trust_signals',
-        rawValue: evaluation.score,
-        normalizedScore: evaluation.score,
-        confidenceLevel: evaluation.confidence,
+        type: 'trust_signals',
+        score: evaluation.score,
+        confidence: evaluation.confidence,
         evidence: {
           brandName,
           websiteUrl,
           trustLevel: evaluation.trust_level,
           keySignals: evaluation.key_signals || [],
           llmProvider: 'openai',
-          model: 'gpt-4-turbo'
+          model: 'gpt-4-turbo',
+          llmResponse: content.substring(0, 500),
+          parsedSuccessfully: true
         }
       }
 
@@ -345,15 +354,18 @@ Respond with ONLY this JSON structure (no markdown, no code blocks):
       logger.error('Trust signals analysis failed', { error })
       
       return {
-        resultType: 'trust_signals',
-        rawValue: 55,
-        normalizedScore: 55,
-        confidenceLevel: 0.4,
+        type: 'trust_signals',
+        score: 55,
+        confidence: 0.4,
         evidence: {
           brandName,
           websiteUrl,
           error: error instanceof Error ? error.message : 'Unknown error',
-          fallback: true
+          details: 'API call failed - network or authentication issue',
+          llmProvider: 'openai',
+          model: 'gpt-4-turbo',
+          parsedSuccessfully: false,
+          errorType: 'api_error'
         }
       }
     }

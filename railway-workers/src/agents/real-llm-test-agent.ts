@@ -160,17 +160,18 @@ Respond with ONLY this JSON structure (no markdown, no code blocks):
       }
 
       return {
-        resultType: 'brand_recognition',
-        rawValue: evaluation.score,
-        normalizedScore: evaluation.score,
-        confidenceLevel: evaluation.confidence,
+        type: 'brand_recognition',
+        score: evaluation.score,
+        confidence: evaluation.confidence,
         evidence: {
           brandName,
           websiteUrl,
           recognized: evaluation.recognized,
           details: evaluation.details,
           llmProvider: 'openai',
-          model: 'gpt-4-turbo'
+          model: 'gpt-4-turbo',
+          llmResponse: content.substring(0, 500), // Include actual response for transparency
+          parsedSuccessfully: true
         }
       }
 
@@ -178,15 +179,18 @@ Respond with ONLY this JSON structure (no markdown, no code blocks):
       logger.error('Brand recognition test failed', { error })
       
       return {
-        resultType: 'brand_recognition',
-        rawValue: 40,
-        normalizedScore: 40,
-        confidenceLevel: 0.3,
+        type: 'brand_recognition',
+        score: 40,
+        confidence: 0.3,
         evidence: {
           brandName,
           websiteUrl,
           error: error instanceof Error ? error.message : 'Unknown error',
-          fallback: true
+          details: 'API call failed - network or authentication issue',
+          llmProvider: 'openai',
+          model: 'gpt-4-turbo',
+          parsedSuccessfully: false,
+          errorType: 'api_error'
         }
       }
     }
@@ -255,17 +259,18 @@ Respond with ONLY this JSON structure (no markdown, no code blocks):
       }
 
       return {
-        resultType: 'product_understanding',
-        rawValue: evaluation.score,
-        normalizedScore: evaluation.score,
-        confidenceLevel: evaluation.confidence,
+        type: 'product_understanding',
+        score: evaluation.score,
+        confidence: evaluation.confidence,
         evidence: {
           brandName,
           websiteUrl,
           products: evaluation.products || [],
           understanding: evaluation.understanding,
           llmProvider: 'openai',
-          model: 'gpt-4-turbo'
+          model: 'gpt-4-turbo',
+          llmResponse: content.substring(0, 500),
+          parsedSuccessfully: true
         }
       }
 
@@ -273,15 +278,18 @@ Respond with ONLY this JSON structure (no markdown, no code blocks):
       logger.error('Product understanding test failed', { error })
       
       return {
-        resultType: 'product_understanding',
-        rawValue: 45,
-        normalizedScore: 45,
-        confidenceLevel: 0.4,
+        type: 'product_understanding',
+        score: 45,
+        confidence: 0.4,
         evidence: {
           brandName,
           websiteUrl,
           error: error instanceof Error ? error.message : 'Unknown error',
-          fallback: true
+          details: 'API call failed - network or authentication issue',
+          llmProvider: 'openai',
+          model: 'gpt-4-turbo',
+          parsedSuccessfully: false,
+          errorType: 'api_error'
         }
       }
     }
@@ -350,17 +358,18 @@ Respond with ONLY this JSON structure (no markdown, no code blocks):
       }
 
       return {
-        resultType: 'recommendation_quality',
-        rawValue: evaluation.score,
-        normalizedScore: evaluation.score,
-        confidenceLevel: evaluation.confidence,
+        type: 'recommendation_quality',
+        score: evaluation.score,
+        confidence: evaluation.confidence,
         evidence: {
           brandName,
           websiteUrl,
           positioning: evaluation.positioning,
           fairness: evaluation.fairness,
           llmProvider: 'openai',
-          model: 'gpt-4-turbo'
+          model: 'gpt-4-turbo',
+          llmResponse: content.substring(0, 500),
+          parsedSuccessfully: true
         }
       }
 
@@ -368,15 +377,18 @@ Respond with ONLY this JSON structure (no markdown, no code blocks):
       logger.error('Recommendation quality test failed', { error })
       
       return {
-        resultType: 'recommendation_quality',
-        rawValue: 50,
-        normalizedScore: 50,
-        confidenceLevel: 0.4,
+        type: 'recommendation_quality',
+        score: 50,
+        confidence: 0.4,
         evidence: {
           brandName,
           websiteUrl,
           error: error instanceof Error ? error.message : 'Unknown error',
-          fallback: true
+          details: 'API call failed - network or authentication issue',
+          llmProvider: 'openai',
+          model: 'gpt-4-turbo',
+          parsedSuccessfully: false,
+          errorType: 'api_error'
         }
       }
     }
