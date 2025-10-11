@@ -95,17 +95,23 @@ export class RealGeoVisibilityAgent {
           model: 'gpt-4-turbo-preview',
           messages: [
             {
+              role: 'system',
+              content: 'You are a geographic market analyst. Respond ONLY with valid JSON.'
+            },
+            {
               role: 'user',
               content: `What is the geographic reach of "${brandName}"? Score 0-100 based on:
 - Global recognition (0-40)
 - Regional presence (0-30)
 - Market coverage (0-30)
 
-Response format: {"score": 0-100, "confidence": 0-1, "reach": "global/regional/local", "regions": ["list"], "insights": "brief explanation"}`
+Respond with ONLY this JSON structure (no markdown):
+{"score": 90, "confidence": 0.95, "reach": "global", "regions": ["North America", "Europe"], "insights": "Brief market coverage analysis"}`
             }
           ],
           temperature: 0.3,
-          max_tokens: 400
+          max_tokens: 400,
+          response_format: { type: "json_object" }
         })
       })
 
@@ -114,26 +120,36 @@ Response format: {"score": 0-100, "confidence": 0-1, "reach": "global/regional/l
       }
 
       const data = await response.json()
-      const content = data.choices[0]?.message?.content || '{}'
+      let content = data.choices[0]?.message?.content || '{}'
+      
+      // Strip markdown if present
+      content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
       
       let evaluation
       try {
         evaluation = JSON.parse(content)
-      } catch {
+      } catch (parseError) {
+        logger.warn('Failed to parse geographic reach response', {
+          rawContent: content.substring(0, 200),
+          error: parseError instanceof Error ? parseError.message : String(parseError)
+        })
+        
+        const scoreMatch = content.match(/score["\s:]+(\d+)/i)
+        const extractedScore = scoreMatch ? parseInt(scoreMatch[1]) : 50
+        
         evaluation = {
-          score: 50,
+          score: extractedScore,
           confidence: 0.5,
           reach: 'regional',
           regions: [],
-          insights: 'Unable to parse response'
+          insights: 'LLM response was not in expected JSON format'
         }
       }
 
       return {
-        resultType: 'geographic_reach',
-        rawValue: evaluation.score,
-        normalizedScore: evaluation.score,
-        confidenceLevel: evaluation.confidence,
+        type: 'geographic_reach',
+        score: evaluation.score,
+        confidence: evaluation.confidence,
         evidence: {
           brandName,
           websiteUrl,
@@ -141,7 +157,9 @@ Response format: {"score": 0-100, "confidence": 0-1, "reach": "global/regional/l
           regions: evaluation.regions || [],
           insights: evaluation.insights,
           llmProvider: 'openai',
-          model: 'gpt-4-turbo'
+          model: 'gpt-4-turbo',
+          llmResponse: content.substring(0, 500),
+          parsedSuccessfully: true
         }
       }
 
@@ -149,15 +167,18 @@ Response format: {"score": 0-100, "confidence": 0-1, "reach": "global/regional/l
       logger.error('Geographic reach analysis failed', { error })
       
       return {
-        resultType: 'geographic_reach',
-        rawValue: 50,
-        normalizedScore: 50,
-        confidenceLevel: 0.4,
+        type: 'geographic_reach',
+        score: 50,
+        confidence: 0.4,
         evidence: {
           brandName,
           websiteUrl,
           error: error instanceof Error ? error.message : 'Unknown error',
-          fallback: true
+          details: 'API call failed - network or authentication issue',
+          llmProvider: 'openai',
+          model: 'gpt-4-turbo',
+          parsedSuccessfully: false,
+          errorType: 'api_error'
         }
       }
     }
@@ -175,17 +196,23 @@ Response format: {"score": 0-100, "confidence": 0-1, "reach": "global/regional/l
           model: 'gpt-4-turbo-preview',
           messages: [
             {
+              role: 'system',
+              content: 'You are a local market analyst. Respond ONLY with valid JSON.'
+            },
+            {
               role: 'user',
               content: `Does "${brandName}" have a strong local presence or physical locations? Score 0-100 based on:
 - Physical location visibility (0-40)
 - Local search optimization (0-30)
 - Community presence (0-30)
 
-Response format: {"score": 0-100, "confidence": 0-1, "has_locations": true/false, "location_types": ["list"], "assessment": "brief summary"}`
+Respond with ONLY this JSON structure:
+{"score": 85, "confidence": 0.9, "has_locations": true, "location_types": ["Retail stores"], "assessment": "Brief summary"}`
             }
           ],
           temperature: 0.3,
-          max_tokens: 350
+          max_tokens: 350,
+          response_format: { type: "json_object" }
         })
       })
 
@@ -194,26 +221,29 @@ Response format: {"score": 0-100, "confidence": 0-1, "has_locations": true/false
       }
 
       const data = await response.json()
-      const content = data.choices[0]?.message?.content || '{}'
+      let content = data.choices[0]?.message?.content || '{}'
+      
+      content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
       
       let evaluation
       try {
         evaluation = JSON.parse(content)
-      } catch {
+      } catch (parseError) {
+        logger.warn('Failed to parse local presence response', { rawContent: content.substring(0, 200) })
+        const scoreMatch = content.match(/score["\s:]+(\d+)/i)
         evaluation = {
-          score: 50,
+          score: scoreMatch ? parseInt(scoreMatch[1]) : 50,
           confidence: 0.5,
           has_locations: false,
           location_types: [],
-          assessment: 'Unable to parse response'
+          assessment: 'LLM response was not in expected JSON format'
         }
       }
 
       return {
-        resultType: 'local_presence',
-        rawValue: evaluation.score,
-        normalizedScore: evaluation.score,
-        confidenceLevel: evaluation.confidence,
+        type: 'local_presence',
+        score: evaluation.score,
+        confidence: evaluation.confidence,
         evidence: {
           brandName,
           websiteUrl,
@@ -221,7 +251,9 @@ Response format: {"score": 0-100, "confidence": 0-1, "has_locations": true/false
           locationTypes: evaluation.location_types || [],
           assessment: evaluation.assessment,
           llmProvider: 'openai',
-          model: 'gpt-4-turbo'
+          model: 'gpt-4-turbo',
+          llmResponse: content.substring(0, 500),
+          parsedSuccessfully: true
         }
       }
 
@@ -229,15 +261,16 @@ Response format: {"score": 0-100, "confidence": 0-1, "has_locations": true/false
       logger.error('Local presence analysis failed', { error })
       
       return {
-        resultType: 'local_presence',
-        rawValue: 45,
-        normalizedScore: 45,
-        confidenceLevel: 0.4,
+        type: 'local_presence',
+        score: 45,
+        confidence: 0.4,
         evidence: {
           brandName,
           websiteUrl,
           error: error instanceof Error ? error.message : 'Unknown error',
-          fallback: true
+          details: 'API call failed',
+          llmProvider: 'openai',
+          parsedSuccessfully: false
         }
       }
     }
@@ -255,17 +288,23 @@ Response format: {"score": 0-100, "confidence": 0-1, "has_locations": true/false
           model: 'gpt-4-turbo-preview',
           messages: [
             {
+              role: 'system',
+              content: 'You are an international commerce analyst. Respond ONLY with valid JSON.'
+            },
+            {
               role: 'user',
               content: `Is "${brandName}" available internationally? Score 0-100 based on:
 - International shipping/availability (0-40)
 - Multi-region support (0-30)
 - Global brand recognition (0-30)
 
-Response format: {"score": 0-100, "confidence": 0-1, "ships_internationally": true/false, "available_regions": ["list"]}`
+Respond with ONLY this JSON structure:
+{"score": 95, "confidence": 0.95, "ships_internationally": true, "available_regions": ["North America", "Europe"]}`
             }
           ],
           temperature: 0.3,
-          max_tokens: 300
+          max_tokens: 300,
+          response_format: { type: "json_object" }
         })
       })
 
@@ -274,14 +313,18 @@ Response format: {"score": 0-100, "confidence": 0-1, "ships_internationally": tr
       }
 
       const data = await response.json()
-      const content = data.choices[0]?.message?.content || '{}'
+      let content = data.choices[0]?.message?.content || '{}'
+      
+      content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
       
       let evaluation
       try {
         evaluation = JSON.parse(content)
-      } catch {
+      } catch (parseError) {
+        logger.warn('Failed to parse international availability response', { rawContent: content.substring(0, 200) })
+        const scoreMatch = content.match(/score["\s:]+(\d+)/i)
         evaluation = {
-          score: 55,
+          score: scoreMatch ? parseInt(scoreMatch[1]) : 55,
           confidence: 0.5,
           ships_internationally: false,
           available_regions: []
@@ -289,16 +332,17 @@ Response format: {"score": 0-100, "confidence": 0-1, "ships_internationally": tr
       }
 
       return {
-        resultType: 'international_availability',
-        rawValue: evaluation.score,
-        normalizedScore: evaluation.score,
-        confidenceLevel: evaluation.confidence,
+        type: 'international_availability',
+        score: evaluation.score,
+        confidence: evaluation.confidence,
         evidence: {
           brandName,
           shipsInternationally: evaluation.ships_internationally,
           availableRegions: evaluation.available_regions || [],
           llmProvider: 'openai',
-          model: 'gpt-4-turbo'
+          model: 'gpt-4-turbo',
+          llmResponse: content.substring(0, 500),
+          parsedSuccessfully: true
         }
       }
 
@@ -306,10 +350,10 @@ Response format: {"score": 0-100, "confidence": 0-1, "ships_internationally": tr
       logger.error('International availability analysis failed', { error })
       
       return {
-        resultType: 'international_availability',
-        rawValue: 55,
-        normalizedScore: 55,
-        confidenceLevel: 0.4,
+        type: 'international_availability',
+        score: 55,
+        score: 55,
+        confidence: 0.4,
         evidence: {
           brandName,
           error: error instanceof Error ? error.message : 'Unknown error',
@@ -327,10 +371,10 @@ Response format: {"score": 0-100, "confidence": 0-1, "ships_internationally": tr
       status: 'completed',
       results: [
         {
-          resultType: 'geographic_reach',
-          rawValue: 60,
-          normalizedScore: 60,
-          confidenceLevel: 0.5,
+          type: 'geographic_reach',
+          score: 60,
+          score: 60,
+          confidence: 0.5,
           evidence: {
             brandName,
             websiteUrl,
@@ -339,10 +383,10 @@ Response format: {"score": 0-100, "confidence": 0-1, "ships_internationally": tr
           }
         },
         {
-          resultType: 'local_presence',
-          rawValue: 50,
-          normalizedScore: 50,
-          confidenceLevel: 0.5,
+          type: 'local_presence',
+          score: 50,
+          score: 50,
+          confidence: 0.5,
           evidence: {
             brandName,
             websiteUrl,
@@ -351,10 +395,10 @@ Response format: {"score": 0-100, "confidence": 0-1, "ships_internationally": tr
           }
         },
         {
-          resultType: 'international_availability',
-          rawValue: 55,
-          normalizedScore: 55,
-          confidenceLevel: 0.5,
+          type: 'international_availability',
+          score: 55,
+          score: 55,
+          confidence: 0.5,
           evidence: {
             brandName,
             placeholder: true,

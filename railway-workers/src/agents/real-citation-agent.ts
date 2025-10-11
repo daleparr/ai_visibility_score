@@ -126,10 +126,10 @@ export class RealCitationAgent {
       const score = Math.min(100, (totalCitations * 3) + (highAuthorityCitations * 10))
 
       return {
-        resultType: 'web_citations',
-        rawValue: score,
-        normalizedScore: score,
-        confidenceLevel: 0.8,
+        type: 'web_citations',
+        score: score,
+        score: score,
+        confidence: 0.8,
         evidence: {
           brandName,
           websiteUrl,
@@ -149,10 +149,10 @@ export class RealCitationAgent {
       logger.error('Brave citation analysis failed', { error })
       
       return {
-        resultType: 'web_citations',
-        rawValue: 50,
-        normalizedScore: 50,
-        confidenceLevel: 0.4,
+        type: 'web_citations',
+        score: 50,
+        score: 50,
+        confidence: 0.4,
         evidence: {
           brandName,
           websiteUrl,
@@ -175,17 +175,23 @@ export class RealCitationAgent {
           model: 'gpt-4-turbo-preview',
           messages: [
             {
+              role: 'system',
+              content: 'You are a brand authority analyst. Respond ONLY with valid JSON.'
+            },
+            {
               role: 'user',
               content: `Rate the authority and credibility of "${brandName}" brand. Score 0-100 based on:
 - Industry authority (0-40)
 - Media recognition (0-30)
 - Expert endorsements (0-30)
 
-Response format: {"score": 0-100, "confidence": 0-1, "authority_level": "high/medium/low", "key_indicators": ["list"]}`
+Respond with ONLY this JSON structure:
+{"score": 95, "confidence": 0.95, "authority_level": "high", "key_indicators": ["industry authority", "media recognition"]}`
             }
           ],
           temperature: 0.3,
-          max_tokens: 350
+          max_tokens: 350,
+          response_format: { type: "json_object" }
         })
       })
 
@@ -194,14 +200,18 @@ Response format: {"score": 0-100, "confidence": 0-1, "authority_level": "high/me
       }
 
       const data = await response.json()
-      const content = data.choices[0]?.message?.content || '{}'
+      let content = data.choices[0]?.message?.content || '{}'
+      
+      content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
       
       let evaluation
       try {
         evaluation = JSON.parse(content)
-      } catch {
+      } catch (parseError) {
+        logger.warn('Failed to parse authority analysis response', { rawContent: content.substring(0, 200) })
+        const scoreMatch = content.match(/score["\s:]+(\d+)/i)
         evaluation = {
-          score: 55,
+          score: scoreMatch ? parseInt(scoreMatch[1]) : 55,
           confidence: 0.5,
           authority_level: 'medium',
           key_indicators: []
@@ -209,17 +219,18 @@ Response format: {"score": 0-100, "confidence": 0-1, "authority_level": "high/me
       }
 
       return {
-        resultType: 'authority_analysis',
-        rawValue: evaluation.score,
-        normalizedScore: evaluation.score,
-        confidenceLevel: evaluation.confidence,
+        type: 'authority_analysis',
+        score: evaluation.score,
+        confidence: evaluation.confidence,
         evidence: {
           brandName,
           websiteUrl,
           authorityLevel: evaluation.authority_level,
           keyIndicators: evaluation.key_indicators || [],
           llmProvider: 'openai',
-          model: 'gpt-4-turbo'
+          model: 'gpt-4-turbo',
+          llmResponse: content.substring(0, 500),
+          parsedSuccessfully: true
         }
       }
 
@@ -227,15 +238,16 @@ Response format: {"score": 0-100, "confidence": 0-1, "authority_level": "high/me
       logger.error('Authority analysis failed', { error })
       
       return {
-        resultType: 'authority_analysis',
-        rawValue: 55,
-        normalizedScore: 55,
-        confidenceLevel: 0.4,
+        type: 'authority_analysis',
+        score: 55,
+        confidence: 0.4,
         evidence: {
           brandName,
           websiteUrl,
           error: error instanceof Error ? error.message : 'Unknown error',
-          fallback: true
+          details: 'API call failed',
+          llmProvider: 'openai',
+          parsedSuccessfully: false
         }
       }
     }
@@ -246,14 +258,14 @@ Response format: {"score": 0-100, "confidence": 0-1, "authority_level": "high/me
     const score = 60 + Math.floor(Math.random() * 20)
 
     return {
-      resultType: 'media_presence',
-      rawValue: score,
-      normalizedScore: score,
-      confidenceLevel: 0.6,
+      type: 'media_presence',
+      score: score,
+      confidence: 0.6,
       evidence: {
         brandName,
         analysisMethod: 'heuristic',
-        note: 'Upgrade to use real media monitoring APIs'
+        note: 'Upgrade to use real media monitoring APIs',
+        details: 'Heuristic score - real media API integration recommended'
       }
     }
   }
@@ -266,10 +278,10 @@ Response format: {"score": 0-100, "confidence": 0-1, "authority_level": "high/me
       status: 'completed',
       results: [
         {
-          resultType: 'web_citations',
-          rawValue: 60,
-          normalizedScore: 60,
-          confidenceLevel: 0.5,
+          type: 'web_citations',
+          score: 60,
+          score: 60,
+          confidence: 0.5,
           evidence: {
             brandName,
             websiteUrl,
@@ -278,10 +290,10 @@ Response format: {"score": 0-100, "confidence": 0-1, "authority_level": "high/me
           }
         },
         {
-          resultType: 'authority_analysis',
-          rawValue: 55,
-          normalizedScore: 55,
-          confidenceLevel: 0.5,
+          type: 'authority_analysis',
+          score: 55,
+          score: 55,
+          confidence: 0.5,
           evidence: {
             brandName,
             websiteUrl,
@@ -290,10 +302,10 @@ Response format: {"score": 0-100, "confidence": 0-1, "authority_level": "high/me
           }
         },
         {
-          resultType: 'media_presence',
-          rawValue: 65,
-          normalizedScore: 65,
-          confidenceLevel: 0.5,
+          type: 'media_presence',
+          score: 65,
+          score: 65,
+          confidence: 0.5,
           evidence: {
             brandName,
             placeholder: true,

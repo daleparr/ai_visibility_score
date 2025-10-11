@@ -130,10 +130,10 @@ Response format: {"score": 0-100, "confidence": 0-1, "is_ecommerce": true/false,
       }
 
       return {
-        resultType: 'ecommerce_signals',
-        rawValue: evaluation.score,
-        normalizedScore: evaluation.score,
-        confidenceLevel: evaluation.confidence,
+        type: 'ecommerce_signals',
+        score: evaluation.score,
+        score: evaluation.score,
+        confidence: evaluation.confidence,
         evidence: {
           brandName,
           websiteUrl,
@@ -149,10 +149,10 @@ Response format: {"score": 0-100, "confidence": 0-1, "is_ecommerce": true/false,
       logger.error('E-commerce detection failed', { error })
       
       return {
-        resultType: 'ecommerce_signals',
-        rawValue: 50,
-        normalizedScore: 50,
-        confidenceLevel: 0.4,
+        type: 'ecommerce_signals',
+        score: 50,
+        score: 50,
+        confidence: 0.4,
         evidence: {
           brandName,
           websiteUrl,
@@ -209,10 +209,10 @@ Response format: {"score": 0-100, "confidence": 0-1, "purchase_clarity": "high/m
       }
 
       return {
-        resultType: 'purchase_intent',
-        rawValue: evaluation.score,
-        normalizedScore: evaluation.score,
-        confidenceLevel: evaluation.confidence,
+        type: 'purchase_intent',
+        score: evaluation.score,
+        score: evaluation.score,
+        confidence: evaluation.confidence,
         evidence: {
           brandName,
           websiteUrl,
@@ -227,10 +227,10 @@ Response format: {"score": 0-100, "confidence": 0-1, "purchase_clarity": "high/m
       logger.error('Purchase intent analysis failed', { error })
       
       return {
-        resultType: 'purchase_intent',
-        rawValue: 55,
-        normalizedScore: 55,
-        confidenceLevel: 0.4,
+        type: 'purchase_intent',
+        score: 55,
+        score: 55,
+        confidence: 0.4,
         evidence: {
           brandName,
           websiteUrl,
@@ -287,10 +287,10 @@ Response format: {"score": 0-100, "confidence": 0-1, "discoverability": "excelle
       }
 
       return {
-        resultType: 'product_discovery',
-        rawValue: evaluation.score,
-        normalizedScore: evaluation.score,
-        confidenceLevel: evaluation.confidence,
+        type: 'product_discovery',
+        score: evaluation.score,
+        score: evaluation.score,
+        confidence: evaluation.confidence,
         evidence: {
           brandName,
           discoverability: evaluation.discoverability,
@@ -304,10 +304,10 @@ Response format: {"score": 0-100, "confidence": 0-1, "discoverability": "excelle
       logger.error('Product discovery analysis failed', { error })
       
       return {
-        resultType: 'product_discovery',
-        rawValue: 50,
-        normalizedScore: 50,
-        confidenceLevel: 0.4,
+        type: 'product_discovery',
+        score: 50,
+        score: 50,
+        confidence: 0.4,
         evidence: {
           brandName,
           error: error instanceof Error ? error.message : 'Unknown error',
@@ -325,10 +325,10 @@ Response format: {"score": 0-100, "confidence": 0-1, "discoverability": "excelle
       status: 'completed',
       results: [
         {
-          resultType: 'ecommerce_signals',
-          rawValue: 60,
-          normalizedScore: 60,
-          confidenceLevel: 0.5,
+          type: 'ecommerce_signals',
+          score: 60,
+          score: 60,
+          confidence: 0.5,
           evidence: {
             brandName,
             websiteUrl,
@@ -337,10 +337,10 @@ Response format: {"score": 0-100, "confidence": 0-1, "discoverability": "excelle
           }
         },
         {
-          resultType: 'purchase_intent',
-          rawValue: 55,
-          normalizedScore: 55,
-          confidenceLevel: 0.5,
+          type: 'purchase_intent',
+          score: 55,
+          score: 55,
+          confidence: 0.5,
           evidence: {
             brandName,
             websiteUrl,
@@ -349,10 +349,10 @@ Response format: {"score": 0-100, "confidence": 0-1, "discoverability": "excelle
           }
         },
         {
-          resultType: 'product_discovery',
-          rawValue: 50,
-          normalizedScore: 50,
-          confidenceLevel: 0.5,
+          type: 'product_discovery',
+          score: 50,
+          score: 50,
+          confidence: 0.5,
           evidence: {
             brandName,
             placeholder: true,

@@ -7,10 +7,10 @@ interface CrawlResult {
   agentName: string
   status: 'completed' | 'failed'
   results: Array<{
-    resultType: string
-    rawValue: any
-    normalizedScore: number
-    confidenceLevel: number
+    type: string
+    score: any
+    score: number
+    confidence: number
     evidence: Record<string, any>
   }>
   executionTime: number
@@ -121,10 +121,10 @@ export class AdvancedCrawlAgent {
         agentName: 'crawl_agent',
         status: 'completed', // Don't fail - return minimal data
         results: [{
-          resultType: 'homepage_crawl_fallback',
-          rawValue: 50,
-          normalizedScore: 50,
-          confidenceLevel: 0.3,
+          type: 'homepage_crawl_fallback',
+          score: 50,
+          score: 50,
+          confidence: 0.3,
           evidence: {
             websiteUrl,
             error: error.message,
@@ -181,10 +181,10 @@ export class AdvancedCrawlAgent {
     const analysis = this.analyzePageContent(html, url)
 
     return {
-      resultType: `${pageType}_crawl`,
-      rawValue: analysis.score,
-      normalizedScore: analysis.score,
-      confidenceLevel: 0.8,
+      type: `${pageType}_crawl`,
+      score: analysis.score,
+      score: analysis.score,
+      confidence: 0.8,
       evidence: {
         url,
         html,
@@ -259,10 +259,10 @@ export class AdvancedCrawlAgent {
           const urlCount = (sitemapXml.match(/<loc>/g) || []).length
 
           return {
-            resultType: 'sitemap_analysis',
-            rawValue: Math.min(100, urlCount * 2),
-            normalizedScore: Math.min(100, urlCount * 2),
-            confidenceLevel: 0.9,
+            type: 'sitemap_analysis',
+            score: Math.min(100, urlCount * 2),
+            score: Math.min(100, urlCount * 2),
+            confidence: 0.9,
             evidence: {
               sitemapUrl,
               urlCount,
@@ -295,10 +295,10 @@ export class AdvancedCrawlAgent {
         const hasSitemap = robotsContent.includes('Sitemap:')
 
         return {
-          resultType: 'robots_analysis',
-          rawValue: hasSitemap ? 80 : 60,
-          normalizedScore: hasSitemap ? 80 : 60,
-          confidenceLevel: 0.9,
+          type: 'robots_analysis',
+          score: hasSitemap ? 80 : 60,
+          score: hasSitemap ? 80 : 60,
+          confidence: 0.9,
           evidence: {
             hasRobotsTxt: true,
             hasDisallows,
