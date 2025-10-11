@@ -434,7 +434,28 @@ Next Step Today: Start with Priority Action #1 - the highest impact, lowest effo
       pdf.setTextColor(...secondaryColor)
       pdf.setFontSize(10)
       pdf.setFont('helvetica', 'normal')
-      const verdict = evaluationData.executiveSummary?.verdict || 'Analysis completed - review detailed findings below.'
+      
+      // Generate insightful verdict based on scores
+      const generateVerdict = () => {
+        const score = evaluationData.overallScore || 0
+        const perceptionScore = evaluationData.pillarScores?.perception || 0
+        const commerceScore = evaluationData.pillarScores?.commerce || 0
+        const infraScore = evaluationData.pillarScores?.infrastructure || 0
+        
+        if (score >= 75) {
+          return 'Analysis completed successfully. Your brand demonstrates strong AI visibility across key dimensions.'
+        } else if (score >= 60) {
+          return 'Good foundation established. Strategic improvements in targeted areas will elevate your AI visibility significantly.'
+        } else if (score >= 40) {
+          const weakestPillar = perceptionScore < commerceScore && perceptionScore < infraScore ? 'brand perception' :
+                               commerceScore < infraScore ? 'commerce experience' : 'technical infrastructure'
+          return `Moderate AI visibility. Primary opportunity: strengthen ${weakestPillar} to improve how AI systems discover and recommend your brand.`
+        } else {
+          return 'Low AI visibility detected. Immediate action required to ensure your brand appears in AI-driven product discovery and recommendations.'
+        }
+      }
+      
+      const verdict = generateVerdict()
       const verdictLines = pdf.splitTextToSize(`Verdict: ${verdict}`, 170)
       pdf.text(verdictLines, 20, yPos + 5)
       yPos += verdictLines.length * 5 + 10
@@ -497,24 +518,47 @@ Next Step Today: Start with Priority Action #1 - the highest impact, lowest effo
         }
         
         const score = dim.score || 0
-        const stars = Math.floor(score / 20)
-        const remainder = score % 20
-        const starDisplay = '★'.repeat(stars) + (remainder >= 10 ? '☆' : '')
+        
+        // Convert score to visual rating (5-star system using text)
+        const rating = score >= 90 ? '5/5 Excellent' :
+                      score >= 80 ? '4.5/5 Very Good' :
+                      score >= 70 ? '4/5 Good' :
+                      score >= 60 ? '3.5/5 Fair' :
+                      score >= 50 ? '3/5 Moderate' :
+                      score >= 40 ? '2.5/5 Needs Work' :
+                      score >= 30 ? '2/5 Poor' :
+                      '1/5 Critical'
+        
+        // Get friendly dimension name
+        const dimensionNameMap: Record<string, string> = {
+          'citation_authority_freshness': 'Brand Authority & Citations',
+          'ai_answer_quality_presence': 'AI Answer Quality & Presence',
+          'geo_visibility_presence': 'Geographic Visibility',
+          'reputation_signals': 'Brand Sentiment & Trust',
+          'hero_products_use_case': 'Hero Products & Use Cases',
+          'policies_logistics_clarity': 'Policies & Logistics Clarity',
+          'schema_structured_data': 'Schema & Structured Data',
+          'semantic_clarity_ontology': 'Semantic Clarity',
+          'knowledge_graphs_entity_linking': 'Knowledge Graphs',
+          'llm_readability_conversational': 'LLM Readability'
+        }
+        
+        const friendlyName = dimensionNameMap[dim.name] || dim.name.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
         
         // Dimension number and name
         pdf.setTextColor(...primaryColor)
         pdf.setFontSize(11)
         pdf.setFont('helvetica', 'bold')
-        pdf.text(`${index + 1}. ${dim.name || 'Analysis Area'}`, 20, yPos)
+        pdf.text(`${index + 1}. ${friendlyName}`, 20, yPos)
         
         yPos += 6
         pdf.setTextColor(...secondaryColor)
         pdf.setFontSize(10)
         pdf.setFont('helvetica', 'normal')
-        pdf.text(`Score: ${score}/100 | Rating: ${starDisplay}`, 20, yPos)
+        pdf.text(`Score: ${score}/100 | Rating: ${rating}`, 20, yPos)
         
         yPos += 5
-        const description = dim.description || 'Assessment in progress'
+        const description = dim.description || `${friendlyName} analysis completed`
         const descLines = pdf.splitTextToSize(description, 170)
         pdf.text(descLines, 20, yPos)
         yPos += descLines.length * 4 + 8
@@ -533,13 +577,89 @@ Next Step Today: Start with Priority Action #1 - the highest impact, lowest effo
       pdf.text('QUICK ACTIONS', 20, yPos)
       yPos += 12
       
-      const actions = [
-        { priority: 'Priority 1 - Immediate (2 weeks)', fix: 'Add structured schema to FAQs, returns, and shipping pages', impact: '+6 pts' },
-        { priority: 'Priority 2 - Short Term (30 days)', fix: 'Refresh reviews (invite verified buyers; surface seasonal feedback)', impact: '+7 pts' },
-        { priority: 'Priority 3 - Medium Term (90 days)', fix: 'Secure structured citations in Tier-1 retail/tech press', impact: '+10 pts' }
-      ]
+      // Generate dynamic actions based on actual scores
+      const generateActions = () => {
+        const lowestDimensions = [...dimensions]
+          .filter(d => (d.score || 0) < 80)
+          .sort((a, b) => (a.score || 0) - (b.score || 0))
+          .slice(0, 3)
+        
+        const actionMap: Record<string, { fix: string, impact: number, timeline: string }> = {
+          'citation_authority_freshness': {
+            fix: 'Secure citations in industry publications and authoritative websites',
+            impact: Math.min(15, 90 - (dimensions.find(d => d.name === 'citation_authority_freshness')?.score || 0)),
+            timeline: '90 days'
+          },
+          'ai_answer_quality_presence': {
+            fix: 'Optimize content for AI comprehension with clear product descriptions and FAQs',
+            impact: Math.min(20, 90 - (dimensions.find(d => d.name === 'ai_answer_quality_presence')?.score || 0)),
+            timeline: '30 days'
+          },
+          'geo_visibility_presence': {
+            fix: 'Add location-specific landing pages and local schema markup',
+            impact: Math.min(10, 90 - (dimensions.find(d => d.name === 'geo_visibility_presence')?.score || 0)),
+            timeline: '60 days'
+          },
+          'reputation_signals': {
+            fix: 'Refresh customer reviews and testimonials; highlight trust signals',
+            impact: Math.min(12, 90 - (dimensions.find(d => d.name === 'reputation_signals')?.score || 0)),
+            timeline: '30 days'
+          },
+          'hero_products_use_case': {
+            fix: 'Create detailed product comparison guides and use-case content',
+            impact: Math.min(10, 90 - (dimensions.find(d => d.name === 'hero_products_use_case')?.score || 0)),
+            timeline: '45 days'
+          },
+          'policies_logistics_clarity': {
+            fix: 'Add structured data to shipping, returns, and FAQ pages',
+            impact: Math.min(8, 90 - (dimensions.find(d => d.name === 'policies_logistics_clarity')?.score || 0)),
+            timeline: '14 days'
+          },
+          'schema_structured_data': {
+            fix: 'Implement comprehensive schema markup across all key pages',
+            impact: Math.min(15, 90 - (dimensions.find(d => d.name === 'schema_structured_data')?.score || 0)),
+            timeline: '30 days'
+          }
+        }
+        
+        const actions = lowestDimensions.map((dim, index) => {
+          const action = actionMap[dim.name] || {
+            fix: `Optimize ${dim.name.split('_').join(' ')} for better AI visibility`,
+            impact: Math.min(10, 90 - (dim.score || 0)),
+            timeline: '30-60 days'
+          }
+          
+          const priorityLabel = index === 0 ? 'Priority 1 - Immediate' :
+                               index === 1 ? 'Priority 2 - Short Term' :
+                               'Priority 3 - Medium Term'
+          
+          return {
+            priority: `${priorityLabel} (${action.timeline})`,
+            fix: action.fix,
+            impact: `+${action.impact} pts`
+          }
+        })
+        
+        // If we have fewer than 3 actions, add generic ones
+        while (actions.length < 3) {
+          actions.push({
+            priority: `Priority ${actions.length + 1} - Strategic`,
+            fix: 'Continue monitoring AI visibility and maintain strong performance',
+            impact: '+5 pts'
+          })
+        }
+        
+        return actions
+      }
+      
+      const actions = generateActions()
       
       actions.forEach((action, index) => {
+        if (yPos > 250) {
+          pdf.addPage()
+          yPos = 30
+        }
+        
         pdf.setTextColor(...accentColor)
         pdf.setFontSize(11)
         pdf.setFont('helvetica', 'bold')
@@ -549,9 +669,10 @@ Next Step Today: Start with Priority Action #1 - the highest impact, lowest effo
         pdf.setTextColor(...secondaryColor)
         pdf.setFontSize(10)
         pdf.setFont('helvetica', 'normal')
-        pdf.text(`Fix: ${action.fix}`, 20, yPos)
+        const fixLines = pdf.splitTextToSize(`Fix: ${action.fix}`, 170)
+        pdf.text(fixLines, 20, yPos)
         
-        yPos += 5
+        yPos += fixLines.length * 4 + 2
         pdf.setTextColor(...successColor)
         pdf.text(`Impact: ${action.impact}`, 20, yPos)
         yPos += 12
@@ -577,13 +698,52 @@ Next Step Today: Start with Priority Action #1 - the highest impact, lowest effo
       pdf.setFontSize(10)
       pdf.setFont('helvetica', 'normal')
       
-      const bottomLineText = `Current State: ${evaluationData.executiveSummary?.verdict || 'Well-structured but emotionally flat—AI sees a competent retailer, not a loved one.'}
+      // Generate contextual bottom line based on actual scores
+      const generateBottomLine = () => {
+        const score = evaluationData.overallScore || 0
+        const perceptionScore = evaluationData.pillarScores?.perception || 0
+        const commerceScore = evaluationData.pillarScores?.commerce || 0
+        const infraScore = evaluationData.pillarScores?.infrastructure || 0
+        
+        let currentState = ''
+        let opportunity = ''
+        let risk = ''
+        let nextStep = ''
+        
+        if (score >= 75) {
+          currentState = 'Analysis completed successfully.'
+          opportunity = 'Your brand has strong AI visibility. Focus on maintaining performance and monitoring emerging AI platforms.'
+          risk = 'Complacency - AI landscape evolves rapidly. Regular monitoring recommended.'
+          nextStep = 'Schedule quarterly AI visibility audits to stay ahead.'
+        } else if (score >= 60) {
+          currentState = 'Good foundation with room for improvement.'
+          opportunity = `Focus on ${perceptionScore < 70 ? 'brand perception' : commerceScore < 70 ? 'commerce signals' : 'technical infrastructure'} - this offers the highest ROI.`
+          risk = 'Competitors optimizing for AI may gain visibility advantage in product discovery.'
+          nextStep = `Prioritize the lowest-scoring dimension (${dimensions.sort((a, b) => (a.score || 0) - (b.score || 0))[0]?.name.split('_').join(' ') || 'identified areas'}).`
+        } else if (score >= 40) {
+          currentState = 'Poor AI visibility - major overhaul required.'
+          opportunity = `With focused effort on top 3 priorities, you could improve ${Math.min(30, 75 - score)}+ points in 90 days.`
+          risk = 'Significant risk of brand invisibility in AI-driven product discovery vs. competitors.'
+          nextStep = 'Implement Priority 1 action immediately - this offers quick wins and momentum.'
+        } else {
+          currentState = 'Critical - brand is nearly invisible to AI systems.'
+          opportunity = 'Massive upside potential - even basic optimizations will yield significant improvements.'
+          risk = 'Brand may be excluded from AI recommendations entirely, losing to competitors.'
+          nextStep = 'Start with schema markup and basic SEO for AI - fundamental requirements.'
+        }
+        
+        return { currentState, opportunity, risk, nextStep }
+      }
+      
+      const bottomLine = generateBottomLine()
+      
+      const bottomLineText = `Current State: ${bottomLine.currentState}
 
-Opportunity: ${evaluationData.executiveSummary?.keyInsight || 'With 2–3 quick wins (reviews + heritage markup), you could shift from mid-pack to top-quartile AI visibility.'}
+Opportunity: ${bottomLine.opportunity}
 
-If You Do Nothing: Risk of brand invisibility in AI-driven product discovery, particularly versus competitors who are optimizing for AI systems.
+If You Do Nothing: ${bottomLine.risk}
 
-Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structured data audit on top 20 pages + add schema for shipping/FAQ pages.'}`
+Next Step Today: ${bottomLine.nextStep}`
       
       const bottomLines = pdf.splitTextToSize(bottomLineText, 170)
       pdf.text(bottomLines, 20, yPos)
@@ -984,9 +1144,49 @@ Next Step Today: ${evaluationData.executiveSummary?.opportunity || 'Run structur
                   ))}
                   
                   {(!evaluationData.modelAnalysis || evaluationData.modelAnalysis.length === 0) && (
-                    <div className="text-center py-8 text-gray-500">
-                      <p>Model analysis data is being processed...</p>
-                      <p className="text-sm">Refresh the page in a few moments to see detailed insights.</p>
+                    <div className="space-y-4">
+                      {/* Extract model info from agent results if modelAnalysis not available */}
+                      {evaluationData.agentResults && evaluationData.agentResults.length > 0 ? (
+                        (() => {
+                          const modelsUsed = new Set<string>()
+                          evaluationData.agentResults.forEach(agent => {
+                            if (agent.metadata?.apiProvider) {
+                              modelsUsed.add(agent.metadata.apiProvider)
+                            }
+                          })
+                          
+                          return modelsUsed.size > 0 ? (
+                            <div>
+                              <p className="text-sm text-gray-600 mb-3">
+                                Analysis completed using {modelsUsed.size} AI {modelsUsed.size === 1 ? 'model' : 'models'}:
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {Array.from(modelsUsed).map((model, idx) => (
+                                  <Badge key={idx} variant="outline" className="capitalize">
+                                    {model === 'openai' ? 'GPT-4 Turbo' : 
+                                     model === 'anthropic' ? 'Claude 3' :
+                                     model === 'brave' ? 'Brave Search' :
+                                     model}
+                                  </Badge>
+                                ))}
+                              </div>
+                              <p className="text-xs text-gray-500 mt-3">
+                                Detailed model-by-model comparison available in full report dashboard.
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="text-center py-8 text-gray-500">
+                              <p>Model analysis data is being processed...</p>
+                              <p className="text-sm">Refresh the page in a few moments to see detailed insights.</p>
+                            </div>
+                          )
+                        })()
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <p>Model analysis data is being processed...</p>
+                          <p className="text-sm">Refresh the page in a few moments to see detailed insights.</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

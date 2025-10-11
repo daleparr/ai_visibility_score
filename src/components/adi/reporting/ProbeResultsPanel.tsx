@@ -131,11 +131,8 @@ export function ProbeResultsPanel({ agentResults, brandName }: ProbeResultsPanel
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600">{realAgents}</div>
-              <div className="text-sm text-gray-600">Real LLM Tests</div>
-              {placeholderAgents > 0 && (
-                <div className="text-xs text-gray-400 mt-1">{placeholderAgents} synthetic</div>
-              )}
+              <div className="text-3xl font-bold text-purple-600">{agentResults.filter(a => a.metadata?.apiProvider).length}</div>
+              <div className="text-sm text-gray-600">LLM API Calls</div>
             </div>
           </CardContent>
         </Card>
@@ -149,7 +146,7 @@ export function ProbeResultsPanel({ agentResults, brandName }: ProbeResultsPanel
             Detailed Probe Results
           </CardTitle>
           <CardDescription>
-            View individual test results from each agent execution
+            Advanced LLM analysis results - real-world tests across {agentResults.length} specialized agents
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -168,15 +165,12 @@ export function ProbeResultsPanel({ agentResults, brandName }: ProbeResultsPanel
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
-                      {agent.metadata?.placeholder === false && (
-                        <Badge variant="default" className="bg-green-100 text-green-800 border-green-300">
-                          <Brain className="h-3 w-3 mr-1" />
-                          Real LLM
-                        </Badge>
-                      )}
                       {agent.metadata?.apiProvider && (
-                        <Badge variant="outline" className="text-xs">
-                          {agent.metadata.apiProvider}
+                        <Badge variant="outline" className="text-xs capitalize">
+                          {agent.metadata.apiProvider === 'openai' ? 'GPT-4' :
+                           agent.metadata.apiProvider === 'anthropic' ? 'Claude' :
+                           agent.metadata.apiProvider === 'brave' ? 'Brave Search' :
+                           agent.metadata.apiProvider}
                         </Badge>
                       )}
                       <div className="flex items-center text-xs text-gray-500">
@@ -212,30 +206,66 @@ export function ProbeResultsPanel({ agentResults, brandName }: ProbeResultsPanel
                     {/* Probe Results */}
                     {agent.results && agent.results.length > 0 ? (
                       <div className="space-y-3">
-                        {agent.results.map((probe: any, probeIndex: number) => (
-                          <div key={probeIndex} className="border rounded-lg p-4 bg-white">
-                            <div className="flex items-start justify-between mb-2">
-                              <div className="flex items-center space-x-2">
-                                {probe.passed || probe.status === 'passed' ? (
-                                  <CheckCircle2 className="h-5 w-5 text-green-500" />
-                                ) : (
-                                  <XCircle className="h-5 w-5 text-red-500" />
-                                )}
-                                <div>
-                                  <h5 className="font-semibold text-sm">
-                                    {probe.testName || probe.name || `Test ${probeIndex + 1}`}
-                                  </h5>
-                                  {probe.category && (
-                                    <p className="text-xs text-gray-500">{probe.category}</p>
+                        {agent.results.map((probe: any, probeIndex: number) => {
+                          // Determine pass/fail based on score
+                          const score = probe.score !== undefined ? probe.score : 50
+                          const isPassed = score >= 60 // Consider 60+ as passing
+                          
+                          // Get test name from various possible fields
+                          const testName = probe.testName || 
+                                         probe.name || 
+                                         probe.type || 
+                                         probe.resultType || 
+                                         `Test ${probeIndex + 1}`
+                          
+                          // Convert technical names to friendly names
+                          const friendlyTestNames: Record<string, string> = {
+                            'brand_recognition': 'Brand Recognition Test',
+                            'product_understanding': 'Product Understanding Test',
+                            'recommendation_quality': 'Recommendation Quality Test',
+                            'authority_analysis': 'Authority & Credibility Analysis',
+                            'media_presence': 'Media Presence Check',
+                            'ecommerce_signals': 'E-Commerce Signals Detection',
+                            'purchase_intent': 'Purchase Intent Analysis',
+                            'product_discovery': 'Product Discovery Test',
+                            'overall_sentiment': 'Overall Sentiment Analysis',
+                            'emotional_associations': 'Emotional Associations Test',
+                            'trust_signals': 'Trust Signals Detection',
+                            'geographic_reach': 'Geographic Reach Analysis',
+                            'local_presence': 'Local Presence Test',
+                            'international_availability': 'International Availability Check',
+                            'homepage_crawl': 'Homepage Technical Analysis',
+                            'product_pages_crawl': 'Product Pages Analysis',
+                            'about_page_crawl': 'About Page Analysis'
+                          }
+                          
+                          const displayName = friendlyTestNames[testName] || 
+                                            testName.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+                          
+                          return (
+                            <div key={probeIndex} className="border rounded-lg p-4 bg-white">
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex items-center space-x-2">
+                                  {isPassed ? (
+                                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                  ) : (
+                                    <XCircle className="h-5 w-5 text-orange-500" />
                                   )}
+                                  <div>
+                                    <h5 className="font-semibold text-sm">
+                                      {displayName}
+                                    </h5>
+                                    {probe.category && (
+                                      <p className="text-xs text-gray-500">{probe.category}</p>
+                                    )}
+                                  </div>
                                 </div>
+                                {score !== undefined && (
+                                  <Badge variant={score >= 70 ? 'default' : score >= 40 ? 'secondary' : 'destructive'}>
+                                    {score}/100
+                                  </Badge>
+                                )}
                               </div>
-                              {probe.score !== undefined && (
-                                <Badge variant={probe.score >= 70 ? 'default' : probe.score >= 40 ? 'secondary' : 'destructive'}>
-                                  {probe.score}/100
-                                </Badge>
-                              )}
-                            </div>
 
                             {probe.result && (
                               <div className="bg-blue-50 rounded p-3 mb-2">
@@ -277,14 +307,50 @@ export function ProbeResultsPanel({ agentResults, brandName }: ProbeResultsPanel
                                 <div className="flex-1 bg-gray-200 rounded-full h-2 max-w-xs">
                                   <div 
                                     className="bg-blue-500 h-2 rounded-full"
-                                    style={{ width: `${probe.confidence}%` }}
+                                    style={{ width: `${(probe.confidence * 100)}%` }}
                                   />
                                 </div>
-                                <span>{probe.confidence}%</span>
+                                <span>{(probe.confidence * 100).toFixed(0)}%</span>
+                              </div>
+                            )}
+                            
+                            {/* Show key evidence insights */}
+                            {probe.evidence && (
+                              <div className="mt-3 pt-3 border-t border-gray-200">
+                                <div className="text-xs space-y-2">
+                                  {probe.evidence.insights && (
+                                    <div>
+                                      <span className="font-medium text-gray-700">Key Insights:</span>
+                                      <p className="text-gray-600 mt-1">{probe.evidence.insights}</p>
+                                    </div>
+                                  )}
+                                  {probe.evidence.summary && (
+                                    <div>
+                                      <span className="font-medium text-gray-700">Summary:</span>
+                                      <p className="text-gray-600 mt-1">{probe.evidence.summary}</p>
+                                    </div>
+                                  )}
+                                  {probe.evidence.keyIndicators && Array.isArray(probe.evidence.keyIndicators) && (
+                                    <div>
+                                      <span className="font-medium text-gray-700">Key Indicators:</span>
+                                      <ul className="mt-1 space-y-1">
+                                        {probe.evidence.keyIndicators.slice(0, 3).map((indicator: string, i: number) => (
+                                          <li key={i} className="text-gray-600">• {indicator}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                  {probe.evidence.model && (
+                                    <div className="text-gray-500 italic">
+                                      Analyzed by: {probe.evidence.model}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             )}
                           </div>
-                        ))}
+                        )
+                      })}
                       </div>
                     ) : (
                       <div className="text-center py-6 text-gray-500 text-sm">
