@@ -106,7 +106,7 @@ export class RealLLMTestAgent {
           messages: [
             {
               role: 'system',
-              content: 'You are evaluating AI brand visibility. Respond with JSON only.'
+              content: 'You are evaluating AI brand visibility. Respond ONLY with valid JSON.'
             },
             {
               role: 'user',
@@ -115,11 +115,13 @@ export class RealLLMTestAgent {
 - Information accuracy (0-30 points)
 - Detail completeness (0-30 points)
 
-Response format: {"recognized": true/false, "score": 0-100, "confidence": 0-1, "details": "brief explanation"}`
+Respond with ONLY this JSON structure (no markdown, no code blocks):
+{"recognized": true, "score": 85, "confidence": 0.9, "details": "Brief explanation of your assessment"}`
             }
           ],
           temperature: 0.3,
-          max_tokens: 300
+          max_tokens: 300,
+          response_format: { type: "json_object" }
         })
       })
 
@@ -128,19 +130,32 @@ Response format: {"recognized": true/false, "score": 0-100, "confidence": 0-1, "
       }
 
       const data = await response.json()
-      const content = data.choices[0]?.message?.content || '{}'
+      let content = data.choices[0]?.message?.content || '{}'
+      
+      // Strip markdown code blocks if present (common GPT-4 behavior)
+      content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
       
       // Parse JSON response
       let evaluation
       try {
         evaluation = JSON.parse(content)
-      } catch {
+      } catch (parseError) {
+        // Log the actual response for debugging
+        logger.warn('Failed to parse LLM response', {
+          rawContent: content,
+          error: parseError instanceof Error ? parseError.message : String(parseError)
+        })
+        
+        // Try to extract score from text if JSON parsing fails
+        const scoreMatch = content.match(/score["\s:]+(\d+)/i)
+        const extractedScore = scoreMatch ? parseInt(scoreMatch[1]) : 50
+        
         // Fallback if response isn't valid JSON
         evaluation = {
-          recognized: content.toLowerCase().includes('yes'),
-          score: 50,
+          recognized: content.toLowerCase().includes('yes') || content.toLowerCase().includes('true'),
+          score: extractedScore,
           confidence: 0.5,
-          details: 'Unable to parse LLM response'
+          details: 'LLM response was not in expected JSON format'
         }
       }
 
@@ -190,7 +205,7 @@ Response format: {"recognized": true/false, "score": 0-100, "confidence": 0-1, "
           messages: [
             {
               role: 'system',
-              content: 'You are evaluating AI product understanding. Respond with JSON only.'
+              content: 'You are evaluating AI product understanding. Respond ONLY with valid JSON.'
             },
             {
               role: 'user',
@@ -199,11 +214,13 @@ Response format: {"recognized": true/false, "score": 0-100, "confidence": 0-1, "
 - Specificity of details (0-30 points)
 - Accuracy validation (0-20 points)
 
-Response format: {"score": 0-100, "confidence": 0-1, "products": ["list"], "understanding": "brief assessment"}`
+Respond with ONLY this JSON structure (no markdown, no code blocks):
+{"score": 75, "confidence": 0.8, "products": ["product1", "product2"], "understanding": "Brief assessment"}`
             }
           ],
           temperature: 0.3,
-          max_tokens: 400
+          max_tokens: 400,
+          response_format: { type: "json_object" }
         })
       })
 
@@ -212,17 +229,28 @@ Response format: {"score": 0-100, "confidence": 0-1, "products": ["list"], "unde
       }
 
       const data = await response.json()
-      const content = data.choices[0]?.message?.content || '{}'
+      let content = data.choices[0]?.message?.content || '{}'
+      
+      // Strip markdown code blocks if present
+      content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
       
       let evaluation
       try {
         evaluation = JSON.parse(content)
-      } catch {
+      } catch (parseError) {
+        logger.warn('Failed to parse product understanding response', {
+          rawContent: content,
+          error: parseError instanceof Error ? parseError.message : String(parseError)
+        })
+        
+        const scoreMatch = content.match(/score["\s:]+(\d+)/i)
+        const extractedScore = scoreMatch ? parseInt(scoreMatch[1]) : 50
+        
         evaluation = {
-          score: 50,
+          score: extractedScore,
           confidence: 0.5,
           products: [],
-          understanding: 'Unable to parse response'
+          understanding: 'LLM response was not in expected JSON format'
         }
       }
 
@@ -272,7 +300,7 @@ Response format: {"score": 0-100, "confidence": 0-1, "products": ["list"], "unde
           messages: [
             {
               role: 'system',
-              content: 'You are evaluating AI recommendation quality. Respond with JSON only.'
+              content: 'You are evaluating AI recommendation quality. Respond ONLY with valid JSON.'
             },
             {
               role: 'user',
@@ -281,11 +309,13 @@ Response format: {"score": 0-100, "confidence": 0-1, "products": ["list"], "unde
 - Helpful context (0-30 points)
 - Fair comparison (0-30 points)
 
-Response format: {"score": 0-100, "confidence": 0-1, "positioning": "brief description", "fairness": "assessment"}`
+Respond with ONLY this JSON structure (no markdown, no code blocks):
+{"score": 80, "confidence": 0.85, "positioning": "Brief description of how you position the brand", "fairness": "Assessment of comparison fairness"}`
             }
           ],
           temperature: 0.3,
-          max_tokens: 400
+          max_tokens: 400,
+          response_format: { type: "json_object" }
         })
       })
 
@@ -294,17 +324,28 @@ Response format: {"score": 0-100, "confidence": 0-1, "positioning": "brief descr
       }
 
       const data = await response.json()
-      const content = data.choices[0]?.message?.content || '{}'
+      let content = data.choices[0]?.message?.content || '{}'
+      
+      // Strip markdown code blocks if present
+      content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
       
       let evaluation
       try {
         evaluation = JSON.parse(content)
-      } catch {
+      } catch (parseError) {
+        logger.warn('Failed to parse recommendation quality response', {
+          rawContent: content,
+          error: parseError instanceof Error ? parseError.message : String(parseError)
+        })
+        
+        const scoreMatch = content.match(/score["\s:]+(\d+)/i)
+        const extractedScore = scoreMatch ? parseInt(scoreMatch[1]) : 50
+        
         evaluation = {
-          score: 50,
+          score: extractedScore,
           confidence: 0.5,
-          positioning: 'Unable to parse response',
-          fairness: 'Unknown'
+          positioning: content.substring(0, 200),
+          fairness: 'LLM response was not in expected JSON format'
         }
       }
 

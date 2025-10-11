@@ -96,7 +96,7 @@ export class RealSentimentAgent {
           messages: [
             {
               role: 'system',
-              content: 'You are a brand sentiment analyst. Respond with JSON only.'
+              content: 'You are a brand sentiment analyst. Respond ONLY with valid JSON.'
             },
             {
               role: 'user',
@@ -107,11 +107,13 @@ export class RealSentimentAgent {
 - 20-39: Negative associations
 - 0-19: Severely negative perception
 
-Response format: {"score": 0-100, "sentiment": "positive/neutral/negative", "confidence": 0-1, "key_associations": ["list"], "reasoning": "brief explanation"}`
+Respond with ONLY this JSON structure (no markdown, no code blocks):
+{"score": 75, "sentiment": "positive", "confidence": 0.8, "key_associations": ["quality", "innovation"], "reasoning": "Brief explanation"}`
             }
           ],
           temperature: 0.3,
-          max_tokens: 400
+          max_tokens: 400,
+          response_format: { type: "json_object" }
         })
       })
 
@@ -120,18 +122,29 @@ Response format: {"score": 0-100, "sentiment": "positive/neutral/negative", "con
       }
 
       const data = await response.json()
-      const content = data.choices[0]?.message?.content || '{}'
+      let content = data.choices[0]?.message?.content || '{}'
+      
+      // Strip markdown code blocks
+      content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
       
       let evaluation
       try {
         evaluation = JSON.parse(content)
-      } catch {
+      } catch (parseError) {
+        logger.warn('Failed to parse sentiment response', {
+          rawContent: content.substring(0, 200),
+          error: parseError instanceof Error ? parseError.message : String(parseError)
+        })
+        
+        const scoreMatch = content.match(/score["\s:]+(\d+)/i)
+        const extractedScore = scoreMatch ? parseInt(scoreMatch[1]) : 50
+        
         evaluation = {
-          score: 50,
+          score: extractedScore,
           sentiment: 'neutral',
           confidence: 0.5,
           key_associations: [],
-          reasoning: 'Unable to parse response'
+          reasoning: 'LLM response was not in expected JSON format'
         }
       }
 
@@ -181,17 +194,23 @@ Response format: {"score": 0-100, "sentiment": "positive/neutral/negative", "con
           model: 'gpt-4-turbo-preview',
           messages: [
             {
+              role: 'system',
+              content: 'You are a brand emotion analyst. Respond ONLY with valid JSON.'
+            },
+            {
               role: 'user',
               content: `What emotions or feelings do people associate with the brand "${brandName}"? Score 0-100 based on:
 - Positive emotional resonance (0-50)
 - Authenticity of associations (0-30)
 - Emotional distinctiveness (0-20)
 
-Response format: {"score": 0-100, "confidence": 0-1, "emotions": ["list"], "summary": "brief description"}`
+Respond with ONLY this JSON structure (no markdown, no code blocks):
+{"score": 80, "confidence": 0.85, "emotions": ["inspired", "confident"], "summary": "Brief description of emotional associations"}`
             }
           ],
           temperature: 0.4,
-          max_tokens: 300
+          max_tokens: 300,
+          response_format: { type: "json_object" }
         })
       })
 
@@ -200,17 +219,28 @@ Response format: {"score": 0-100, "confidence": 0-1, "emotions": ["list"], "summ
       }
 
       const data = await response.json()
-      const content = data.choices[0]?.message?.content || '{}'
+      let content = data.choices[0]?.message?.content || '{}'
+      
+      // Strip markdown code blocks
+      content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
       
       let evaluation
       try {
         evaluation = JSON.parse(content)
-      } catch {
+      } catch (parseError) {
+        logger.warn('Failed to parse emotional associations response', {
+          rawContent: content.substring(0, 200),
+          error: parseError instanceof Error ? parseError.message : String(parseError)
+        })
+        
+        const scoreMatch = content.match(/score["\s:]+(\d+)/i)
+        const extractedScore = scoreMatch ? parseInt(scoreMatch[1]) : 50
+        
         evaluation = {
-          score: 50,
+          score: extractedScore,
           confidence: 0.5,
           emotions: [],
-          summary: 'Unable to parse response'
+          summary: 'LLM response was not in expected JSON format'
         }
       }
 
@@ -257,17 +287,23 @@ Response format: {"score": 0-100, "confidence": 0-1, "emotions": ["list"], "summ
           model: 'gpt-4-turbo-preview',
           messages: [
             {
+              role: 'system',
+              content: 'You are a brand trust analyst. Respond ONLY with valid JSON.'
+            },
+            {
               role: 'user',
               content: `How trustworthy is "${brandName}" perceived to be? Score 0-100 based on:
 - Reputation signals (0-40)
 - Authority indicators (0-30)
 - Customer confidence (0-30)
 
-Response format: {"score": 0-100, "confidence": 0-1, "trust_level": "high/medium/low", "key_signals": ["list"]}`
+Respond with ONLY this JSON structure (no markdown, no code blocks):
+{"score": 85, "confidence": 0.9, "trust_level": "high", "key_signals": ["strong reputation", "customer loyalty"]}`
             }
           ],
           temperature: 0.3,
-          max_tokens: 300
+          max_tokens: 300,
+          response_format: { type: "json_object" }
         })
       })
 
