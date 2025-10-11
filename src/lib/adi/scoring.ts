@@ -527,7 +527,7 @@ export class ADIScoringEngine {
     const evidence = {
       resultCount: agentOutput.results.length,
       executionTime: agentOutput.executionTime,
-      results: agentOutput.results.map(r => ({
+      results: agentOutput.results.map((r: any) => ({
         type: r.type || r.resultType,
         score: extractScore(r),
         confidence: extractConfidence(r),
