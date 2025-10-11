@@ -8,7 +8,6 @@ interface CrawlResult {
   status: 'completed' | 'failed'
   results: Array<{
     type: string
-    score: any
     score: number
     confidence: number
     evidence: Record<string, any>
@@ -258,7 +257,6 @@ export class AdvancedCrawlAgent {
 
           return {
             type: 'sitemap_analysis',
-            score: Math.min(100, urlCount * 2),
             score: Math.min(100, urlCount * 2),
             confidence: 0.9,
             evidence: {
