@@ -238,11 +238,32 @@ export class EvaluationFinalizer {
         return
       }
 
-      // Save dimension scores in batch
-      console.log(`💾 [Finalizer] Attempting to insert ${dimensionScoresToSave.length} dimension scores into database...`)
-      await db.insert(dimensionScores).values(dimensionScoresToSave)
+      // CRITICAL FIX: Deduplicate dimension scores (keep highest score for each dimension)
+      const deduplicatedScores = new Map<string, typeof dimensionScoresToSave[0]>()
+      for (const dim of dimensionScoresToSave) {
+        const existing = deduplicatedScores.get(dim.dimensionName)
+        if (!existing || dim.score > existing.score) {
+          deduplicatedScores.set(dim.dimensionName, dim)
+        }
+      }
+      const uniqueScores = Array.from(deduplicatedScores.values())
+
+      console.log(`💾 [Finalizer] Deduplicated ${dimensionScoresToSave.length} scores to ${uniqueScores.length} unique dimensions`)
+      console.log(`💾 [Finalizer] Attempting to insert ${uniqueScores.length} dimension scores into database...`)
       
-      console.log(`✅ [Finalizer] Successfully saved ${dimensionScoresToSave.length} dimension scores to database`)
+      // Use upsert to handle any existing records
+      for (const dim of uniqueScores) {
+        await db.insert(dimensionScores).values(dim).onConflictDoUpdate({
+          target: [dimensionScores.evaluationId, dimensionScores.dimensionName],
+          set: {
+            score: dim.score,
+            explanation: dim.explanation,
+            recommendations: dim.recommendations
+          }
+        })
+      }
+      
+      console.log(`✅ [Finalizer] Successfully saved ${uniqueScores.length} dimension scores to database`)
 
     } catch (error) {
       console.error(`❌ [Finalizer] Failed to save dimension scores:`, error)
