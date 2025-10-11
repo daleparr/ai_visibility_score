@@ -322,8 +322,8 @@ export class ADIScoringEngine {
       )
       
       if (schemaResults.length > 0) {
-        const avgScore = schemaResults.reduce((sum, r) => sum + (r.score || r.normalizedScore || 0), 0) / schemaResults.length
-        const avgConfidence = schemaResults.reduce((sum, r) => sum + (r.confidence || r.confidenceLevel || 0), 0) / schemaResults.length
+        const avgScore = schemaResults.reduce((sum, r: any) => sum + (r.score || r.normalizedScore || 0), 0) / schemaResults.length
+        const avgConfidence = schemaResults.reduce((sum, r: any) => sum + (r.confidence || r.confidenceLevel || 0), 0) / schemaResults.length
         
         dimensionScores.push({
           dimension: 'schema_structured_data',
@@ -343,8 +343,8 @@ export class ADIScoringEngine {
       )
       
       if (logisticsResults.length > 0) {
-        const avgScore = logisticsResults.reduce((sum, r) => sum + (r.score || r.normalizedScore || 0), 0) / logisticsResults.length
-        const avgConfidence = logisticsResults.reduce((sum, r) => sum + (r.confidence || r.confidenceLevel || 0), 0) / logisticsResults.length
+        const avgScore = logisticsResults.reduce((sum, r: any) => sum + (r.score || r.normalizedScore || 0), 0) / logisticsResults.length
+        const avgConfidence = logisticsResults.reduce((sum, r: any) => sum + (r.confidence || r.confidenceLevel || 0), 0) / logisticsResults.length
         
         dimensionScores.push({
           dimension: 'policies_logistics_clarity',
@@ -374,8 +374,8 @@ export class ADIScoringEngine {
         )
         
         if (heroResults.length > 0) {
-          const avgScore = heroResults.reduce((sum, r) => sum + (r.score || r.normalizedScore || 0), 0) / heroResults.length
-          const avgConfidence = heroResults.reduce((sum, r) => sum + (r.confidence || r.confidenceLevel || 0), 0) / heroResults.length
+          const avgScore = heroResults.reduce((sum, r: any) => sum + (r.score || r.normalizedScore || 0), 0) / heroResults.length
+          const avgConfidence = heroResults.reduce((sum, r: any) => sum + (r.confidence || r.confidenceLevel || 0), 0) / heroResults.length
           
           dimensionScores.push({
             dimension: 'hero_products_use_case',
@@ -471,8 +471,8 @@ export class ADIScoringEngine {
     }
 
     if (relevantResults.length > 0) {
-      const avgScore = relevantResults.reduce((sum, r) => sum + (r.score || r.normalizedScore || 0), 0) / relevantResults.length
-      const avgConfidence = relevantResults.reduce((sum, r) => sum + (r.confidence || r.confidenceLevel || 0), 0) / relevantResults.length
+      const avgScore = relevantResults.reduce((sum, r: any) => sum + (r.score || r.normalizedScore || 0), 0) / relevantResults.length
+      const avgConfidence = relevantResults.reduce((sum, r: any) => sum + (r.confidence || r.confidenceLevel || 0), 0) / relevantResults.length
 
       return {
         dimension: dimensionName,
