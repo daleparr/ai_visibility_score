@@ -322,8 +322,8 @@ export class ADIScoringEngine {
       )
       
       if (schemaResults.length > 0) {
-        const avgScore = schemaResults.reduce((sum, r) => sum + (r.normalizedScore || 0), 0) / schemaResults.length
-        const avgConfidence = schemaResults.reduce((sum, r) => sum + (r.confidenceLevel || 0), 0) / schemaResults.length
+        const avgScore = schemaResults.reduce((sum, r) => sum + (r.score || r.normalizedScore || 0), 0) / schemaResults.length
+        const avgConfidence = schemaResults.reduce((sum, r) => sum + (r.confidence || r.confidenceLevel || 0), 0) / schemaResults.length
         
         dimensionScores.push({
           dimension: 'schema_structured_data',
@@ -343,8 +343,8 @@ export class ADIScoringEngine {
       )
       
       if (logisticsResults.length > 0) {
-        const avgScore = logisticsResults.reduce((sum, r) => sum + (r.normalizedScore || 0), 0) / logisticsResults.length
-        const avgConfidence = logisticsResults.reduce((sum, r) => sum + (r.confidenceLevel || 0), 0) / logisticsResults.length
+        const avgScore = logisticsResults.reduce((sum, r) => sum + (r.score || r.normalizedScore || 0), 0) / logisticsResults.length
+        const avgConfidence = logisticsResults.reduce((sum, r) => sum + (r.confidence || r.confidenceLevel || 0), 0) / logisticsResults.length
         
         dimensionScores.push({
           dimension: 'policies_logistics_clarity',
@@ -374,8 +374,8 @@ export class ADIScoringEngine {
         )
         
         if (heroResults.length > 0) {
-          const avgScore = heroResults.reduce((sum, r) => sum + (r.normalizedScore || 0), 0) / heroResults.length
-          const avgConfidence = heroResults.reduce((sum, r) => sum + (r.confidenceLevel || 0), 0) / heroResults.length
+          const avgScore = heroResults.reduce((sum, r) => sum + (r.score || r.normalizedScore || 0), 0) / heroResults.length
+          const avgConfidence = heroResults.reduce((sum, r) => sum + (r.confidence || r.confidenceLevel || 0), 0) / heroResults.length
           
           dimensionScores.push({
             dimension: 'hero_products_use_case',
@@ -471,8 +471,8 @@ export class ADIScoringEngine {
     }
 
     if (relevantResults.length > 0) {
-      const avgScore = relevantResults.reduce((sum, r) => sum + (r.normalizedScore || 0), 0) / relevantResults.length
-      const avgConfidence = relevantResults.reduce((sum, r) => sum + (r.confidenceLevel || 0), 0) / relevantResults.length
+      const avgScore = relevantResults.reduce((sum, r) => sum + (r.score || r.normalizedScore || 0), 0) / relevantResults.length
+      const avgConfidence = relevantResults.reduce((sum, r) => sum + (r.confidence || r.confidenceLevel || 0), 0) / relevantResults.length
 
       return {
         dimension: dimensionName,
@@ -502,15 +502,25 @@ export class ADIScoringEngine {
       return null
     }
 
+    // Helper to extract score from result (handles both old and new formats)
+    const extractScore = (result: any): number => {
+      return result.score || result.normalizedScore || result.rawValue || 0
+    }
+
+    // Helper to extract confidence from result (handles both old and new formats)
+    const extractConfidence = (result: any): number => {
+      return result.confidence || result.confidenceLevel || 0
+    }
+
     // Calculate weighted average of all results
     const totalWeight = agentOutput.results.length
     const weightedScore = agentOutput.results.reduce((sum, result) =>
-      sum + (result.normalizedScore || 0), 0
+      sum + extractScore(result), 0
     ) / totalWeight
 
     // Calculate average confidence
     const avgConfidence = agentOutput.results.reduce((sum, result) =>
-      sum + (result.confidenceLevel || 0), 0
+      sum + extractConfidence(result), 0
     ) / totalWeight
 
     // Collect evidence
@@ -518,9 +528,9 @@ export class ADIScoringEngine {
       resultCount: agentOutput.results.length,
       executionTime: agentOutput.executionTime,
       results: agentOutput.results.map(r => ({
-        type: r.resultType,
-        score: r.normalizedScore || 0,
-        confidence: r.confidenceLevel || 0,
+        type: r.type || r.resultType,
+        score: extractScore(r),
+        confidence: extractConfidence(r),
         evidence: r.evidence
       })),
       metadata: agentOutput.metadata
