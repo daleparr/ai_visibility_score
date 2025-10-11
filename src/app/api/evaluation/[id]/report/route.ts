@@ -78,27 +78,39 @@ export async function GET(
       // This is okay - we'll derive pillar scores from dimension scores
     }
 
-    // Get brand category
-    const brandCategory = await withSchema(async () => {
-      const result = await sql`
-        SELECT * FROM production.brand_categories
-        WHERE brand_id = ${evaluation.brand_id}
-        ORDER BY created_at DESC
-        LIMIT 1
-      `
-      return result[0]
-    })
+    // Get brand category (optional - handle missing table gracefully)
+    let brandCategory = null
+    try {
+      brandCategory = await withSchema(async () => {
+        const result = await sql`
+          SELECT * FROM production.brand_categories
+          WHERE brand_id = ${evaluation.brand_id}
+          ORDER BY created_at DESC
+          LIMIT 1
+        `
+        return result[0]
+      })
+    } catch (categoryError: any) {
+      console.warn(`⚠️ [Report] brand_categories table query failed:`, categoryError.message)
+      // This is okay - brand category is optional metadata
+    }
 
-    // Get performance profile
-    const performanceProfile = await withSchema(async () => {
-      const result = await sql`
-        SELECT * FROM production.performance_profiles
-        WHERE evaluation_id = ${evaluationId}
-        ORDER BY created_at DESC
-        LIMIT 1
-      `
-      return result[0]
-    })
+    // Get performance profile (optional - handle missing table gracefully)
+    let performanceProfile = null
+    try {
+      performanceProfile = await withSchema(async () => {
+        const result = await sql`
+          SELECT * FROM production.performance_profiles
+          WHERE evaluation_id = ${evaluationId}
+          ORDER BY created_at DESC
+          LIMIT 1
+        `
+        return result[0]
+      })
+    } catch (profileError: any) {
+      console.warn(`⚠️ [Report] performance_profiles table query failed:`, profileError.message)
+      // This is okay - performance profile is optional metadata
+    }
 
     // Get agent results and aggregate them
     const agentResults = executions
