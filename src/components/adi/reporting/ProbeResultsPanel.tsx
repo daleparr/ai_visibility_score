@@ -267,23 +267,32 @@ export function ProbeResultsPanel({ agentResults, brandName }: ProbeResultsPanel
                                 )}
                               </div>
 
-                            {probe.result && (
-                              <div className="bg-blue-50 rounded p-3 mb-2">
-                                <p className="text-xs font-medium text-blue-800 mb-1">Result:</p>
-                                <p className="text-sm text-gray-700">{probe.result}</p>
-                              </div>
-                            )}
-
-                            {probe.response && (
+                            {/* Show LLM Response if available */}
+                            {probe.evidence?.llmResponse && (
                               <div className="bg-green-50 rounded p-3 mb-2">
-                                <p className="text-xs font-medium text-green-800 mb-1">LLM Response:</p>
-                                <p className="text-sm text-gray-700">{probe.response}</p>
+                                <p className="text-xs font-medium text-green-800 mb-1">AI Response:</p>
+                                <p className="text-sm text-gray-700 whitespace-pre-wrap">{probe.evidence.llmResponse}</p>
                               </div>
                             )}
 
-                            {probe.details && (
-                              <div className="text-xs text-gray-600">
-                                <span className="font-medium">Details:</span> {probe.details}
+                            {/* Show error details if parsing failed */}
+                            {probe.evidence?.parsedSuccessfully === false && (
+                              <div className="bg-red-50 rounded p-3 mb-2 border border-red-200">
+                                <p className="text-xs font-medium text-red-800 mb-1">⚠️ Response Parsing Issue:</p>
+                                <p className="text-sm text-red-700">{probe.evidence.details || 'Response format not recognized'}</p>
+                                {probe.evidence.error && (
+                                  <p className="text-xs text-red-600 mt-1">Error: {probe.evidence.error}</p>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Show main result/details */}
+                            {(probe.evidence?.details || probe.evidence?.reasoning || probe.evidence?.understanding) && probe.evidence.parsedSuccessfully !== false && (
+                              <div className="bg-blue-50 rounded p-3 mb-2">
+                                <p className="text-xs font-medium text-blue-800 mb-1">Analysis:</p>
+                                <p className="text-sm text-gray-700">
+                                  {probe.evidence.details || probe.evidence.reasoning || probe.evidence.understanding}
+                                </p>
                               </div>
                             )}
 
@@ -318,6 +327,54 @@ export function ProbeResultsPanel({ agentResults, brandName }: ProbeResultsPanel
                             {probe.evidence && (
                               <div className="mt-3 pt-3 border-t border-gray-200">
                                 <div className="text-xs space-y-2">
+                                  {/* Products list (for product understanding tests) */}
+                                  {probe.evidence.products && Array.isArray(probe.evidence.products) && probe.evidence.products.length > 0 && (
+                                    <div>
+                                      <span className="font-medium text-gray-700">Products Identified:</span>
+                                      <ul className="mt-1 space-y-1">
+                                        {probe.evidence.products.slice(0, 5).map((product: string, i: number) => (
+                                          <li key={i} className="text-gray-600">• {product}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Emotions list (for sentiment tests) */}
+                                  {probe.evidence.emotions && Array.isArray(probe.evidence.emotions) && probe.evidence.emotions.length > 0 && (
+                                    <div>
+                                      <span className="font-medium text-gray-700">Emotional Associations:</span>
+                                      <div className="mt-1 flex flex-wrap gap-1">
+                                        {probe.evidence.emotions.map((emotion: string, i: number) => (
+                                          <Badge key={i} variant="outline" className="text-xs">{emotion}</Badge>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Key signals (for trust tests) */}
+                                  {probe.evidence.keySignals && Array.isArray(probe.evidence.keySignals) && probe.evidence.keySignals.length > 0 && (
+                                    <div>
+                                      <span className="font-medium text-gray-700">Trust Signals:</span>
+                                      <ul className="mt-1 space-y-1">
+                                        {probe.evidence.keySignals.slice(0, 5).map((signal: string, i: number) => (
+                                          <li key={i} className="text-gray-600">• {signal}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Regions list (for geo tests) */}
+                                  {probe.evidence.regions && Array.isArray(probe.evidence.regions) && probe.evidence.regions.length > 0 && (
+                                    <div>
+                                      <span className="font-medium text-gray-700">Geographic Regions:</span>
+                                      <div className="mt-1 flex flex-wrap gap-1">
+                                        {probe.evidence.regions.map((region: string, i: number) => (
+                                          <Badge key={i} variant="secondary" className="text-xs">{region}</Badge>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                  
                                   {probe.evidence.insights && (
                                     <div>
                                       <span className="font-medium text-gray-700">Key Insights:</span>
@@ -341,7 +398,7 @@ export function ProbeResultsPanel({ agentResults, brandName }: ProbeResultsPanel
                                     </div>
                                   )}
                                   {probe.evidence.model && (
-                                    <div className="text-gray-500 italic">
+                                    <div className="text-gray-500 italic mt-2">
                                       Analyzed by: {probe.evidence.model}
                                     </div>
                                   )}
