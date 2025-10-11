@@ -240,7 +240,7 @@ export function ProbeResultsPanel({ agentResults, brandName }: ProbeResultsPanel
                           }
                           
                           const displayName = friendlyTestNames[testName] || 
-                                            testName.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+                                            testName.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
                           
                           return (
                             <div key={probeIndex} className="border rounded-lg p-4 bg-white">
