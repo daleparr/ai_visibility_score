@@ -318,9 +318,10 @@ export class ADIScoringEngine {
     // Handle special case: schema_structured_data (if schema_agent has results but no dimension yet)
     const schemaAgent = agentResults['schema_agent']
     if (schemaAgent?.status === 'completed' && !dimensionScores.find(d => d.dimension === 'schema_structured_data')) {
-      const schemaResults = schemaAgent.results.filter(r =>
-        r.resultType.includes('schema') || r.resultType.includes('structured_data')
-      )
+      const schemaResults = schemaAgent.results.filter((r: any) => {
+        const resultType = r.type || r.resultType || ''
+        return resultType.includes('schema') || resultType.includes('structured_data')
+      })
       
       if (schemaResults.length > 0) {
         const avgScore = schemaResults.reduce((sum, r: any) => sum + (r.score || r.normalizedScore || 0), 0) / schemaResults.length
@@ -339,9 +340,10 @@ export class ADIScoringEngine {
     // Handle special case: policies_logistics_clarity (derived from commerce_agent)
     const commerceAgent = agentResults['commerce_agent']
     if (commerceAgent?.status === 'completed') {
-      const logisticsResults = commerceAgent.results.filter(r =>
-        r.resultType.includes('logistics') || r.resultType.includes('policy')
-      )
+      const logisticsResults = commerceAgent.results.filter((r: any) => {
+        const resultType = r.type || r.resultType || ''
+        return resultType.includes('logistics') || resultType.includes('policy')
+      })
       
       if (logisticsResults.length > 0) {
         const avgScore = logisticsResults.reduce((sum, r: any) => sum + (r.score || r.normalizedScore || 0), 0) / logisticsResults.length
@@ -370,9 +372,10 @@ export class ADIScoringEngine {
 
       // Ensure hero_products_use_case dimension is created if not already mapped
       if (!dimensionScores.find(d => d.dimension === 'hero_products_use_case')) {
-        const heroResults = commerceAgent.results.filter(r =>
-          r.resultType.includes('hero') || r.resultType.includes('product') || r.resultType.includes('use_case')
-        )
+        const heroResults = commerceAgent.results.filter((r: any) => {
+          const resultType = r.type || r.resultType || ''
+          return resultType.includes('hero') || resultType.includes('product') || resultType.includes('use_case')
+        })
         
         if (heroResults.length > 0) {
           const avgScore = heroResults.reduce((sum, r: any) => sum + (r.score || r.normalizedScore || 0), 0) / heroResults.length
@@ -458,8 +461,8 @@ export class ADIScoringEngine {
     }
 
     // Create dimension score from agent results
-    const relevantResults = agentOutput.results.filter(r => {
-      const resultType = r.resultType.toLowerCase()
+    const relevantResults = agentOutput.results.filter((r: any) => {
+      const resultType = (r.type || r.resultType || '').toLowerCase()
       const dimension = dimensionName.toLowerCase()
       
       // Check if result type is relevant to this dimension
@@ -825,8 +828,8 @@ export class ADIScoringEngine {
     
     const keywords = areaKeywords[optimizationArea] || []
     
-    return agentOutput.results.filter(result => {
-      const resultType = result.resultType.toLowerCase()
+    return agentOutput.results.filter((result: any) => {
+      const resultType = (result.type || result.resultType || '').toLowerCase()
       return keywords.some(keyword => resultType.includes(keyword))
     })
   }
