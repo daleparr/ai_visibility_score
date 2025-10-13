@@ -286,6 +286,7 @@ export class ADIScoringEngine {
       'citation_agent': ['citation_authority_freshness'],
       'sentiment_agent': ['reputation_signals'],
       'commerce_agent': ['hero_products_use_case', 'policies_logistics_clarity'], // Commerce agent handles both
+      'crawl_agent': ['policies_logistics_clarity'], // Crawl agent also evaluates policies/logistics
       'brand_heritage_agent': ['reputation_signals'] // Map to reputation signals
     }
 
