@@ -546,7 +546,10 @@ export class ADIScoringEngine {
       totalWeight += pillar.weight
     }
 
-    return totalWeight > 0 ? Math.round(totalWeightedScore) : 0
+    // CRITICAL FIX: Normalize by actual total weight to handle missing pillars
+    // When infrastructure pillar is missing (fast agents not running), we need to
+    // normalize the score based on the available pillars, not penalize it to ~50/100
+    return totalWeight > 0 ? Math.round(totalWeightedScore / totalWeight) : 0
   }
 
   /**
