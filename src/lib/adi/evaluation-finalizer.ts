@@ -142,10 +142,22 @@ export class EvaluationFinalizer {
       // Calculate ADI score using the scoring engine with error handling
       let adiScore
       try {
+        console.log(`🎯 [Finalizer] Calling ADIScoringEngine with orchestrationResult:`)
+        console.log(`🎯 [Finalizer] Agent results keys:`, Object.keys(agentResults))
+        console.log(`🎯 [Finalizer] Sample agent result:`, JSON.stringify(Object.values(agentResults)[0], null, 2).substring(0, 500))
+        
         adiScore = ADIScoringEngine.calculateADIScore(orchestrationResult)
+        
         console.log(`🎯 [Finalizer] Calculated ADI score: ${adiScore.overall}/100`)
+        console.log(`🎯 [Finalizer] ADI score structure:`, {
+          overall: adiScore.overall,
+          pillarsCount: adiScore.pillars?.length || 0,
+          pillarNames: adiScore.pillars?.map((p: any) => p.pillar) || [],
+          totalDimensions: adiScore.pillars?.reduce((sum: number, p: any) => sum + (p.dimensions?.length || 0), 0) || 0
+        })
       } catch (scoringError: any) {
         console.error(`❌ [Finalizer] Scoring engine failed, using fallback:`, scoringError.message)
+        console.error(`❌ [Finalizer] Scoring error stack:`, scoringError.stack)
         // Fallback: Create minimal score from placeholder data
         adiScore = {
           overall: 45, // Default medium score for placeholder results
