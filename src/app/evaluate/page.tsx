@@ -185,6 +185,20 @@ export default function EvaluatePage() {
   const [brandCategory, setBrandCategory] = useState<any>(null)
   const [performanceProfile, setPerformanceProfile] = useState<AIDIPerformanceProfile | null>(null)
 
+  // Debug: Log whenever evaluationData changes
+  useEffect(() => {
+    if (evaluationData) {
+      console.log('🔄 evaluationData state updated:', {
+        hasDimensionScores: !!evaluationData.dimensionScores,
+        dimensionScoresLength: evaluationData.dimensionScores?.length || 0,
+        dimensionScores: evaluationData.dimensionScores?.map((d: any) => ({
+          name: d.name,
+          score: d.score
+        }))
+      });
+    }
+  }, [evaluationData]);
+
   const generateActionPlan = async () => {
     console.log('🔍 generateActionPlan called');
     console.log('🔍 evaluationData:', evaluationData);
@@ -870,11 +884,33 @@ Next Step Today: ${bottomLine.nextStep}`
                 const reportResponse = await fetch(`/api/evaluation/${evaluationId}/report`);
                 if (reportResponse.ok) {
                   const reportData = await reportResponse.json();
-                  console.log('✅ Final report data:', reportData);
+                  console.log('✅ Final report data (raw):', reportData);
+                  console.log('🔍 Report structure check:', {
+                    hasReport: !!reportData.report,
+                    hasReportDimensionScores: !!reportData.report?.dimensionScores,
+                    reportDimensionScoresLength: reportData.report?.dimensionScores?.length || 0,
+                    firstDimensionInReport: reportData.report?.dimensionScores?.[0]
+                  });
                   
                   // Use report data if available, fallback to status data
+                  console.log('🔧 Data extraction chain:', {
+                    hasReportDataReport: !!reportData.report,
+                    hasReportData: !!reportData,
+                    hasStatusDataReport: !!statusData.report,
+                    hasStatusDataResults: !!statusData.results,
+                    hasStatusData: !!statusData,
+                    reportDataReportDimensions: reportData.report?.dimensionScores?.length || 0,
+                    statusDataReportDimensions: statusData.report?.dimensionScores?.length || 0,
+                    statusDataResultsDimensions: statusData.results?.dimensionScores?.length || 0
+                  });
                   const finalData = reportData.report || reportData || statusData.report || statusData.results || statusData;
                   console.log('✅ Setting final evaluation data:', finalData);
+                  console.log('🔍 DIMENSION SCORES DEBUG:', {
+                    dimensionScoresLength: finalData?.dimensionScores?.length || 0,
+                    firstDimension: finalData?.dimensionScores?.[0],
+                    allDimensionNames: finalData?.dimensionScores?.map((d: any) => d.name),
+                    allDimensionScores: finalData?.dimensionScores?.map((d: any) => d.score)
+                  });
                   
                   setEvaluationData(finalData);
                   if(finalData.performanceProfile) {
@@ -1876,13 +1912,19 @@ Next Step Today: ${bottomLine.nextStep}`
               Click to see improvement opportunities and real AI examples.
             </p>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {(evaluationData.dimensionScores || []).map((dimension, index) => (
+              {(() => {
+                const dimensions = evaluationData.dimensionScores || [];
+                console.log('🎨 Rendering dimension cards:', {
+                  count: dimensions.length,
+                  dimensions: dimensions.map((d: any) => ({ name: d.name, score: d.score }))
+                });
+                return dimensions.map((dimension, index) => (
                 <UserFriendlyDimensionCard
                   key={index}
                   dimension={dimension}
                   isConversationalCopy={dimension.name.toLowerCase().includes('conversational')}
                 />
-              ))}
+              ))})()}
             </div>
           </div>
 

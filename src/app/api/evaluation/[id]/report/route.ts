@@ -208,7 +208,11 @@ export async function GET(
       dimensionCount: report.dimensionScores.length,
       pillarScores: report.pillarScores,
       agentResultsCount: report.agentResults.length,
-      sampleDimension: report.dimensionScores[0]
+      sampleDimension: report.dimensionScores[0],
+      allDimensionScores: report.dimensionScores.map((d: any) => ({
+        name: d.name,
+        score: d.score
+      }))
     })
 
     return NextResponse.json({ report })
