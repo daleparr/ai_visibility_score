@@ -337,72 +337,9 @@ export class ADIScoringEngine {
       }
     }
 
-    // Handle special case: policies_logistics_clarity (derived from commerce_agent)
-    const commerceAgent = agentResults['commerce_agent']
-    if (commerceAgent?.status === 'completed') {
-      const logisticsResults = commerceAgent.results.filter((r: any) => {
-        const resultType = r.type || r.resultType || ''
-        return resultType.includes('logistics') || resultType.includes('policy')
-      })
-      
-      if (logisticsResults.length > 0) {
-        const avgScore = logisticsResults.reduce((sum, r: any) => sum + (r.score || r.normalizedScore || 0), 0) / logisticsResults.length
-        const avgConfidence = logisticsResults.reduce((sum, r: any) => sum + (r.confidence || r.confidenceLevel || 0), 0) / logisticsResults.length
-        
-        dimensionScores.push({
-          dimension: 'policies_logistics_clarity',
-          score: Math.round(avgScore),
-          confidenceInterval: avgConfidence,
-          evidence: { logisticsResults },
-          agentContributions: { 'commerce_agent': avgScore }
-        })
-      } else {
-        // If no specific logistics results, create a default score for policies_logistics_clarity
-        const aggregatedScore = this.aggregateAgentResults(commerceAgent)
-        if (aggregatedScore) {
-          dimensionScores.push({
-            dimension: 'policies_logistics_clarity',
-            score: Math.round(aggregatedScore.score * 0.6), // Reduced score since it's derived
-            confidenceInterval: aggregatedScore.confidence * 0.8,
-            evidence: { derivedFromCommerce: true },
-            agentContributions: { 'commerce_agent': aggregatedScore.score * 0.6 }
-          })
-        }
-      }
-
-      // Ensure hero_products_use_case dimension is created if not already mapped
-      if (!dimensionScores.find(d => d.dimension === 'hero_products_use_case')) {
-        const heroResults = commerceAgent.results.filter((r: any) => {
-          const resultType = r.type || r.resultType || ''
-          return resultType.includes('hero') || resultType.includes('product') || resultType.includes('use_case')
-        })
-        
-        if (heroResults.length > 0) {
-          const avgScore = heroResults.reduce((sum, r: any) => sum + (r.score || r.normalizedScore || 0), 0) / heroResults.length
-          const avgConfidence = heroResults.reduce((sum, r: any) => sum + (r.confidence || r.confidenceLevel || 0), 0) / heroResults.length
-          
-          dimensionScores.push({
-            dimension: 'hero_products_use_case',
-            score: Math.round(avgScore),
-            confidenceInterval: avgConfidence,
-            evidence: { heroResults },
-            agentContributions: { 'commerce_agent': avgScore }
-          })
-        } else {
-          // Create default hero products score from commerce agent
-          const aggregatedScore = this.aggregateAgentResults(commerceAgent)
-          if (aggregatedScore) {
-            dimensionScores.push({
-              dimension: 'hero_products_use_case',
-              score: Math.round(aggregatedScore.score * 0.8), // Primary commerce dimension
-              confidenceInterval: aggregatedScore.confidence,
-              evidence: { derivedFromCommerce: true },
-              agentContributions: { 'commerce_agent': aggregatedScore.score * 0.8 }
-            })
-          }
-        }
-      }
-    }
+    // NOTE: Special case handling for commerce_agent has been removed.
+    // Both hero_products_use_case and policies_logistics_clarity are now
+    // properly mapped in agentToDimensionMap (line 288), preventing duplicate scores.
 
     // Ensure all 10 dimensions are represented (create defaults for missing ones)
     const allDimensions: ADIDimensionName[] = [
