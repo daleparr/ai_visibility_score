@@ -7,7 +7,8 @@ import { BrandHeritageAgent } from './agents/brand-heritage-agent'
 import { ScoreAggregatorAgent as ScoreAggregator } from './agents/score-aggregator-agent'
 import { BackendAgentTracker } from './backend-agent-tracker'
 import { apiUrl } from '@/lib/url'
-import { getSystemRouting, isAdvancedLoggingEnabled } from '../feature-flags'
+// Feature flags integration - simplified for now
+// import { getSystemRouting, isAdvancedLoggingEnabled } from '../feature-flags'
 import { db, evaluations, brands, users } from '../db/index'
 import { eq } from 'drizzle-orm'
 import { randomUUID } from 'crypto'
@@ -113,19 +114,17 @@ export class IntelligentHybridADIOrchestrator {
       await this.ensureEvaluationRecord(context)
       console.log(`✅ [IntelligentHybrid] Evaluation record confirmed`)
       
-      // Determine system routing based on feature flags
+      // Determine system routing based on tier
       const tier = context.metadata?.tier || 'free'
       const allAgents = [...this.FAST_AGENTS, ...this.SLOW_AGENTS]
-      const routing = getSystemRouting(tier, allAgents)
       
-      if (isAdvancedLoggingEnabled()) {
-        console.log(`🎯 [IntelligentHybrid] System routing decision:`, {
-          evaluationId: context.evaluationId,
-          tier,
-          routing,
-          allAgents
-        })
-      }
+      // Simple routing: all tiers use hybrid approach for now
+      console.log(`🎯 [IntelligentHybrid] Evaluation routing:`, {
+        evaluationId: context.evaluationId,
+        tier,
+        fastAgents: this.FAST_AGENTS.length,
+        slowAgents: this.SLOW_AGENTS.length
+      })
       
       // Phase 1: Execute fast agents in parallel (must complete within 8 seconds)
       const fastResults = await this.executeFastAgents(context)
