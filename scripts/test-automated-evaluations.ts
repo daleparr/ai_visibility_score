@@ -90,7 +90,7 @@ class AutomatedEvaluationTester {
 
       console.log(`✅ Found ${brands.length} brands in queue`)
       console.log('Sample brands:')
-      brands.slice(0, 3).forEach(brand => {
+      brands.slice(0, 3).forEach((brand: any) => {
         console.log(`  • ${brand.brandName} (${brand.nicheCategory})`)
       })
 
@@ -251,7 +251,7 @@ class AutomatedEvaluationTester {
 
       if (cacheEntries.length > 0) {
         console.log('\nRecent cache entries:')
-        cacheEntries.slice(0, 3).forEach(entry => {
+        cacheEntries.slice(0, 3).forEach((entry: any) => {
           console.log(`  • ${entry.brandName}: ${entry.adiScore}/100 (${entry.grade})`)
           console.log(`    Rank: #${entry.rankNiche || '?'} in ${entry.nicheCategory}`)
         })
@@ -318,7 +318,7 @@ class AutomatedEvaluationTester {
         console.log('✅ Ranking calculations are correct')
       } else {
         console.log('⚠️  Ranking issues detected:')
-        rankingIssues.forEach(issue => console.log(`  • ${issue}`))
+        rankingIssues.forEach((issue: string) => console.log(`  • ${issue}`))
       }
 
       this.recordResult({
@@ -387,7 +387,7 @@ class AutomatedEvaluationTester {
 
     if (failed > 0) {
       console.log('Failed Tests:')
-      this.testResults.filter(r => !r.success).forEach(result => {
+      this.testResults.filter(r => !r.success).forEach((result: any) => {
         console.log(`  ❌ ${result.message}`)
       })
       console.log()
