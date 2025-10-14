@@ -10,11 +10,15 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest) {
   try {
     const featureFlags = getFeatureFlags()
-    const debugInfo = featureFlags.getDebugInfo()
 
     return NextResponse.json({
       success: true,
-      data: debugInfo,
+      data: {
+        uxVariation: featureFlags.uxVariation,
+        enableABTesting: featureFlags.enableABTesting,
+        showVariationToggle: featureFlags.showVariationToggle,
+        environment: process.env.NODE_ENV
+      },
       timestamp: new Date().toISOString()
     })
   } catch (error) {
@@ -44,7 +48,14 @@ export async function POST(request: NextRequest) {
     }
 
     const featureFlags = getFeatureFlags()
-    const routing = featureFlags.getSystemRouting(tier, agents)
+
+    // Simple routing logic for now
+    const routing = {
+      tier,
+      agents,
+      strategy: 'hybrid',
+      note: 'All tiers currently use hybrid orchestration approach'
+    }
 
     return NextResponse.json({
       success: true,
@@ -52,7 +63,11 @@ export async function POST(request: NextRequest) {
         tier,
         agents,
         routing,
-        flags: featureFlags.getFlags()
+        flags: {
+          uxVariation: featureFlags.uxVariation,
+          enableABTesting: featureFlags.enableABTesting,
+          showVariationToggle: featureFlags.showVariationToggle
+        }
       },
       timestamp: new Date().toISOString()
     })
