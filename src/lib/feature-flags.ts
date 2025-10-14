@@ -1,202 +1,276 @@
 /**
- * Feature Flag System for AIDI
- * Allows toggling between original system and Railway bridge
+ * Feature Flag System for UX Variation Testing
+ * 
+ * Enables A/B testing between:
+ * - Executive-First Dashboard (score-centric, analytical)
+ * - Playbook-First Dashboard (action-centric, quick wins)
  */
 
-import { createLogger } from './utils/logger'
-
-const logger = createLogger('feature-flags')
+export enum UXVariation {
+  EXECUTIVE_FIRST = 'executive-first',
+  PLAYBOOK_FIRST = 'playbook-first'
+}
 
 export interface FeatureFlags {
-  enableRailwayBridge: boolean
-  railwayBridgeTiers: string[]
-  enableHybridFallback: boolean
-  enableSyntheticData: boolean
-  enableAdvancedLogging: boolean
+  uxVariation: UXVariation;
+  enableABTesting: boolean;
+  showVariationToggle: boolean; // For QA only
 }
 
-class FeatureFlagManager {
-  private flags: FeatureFlags
-  private lastUpdate: number = 0
-  private readonly CACHE_TTL = 60000 // 1 minute cache
+interface ABTestAssignment {
+  userId: string;
+  variation: UXVariation;
+  assignedAt: Date;
+  cohort: number;
+}
 
-  constructor() {
-    this.flags = this.loadFlags()
-    logger.info('Feature flags initialized', { flags: this.flags })
-  }
-
-  private loadFlags(): FeatureFlags {
-    const flags: FeatureFlags = {
-      // Railway Bridge System
-      enableRailwayBridge: this.getBooleanFlag('ENABLE_RAILWAY_BRIDGE', false),
-      railwayBridgeTiers: this.getArrayFlag('RAILWAY_BRIDGE_TIERS', ['free', 'index-pro', 'enterprise']),
-      
-      // Fallback Systems
-      enableHybridFallback: this.getBooleanFlag('ENABLE_HYBRID_FALLBACK', true),
-      enableSyntheticData: this.getBooleanFlag('ENABLE_SYNTHETIC_DATA', false), // Force disable synthetic data
-      
-      // Debugging
-      enableAdvancedLogging: this.getBooleanFlag('ENABLE_ADVANCED_LOGGING', false)
+/**
+ * Get feature flags for a user
+ * Priority:
+ * 1. Environment override (QA testing)
+ * 2. User preference (explicit choice)
+ * 3. A/B test assignment (for new users)
+ * 4. Default (Executive-First)
+ */
+export function getFeatureFlags(userId?: string): FeatureFlags {
+  // Check environment override (for QA testing)
+  if (typeof window !== 'undefined') {
+    const envOverride = localStorage.getItem('ux_variation_override');
+    if (envOverride && Object.values(UXVariation).includes(envOverride as UXVariation)) {
+      return {
+        uxVariation: envOverride as UXVariation,
+        enableABTesting: false,
+        showVariationToggle: true
+      };
     }
-
-    this.lastUpdate = Date.now()
-    return flags
   }
 
-  private getBooleanFlag(envVar: string, defaultValue: boolean): boolean {
-    const value = process.env[envVar]
-    if (value === undefined) return defaultValue
-    return value.toLowerCase() === 'true' || value === '1'
+  const serverOverride = process.env.NEXT_PUBLIC_UX_VARIATION;
+  if (serverOverride && Object.values(UXVariation).includes(serverOverride as UXVariation)) {
+    return {
+      uxVariation: serverOverride as UXVariation,
+      enableABTesting: false,
+      showVariationToggle: true
+    };
   }
 
-  private getArrayFlag(envVar: string, defaultValue: string[]): string[] {
-    const value = process.env[envVar]
-    if (!value) return defaultValue
-    return value.split(',').map(s => s.trim()).filter(Boolean)
+  // Check user preference (stored in localStorage or DB)
+  const userPreference = getUserUXPreference(userId);
+  if (userPreference) {
+    return {
+      uxVariation: userPreference,
+      enableABTesting: false,
+      showVariationToggle: true
+    };
   }
 
-  /**
-   * Get current feature flags (with caching)
-   */
-  getFlags(): FeatureFlags {
-    const now = Date.now()
-    if (now - this.lastUpdate > this.CACHE_TTL) {
-      logger.debug('Refreshing feature flags from environment')
-      this.flags = this.loadFlags()
+  // Check if user should be in A/B test
+  if (userId && shouldAssignABTest(userId)) {
+    const assignment = getOrCreateABTestAssignment(userId);
+    return {
+      uxVariation: assignment.variation,
+      enableABTesting: true,
+      showVariationToggle: false
+    };
+  }
+
+  // Default to Executive First
+  return {
+    uxVariation: UXVariation.EXECUTIVE_FIRST,
+    enableABTesting: false,
+    showVariationToggle: process.env.NODE_ENV === 'development'
+  };
+}
+
+/**
+ * Get user's UX preference from storage
+ */
+function getUserUXPreference(userId?: string): UXVariation | null {
+  if (typeof window === 'undefined' || !userId) return null;
+
+  try {
+    const stored = localStorage.getItem(`ux_preference_${userId}`);
+    if (stored && Object.values(UXVariation).includes(stored as UXVariation)) {
+      return stored as UXVariation;
     }
-    return { ...this.flags }
+  } catch (error) {
+    console.error('Error reading UX preference:', error);
   }
 
-  /**
-   * Check if Railway bridge is enabled for a specific tier
-   */
-  isRailwayBridgeEnabled(tier?: string): boolean {
-    const flags = this.getFlags()
+  return null;
+}
+
+/**
+ * Save user's UX preference
+ */
+export function setUserUXPreference(userId: string, variation: UXVariation): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    localStorage.setItem(`ux_preference_${userId}`, variation);
     
-    if (!flags.enableRailwayBridge) {
-      return false
+    // Track preference change
+    if (typeof window !== 'undefined' && (window as any).analytics) {
+      (window as any).analytics.track('ux_variation_preference_set', {
+        userId,
+        variation,
+        timestamp: new Date().toISOString()
+      });
     }
-
-    if (!tier) {
-      return true
-    }
-
-    return flags.railwayBridgeTiers.includes(tier)
-  }
-
-  /**
-   * Check if hybrid fallback is enabled
-   */
-  isHybridFallbackEnabled(): boolean {
-    return this.getFlags().enableHybridFallback
-  }
-
-  /**
-   * Check if synthetic data generation is enabled
-   */
-  isSyntheticDataEnabled(): boolean {
-    return this.getFlags().enableSyntheticData
-  }
-
-  /**
-   * Check if advanced logging is enabled
-   */
-  isAdvancedLoggingEnabled(): boolean {
-    return this.getFlags().enableAdvancedLogging
-  }
-
-  /**
-   * Get system routing decision for an evaluation
-   */
-  getSystemRouting(tier: string, agentNames: string[]): {
-    useRailwayBridge: boolean
-    useLegacySystem: boolean
-    reason: string
-  } {
-    const flags = this.getFlags()
-
-    // Check if Railway bridge is enabled for this tier
-    if (!this.isRailwayBridgeEnabled(tier)) {
-      return {
-        useRailwayBridge: false,
-        useLegacySystem: true,
-        reason: `Railway bridge disabled for tier: ${tier}`
-      }
-    }
-
-    // Check for slow agents that benefit from Railway
-    // These should match the SLOW_AGENTS in IntelligentHybridADIOrchestrator
-    const slowAgents = ['crawl_agent', 'llm_test_agent', 'geo_visibility_agent', 'citation_agent', 'commerce_agent']
-    const hasSlowAgents = agentNames.some(agent => slowAgents.includes(agent))
-
-    if (hasSlowAgents) {
-      return {
-        useRailwayBridge: true,
-        useLegacySystem: false,
-        reason: `Slow agents detected: ${agentNames.filter(a => slowAgents.includes(a)).join(', ')}`
-      }
-    }
-
-    // Default to legacy system for fast agents
-    return {
-      useRailwayBridge: false,
-      useLegacySystem: true,
-      reason: 'Only fast agents, using legacy system'
-    }
-  }
-
-  /**
-   * Force refresh flags from environment
-   */
-  refreshFlags(): FeatureFlags {
-    logger.info('Force refreshing feature flags')
-    this.flags = this.loadFlags()
-    return { ...this.flags }
-  }
-
-  /**
-   * Get flag status for debugging
-   */
-  getDebugInfo(): {
-    flags: FeatureFlags
-    lastUpdate: string
-    cacheAge: number
-    environment: Record<string, string>
-  } {
-    return {
-      flags: this.getFlags(),
-      lastUpdate: new Date(this.lastUpdate).toISOString(),
-      cacheAge: Date.now() - this.lastUpdate,
-      environment: {
-        ENABLE_RAILWAY_BRIDGE: process.env.ENABLE_RAILWAY_BRIDGE || 'undefined',
-        RAILWAY_BRIDGE_TIERS: process.env.RAILWAY_BRIDGE_TIERS || 'undefined',
-        ENABLE_HYBRID_FALLBACK: process.env.ENABLE_HYBRID_FALLBACK || 'undefined',
-        ENABLE_SYNTHETIC_DATA: process.env.ENABLE_SYNTHETIC_DATA || 'undefined',
-        ENABLE_ADVANCED_LOGGING: process.env.ENABLE_ADVANCED_LOGGING || 'undefined'
-      }
-    }
+  } catch (error) {
+    console.error('Error saving UX preference:', error);
   }
 }
 
-// Singleton instance
-let featureFlagManager: FeatureFlagManager | null = null
+/**
+ * Check if user should be assigned to A/B test
+ * Currently: Only new users (no preference set)
+ */
+function shouldAssignABTest(userId: string): boolean {
+  // Check if A/B testing is globally enabled
+  const abTestEnabled = process.env.NEXT_PUBLIC_ENABLE_AB_TEST === 'true';
+  if (!abTestEnabled) return false;
 
-export function getFeatureFlags(): FeatureFlagManager {
-  if (!featureFlagManager) {
-    featureFlagManager = new FeatureFlagManager()
+  // Check if user has existing assignment
+  const existingAssignment = getABTestAssignment(userId);
+  if (existingAssignment) return true;
+
+  // For new users, check if they qualify (e.g., created after A/B test start date)
+  const abTestStartDate = process.env.NEXT_PUBLIC_AB_TEST_START_DATE;
+  if (abTestStartDate) {
+    const startDate = new Date(abTestStartDate);
+    const now = new Date();
+    return now >= startDate;
   }
-  return featureFlagManager
+
+  return false;
 }
 
-// Convenience functions
-export function isRailwayBridgeEnabled(tier?: string): boolean {
-  return getFeatureFlags().isRailwayBridgeEnabled(tier)
+/**
+ * Get or create A/B test assignment for user
+ */
+function getOrCreateABTestAssignment(userId: string): ABTestAssignment {
+  const existing = getABTestAssignment(userId);
+  if (existing) return existing;
+
+  // Create new assignment with 50/50 split
+  const variation = assignVariation(userId);
+  const assignment: ABTestAssignment = {
+    userId,
+    variation,
+    assignedAt: new Date(),
+    cohort: getCohortNumber()
+  };
+
+  saveABTestAssignment(assignment);
+  
+  // Track assignment
+  if (typeof window !== 'undefined' && (window as any).analytics) {
+    (window as any).analytics.track('ux_variation_assigned', {
+      userId,
+      variation,
+      cohort: assignment.cohort,
+      timestamp: assignment.assignedAt.toISOString()
+    });
+  }
+
+  return assignment;
 }
 
-export function getSystemRouting(tier: string, agentNames: string[]) {
-  return getFeatureFlags().getSystemRouting(tier, agentNames)
+/**
+ * Get existing A/B test assignment from storage
+ */
+function getABTestAssignment(userId: string): ABTestAssignment | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const stored = localStorage.getItem(`ab_test_assignment_${userId}`);
+    if (stored) {
+      const assignment = JSON.parse(stored);
+      assignment.assignedAt = new Date(assignment.assignedAt);
+      return assignment;
+    }
+  } catch (error) {
+    console.error('Error reading A/B test assignment:', error);
+  }
+
+  return null;
 }
 
-export function isAdvancedLoggingEnabled(): boolean {
-  return getFeatureFlags().isAdvancedLoggingEnabled()
+/**
+ * Save A/B test assignment to storage
+ */
+function saveABTestAssignment(assignment: ABTestAssignment): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    localStorage.setItem(`ab_test_assignment_${assignment.userId}`, JSON.stringify(assignment));
+  } catch (error) {
+    console.error('Error saving A/B test assignment:', error);
+  }
 }
+
+/**
+ * Assign variation using deterministic hash
+ * Ensures same user always gets same variation
+ */
+function assignVariation(userId: string): UXVariation {
+  // Simple hash function for consistent assignment
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    const char = userId.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  // 50/50 split
+  return Math.abs(hash) % 2 === 0 ? UXVariation.EXECUTIVE_FIRST : UXVariation.PLAYBOOK_FIRST;
+}
+
+/**
+ * Get current cohort number (week-based)
+ * Useful for analyzing results by time period
+ */
+function getCohortNumber(): number {
+  const startDate = new Date(process.env.NEXT_PUBLIC_AB_TEST_START_DATE || new Date());
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - startDate.getTime());
+  const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
+  return diffWeeks;
+}
+
+/**
+ * Track UX variation view
+ */
+export function trackVariationView(variation: UXVariation, userId?: string): void {
+  if (typeof window === 'undefined' || !(window as any).analytics) return;
+
+  (window as any).analytics.track('ux_variation_viewed', {
+    variation,
+    userId,
+    timestamp: new Date().toISOString(),
+    url: window.location.pathname
+  });
+}
+
+/**
+ * Track variation switch
+ */
+export function trackVariationSwitch(
+  fromVariation: UXVariation,
+  toVariation: UXVariation,
+  method: 'toggle' | 'preference' | 'system',
+  userId?: string
+): void {
+  if (typeof window === 'undefined' || !(window as any).analytics) return;
+
+  (window as any).analytics.track('ux_variation_switched', {
+    fromVariation,
+    toVariation,
+    method,
+    userId,
+    timestamp: new Date().toISOString()
+  });
+}
+
+// React hook moved to separate client-side file: hooks/useFeatureFlags.ts

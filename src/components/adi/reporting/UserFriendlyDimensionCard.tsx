@@ -24,12 +24,14 @@ interface UserFriendlyDimensionCardProps {
   }
   isConversationalCopy?: boolean
   evidence?: any
+  userTier?: 'free' | 'index-pro' | 'enterprise'
 }
 
 export function UserFriendlyDimensionCard({ 
   dimension, 
   isConversationalCopy = false,
-  evidence 
+  evidence,
+  userTier = 'free'
 }: UserFriendlyDimensionCardProps) {
   const [showTechnical, setShowTechnical] = useState(false)
   const [showExample, setShowExample] = useState(false)
@@ -182,66 +184,70 @@ export function UserFriendlyDimensionCard({
           </div>
         )}
 
-        {/* AI Interaction Example */}
-        <div className="space-y-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowExample(!showExample)}
-            className="w-full justify-between text-xs"
-          >
-            💬 See how this affects AI conversations
-            {showExample ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-          </Button>
-          
-          {showExample && (
-            <div className="bg-gray-50 rounded-lg p-3 border space-y-3">
-              <div>
-                <p className="text-xs font-medium text-red-700 mb-1">❌ Current AI Response:</p>
-                <p className="text-xs text-gray-700 italic">"{aiExample.before}"</p>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-green-700 mb-1">✅ After Improvements:</p>
-                <p className="text-xs text-gray-700 italic">"{aiExample.after}"</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Technical Details Toggle */}
-        <div className="space-y-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowTechnical(!showTechnical)}
-            className="w-full justify-between text-xs"
-          >
-            🔧 Technical details
-            {showTechnical ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-          </Button>
-          
-          {showTechnical && (
-            <div className="bg-gray-50 rounded-lg p-3 border">
-              <p className="text-xs text-gray-600 mb-2">
-                <span className="font-medium">Technical name:</span> {dimension.name}
-              </p>
-              <p className="text-xs text-gray-600 mb-2">
-                <span className="font-medium">Pillar:</span> {dimension.pillar}
-              </p>
-              <p className="text-xs text-gray-600">
-                <span className="font-medium">Technical description:</span> {dimension.description}
-              </p>
-              {evidence && (
-                <div className="mt-2 pt-2 border-t border-gray-200">
-                  <p className="text-xs font-medium text-gray-700 mb-1">Analysis Evidence:</p>
-                  <pre className="text-xs text-gray-600 whitespace-pre-wrap">
-                    {JSON.stringify(evidence, null, 2)}
-                  </pre>
+        {/* AI Interaction Example - Only for paid tiers */}
+        {userTier !== 'free' && (
+          <div className="space-y-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowExample(!showExample)}
+              className="w-full justify-between text-xs"
+            >
+              💬 See how this affects AI conversations
+              {showExample ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            </Button>
+            
+            {showExample && (
+              <div className="bg-gray-50 rounded-lg p-3 border space-y-3">
+                <div>
+                  <p className="text-xs font-medium text-red-700 mb-1">❌ Current AI Response:</p>
+                  <p className="text-xs text-gray-700 italic">"{aiExample.before}"</p>
                 </div>
-              )}
-            </div>
-          )}
-        </div>
+                <div>
+                  <p className="text-xs font-medium text-green-700 mb-1">✅ After Improvements:</p>
+                  <p className="text-xs text-gray-700 italic">"{aiExample.after}"</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Technical Details Toggle - Only for paid tiers */}
+        {userTier !== 'free' && (
+          <div className="space-y-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowTechnical(!showTechnical)}
+              className="w-full justify-between text-xs"
+            >
+              🔧 Technical details
+              {showTechnical ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            </Button>
+            
+            {showTechnical && (
+              <div className="bg-gray-50 rounded-lg p-3 border">
+                <p className="text-xs text-gray-600 mb-2">
+                  <span className="font-medium">Technical name:</span> {dimension.name}
+                </p>
+                <p className="text-xs text-gray-600 mb-2">
+                  <span className="font-medium">Pillar:</span> {dimension.pillar}
+                </p>
+                <p className="text-xs text-gray-600">
+                  <span className="font-medium">Technical description:</span> {dimension.description}
+                </p>
+                {evidence && (
+                  <div className="mt-2 pt-2 border-t border-gray-200">
+                    <p className="text-xs font-medium text-gray-700 mb-1">Analysis Evidence:</p>
+                    <pre className="text-xs text-gray-600 whitespace-pre-wrap">
+                      {JSON.stringify(evidence, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   )

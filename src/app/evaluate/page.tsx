@@ -1923,6 +1923,7 @@ Next Step Today: ${bottomLine.nextStep}`
                   key={index}
                   dimension={dimension}
                   isConversationalCopy={dimension.name.toLowerCase().includes('conversational')}
+                  userTier={tier}
                 />
               ))})()}
             </div>

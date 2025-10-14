@@ -184,8 +184,8 @@ class LeaderboardScheduler {
 
       // Alert on critical failure (3+ consecutive failures)
       if (this.status.consecutiveFailures >= 3) {
-        await this.sendNotification('critical', {
-          message: `${this.status.consecutiveFailures} consecutive evaluation failures`,
+        await this.sendNotification('error', {
+          message: `CRITICAL: ${this.status.consecutiveFailures} consecutive evaluation failures`,
           action: 'Manual intervention required',
           timestamp: new Date().toISOString()
         })
