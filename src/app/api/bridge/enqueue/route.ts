@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       ...result,
-      routing: routing.reason
+      bridgeEnabled: true
     })
 
   } catch (error) {
