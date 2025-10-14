@@ -1,6 +1,5 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { getRailwayBridgeClient } from '@/lib/bridge/railway-client'
-import { getFeatureFlags } from '@/lib/feature-flags'
 import { createLogger } from '@/lib/utils/logger'
 
 const logger = createLogger('bridge-enqueue-api')
@@ -32,15 +31,14 @@ export async function POST(request: NextRequest) {
       priority
     })
 
-    // Check feature flags
-    const featureFlags = getFeatureFlags()
-    const routing = featureFlags.getSystemRouting(tier, agents)
-
-    if (!routing.useRailwayBridge) {
+    // Check if Railway bridge is enabled
+    const bridgeEnabled = process.env.ENABLE_RAILWAY_BRIDGE === 'true'
+    
+    if (!bridgeEnabled) {
       return NextResponse.json({
         success: false,
-        error: 'Railway bridge not enabled for this request',
-        reason: routing.reason,
+        error: 'Railway bridge not enabled',
+        reason: 'ENABLE_RAILWAY_BRIDGE environment variable is not set to true',
         fallback: 'Use legacy system'
       }, { status: 503 })
     }
@@ -88,7 +86,7 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    const featureFlags = getFeatureFlags()
+    const bridgeEnabled = process.env.ENABLE_RAILWAY_BRIDGE === 'true'
     const bridgeClient = getRailwayBridgeClient()
     
     // Get Railway health status
@@ -98,8 +96,8 @@ export async function GET(request: NextRequest) {
       success: true,
       status: 'operational',
       bridge: {
-        enabled: featureFlags.isRailwayBridgeEnabled(),
-        tiers: featureFlags.getFlags().railwayBridgeTiers,
+        enabled: bridgeEnabled,
+        tiers: ['free', 'index-pro', 'enterprise'], // All tiers can use bridge
         railway: healthStatus
       },
       timestamp: new Date().toISOString()
