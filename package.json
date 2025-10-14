@@ -20,6 +20,7 @@
     "leaderboard:process": "tsx scripts/process-leaderboard-queue.ts",
     "leaderboard:test": "tsx scripts/test-leaderboard-deployment.ts",
     "leaderboard:scheduler": "tsx scripts/automated-leaderboard-scheduler.ts",
+    "test:evaluations": "tsx scripts/test-automated-evaluations.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

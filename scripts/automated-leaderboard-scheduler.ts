@@ -113,10 +113,87 @@ class LeaderboardScheduler {
   }
 
   /**
-   * Run daily evaluation batch (DEPRECATED)
+   * Run daily evaluation batch
+   * Processes genuine ADI evaluations for brands in the queue
    */
   private async runDailyEvaluation(): Promise<void> {
-    console.warn('runDailyEvaluation is deprecated and no longer processes a queue.');
+    console.log('\n' + '='.repeat(80))
+    console.log('🕐 STARTING DAILY AUTOMATED EVALUATION RUN')
+    console.log(`⏰ Time: ${new Date().toISOString()}`)
+    console.log('='.repeat(80) + '\n')
+
+    this.status.isRunning = true
+    const startTime = Date.now()
+
+    try {
+      // Process batch of evaluations
+      console.log(`📊 Processing batch of ${this.config.batchSize} brands...`)
+      console.log(`📈 Daily limit: ${this.config.dailyLimit} evaluations`)
+      
+      const result = await this.service.processBatchEvaluations(this.config.batchSize)
+      
+      const duration = Date.now() - startTime
+      const durationMinutes = Math.round(duration / 60000)
+
+      // Update status
+      if (result.failed === 0) {
+        this.status.lastRunStatus = 'success'
+        this.status.consecutiveFailures = 0
+      } else if (result.successful > 0) {
+        this.status.lastRunStatus = 'partial'
+        this.status.consecutiveFailures = 0
+      } else {
+        this.status.lastRunStatus = 'error'
+        this.status.consecutiveFailures++
+      }
+
+      this.status.lastRunTime = new Date()
+
+      // Send success notification
+      await this.sendNotification('success', {
+        message: 'Daily evaluation completed',
+        processed: result.processed,
+        successful: result.successful,
+        failed: result.failed,
+        duration: `${durationMinutes} minutes`,
+        timestamp: new Date().toISOString()
+      })
+
+      console.log('\n' + '='.repeat(80))
+      console.log('✅ DAILY EVALUATION COMPLETE')
+      console.log(`⏱️  Duration: ${durationMinutes} minutes`)
+      console.log(`📊 Success rate: ${result.processed > 0 ? Math.round((result.successful / result.processed) * 100) : 0}%`)
+      console.log('='.repeat(80) + '\n')
+
+    } catch (error: any) {
+      const duration = Date.now() - startTime
+      console.error('❌ Daily evaluation failed:', error)
+      
+      this.status.lastRunStatus = 'error'
+      this.status.lastRunTime = new Date()
+      this.status.consecutiveFailures++
+
+      // Send error notification
+      await this.sendNotification('error', {
+        message: 'Daily evaluation failed',
+        error: error.message,
+        consecutiveFailures: this.status.consecutiveFailures,
+        duration: `${Math.round(duration / 60000)} minutes`,
+        timestamp: new Date().toISOString()
+      })
+
+      // Alert on critical failure (3+ consecutive failures)
+      if (this.status.consecutiveFailures >= 3) {
+        await this.sendNotification('critical', {
+          message: `${this.status.consecutiveFailures} consecutive evaluation failures`,
+          action: 'Manual intervention required',
+          timestamp: new Date().toISOString()
+        })
+      }
+
+    } finally {
+      this.status.isRunning = false
+    }
   }
 
   /**

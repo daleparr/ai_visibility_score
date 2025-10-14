@@ -14,6 +14,10 @@ import type {
   NewCompetitiveTrigger,
   NewNicheBrandSelection
 } from './db/schema'
+import { PerformanceOptimizedADIOrchestrator } from './adi/performance-optimized-orchestrator'
+import { ADIScoringEngine } from './adi/scoring'
+import type { ADIEvaluationContext, ADIOrchestrationResult } from '@/types/adi'
+import { createBrand, createEvaluation, updateEvaluation } from './database'
 
 // Correctly infer the type from the table schema
 type LeaderboardCacheType = typeof leaderboardCache.$inferSelect;
@@ -327,5 +331,262 @@ export class LeaderboardPopulationService {
   async cleanupExpiredCache(): Promise<void> {
     await db.delete(leaderboardCache).where(lt(leaderboardCache.cacheExpires, new Date()));
     console.log('🧹 Cleaned up expired leaderboard cache');
+  }
+
+  /**
+   * Execute genuine ADI evaluation for a brand
+   * This runs the full multi-agent orchestrator with all probes and agents
+   * All results are persisted to Neon database (probe_runs, page_blobs, etc.)
+   */
+  async executeGenuineEvaluation(
+    brandName: string,
+    websiteUrl: string,
+    nicheCategory: string,
+    systemUserId: string = '00000000-0000-0000-0000-000000000000' // System user for automated evaluations
+  ): Promise<FullOrchestrationResult> {
+    console.log(`🚀 Starting genuine evaluation for ${brandName} (${websiteUrl})`)
+    
+    try {
+      // Step 1: Create or get brand record
+      let brandRecord
+      try {
+        const existingBrands = await db.select()
+          .from(brands)
+          .where(eq(brands.websiteUrl, websiteUrl))
+          .limit(1)
+        
+        if (existingBrands.length > 0) {
+          brandRecord = existingBrands[0]
+          console.log(`✅ Using existing brand record: ${brandRecord.id}`)
+        } else {
+          brandRecord = await createBrand({
+            userId: systemUserId,
+            name: brandName,
+            websiteUrl: websiteUrl,
+            description: `Automated evaluation for ${nicheCategory} niche`,
+            industry: nicheCategory,
+            competitors: []
+          })
+          console.log(`✅ Created new brand record: ${brandRecord.id}`)
+        }
+      } catch (error) {
+        console.error('Error creating/fetching brand:', error)
+        throw new Error(`Failed to create brand record: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
+
+      // Step 2: Create evaluation record
+      const evaluation = await createEvaluation({
+        brandId: brandRecord.id,
+        status: 'running',
+        startedAt: new Date()
+      })
+      console.log(`✅ Created evaluation record: ${evaluation.id}`)
+
+      // Step 3: Initialize ADI orchestrator
+      const orchestrator = new PerformanceOptimizedADIOrchestrator()
+      await orchestrator.initialize()
+      console.log('✅ ADI Orchestrator initialized')
+
+      // Step 4: Create evaluation context
+      const context: ADIEvaluationContext = {
+        evaluationId: evaluation.id,
+        brandId: brandRecord.id,
+        brandName: brandName,
+        websiteUrl: websiteUrl,
+        userId: systemUserId,
+        tier: 'pro', // Use pro tier for automated evaluations
+        industryContext: nicheCategory
+      }
+
+      // Step 5: Execute full ADI evaluation
+      // This runs ALL agents: crawl, schema, LLM test, semantic, etc.
+      // All probe results are automatically saved to probe_runs table
+      // All HTML content is automatically saved to page_blobs table
+      console.log('🤖 Executing full multi-agent ADI evaluation...')
+      const orchestrationResult: ADIOrchestrationResult = await orchestrator.executeEvaluation(context)
+      console.log(`✅ Orchestration completed: ${orchestrationResult.overallStatus}`)
+
+      // Step 6: Calculate ADI score
+      const adiScore = ADIScoringEngine.calculateADIScore(orchestrationResult)
+      console.log(`✅ ADI Score calculated: ${adiScore.overall}/100 (${adiScore.grade})`)
+
+      // Step 7: Update evaluation record with results
+      await updateEvaluation(evaluation.id, {
+        status: orchestrationResult.overallStatus === 'completed' ? 'completed' : 'partial',
+        overallScore: adiScore.overall,
+        grade: adiScore.grade,
+        adiScore: adiScore.overall,
+        adiGrade: adiScore.grade,
+        confidenceInterval: Math.round((adiScore.reliabilityScore || 0.8) * 100),
+        reliabilityScore: Math.round((adiScore.reliabilityScore || 0.8) * 100),
+        completedAt: new Date()
+      })
+      console.log('✅ Evaluation record updated with final scores')
+
+      // Step 8: Extract dimension scores and highlights
+      const dimensionScores = adiScore.pillars.flatMap(pillar => pillar.dimensions)
+      
+      // Find strongest and weakest dimensions for highlights
+      const sortedDimensions = [...dimensionScores].sort((a, b) => b.score - a.score)
+      const strengths = sortedDimensions.slice(0, 3).map(dim => ({
+        dimension: dim.name,
+        score: dim.score,
+        description: `Strong performance in ${dim.name}`
+      }))
+      const gaps = [...dimensionScores].sort((a, b) => a.score - b.score).slice(0, 3).map(dim => ({
+        dimension: dim.name,
+        score: dim.score,
+        description: `Opportunity for improvement in ${dim.name}`
+      }))
+
+      // Step 9: Return full result for caching
+      const result: FullOrchestrationResult = {
+        evaluationId: evaluation.id,
+        overallStatus: orchestrationResult.overallStatus === 'completed' ? 'completed' : 'partial',
+        adiScore: {
+          overall: adiScore.overall,
+          grade: adiScore.grade
+        },
+        highlights: {
+          strengths,
+          gaps
+        },
+        dimensionScores
+      }
+
+      console.log(`✅ Genuine evaluation completed for ${brandName}`)
+      return result
+
+    } catch (error) {
+      console.error(`❌ Evaluation failed for ${brandName}:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Process a batch of pending evaluations from the queue
+   * This is called by the automated scheduler
+   */
+  async processBatchEvaluations(batchSize?: number): Promise<{
+    processed: number
+    successful: number
+    failed: number
+    errors: string[]
+  }> {
+    const size = batchSize || this.config.batchSize
+    console.log(`📊 Processing batch of ${size} evaluations...`)
+
+    const stats = {
+      processed: 0,
+      successful: 0,
+      failed: 0,
+      errors: [] as string[]
+    }
+
+    try {
+      // Get pending brand selections (these are the brands to evaluate)
+      const pendingBrands = await db.select()
+        .from(nicheBrandSelection)
+        .where(isNull(nicheBrandSelection.lastEvaluated))
+        .limit(size)
+
+      if (pendingBrands.length === 0) {
+        console.log('ℹ️ No pending brands to evaluate')
+        return stats
+      }
+
+      console.log(`📋 Found ${pendingBrands.length} brands to evaluate`)
+
+      // Process each brand
+      for (const brand of pendingBrands) {
+        stats.processed++
+        
+        try {
+          console.log(`\n${'='.repeat(60)}`)
+          console.log(`Evaluating ${stats.processed}/${pendingBrands.length}: ${brand.brandName}`)
+          console.log(`${'='.repeat(60)}\n`)
+
+          // Execute genuine evaluation
+          const result = await this.executeGenuineEvaluation(
+            brand.brandName,
+            brand.websiteUrl,
+            brand.nicheCategory
+          )
+
+          // Calculate pillar scores from dimension scores
+          const infrastructureDims = result.dimensionScores.filter((d: any) => 
+            ['Schema & Structured Data', 'Semantic Clarity', 'Knowledge Graph'].includes(d.name)
+          )
+          const perceptionDims = result.dimensionScores.filter((d: any) => 
+            ['LLM Testability', 'Geo-Visibility', 'Citation Quality', 'Sentiment & Trust'].includes(d.name)
+          )
+          const commerceDims = result.dimensionScores.filter((d: any) => 
+            ['Commerce Readiness', 'Brand Heritage'].includes(d.name)
+          )
+
+          const pillarScores = {
+            infrastructure: infrastructureDims.length > 0 
+              ? Math.round(infrastructureDims.reduce((sum: number, d: any) => sum + d.score, 0) / infrastructureDims.length)
+              : 0,
+            perception: perceptionDims.length > 0
+              ? Math.round(perceptionDims.reduce((sum: number, d: any) => sum + d.score, 0) / perceptionDims.length)
+              : 0,
+            commerce: commerceDims.length > 0
+              ? Math.round(commerceDims.reduce((sum: number, d: any) => sum + d.score, 0) / commerceDims.length)
+              : 0
+          }
+
+          // Cache the result in leaderboard_cache
+          await this.cacheEvaluationResult(
+            {
+              nicheCategory: brand.nicheCategory,
+              brandName: brand.brandName,
+              websiteUrl: brand.websiteUrl
+            },
+            result,
+            result.adiScore.overall,
+            result.adiScore.grade,
+            pillarScores
+          )
+
+          // Update the brand selection record to mark as evaluated
+          await db.update(nicheBrandSelection)
+            .set({ lastEvaluated: new Date() })
+            .where(eq(nicheBrandSelection.id, brand.id))
+
+          // Update niche rankings
+          await this.updateNicheRankings(brand.nicheCategory)
+
+          stats.successful++
+          console.log(`✅ Successfully evaluated ${brand.brandName}`)
+
+        } catch (error) {
+          stats.failed++
+          const errorMsg = `Failed to evaluate ${brand.brandName}: ${error instanceof Error ? error.message : 'Unknown error'}`
+          stats.errors.push(errorMsg)
+          console.error(`❌ ${errorMsg}`)
+        }
+
+        // Add delay between evaluations to avoid rate limits
+        if (stats.processed < pendingBrands.length) {
+          console.log('⏱️ Waiting 10 seconds before next evaluation...')
+          await new Promise(resolve => setTimeout(resolve, 10000))
+        }
+      }
+
+      console.log('\n' + '='.repeat(60))
+      console.log('📊 BATCH PROCESSING COMPLETE')
+      console.log('='.repeat(60))
+      console.log(`✅ Successful: ${stats.successful}`)
+      console.log(`❌ Failed: ${stats.failed}`)
+      console.log(`📈 Total processed: ${stats.processed}`)
+      console.log('='.repeat(60) + '\n')
+
+      return stats
+
+    } catch (error) {
+      console.error('❌ Batch processing failed:', error)
+      throw error
+    }
   }
 }
