@@ -103,6 +103,25 @@ export async function GET(
       ORDER BY score DESC
     ` as DimensionScore[]
 
+    // ✅ Query probe_runs for technical foundation scores
+    let probeResults: any[] = []
+    try {
+      probeResults = await sql`
+        SELECT 
+          agent_name,
+          test_name,
+          score,
+          confidence
+        FROM production.probe_runs
+        WHERE evaluation_id = ${evaluationId}
+        ORDER BY score DESC
+      `
+      console.log(`[STATUS_DEBUG] Found ${probeResults.length} probe results for ${evaluationId}`)
+    } catch (error) {
+      console.log(`[STATUS_DEBUG] probe_runs query failed, using defaults:`, error)
+      probeResults = []
+    }
+
     // ✅ Safe evaluation_results query with fallback
     let evaluationData: EvaluationData[] = []
     try {
@@ -440,16 +459,26 @@ export async function GET(
         // Technical Findings
         technicalFindings: insights.technicalFindings,
         
-        // Calculate pillar scores from actual dimension scores
+        // Calculate pillar scores from actual dimension scores and probe results
         pillarScores: {
-          infrastructure: Math.round(
-            ((insights.agentFindings.crawl?.score || 0) + 
-             (insights.agentFindings.schema?.score || 0) + 
-             (insights.agentFindings.semantic?.score || 0) + 
-             (insights.agentFindings.knowledge?.score || 0) + 
-             (insights.agentFindings.llm?.score || 0) + 
-             (insights.agentFindings.conversational?.score || 0)) / 6
-          ),
+          infrastructure: (() => {
+            // Use probe results for technical foundation if available
+            if (probeResults && probeResults.length > 0) {
+              const totalScore = probeResults.reduce((sum: number, probe: any) => sum + (probe.score || 0), 0)
+              const avgScore = Math.round(totalScore / probeResults.length)
+              console.log(`[PILLAR_DEBUG] Infrastructure from ${probeResults.length} probes: ${avgScore}`)
+              return avgScore
+            }
+            // Fallback to dimension scores
+            return Math.round(
+              ((insights.agentFindings.crawl?.score || 0) + 
+               (insights.agentFindings.schema?.score || 0) + 
+               (insights.agentFindings.semantic?.score || 0) + 
+               (insights.agentFindings.knowledge?.score || 0) + 
+               (insights.agentFindings.llm?.score || 0) + 
+               (insights.agentFindings.conversational?.score || 0)) / 6
+            )
+          })(),
           perception: Math.round(
             ((insights.agentFindings.geo?.score || 0) + 
              (insights.agentFindings.citation?.score || 0) + 
