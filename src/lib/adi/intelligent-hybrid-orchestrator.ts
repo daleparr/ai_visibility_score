@@ -129,12 +129,14 @@ export class IntelligentHybridADIOrchestrator {
       // Phase 1: Execute fast agents in parallel (must complete within 8 seconds)
       const fastResults = await this.executeFastAgents(context)
       
-      // Phase 2: Route slow agents based on feature flags
-      if (routing.useRailwayBridge) {
-        console.log(`🌉 [IntelligentHybrid] Using Railway bridge: ${routing.reason}`)
+      // Phase 2: Route slow agents - use Railway bridge if enabled
+      const useRailwayBridge = process.env.ENABLE_RAILWAY_BRIDGE === 'true'
+      
+      if (useRailwayBridge) {
+        console.log(`🌉 [IntelligentHybrid] Using Railway bridge (env var enabled)`)
         await this.enqueueSlowAgentsIntelligently(context, fastResults)
       } else {
-        console.log(`🔄 [IntelligentHybrid] Using legacy system: ${routing.reason}`)
+        console.log(`🔄 [IntelligentHybrid] Using legacy system (Railway bridge disabled)`)
         await this.enqueueSlowAgentsLegacy(context, fastResults)
       }
 

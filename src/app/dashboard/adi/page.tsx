@@ -22,14 +22,15 @@ import { Crown, LayoutDashboard, ListChecks } from 'lucide-react';
  */
 export default function AIDIDashboardRouter() {
   const { data: session } = useSession();
-  const { uxVariation, showVariationToggle } = useFeatureFlags(session?.user?.id);
+  const userId = session?.user?.email || undefined;
+  const { uxVariation, showVariationToggle } = useFeatureFlags(userId);
 
   // Track variation view for analytics
   useEffect(() => {
-    if (session?.user?.id) {
-      trackVariationView(uxVariation, session.user.id);
+    if (userId) {
+      trackVariationView(uxVariation, userId);
     }
-  }, [uxVariation, session?.user?.id]);
+  }, [uxVariation, userId]);
 
   return (
     <div className="relative min-h-screen">
