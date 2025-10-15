@@ -38,7 +38,7 @@ export default function AIDIDashboardRouter() {
       {showVariationToggle && (
         <UXVariationToggle 
           currentVariation={uxVariation}
-          userId={session?.user?.id}
+          userId={userId}
         />
       )}
 

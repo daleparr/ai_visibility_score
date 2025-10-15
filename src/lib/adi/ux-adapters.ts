@@ -179,7 +179,7 @@ function generateVerdict(evaluation: Evaluation): string {
   return "Invisible to AI engines - critical intervention required";
 }
 
-function extractPillarScores(evaluation: Evaluation): PillarScore[] {
+function extractPillarScores(evaluation: Evaluation | any): PillarScore[] {
   const scores = evaluation.dimensionScores || [];
   
   // Calculate pillar scores
@@ -228,14 +228,14 @@ function extractPillarScores(evaluation: Evaluation): PillarScore[] {
 }
 
 function calculatePillarScore(scores: any[], dimensions: string[]): number {
-  const relevantScores = scores.filter(s => dimensions.includes(s.dimension));
+  const relevantScores = scores.filter((s: any) => dimensions.includes(s.dimension));
   if (relevantScores.length === 0) return 0;
   
-  const sum = relevantScores.reduce((acc, s) => acc + (s.score || 0), 0);
+  const sum = relevantScores.reduce((acc: number, s: any) => acc + (s.score || 0), 0);
   return Math.round(sum / relevantScores.length);
 }
 
-function extractDimensionScores(evaluation: Evaluation): DimensionScore[] {
+function extractDimensionScores(evaluation: Evaluation | any): DimensionScore[] {
   const scores = evaluation.dimensionScores || [];
   
   const dimensionMap: Record<string, string> = {
@@ -251,7 +251,7 @@ function extractDimensionScores(evaluation: Evaluation): DimensionScore[] {
     'policies_logistics': 'Policies & Logistics'
   };
 
-  return scores.map(s => ({
+  return scores.map((s: any) => ({
     dimension: s.dimension,
     displayName: dimensionMap[s.dimension] || s.dimension,
     score: s.score || 0,
@@ -289,12 +289,12 @@ function extractBenchmarkData(evaluation: Evaluation): BenchmarkData {
   };
 }
 
-function extractPriorityActions(evaluation: Evaluation): PriorityAction[] {
+function extractPriorityActions(evaluation: Evaluation | any): PriorityAction[] {
   const scores = evaluation.dimensionScores || [];
   const actions: PriorityAction[] = [];
 
   // Schema action
-  const schemaScore = scores.find(s => s.dimension === 'schema_structured_data')?.score || 0;
+  const schemaScore = scores.find((s: any) => s.dimension === 'schema_structured_data')?.score || 0;
   if (schemaScore < 80) {
     actions.push({
       id: 'action-schema-reviews',
@@ -319,7 +319,7 @@ function extractPriorityActions(evaluation: Evaluation): PriorityAction[] {
   }
 
   // Readability action
-  const readabilityScore = scores.find(s => s.dimension === 'llm_readability')?.score || 0;
+  const readabilityScore = scores.find((s: any) => s.dimension === 'llm_readability')?.score || 0;
   if (readabilityScore < 75) {
     actions.push({
       id: 'action-answer-first',
@@ -344,7 +344,7 @@ function extractPriorityActions(evaluation: Evaluation): PriorityAction[] {
   }
 
   // Knowledge graph action
-  const kgScore = scores.find(s => s.dimension === 'knowledge_graphs')?.score || 0;
+  const kgScore = scores.find((s: any) => s.dimension === 'knowledge_graphs')?.score || 0;
   if (kgScore < 70) {
     actions.push({
       id: 'action-knowledge-graph',
@@ -395,7 +395,7 @@ export function transformForPlaybookUX(evaluation: Evaluation): PlaybookUXData {
   };
 }
 
-function mapDimensionsToAEOPractices(evaluation: Evaluation): AEOPractice[] {
+function mapDimensionsToAEOPractices(evaluation: Evaluation | any): AEOPractice[] {
   const scores = evaluation.dimensionScores || [];
   
   const practiceMap = [
@@ -486,7 +486,7 @@ function mapDimensionsToAEOPractices(evaluation: Evaluation): AEOPractice[] {
   ];
 
   return practiceMap.map(practice => {
-    const dimensionScore = scores.find(s => s.dimension === practice.dimension);
+    const dimensionScore = scores.find((s: any) => s.dimension === practice.dimension);
     const score = dimensionScore?.score || 0;
     
     return {
@@ -514,12 +514,12 @@ function getStatusFromScore(score: number): AEOPractice['status'] {
   return 'not-started';
 }
 
-function extractQuickWins(evaluation: Evaluation): QuickWinItem[] {
+function extractQuickWins(evaluation: Evaluation | any): QuickWinItem[] {
   const scores = evaluation.dimensionScores || [];
   const quickWins: QuickWinItem[] = [];
 
   // Schema quick win
-  const schemaScore = scores.find(s => s.dimension === 'schema_structured_data')?.score || 0;
+  const schemaScore = scores.find((s: any) => s.dimension === 'schema_structured_data')?.score || 0;
   if (schemaScore < 80) {
     quickWins.push({
       id: 'qw-schema-faq',
@@ -534,7 +534,7 @@ function extractQuickWins(evaluation: Evaluation): QuickWinItem[] {
   }
 
   // Robots.txt quick win
-  const botAccessScore = scores.find(s => s.dimension === 'reputation_signals')?.score || 0;
+  const botAccessScore = scores.find((s: any) => s.dimension === 'reputation_signals')?.score || 0;
   if (botAccessScore < 90) {
     quickWins.push({
       id: 'qw-robots-check',
@@ -549,7 +549,7 @@ function extractQuickWins(evaluation: Evaluation): QuickWinItem[] {
   }
 
   // Headlines quick win
-  const readabilityScore = scores.find(s => s.dimension === 'llm_readability')?.score || 0;
+  const readabilityScore = scores.find((s: any) => s.dimension === 'llm_readability')?.score || 0;
   if (readabilityScore < 75) {
     quickWins.push({
       id: 'qw-headlines-questions',
