@@ -367,11 +367,15 @@ export class LeaderboardPopulationService {
             industry: nicheCategory,
             competitors: []
           })
-          console.log(`✅ Created new brand record: ${brandRecord.id}`)
+          console.log(`✅ Created new brand record: ${brandRecord?.id || 'unknown'}`)
         }
       } catch (error) {
         console.error('Error creating/fetching brand:', error)
         throw new Error(`Failed to create brand record: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
+
+      if (!brandRecord) {
+        throw new Error('Failed to create or retrieve brand record')
       }
 
       // Step 2: Create evaluation record
@@ -384,18 +388,22 @@ export class LeaderboardPopulationService {
 
       // Step 3: Initialize ADI orchestrator
       const orchestrator = new PerformanceOptimizedADIOrchestrator()
-      await orchestrator.initialize()
       console.log('✅ ADI Orchestrator initialized')
 
       // Step 4: Create evaluation context
       const context: ADIEvaluationContext = {
         evaluationId: evaluation.id,
         brandId: brandRecord.id,
-        brandName: brandName,
         websiteUrl: websiteUrl,
-        userId: systemUserId,
-        tier: 'pro', // Use pro tier for automated evaluations
-        industryContext: nicheCategory
+        evaluationType: 'adi_premium',
+        queryCanon: [],
+        crawlArtifacts: [],
+        metadata: {
+          tier: 'pro', // Use pro tier for automated evaluations
+          userId: systemUserId,
+          brandName: brandName,
+          industryContext: nicheCategory
+        }
       }
 
       // Step 5: Execute full ADI evaluation
@@ -412,7 +420,7 @@ export class LeaderboardPopulationService {
 
       // Step 7: Update evaluation record with results
       await updateEvaluation(evaluation.id, {
-        status: orchestrationResult.overallStatus === 'completed' ? 'completed' : 'partial',
+        status: orchestrationResult.overallStatus === 'completed' ? 'completed' : 'failed',
         overallScore: adiScore.overall,
         grade: adiScore.grade,
         adiScore: adiScore.overall,
@@ -428,21 +436,21 @@ export class LeaderboardPopulationService {
       
       // Find strongest and weakest dimensions for highlights
       const sortedDimensions = [...dimensionScores].sort((a, b) => b.score - a.score)
-      const strengths = sortedDimensions.slice(0, 3).map(dim => ({
-        dimension: dim.name,
+      const strengths = sortedDimensions.slice(0, 3).map((dim: any) => ({
+        dimension: dim.dimension || dim.name,
         score: dim.score,
-        description: `Strong performance in ${dim.name}`
+        description: `Strong performance in ${dim.dimension || dim.name}`
       }))
-      const gaps = [...dimensionScores].sort((a, b) => a.score - b.score).slice(0, 3).map(dim => ({
-        dimension: dim.name,
+      const gaps = [...dimensionScores].sort((a, b) => a.score - b.score).slice(0, 3).map((dim: any) => ({
+        dimension: dim.dimension || dim.name,
         score: dim.score,
-        description: `Opportunity for improvement in ${dim.name}`
+        description: `Opportunity for improvement in ${dim.dimension || dim.name}`
       }))
 
       // Step 9: Return full result for caching
       const result: FullOrchestrationResult = {
         evaluationId: evaluation.id,
-        overallStatus: orchestrationResult.overallStatus === 'completed' ? 'completed' : 'partial',
+        overallStatus: orchestrationResult.overallStatus === 'completed' ? 'completed' : 'failed',
         adiScore: {
           overall: adiScore.overall,
           grade: adiScore.grade
