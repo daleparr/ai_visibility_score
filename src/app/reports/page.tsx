@@ -106,7 +106,7 @@ export default async function IndustryReportsPage() {
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             <PricingCard
               tier="Free"
-              price="$0"
+              price="£0"
               features={[
                 'Executive summary',
                 'Top 10 leaderboard',
@@ -114,8 +114,8 @@ export default async function IndustryReportsPage() {
               ]}
             />
             <PricingCard
-              tier="Professional"
-              price="$99"
+              tier="Index Pro"
+              price="£119"
               period="/sector/month"
               features={[
                 'Full leaderboard (50+ brands)',
@@ -127,7 +127,7 @@ export default async function IndustryReportsPage() {
             />
             <PricingCard
               tier="Enterprise"
-              price="$499"
+              price="£319"
               period="/sector/month"
               features={[
                 'Brand-specific deep dives',

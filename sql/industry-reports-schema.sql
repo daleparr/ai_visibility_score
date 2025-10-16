@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS report_subscriptions (
   
   -- Billing
   price_monthly DECIMAL(10,2),
-  currency TEXT DEFAULT 'USD',
+  currency TEXT DEFAULT 'GBP',
   billing_interval TEXT DEFAULT 'monthly',
   stripe_subscription_id TEXT,
   stripe_customer_id TEXT,

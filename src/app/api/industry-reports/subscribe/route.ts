@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
         canRequestCustomPrompts: false,
         apiAccessEnabled: false,
         priceMonthly: 0,
-        currency: 'USD',
+        currency: 'GBP',
         billingInterval: 'monthly',
         startedAt: new Date(),
       });
@@ -98,12 +98,12 @@ export async function POST(request: NextRequest) {
       line_items: [
         {
           price_data: {
-            currency: 'usd',
+            currency: 'gbp',
             product_data: {
               name: `${sector.name} - ${tierConfig.name}`,
               description: `Monthly subscription to ${sector.name} AI Brand Visibility Reports`,
             },
-            unit_amount: tierConfig.price * 100, // Convert to cents
+            unit_amount: tierConfig.price * 100, // Convert to pence
             recurring: {
               interval: 'month',
             },

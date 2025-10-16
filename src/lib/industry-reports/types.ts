@@ -304,6 +304,7 @@ export const SUBSCRIPTION_TIERS = {
   free: {
     name: 'Free Preview',
     price: 0,
+    currency: 'GBP',
     features: {
       executiveSummary: true,
       top10Leaderboard: true,
@@ -314,8 +315,9 @@ export const SUBSCRIPTION_TIERS = {
     },
   },
   pro: {
-    name: 'Professional',
-    price: 99,
+    name: 'Index Pro',
+    price: 119,
+    currency: 'GBP',
     features: {
       executiveSummary: true,
       fullLeaderboard: true,
@@ -328,7 +330,8 @@ export const SUBSCRIPTION_TIERS = {
   },
   enterprise: {
     name: 'Enterprise',
-    price: 499,
+    price: 319,
+    currency: 'GBP',
     features: {
       executiveSummary: true,
       fullLeaderboard: true,

@@ -54,11 +54,11 @@ export function SubscriptionCTA({ sectorSlug, sectorName }: SubscriptionCTAProps
       </div>
       
       <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-        {/* Pro Tier */}
+        {/* Index Pro Tier */}
         <div className="bg-slate-900/50 border-2 border-emerald-500 rounded-xl p-6">
           <div className="text-center mb-6">
             <div className="text-sm font-medium text-emerald-400 mb-1">MOST POPULAR</div>
-            <div className="text-4xl font-bold text-white mb-2">$99</div>
+            <div className="text-4xl font-bold text-white mb-2">£119</div>
             <div className="text-slate-400">/month for this sector</div>
           </div>
           
@@ -75,7 +75,7 @@ export function SubscriptionCTA({ sectorSlug, sectorName }: SubscriptionCTAProps
             disabled={loading !== null}
             className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading === 'pro' ? 'Processing...' : 'Upgrade to Pro'}
+            {loading === 'pro' ? 'Processing...' : 'Upgrade to Index Pro'}
           </button>
         </div>
         
@@ -83,12 +83,12 @@ export function SubscriptionCTA({ sectorSlug, sectorName }: SubscriptionCTAProps
         <div className="bg-slate-900/50 border border-slate-600 rounded-xl p-6">
           <div className="text-center mb-6">
             <div className="text-sm font-medium text-purple-400 mb-1">ENTERPRISE</div>
-            <div className="text-4xl font-bold text-white mb-2">$499</div>
+            <div className="text-4xl font-bold text-white mb-2">£319</div>
             <div className="text-slate-400">/month for this sector</div>
           </div>
           
           <ul className="space-y-3 mb-8">
-            <Feature text="All Pro features" />
+            <Feature text="All Index Pro features" />
             <Feature text="Brand-specific deep dives" />
             <Feature text="Custom prompt requests" />
             <Feature text="Raw data API access" />
@@ -106,7 +106,7 @@ export function SubscriptionCTA({ sectorSlug, sectorName }: SubscriptionCTAProps
       </div>
       
       <div className="mt-8 text-center text-sm text-slate-400">
-        💳 Secure payment via Stripe • Cancel anytime • All prices in USD
+        💳 Secure payment via Stripe • Cancel anytime • All prices in GBP
       </div>
     </div>
   );
