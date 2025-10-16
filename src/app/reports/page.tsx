@@ -2,16 +2,58 @@
 
 import Link from 'next/link';
 import { industryReportsDB } from '@/lib/industry-reports/db';
+import { Brain, Menu, X, Home, BarChart3 } from 'lucide-react';
+import { BrowseReportsButton } from '@/components/industry-reports/BrowseButton';
 
 // Force dynamic rendering since we need database access
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function IndustryReportsPage() {
-  const sectors = await industryReportsDB.getSectors(true);
+  let sectors = [];
+  let error = null;
+  
+  try {
+    sectors = await industryReportsDB.getSectors(true);
+  } catch (err) {
+    console.error('Error loading sectors:', err);
+    error = 'Failed to load sectors';
+  }
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+      {/* Navigation Bar */}
+      <header className="border-b border-slate-700 bg-slate-900/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center space-x-2">
+              <Brain className="h-8 w-8 text-emerald-400" />
+              <span className="text-xl font-bold text-white">AI Discoverability Index</span>
+            </Link>
+            
+            <nav className="hidden md:flex items-center space-x-6">
+              <Link href="/" className="text-slate-300 hover:text-white transition flex items-center gap-2">
+                <Home size={16} />
+                Home
+              </Link>
+              <Link href="/evaluate" className="text-slate-300 hover:text-white transition">
+                Get Your Score
+              </Link>
+              <Link href="/reports" className="text-emerald-400 font-medium flex items-center gap-2">
+                <BarChart3 size={16} />
+                Industry Reports
+              </Link>
+              <Link href="/leaderboards" className="text-slate-300 hover:text-white transition">
+                Leaderboards
+              </Link>
+              <Link href="/auth/signin" className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition">
+                Sign In
+              </Link>
+            </nav>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto">
@@ -55,15 +97,44 @@ export default async function IndustryReportsPage() {
         </div>
 
         {/* Sectors Grid */}
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto" id="sectors">
           <h2 className="text-3xl font-bold text-white text-center mb-12">
             Choose Your Industry
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sectors.map((sector) => (
-              <SectorCard key={sector.id} sector={sector} />
-            ))}
-          </div>
+          
+          {error && (
+            <div className="bg-red-900/20 border border-red-600 rounded-lg p-6 text-center mb-8">
+              <p className="text-red-400">{error}</p>
+            </div>
+          )}
+          
+          {sectors.length === 0 && !error && (
+            <div className="bg-yellow-900/20 border border-yellow-600 rounded-lg p-6 text-center mb-8">
+              <p className="text-yellow-400">No sectors configured yet. Please seed the database.</p>
+            </div>
+          )}
+          
+          {sectors.length > 0 && (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {sectors.map((sector) => (
+                <SectorCard key={sector.id} sector={sector} />
+              ))}
+            </div>
+          )}
+          
+          {/* Demo Report CTA */}
+          {sectors.length > 0 && (
+            <div className="mt-12 text-center">
+              <p className="text-slate-400 mb-4">Want to see a sample report first?</p>
+              <Link
+                href="/reports/demo"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition"
+              >
+                <BarChart3 size={16} />
+                View Demo Report
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Social Proof */}
@@ -88,12 +159,7 @@ export default async function IndustryReportsPage() {
             Get executive summaries and top 10 brand rankings for any sector.
             Upgrade for full leaderboards, archive access, and PDF exports.
           </p>
-          <Link
-            href="/reports#sectors"
-            className="inline-block px-8 py-4 bg-white text-emerald-600 font-semibold rounded-lg hover:bg-emerald-50 transition"
-          >
-            Browse Reports
-          </Link>
+          <BrowseReportsButton />
         </div>
       </div>
 
