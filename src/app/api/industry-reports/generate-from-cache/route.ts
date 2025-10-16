@@ -7,6 +7,46 @@ import { db } from '@/lib/db';
 import { sql } from 'drizzle-orm';
 import { industryReportsDB } from '@/lib/industry-reports/db';
 
+// GET: Show status and available data
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email || !isAdmin(session.user.email)) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized - Admin access required' },
+        { status: 401 }
+      );
+    }
+
+    // Check what data is available
+    const statsResult = await db.execute(sql`
+      SELECT 
+        s.id,
+        s.slug,
+        s.name,
+        COUNT(bp.id) as brand_count
+      FROM industry_sectors s
+      LEFT JOIN brand_performance bp ON s.id = bp.sector_id
+        AND bp.report_month = DATE_TRUNC('month', CURRENT_DATE)
+        AND bp.metadata->>'beta' = 'true'
+      GROUP BY s.id, s.slug, s.name
+      ORDER BY COUNT(bp.id) DESC
+    `);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Use POST to generate reports. GET shows available data.',
+      availableData: statsResult.rows,
+      instructions: 'Send POST request to this endpoint to generate beta reports from leaderboard data',
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: 'Failed to check data', details: error instanceof Error ? error.message : 'Unknown' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Check admin access

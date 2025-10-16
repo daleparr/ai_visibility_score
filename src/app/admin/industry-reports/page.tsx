@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { industryReportsDB } from '@/lib/industry-reports/db';
+import { GenerateBetaReportsButton } from '@/components/admin/GenerateBetaReportsButton';
 
 // Force dynamic rendering since we need database access
 export const dynamic = 'force-dynamic';
@@ -41,12 +42,17 @@ export default async function IndustryReportsAdminPage() {
             >
               ← Back to Admin
             </Link>
-            <button
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
-            >
-              Run All Probes
-            </button>
           </div>
+        </div>
+        
+        {/* Beta Report Generation */}
+        <div className="mb-8 bg-slate-800 border border-slate-700 rounded-lg p-6">
+          <h2 className="text-xl font-bold text-white mb-2">🚀 Beta Report Generation</h2>
+          <p className="text-slate-400 mb-4">
+            Generate industry reports from your 195 existing leaderboard evaluations.
+            Run the SQL bridge first: <code className="text-emerald-400">sql/bridge-leaderboard-to-industry-reports.sql</code>
+          </p>
+          <GenerateBetaReportsButton />
         </div>
         
         {/* Sectors Grid */}
