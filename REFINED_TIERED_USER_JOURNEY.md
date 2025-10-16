@@ -11,7 +11,7 @@ Your model: **Show the methodology, charge for competitive context + trends.**
 ## 🔬 The Data Hierarchy
 
 ### What Makes You "Audit-Grade"
-1. ✅ **Detailed Probe Results** (6 agents, 4+ LLMs, statistical sampling)
+1. ✅ **Detailed Probe Results** (12 agents, 4+ LLMs, statistical sampling)
 2. ✅ **Multi-model validation** (GPT-4, Claude, Gemini, Perplexity)
 3. ✅ **Version-controlled prompts** (reproducible methodology)
 4. ✅ **Statistical significance testing** (p-values, Cohen's d, 95% CI)
@@ -86,7 +86,7 @@ User enters URL → Clicks "Analyze"
 │                                                             │
 │ With Index Pro (£119/month) see:                            │
 │ ✓ How you compare to Nike, Adidas, Patagonia               │
-│ ✓ Detailed probe results (6 agents × 4 models)              │
+│ ✓ Detailed probe results (12 agents × 4 models)              │
 │ ✓ Specific gaps and recommendations                         │
 │ ✓ Month-over-month progress tracking                        │
 │ ✓ Full Fashion industry report access                       │
@@ -423,7 +423,7 @@ Your AIDI Score: 67 (B)
 │                                            │
 │ 🔒 Index Pro Subscribers See:              │
 │                                            │
-│ ✓ 6 detailed agent analyses                │
+│ ✓ 12 detailed agent analyses                │
 │ ✓ 4 model cross-validation results         │
 │ ✓ Competitive gap breakdowns                │
 │ ✓ Source-by-source citation analysis        │
