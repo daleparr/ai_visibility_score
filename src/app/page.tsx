@@ -61,6 +61,13 @@ export default function HomePage() {
               <Link href="#pricing" className="text-gray-600 hover:text-brand-600 transition-colors">
                 Pricing
               </Link>
+              <Link href="/reports" className="text-gray-600 hover:text-brand-600 transition-colors">
+                <span className="flex items-center space-x-1">
+                  <BarChart3 className="h-4 w-4" />
+                  <span>Industry Reports</span>
+                  <Badge variant="secondary" className="text-xs bg-emerald-100 text-emerald-700">New</Badge>
+                </span>
+              </Link>
               <Link href="/leaderboards" className="text-gray-600 hover:text-brand-600 transition-colors">
                 <span className="flex items-center space-x-1">
                   <TrendingUp className="h-4 w-4" />
@@ -107,6 +114,15 @@ export default function HomePage() {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Pricing
+                </Link>
+                <Link
+                  href="/reports"
+                  className="text-gray-600 hover:text-brand-600 transition-colors py-2 flex items-center space-x-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  <span>Industry Reports</span>
+                  <Badge variant="secondary" className="text-xs bg-emerald-100 text-emerald-700">New</Badge>
                 </Link>
                 <Link
                   href="/leaderboards"

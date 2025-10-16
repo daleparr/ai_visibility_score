@@ -1,168 +1,174 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import Link from 'next/link'
-import { Calendar, User, ArrowRight, Rss } from 'lucide-react'
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Calendar, Clock, Tag, ArrowRight } from 'lucide-react';
+import { format } from 'date-fns';
+
+interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  cover_image?: string;
+  category: { name: string; slug: string };
+  published_at: Date;
+  tags: string[];
+  view_count: number;
+  author: { name: string };
+}
 
 export default function BlogPage() {
-  const posts = [
-    {
-      id: 1,
-      title: "🚫 Why SEO Crawlers Won’t Save You in the Age of AI Search",
-      excerpt: "For the last 20 years, SEO tools have ruled digital visibility. They crawled your site, counted your tags, and told you whether Google’s spiders could index your pages. That era is ending.",
-      author: "ADI Team",
-      date: "2025-09-24",
-      category: "Industry Analysis",
-      readTime: "4 min read"
-    },
-    {
-      id: 2,
-      title: "The Future of AI Discoverability: What Brands Need to Know",
-      excerpt: "As AI models become the primary way users discover information, brands must adapt their digital presence to remain visible and competitive.",
-      author: "ADI Team",
-      date: "2024-01-15",
-      category: "Industry Insights",
-      readTime: "5 min read"
-    },
-    {
-      id: 3,
-      title: "Understanding the ADI Framework: A Deep Dive",
-      excerpt: "Explore the three pillars of AI discoverability and learn how each dimension impacts your brand's visibility across AI platforms.",
-      author: "ADI Team",
-      date: "2024-01-10",
-      category: "Framework",
-      readTime: "8 min read"
-    },
-    {
-      id: 4,
-      title: "Case Study: How Leading Brands Optimize for AI Discovery",
-      excerpt: "Real-world examples of brands that have successfully improved their AI discoverability scores and the strategies they used.",
-      author: "ADI Team",
-      date: "2024-01-05",
-      category: "Case Studies",
-      readTime: "6 min read"
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [featured, setFeatured] = useState<BlogPost | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadPosts();
+  }, []);
+
+  const loadPosts = async () => {
+    try {
+      const [postsRes, featuredRes] = await Promise.all([
+        fetch('/api/cms/blog?status=published&limit=10'),
+        fetch('/api/cms/blog?status=published&featured=true&limit=1')
+      ]);
+
+      const postsData = await postsRes.json();
+      const featuredData = await featuredRes.json();
+
+      setPosts(postsData.posts || []);
+      setFeatured(featuredData.posts?.[0] || null);
+    } catch (error) {
+      console.error('Failed to load posts:', error);
+    } finally {
+      setLoading(false);
     }
-  ]
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Rss className="h-8 w-8 text-blue-600" />
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Blog</h1>
-                <p className="text-gray-600 mt-1">Insights on AI discoverability and brand optimization</p>
-              </div>
-            </div>
-            <Button variant="outline" disabled>
-              Subscribe to Updates
-            </Button>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <h1 className="text-4xl font-bold mb-4">AIDI Blog</h1>
+          <p className="text-xl text-gray-600">
+            Insights on AEO, benchmarking methodology, and AI visibility trends
+          </p>
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-8">
-        {/* Featured Post */}
-        <div className="mb-8">
-          <Card className="border-2 border-blue-100">
-            <CardHeader>
-              <div className="flex items-center space-x-2 mb-2">
-                <Badge variant="secondary" className="bg-blue-100 text-blue-700">Featured</Badge>
-                <Badge variant="outline">{posts[0].category}</Badge>
-              </div>
-              <CardTitle className="text-2xl">
-                {posts[0].title}
-              </CardTitle>
-              <CardDescription className="text-base">
-                {posts[0].excerpt}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4 text-sm text-gray-600">
-                  <div className="flex items-center space-x-1">
-                    <User className="h-4 w-4" />
-                    <span>{posts[0].author}</span>
+      {/* Featured Post */}
+      {featured && (
+        <div className="bg-white border-b">
+          <div className="max-w-7xl mx-auto px-4 py-12">
+            <div className="flex items-start gap-2 mb-4">
+              <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-semibold rounded-full">
+                Featured Post
+              </span>
+            </div>
+            <Link href={`/blog/${featured.slug}`}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 hover:opacity-90 transition-opacity">
+                {featured.cover_image && (
+                  <div className="relative h-80 rounded-xl overflow-hidden">
+                    <Image
+                      src={featured.cover_image}
+                      alt={featured.title}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
-                  <div className="flex items-center space-x-1">
-                    <Calendar className="h-4 w-4" />
-                    <span>{new Date(posts[0].date).toLocaleDateString()}</span>
+                )}
+                <div className={featured.cover_image ? '' : 'md:col-span-2'}>
+                  <h2 className="text-3xl font-bold mb-4 hover:text-blue-600 transition-colors">
+                    {featured.title}
+                  </h2>
+                  <p className="text-lg text-gray-600 mb-4">{featured.excerpt}</p>
+                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      {format(new Date(featured.published_at), 'MMMM d, yyyy')}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      5 min read
+                    </span>
                   </div>
-                  <span>{posts[0].readTime}</span>
+                  <div className="mt-4">
+                    <span className="text-blue-600 font-medium inline-flex items-center gap-1">
+                      Read full article
+                      <ArrowRight className="h-4 w-4" />
+                    </span>
+                  </div>
                 </div>
-                <Button variant="outline" size="sm" disabled>
-                  Read More
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Recent Posts */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Recent Posts</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {posts.slice(1).map((post) => (
-              <Card key={post.id} className="h-full">
-                <CardHeader>
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Badge variant="outline">{post.category}</Badge>
-                  </div>
-                  <CardTitle className="text-lg line-clamp-2">
-                    {post.title}
-                  </CardTitle>
-                  <CardDescription className="line-clamp-3">
-                    {post.excerpt}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="mt-auto">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-600">
-                      <div className="flex items-center space-x-1 mb-1">
-                        <User className="h-3 w-3" />
-                        <span>{post.author}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="h-3 w-3" />
-                        <span>{new Date(post.date).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {post.readTime}
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" className="w-full mt-3" disabled>
-                    Read More
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+            </Link>
           </div>
         </div>
+      )}
 
-        {/* Newsletter Signup */}
-        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-          <CardHeader className="text-center">
-            <CardTitle>Stay Updated</CardTitle>
-            <CardDescription>
-              Get the latest insights on AI discoverability delivered to your inbox
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Button disabled>
-              Subscribe to Newsletter
-            </Button>
-            <p className="text-xs text-gray-500 mt-2">
-              Newsletter coming soon
-            </p>
-          </CardContent>
-        </Card>
+      {/* Posts Grid */}
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <h2 className="text-2xl font-bold mb-8">Latest Posts</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {posts.map((post) => (
+            <Link key={post.id} href={`/blog/${post.slug}`}>
+              <article className="bg-white rounded-xl border hover:shadow-lg transition-shadow h-full flex flex-col">
+                {post.cover_image && (
+                  <div className="relative h-48 w-full rounded-t-xl overflow-hidden">
+                    <Image
+                      src={post.cover_image}
+                      alt={post.title}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                )}
+                <div className="p-6 flex-1 flex flex-col">
+                  {post.category && (
+                    <div className="mb-3">
+                      <span className="text-xs font-semibold text-blue-600 uppercase">
+                        {post.category.name}
+                      </span>
+                    </div>
+                  )}
+                  <h3 className="text-xl font-semibold mb-2 hover:text-blue-600 transition-colors">
+                    {post.title}
+                  </h3>
+                  <p className="text-gray-600 text-sm mb-4 flex-1">
+                    {post.excerpt}
+                  </p>
+                  <div className="flex items-center justify-between text-xs text-gray-500 pt-4 border-t">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {format(new Date(post.published_at), 'MMM d, yyyy')}
+                    </span>
+                    <span className="text-blue-600 font-medium">
+                      Read →
+                    </span>
+                  </div>
+                </div>
+              </article>
+            </Link>
+          ))}
+        </div>
+
+        {posts.length === 0 && (
+          <div className="text-center py-12 text-gray-500">
+            <p>No blog posts yet. Check back soon!</p>
+          </div>
+        )}
       </div>
     </div>
-  )
+  );
 }
