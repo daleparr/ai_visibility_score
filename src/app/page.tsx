@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Brain, Search, Shield, Zap, BarChart3, CheckCircle, Lock } from 'lucide-react'
+import { Brain, Search, TrendingUp, Shield, Zap, BarChart3, CheckCircle, Lock, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { contentManager } from '@/lib/cms/cms-client'
 import { HomePageInteractive } from '@/components/homepage/Interactive'
