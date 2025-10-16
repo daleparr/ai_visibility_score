@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
 export default async function PositioningPage() {
-  // Fetch CMS content  const page = await contentManager.getPage('aidi-vs-monitoring-tools')
+  // Fetch CMS content
+  const page = await contentManager.getPage('aidi-vs-monitoring-tools')
   const intro = await contentManager.getBlockByKey('aidi-vs-monitoring-tools', 'positioning_intro')
   const comparison = await contentManager.getBlockByKey('aidi-vs-monitoring-tools', 'comparison_table')
   
