@@ -1,45 +1,26 @@
-'use client'
-
-import { useState } from 'react'
-// Neon database integration complete - v1.0.2
+// Homepage with CMS-driven authoritative copy
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { ArrowRight, Brain, Search, TrendingUp, Shield, Zap, BarChart3, Globe, CheckCircle, Lock, Menu, X } from 'lucide-react'
+import { Brain, Search, TrendingUp, Shield, Zap, BarChart3, CheckCircle, Lock } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { safeHref } from '@/lib/url'
+import { contentManager } from '@/lib/cms/cms-client'
+import { HomePageInteractive } from '@/components/homepage/Interactive'
 
-export default function HomePage() {
-  const [url, setUrl] = useState('')
-  const [tier, setTier] = useState<'free' | 'index-pro' | 'enterprise'>('free')
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const router = useRouter()
-
-  const handleAnalyze = async () => {
-    if (!url) return
-    
-    // Basic URL validation
-    try {
-      const safeUrl = safeHref(url.startsWith('http') ? url : `https://${url}`)
-    } catch {
-      alert('Please enter a valid URL')
-      return
-    }
-
-    setIsAnalyzing(true)
-    
-    // Navigate to evaluation with URL and tier parameters
-    const encodedUrl = encodeURIComponent(url)
-    router.push(`/evaluate?url=${encodedUrl}&tier=${tier}`)
-  }
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleAnalyze()
-    }
+export default async function HomePage() {
+  // Fetch CMS content for hero section
+  let heroHeadline, heroSubhead, heroDescription, trustIndicators, pricingTiers, footerAbout
+  
+  try {
+    heroHeadline = await contentManager.getBlockByKey('homepage', 'hero_headline')
+    heroSubhead = await contentManager.getBlockByKey('homepage', 'hero_subhead')
+    heroDescription = await contentManager.getBlockByKey('homepage', 'hero_description')
+    trustIndicators = await contentManager.getBlockByKey('homepage', 'trust_indicators')
+    pricingTiers = await contentManager.getBlockByKey('homepage', 'pricing_tiers')
+    footerAbout = await contentManager.getBlockByKey('homepage', 'footer_about')
+  } catch (error) {
+    console.error('Error loading CMS content:', error)
+    // Fallback to defaults if CMS not available yet
   }
 
   return (
@@ -50,7 +31,10 @@ export default function HomePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Brain className="h-8 w-8 text-brand-600" />
-              <span className="text-2xl font-bold gradient-text">AI Discoverability Index</span>
+              <span className="text-2xl font-bold gradient-text">
+                {/* CMS-driven site name */}
+                AI Discoverability Index (AIDI)
+              </span>
             </div>
             
             {/* Desktop Navigation */}
@@ -151,104 +135,45 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Hero Section with URL Input */}
+      {/* Hero Section with URL Input - CMS Driven */}
       <section className="py-16 md:py-24 gradient-bg">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <Badge variant="secondary" className="mb-6">
-              🚀 Free AI Visibility Audit
+              ✓ Available Now - No Waitlist
             </Badge>
             <h1 className="text-4xl md:text-6xl font-bold mb-6 text-balance">
-              How Visible Is Your Brand
-              <span className="gradient-text block">to AI Models?</span>
+              {heroHeadline?.text || 'The Benchmark Standard for AEO Intelligence'}
             </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto text-balance">
-              Test how AI discovers, understands, and recommends your brand.
-              Get your free AI visibility audit in minutes. Upgrade for GPT-4 + real-time web insights.
+            <p className="text-xl font-semibold text-gray-700 mb-4 max-w-2xl mx-auto">
+              {heroSubhead?.text || 'Scientifically rigorous. Statistically validated. Board-ready insights.'}
             </p>
-
-            {/* URL Input Section */}
-            <div className="max-w-2xl mx-auto mb-8">
-              <Card className="p-6 shadow-lg border-2">
-                {/* Tier Selection */}
-                <div className="mb-4">
-                  <div className="flex items-center justify-center gap-2 md:gap-4">
-                    <button
-                      onClick={() => setTier('free')}
-                      className={`px-3 py-2 rounded-lg font-medium transition-all text-sm ${
-                        tier === 'free'
-                          ? 'bg-green-100 text-green-700 border-2 border-green-300'
-                          : 'bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200'
-                      }`}
-                    >
-                      🆓 Free Tier
-                      <div className="text-xs mt-1">3 evaluations • GPT-3.5</div>
-                    </button>
-                    <button
-                      onClick={() => setTier('index-pro')}
-                      className={`px-3 py-2 rounded-lg font-medium transition-all text-sm ${
-                        tier === 'index-pro'
-                          ? 'bg-brand-100 text-brand-700 border-2 border-brand-300'
-                          : 'bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200'
-                      }`}
-                    >
-                      💎 Index Pro
-                      <div className="text-xs mt-1">25 evaluations • GPT-4 + AI Web Search</div>
-                    </button>
-                    <button
-                      onClick={() => setTier('enterprise')}
-                      className={`px-3 py-2 rounded-lg font-medium transition-all text-sm ${
-                        tier === 'enterprise'
-                          ? 'bg-purple-100 text-purple-700 border-2 border-purple-300'
-                          : 'bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200'
-                      }`}
-                    >
-                      🏢 Enterprise
-                      <div className="text-xs mt-1">Unlimited • Full API Access</div>
-                    </button>
+            <div 
+              className="text-lg text-gray-600 mb-6 max-w-2xl mx-auto"
+              dangerouslySetInnerHTML={{ 
+                __html: heroDescription?.html || '<p>While monitoring tools provide quick feedback, AIDI delivers the systematic benchmarking enterprises need for strategic decisions.</p>' 
+              }}
+            />
+            
+            {/* Trust Indicators - CMS Driven */}
+            {trustIndicators?.items && (
+              <div className="flex flex-wrap justify-center gap-4 mb-8">
+                {trustIndicators.items.map((item: string, idx: number) => (
+                  <div key={idx} className="flex items-center text-sm text-gray-700 bg-white/80 px-4 py-2 rounded-full border border-brand-200">
+                    {item}
                   </div>
-                </div>
+                ))}
+              </div>
+            )}
 
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="flex-1 relative">
-                    <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <Input
-                      type="url"
-                      placeholder="Enter your website URL (e.g., example.com)"
-                      value={url}
-                      onChange={(e) => setUrl(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      className="pl-10 h-12 text-lg"
-                      disabled={isAnalyzing}
-                    />
-                  </div>
-                  <Button
-                    size="lg"
-                    onClick={handleAnalyze}
-                    disabled={!url || isAnalyzing}
-                    className={`h-12 px-8 text-lg ${
-                      tier === 'index-pro' ? 'bg-brand-600 hover:bg-brand-700' : ''
-                    }`}
-                  >
-                    {isAnalyzing ? 'Analyzing...' : tier === 'index-pro' ? 'Pro Analysis' : 'Analyze Now'}
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </div>
-                <div className="flex items-center justify-center mt-4 text-sm text-gray-500">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  {tier === 'index-pro'
-                    ? 'Professional analysis • Multi-model comparison • Advanced insights'
-                    : 'Free audit • No signup required • Results in 10 minutes'
-                  }
-                </div>
-              </Card>
-            </div>
+            {/* URL Input Section - Interactive Client Component */}
+            <HomePageInteractive />
 
-            {/* Trust Indicators */}
+            {/* Statistical Rigor Indicators */}
             <div className="flex flex-wrap justify-center items-center gap-6 text-sm text-gray-500">
               <div className="flex items-center">
                 <Brain className="h-4 w-4 mr-1" />
-                5+ AI Models
+                4+ AI Models
               </div>
               <div className="flex items-center">
                 <BarChart3 className="h-4 w-4 mr-1" />
@@ -256,7 +181,7 @@ export default function HomePage() {
               </div>
               <div className="flex items-center">
                 <Shield className="h-4 w-4 mr-1" />
-                3 Core Pillars
+                95% Confidence Intervals
               </div>
             </div>
           </div>
@@ -705,12 +630,14 @@ export default function HomePage() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Brain className="h-6 w-6" />
-                <span className="text-lg font-bold">AI Discoverability Index</span>
+                <span className="text-lg font-bold">AI Discoverability Index (AIDI)</span>
               </div>
-              <p className="text-gray-400 text-sm">
-                The first platform to measure and optimize brand visibility 
-                across AI-powered search and recommendation systems.
-              </p>
+              <div 
+                className="text-gray-400 text-sm prose-invert max-w-none"
+                dangerouslySetInnerHTML={{ 
+                  __html: footerAbout?.html || '<p>The benchmark standard for measuring brand visibility in AI-powered answer engines. Built by data scientists for executives who need audit-grade results for strategic decisions.</p>' 
+                }}
+              />
             </div>
             <div>
               <h4 className="font-semibold mb-4">Product</h4>
@@ -724,24 +651,24 @@ export default function HomePage() {
             <div>
               <h4 className="font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link href="/about" className="hover:text-white">About</Link></li>
+                <li><Link href="/methodology" className="hover:text-white">Methodology</Link></li>
                 <li><Link href="/blog" className="hover:text-white">Blog</Link></li>
                 <li><Link href="/careers" className="hover:text-white">Careers</Link></li>
-                <li><Link href="/contact" className="hover:text-white">Contact</Link></li>
+                <li><Link href="/faq" className="hover:text-white">FAQ</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Support</h4>
+              <h4 className="font-semibold mb-4">Resources</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link href="/docs" className="hover:text-white">Documentation</Link></li>
-                <li><Link href="/help" className="hover:text-white">Help Center</Link></li>
+                <li><Link href="/aidi-vs-monitoring-tools" className="hover:text-white">vs. Monitoring Tools</Link></li>
+                <li><Link href="/reports" className="hover:text-white">Industry Reports</Link></li>
                 <li><Link href="/privacy" className="hover:text-white">Privacy</Link></li>
                 <li><Link href="/terms" className="hover:text-white">Terms</Link></li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
-            <p>&copy; 2024 AI Discoverability Index. All rights reserved.</p>
+            <p>&copy; 2025 AI Discoverability Index (AIDI). All rights reserved.</p>
           </div>
         </div>
       </footer>

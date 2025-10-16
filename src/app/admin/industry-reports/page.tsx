@@ -18,15 +18,28 @@ export default async function IndustryReportsAdminPage() {
     redirect('/');
   }
   
-  // Get all sectors with latest report info
-  const sectors = await industryReportsDB.getSectors(false);
-  const sectorsWithReports = await Promise.all(
-    sectors.map(async (sector) => {
-      const latestReport = await industryReportsDB.getLatestReport(sector.id, false);
-      const schedule = await industryReportsDB.getProbeSchedule(sector.id);
-      return { sector, latestReport, schedule };
-    })
-  );
+  // Get all sectors with latest report info (with error handling)
+  let sectors: any[] = [];
+  let sectorsWithReports: any[] = [];
+  let error: string | null = null;
+  
+  try {
+    sectors = await industryReportsDB.getSectors(false);
+    sectorsWithReports = await Promise.all(
+      sectors.map(async (sector) => {
+        try {
+          const latestReport = await industryReportsDB.getLatestReport(sector.id, false);
+          const schedule = await industryReportsDB.getProbeSchedule(sector.id);
+          return { sector, latestReport, schedule };
+        } catch (err) {
+          return { sector, latestReport: null, schedule: null };
+        }
+      })
+    );
+  } catch (err) {
+    console.error('Error loading admin data:', err);
+    error = err instanceof Error ? err.message : 'Failed to load sectors';
+  }
   
   return (
     <div className="min-h-screen bg-slate-900 py-8">
@@ -45,18 +58,36 @@ export default async function IndustryReportsAdminPage() {
           </div>
         </div>
         
+        {/* Error Message */}
+        {error && (
+          <div className="mb-8 bg-red-900/20 border border-red-600 rounded-lg p-6">
+            <h3 className="text-red-400 font-semibold mb-2">⚠️ Error Loading Data</h3>
+            <p className="text-red-300 text-sm">{error}</p>
+            <p className="text-slate-400 text-sm mt-2">
+              Make sure you've run: <code className="text-emerald-400">sql/industry-reports-schema.sql</code>
+            </p>
+          </div>
+        )}
+        
         {/* Beta Report Generation */}
         <div className="mb-8 bg-slate-800 border border-slate-700 rounded-lg p-6">
           <h2 className="text-xl font-bold text-white mb-2">🚀 Beta Report Generation</h2>
-          <p className="text-slate-400 mb-4">
+          <p className="text-slate-400 mb-4 text-sm">
             Generate industry reports from your 195 existing leaderboard evaluations.
-            Run the SQL bridge first: <code className="text-emerald-400">sql/bridge-leaderboard-to-industry-reports.sql</code>
           </p>
+          <div className="bg-slate-900 border border-slate-600 rounded p-4 mb-4 text-sm">
+            <h4 className="text-white font-semibold mb-2">Prerequisites (Run in Neon):</h4>
+            <ol className="text-slate-300 space-y-1 list-decimal list-inside">
+              <li><code className="text-emerald-400">sql/add-sector-and-competitors-to-evaluations.sql</code></li>
+              <li><code className="text-emerald-400">sql/bridge-leaderboard-to-industry-reports.sql</code></li>
+            </ol>
+          </div>
           <GenerateBetaReportsButton />
         </div>
         
         {/* Sectors Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {sectors.length > 0 && (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sectorsWithReports.map(({ sector, latestReport, schedule }) => (
             <div
               key={sector.id}
@@ -134,10 +165,12 @@ export default async function IndustryReportsAdminPage() {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        )}
         
         {/* System Status */}
-        <div className="mt-12 bg-slate-800 border border-slate-700 rounded-lg p-6">
+        {sectors.length > 0 && (
+          <div className="mt-12 bg-slate-800 border border-slate-700 rounded-lg p-6">
           <h2 className="text-xl font-bold text-white mb-4">System Status</h2>
           <div className="grid md:grid-cols-4 gap-6">
             <StatusCard
@@ -161,7 +194,8 @@ export default async function IndustryReportsAdminPage() {
               color="yellow"
             />
           </div>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
