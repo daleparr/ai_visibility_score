@@ -18,7 +18,8 @@ import {
   BarChart3,
   CheckCircle2,
   Clock,
-  Sparkles
+  Sparkles,
+  Target
 } from 'lucide-react'
 import { safeHostname } from '@/lib/url'
 
@@ -129,6 +130,13 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
   const [elapsedTime, setElapsedTime] = useState(0)
   const [evaluationStatus, setEvaluationStatus] = useState<'running' | 'finalizing' | 'completed' | 'failed'>('running')
   const [allAgentsCompleted, setAllAgentsCompleted] = useState(false)
+  
+  // Benchmark form state
+  const [showBenchmarkForm, setShowBenchmarkForm] = useState(false)
+  const [sectors, setSectors] = useState<any[]>([])
+  const [selectedSector, setSelectedSector] = useState('')
+  const [competitor, setCompetitor] = useState('')
+  const [benchmarkSaved, setBenchmarkSaved] = useState(false)
 
   // Smooth progress animation - displayProgress always increases toward targetProgress
   useEffect(() => {
@@ -155,6 +163,48 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
 
     return () => clearInterval(timer)
   }, [])
+  
+  // Show benchmark form after 10 seconds (fills dead time)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowBenchmarkForm(true)
+    }, 10000) // 10 seconds
+    return () => clearTimeout(timer)
+  }, [])
+  
+  // Load sectors for benchmark form
+  useEffect(() => {
+    fetch('/api/industry-reports/sectors')
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.sectors) {
+          setSectors(data.sectors)
+        }
+      })
+      .catch(err => console.error('Failed to load sectors:', err))
+  }, [])
+  
+  // Save benchmark data
+  async function handleSaveBenchmark() {
+    if (!selectedSector || !evaluationId) return
+    
+    try {
+      await fetch('/api/evaluations/set-sector', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          evaluationId,
+          sectorId: selectedSector,
+          competitors: competitor ? [competitor] : [],
+          brandDomain: url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0],
+        }),
+      })
+      setBenchmarkSaved(true)
+      setTimeout(() => setShowBenchmarkForm(false), 2000) // Hide after 2s with success message
+    } catch (err) {
+      console.error('Failed to save benchmark:', err)
+    }
+  }
 
   // Minimum progress guarantee - always trickle forward even without server updates
   useEffect(() => {
@@ -499,6 +549,97 @@ export function EnhancedProgressDisplay({ tier, url, evaluationId }: EnhancedPro
           </Card>
         ))}
       </div>
+
+      {/* Benchmark Form - Appears after 10s during analysis */}
+      {showBenchmarkForm && !benchmarkSaved && displayProgress < 80 && evaluationStatus === 'running' && (
+        <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-blue-900 mb-1 flex items-center gap-2">
+                  <Target className="h-5 w-5" />
+                  While we analyze, help us benchmark you
+                </h3>
+                <p className="text-sm text-blue-700">
+                  Optional - unlocks competitive ranking in your results
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowBenchmarkForm(false)}
+                className="text-blue-400 hover:text-blue-600 text-xl"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-blue-900 mb-2">
+                  Your industry:
+                </label>
+                <select
+                  value={selectedSector}
+                  onChange={(e) => setSelectedSector(e.target.value)}
+                  className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="">Select industry...</option>
+                  {sectors.map((s: any) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-blue-900 mb-2">
+                  Main competitor (optional):
+                </label>
+                <input
+                  type="text"
+                  value={competitor}
+                  onChange={(e) => setCompetitor(e.target.value)}
+                  placeholder="e.g., nike.com"
+                  className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-xs text-blue-600 flex items-center gap-1">
+                <CheckCircle2 className="h-4 w-4" />
+                See your rank vs competitors • Get targeted recommendations
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowBenchmarkForm(false)}
+                  className="px-4 py-2 text-blue-600 hover:text-blue-700 text-sm font-medium"
+                >
+                  Skip
+                </button>
+                <button
+                  onClick={handleSaveBenchmark}
+                  disabled={!selectedSector}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  Save & Continue
+                </button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Success message after saving */}
+      {benchmarkSaved && (
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-green-700">
+              <CheckCircle2 className="h-5 w-5" />
+              <span className="font-medium">Benchmark info saved! We'll show competitive context in your results.</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Current Activity */}
       {runningAgents.length > 0 && evaluationStatus !== 'finalizing' && (
