@@ -14,6 +14,7 @@ import { PriorityActionCard } from '@/components/adi/reporting/PriorityActionCar
 import { AIInteractionExample } from '@/components/adi/reporting/AIInteractionExample'
 import { LeaderboardTable } from '@/components/adi/leaderboards/LeaderboardTable'
 import { ProbeResultsPanel } from '@/components/adi/reporting/ProbeResultsPanel'
+import { CompetitiveBenchmark } from '@/components/industry-reports/CompetitiveBenchmark'
 import {
   getImprovementPriority,
   getAIInteractionExample,
@@ -182,8 +183,49 @@ export default function EvaluatePage() {
   const [error, setError] = useState<string | null>(null)
   const [currentEvaluationId, setCurrentEvaluationId] = useState<string | null>(null) // Store evaluation ID for progress tracking
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null)
+  const [sectorData, setSectorData] = useState<{
+    sectorId?: string;
+    sectorName?: string;
+    sectorSlug?: string;
+    competitors?: string[];
+    userRank?: number;
+    totalBrands?: number;
+    userMentionShare?: number;
+    sectorAverage?: number;
+    competitorRanks?: Array<{ name: string; rank: number; mentionShare: number; sentiment: number }>;
+  } | null>(null)
   const [brandCategory, setBrandCategory] = useState<any>(null)
   const [performanceProfile, setPerformanceProfile] = useState<AIDIPerformanceProfile | null>(null)
+
+  // Fetch sector and competitor data after evaluation completes
+  useEffect(() => {
+    if (currentEvaluationId && evaluationData) {
+      fetch(`/api/evaluations/set-sector?evaluationId=${currentEvaluationId}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.success && data.sectorId) {
+            // Mock competitive data for now (will be replaced with real data from industry reports)
+            setSectorData({
+              sectorId: data.sectorId,
+              sectorName: data.sectorName,
+              sectorSlug: data.sectorSlug,
+              competitors: data.competitors || [],
+              userRank: 23, // Placeholder - would come from brand_performance query
+              totalBrands: 78, // Placeholder
+              userMentionShare: 2.4, // Placeholder
+              sectorAverage: 3.1, // Placeholder
+              competitorRanks: data.competitors?.map((comp: string, idx: number) => ({
+                name: comp,
+                rank: idx + 1, // Placeholder
+                mentionShare: 15 - (idx * 2), // Placeholder
+                sentiment: 0.85 - (idx * 0.05), // Placeholder
+              })) || [],
+            });
+          }
+        })
+        .catch(err => console.error('Failed to fetch sector data:', err));
+    }
+  }, [currentEvaluationId, evaluationData]);
 
   // Debug: Log whenever evaluationData changes
   useEffect(() => {
@@ -1089,6 +1131,23 @@ Next Step Today: ${bottomLine.nextStep}`
             tier={tier}
             pillarScores={evaluationData.pillarScores}
           />
+
+          {/* Competitive Benchmark - Industry Reports Integration */}
+          {sectorData && (
+            <div className="mb-8">
+              <CompetitiveBenchmark
+                tier={tier}
+                sectorName={sectorData.sectorName}
+                sectorSlug={sectorData.sectorSlug}
+                userRank={sectorData.userRank}
+                totalBrands={sectorData.totalBrands}
+                userMentionShare={sectorData.userMentionShare}
+                sectorAverage={sectorData.sectorAverage}
+                competitors={sectorData.competitorRanks}
+                userScore={evaluationData.overallScore}
+              />
+            </div>
+          )}
 
           {/* AI Models Analysis */}
           <Card className="mb-8">

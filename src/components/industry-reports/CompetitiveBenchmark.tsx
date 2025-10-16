@@ -219,7 +219,7 @@ export function CompetitiveBenchmark({
           )}
 
           {/* Priority Actions - Index Pro and Enterprise */}
-          {tier !== 'free' && (
+          {(tier === 'index-pro' || tier === 'enterprise') && (
             <div className="bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 rounded-lg p-4">
               <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
                 <Target className="h-4 w-4" />
