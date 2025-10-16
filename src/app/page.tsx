@@ -500,20 +500,25 @@ export default async function HomePage() {
       <section className="py-16 bg-brand-600 text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">
-            Start Your Free AI Visibility Audit
+            Ready for Benchmark-Grade AEO Intelligence?
           </h2>
           <p className="text-xl mb-8 text-brand-100 max-w-2xl mx-auto">
-            Enter your URL above to discover how AI models see your brand. 
-            No signup required - get results in minutes.
+            Get the strategic metrics you need for board presentations. 
+            Our peer-reviewed methodology ensures defendable results.
           </p>
-          <Button size="lg" variant="secondary" className="text-lg px-8" onClick={() => {
-            const input = document.querySelector('input[type="url"]') as HTMLInputElement
-            input?.focus()
-            window.scrollTo({ top: 0, behavior: 'smooth' })
-          }}>
-            Get Your Free Audit Now
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+          <div className="flex justify-center gap-4">
+            <Button size="lg" variant="secondary" className="text-lg px-8" asChild>
+              <Link href="/evaluate">
+                Get Your Benchmark Score
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" className="text-lg px-8 border-white text-white hover:bg-white/10" asChild>
+              <Link href="/methodology">
+                View Methodology
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 
