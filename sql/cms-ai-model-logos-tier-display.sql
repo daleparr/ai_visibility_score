@@ -53,24 +53,24 @@ INSERT INTO ai_model_tier_display (tier_key, model_slug, is_displayed, model_ver
 
 -- FREE TIER: OpenAI only (ChatGPT 3.5)
 ('free', 'openai', true, 'GPT-3.5 Turbo', 'Basic Model', 1),
-('free', 'anthropic', false, NULL, NULL, 2),
-('free', 'google-ai', false, NULL, NULL, 3),
-('free', 'perplexity', false, NULL, NULL, 4),
-('free', 'mistral', false, NULL, NULL, 5),
+('free', 'anthropic', false, 'Claude Sonnet 4.1', NULL, 2),
+('free', 'perplexity', false, 'Perplexity Pro', NULL, 3),
+('free', 'google-ai', false, 'Gemini 2.5 Flash', NULL, 4),
+('free', 'mistral', false, 'Mistral Large', NULL, 5),
 
--- INDEX PRO TIER: All frontier models
-('index-pro', 'openai', true, 'GPT-4 Turbo', 'Frontier Model', 1),
-('index-pro', 'anthropic', true, 'Claude 3.5 Sonnet', 'Frontier Model', 2),
-('index-pro', 'google-ai', true, 'Gemini 1.5 Pro', 'Frontier Model', 3),
-('index-pro', 'perplexity', true, 'Perplexity AI', 'Frontier Model', 4),
+-- INDEX PRO TIER: All 5 frontier models (customizable)
+('index-pro', 'openai', true, 'ChatGPT 4.0', 'Frontier Model', 1),
+('index-pro', 'anthropic', true, 'Claude Sonnet 4.1', 'Frontier Model', 2),
+('index-pro', 'perplexity', true, 'Perplexity Pro', 'Frontier Model', 3),
+('index-pro', 'google-ai', true, 'Gemini 2.5 Flash', 'Frontier Model', 4),
 ('index-pro', 'mistral', true, 'Mistral Large', 'Frontier Model', 5),
 
--- ENTERPRISE TIER: All models + priority access badge
-('enterprise', 'openai', true, 'GPT-4 Turbo', 'Priority Access', 1),
-('enterprise', 'anthropic', true, 'Claude 3.5 Sonnet', 'Priority Access', 2),
-('enterprise', 'google-ai', true, 'Gemini 1.5 Pro', 'Priority Access', 3),
-('enterprise', 'perplexity', true, 'Perplexity AI', 'Priority Access', 4),
-('enterprise', 'mistral', true, 'Mistral Large', 'Priority Access', 5)
+-- ENTERPRISE TIER: All 5 models + priority/customizable
+('enterprise', 'openai', true, 'ChatGPT 4.0', 'Customizable', 1),
+('enterprise', 'anthropic', true, 'Claude Sonnet 4.1', 'Customizable', 2),
+('enterprise', 'perplexity', true, 'Perplexity Pro', 'Customizable', 3),
+('enterprise', 'google-ai', true, 'Gemini 2.5 Flash', 'Customizable', 4),
+('enterprise', 'mistral', true, 'Mistral Large', 'Customizable', 5)
 
 ON CONFLICT (tier_key, model_slug) DO UPDATE SET
   is_displayed = EXCLUDED.is_displayed,

@@ -9,6 +9,7 @@ import { HomePageInteractive } from '@/components/homepage/Interactive'
 import { HomePageHeader } from '@/components/homepage/Header'
 import { LogoDisplay } from '@/components/LogoDisplay'
 import { DynamicPricingCards } from '@/components/DynamicPricingCards'
+import { AIModelLogos } from '@/components/AIModelLogos'
 
 // Disable caching so CMS changes appear immediately
 export const revalidate = 0;
@@ -73,7 +74,7 @@ export default async function HomePage() {
             <HomePageInteractive />
 
             {/* Statistical Rigor Indicators */}
-            <div className="flex flex-wrap justify-center items-center gap-6 text-sm text-gray-500">
+            <div className="flex flex-wrap justify-center items-center gap-6 text-sm text-gray-500 mb-12">
               <div className="flex items-center">
                 <Brain className="h-4 w-4 mr-1" />
                 4+ AI Models
@@ -87,6 +88,14 @@ export default async function HomePage() {
                 95% Confidence Intervals
               </div>
             </div>
+
+            {/* AI Model Logos - Shows tier-based availability */}
+            <AIModelLogos 
+              userTier="free"
+              showUpgradePrompt={true}
+              variant="homepage"
+              className="mt-8"
+            />
           </div>
         </div>
       </section>

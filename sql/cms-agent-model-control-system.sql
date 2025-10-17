@@ -149,41 +149,33 @@ INSERT INTO ai_model_configurations (
 ) VALUES
 
 -- OpenAI Models
-('gpt-4-turbo', 'GPT-4 Turbo', 'openai', 'gpt-4-turbo-preview',
+('chatgpt-4', 'ChatGPT 4.0', 'openai', 'gpt-4-turbo-preview',
  true, ARRAY['index-pro', 'enterprise'], 0.010000, 0.030000, 0.45, 4096, 0.7,
- 'Latest GPT-4 Turbo - Best quality, higher cost'),
+ 'ChatGPT 4.0 - Baseline for Index Pro & Enterprise (customizable)'),
 
 ('gpt-3.5-turbo', 'GPT-3.5 Turbo', 'openai', 'gpt-3.5-turbo',
- true, ARRAY['free', 'index-pro', 'enterprise'], 0.001000, 0.002000, 0.08, 4096, 0.7,
- 'Fast and cost-effective - Good for free tier'),
+ true, ARRAY['free'], 0.001000, 0.002000, 0.08, 4096, 0.7,
+ 'Free tier baseline model - Fast and cost-effective'),
 
 -- Anthropic Models
-('claude-3.5-sonnet', 'Claude 3.5 Sonnet', 'anthropic', 'claude-3-5-sonnet-20241022',
+('claude-sonnet-4.1', 'Claude Sonnet 4.1', 'anthropic', 'claude-3-5-sonnet-20241022',
  true, ARRAY['index-pro', 'enterprise'], 0.003000, 0.015000, 0.28, 4096, 0.7,
- 'Best reasoning model - Excellent for analysis'),
-
-('claude-3-haiku', 'Claude 3 Haiku', 'anthropic', 'claude-3-haiku-20240307',
- true, ARRAY['index-pro', 'enterprise'], 0.000250, 0.001250, 0.05, 4096, 0.7,
- 'Fastest Claude model - Low cost alternative'),
-
--- Google Models
-('gemini-1.5-pro', 'Gemini 1.5 Pro', 'google', 'gemini-1.5-pro-latest',
- true, ARRAY['index-pro', 'enterprise'], 0.003500, 0.010500, 0.32, 4096, 0.7,
- 'Large context window - Good for long content analysis'),
-
-('gemini-1.5-flash', 'Gemini 1.5 Flash', 'google', 'gemini-1.5-flash-latest',
- true, ARRAY['index-pro', 'enterprise'], 0.000350, 0.001050, 0.06, 4096, 0.7,
- 'Fast and economical - Budget-friendly option'),
+ 'Claude Sonnet 4.1 - Baseline for Index Pro & Enterprise (customizable)'),
 
 -- Perplexity
-('perplexity', 'Perplexity AI', 'perplexity', 'sonar-pro',
+('perplexity-pro', 'Perplexity Pro', 'perplexity', 'sonar-pro',
  true, ARRAY['index-pro', 'enterprise'], 0.003000, 0.015000, 0.25, 4096, 0.7,
- 'Real-time search integration'),
+ 'Perplexity Pro - Baseline for Index Pro & Enterprise (customizable)'),
+
+-- Google Models
+('gemini-2.5-flash', 'Gemini 2.5 Flash', 'google', 'gemini-2-5-flash-latest',
+ true, ARRAY['index-pro', 'enterprise'], 0.000350, 0.001050, 0.06, 4096, 0.7,
+ 'Gemini 2.5 Flash - Baseline for Index Pro & Enterprise (customizable)'),
 
 -- Mistral
 ('mistral-large', 'Mistral Large', 'mistral', 'mistral-large-latest',
  true, ARRAY['index-pro', 'enterprise'], 0.003000, 0.009000, 0.22, 4096, 0.7,
- 'European alternative - Good performance/cost ratio')
+ 'Mistral Large - Baseline for Index Pro & Enterprise (customizable)')
 
 ON CONFLICT (model_key) DO UPDATE SET
   model_name = EXCLUDED.model_name,

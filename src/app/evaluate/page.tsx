@@ -15,6 +15,7 @@ import { AIInteractionExample } from '@/components/adi/reporting/AIInteractionEx
 import { LeaderboardTable } from '@/components/adi/leaderboards/LeaderboardTable'
 import { ProbeResultsPanel } from '@/components/adi/reporting/ProbeResultsPanel'
 import { CompetitiveBenchmark } from '@/components/industry-reports/CompetitiveBenchmark'
+import { AIModelLogos } from '@/components/AIModelLogos'
 import {
   getImprovementPriority,
   getAIInteractionExample,
