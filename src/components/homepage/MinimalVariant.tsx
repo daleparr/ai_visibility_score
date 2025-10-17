@@ -48,14 +48,27 @@ export function MinimalHomepageVariant() {
             <HomePageInteractive />
           </div>
 
-          {/* AI Model Logos - Trust Indicator Only */}
-          <div className="pt-8 border-t border-gray-200 max-w-2xl mx-auto">
-            <AIModelLogos 
-              userTier="free"
-              showUpgradePrompt={false}
-              variant="homepage"
-              className=""
-            />
+          {/* AI Model Logos - Trust Signals (All Labs Visible) */}
+          <div className="pt-12 max-w-3xl mx-auto">
+            <p className="text-sm text-gray-500 text-center mb-8 uppercase tracking-wider font-semibold">
+              Testing Across Frontier AI Models
+            </p>
+            <div className="flex items-center justify-center gap-12 flex-wrap">
+              {['openai', 'anthropic', 'google-ai', 'perplexity', 'mistral'].map((model) => (
+                <div key={model} className="flex flex-col items-center opacity-70 hover:opacity-100 transition-opacity">
+                  <div className="w-32 h-32 flex items-center justify-center">
+                    <img
+                      src={`/logos/${model === 'openai' ? 'OpenAI' : model === 'anthropic' ? 'Anthropic' : model === 'google-ai' ? 'Google' : model === 'perplexity' ? 'Perplexity AI' : 'Mistral ai'} logo 200 x 80.png`}
+                      alt={`${model} logo`}
+                      className="max-w-full max-h-full object-contain grayscale hover:grayscale-0 transition-all"
+                    />
+                  </div>
+                  <span className="text-xs text-gray-400 mt-2">
+                    {model === 'openai' ? 'ChatGPT' : model === 'anthropic' ? 'Claude' : model === 'google-ai' ? 'Gemini' : model === 'perplexity' ? 'Perplexity' : 'Mistral'}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Minimal Trust Signals */}

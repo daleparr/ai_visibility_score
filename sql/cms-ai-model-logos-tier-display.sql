@@ -30,9 +30,14 @@ INSERT INTO client_logos (
  ARRAY['homepage_models', 'evaluation_report_models'])
 
 ON CONFLICT (logo_slug) DO UPDATE SET
+  file_url = EXCLUDED.file_url,
+  file_type = EXCLUDED.file_type,
+  width = EXCLUDED.width,
+  height = EXCLUDED.height,
   category = 'ai_model',
   usage_locations = EXCLUDED.usage_locations,
-  is_active = EXCLUDED.is_active;
+  is_active = EXCLUDED.is_active,
+  updated_at = NOW();
 
 -- =============================================================================
 -- AI Model Display Rules (Which models shown per tier)
