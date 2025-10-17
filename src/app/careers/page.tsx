@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Briefcase, MapPin, Clock, DollarSign, ArrowRight } from 'lucide-react';
+import { Briefcase, MapPin, Clock, DollarSign, ArrowRight, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface JobPosting {
@@ -52,27 +52,57 @@ export default function CareersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Navigation Header */}
+      <header className="border-b bg-white sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center space-x-2">
+              <Brain className="h-8 w-8 text-brand-600" />
+              <span className="text-xl md:text-2xl font-bold gradient-text">AIDI</span>
+            </Link>
+            
+            <nav className="hidden md:flex items-center space-x-6">
+              <Link href="/" className="text-gray-600 hover:text-brand-600 transition-colors">
+                Home
+              </Link>
+              <Link href="/methodology" className="text-gray-600 hover:text-brand-600 transition-colors">
+                Methodology
+              </Link>
+              <Link href="/blog" className="text-gray-600 hover:text-brand-600 transition-colors">
+                Blog
+              </Link>
+              <Link href="/careers" className="text-brand-600 font-medium">
+                Careers
+              </Link>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/evaluate">Get Your Score</Link>
+              </Button>
+            </nav>
+          </div>
+        </div>
+      </header>
+      
+      {/* Hero Header */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 py-16">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+        <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
+          <h1 className="text-3xl md:text-5xl font-bold mb-4">
             Join the AIDI Team
           </h1>
-          <p className="text-xl md:text-2xl text-blue-100 max-w-3xl">
+          <p className="text-lg md:text-2xl text-blue-100 max-w-3xl">
             Help us build the benchmark standard for AEO intelligence.
             Work with data scientists, executives, and industry leaders.
           </p>
-          <div className="mt-8 flex items-center gap-6 text-sm">
+          <div className="mt-8 flex flex-wrap items-center gap-4 md:gap-6 text-sm">
             <div>
-              <div className="text-2xl font-bold">{jobs.length}</div>
+              <div className="text-2xl md:text-3xl font-bold">{jobs.length}</div>
               <div className="text-blue-200">Open Positions</div>
             </div>
             <div>
-              <div className="text-2xl font-bold">{departments.length}</div>
+              <div className="text-2xl md:text-3xl font-bold">{departments.length}</div>
               <div className="text-blue-200">Departments</div>
             </div>
             <div>
-              <div className="text-2xl font-bold">Remote OK</div>
+              <div className="text-2xl md:text-3xl font-bold">Remote OK</div>
               <div className="text-blue-200">Work From Anywhere</div>
             </div>
           </div>

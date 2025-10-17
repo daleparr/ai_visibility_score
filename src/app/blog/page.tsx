@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Calendar, Clock, Tag, ArrowRight } from 'lucide-react';
+import { Calendar, Clock, Tag, ArrowRight, Brain } from 'lucide-react';
 import { format } from 'date-fns';
+import { Button } from '@/components/ui/button';
 
 interface BlogPost {
   id: string;
@@ -57,7 +58,37 @@ export default function BlogPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Navigation Header */}
+      <header className="border-b bg-white sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center space-x-2">
+              <Brain className="h-8 w-8 text-brand-600" />
+              <span className="text-xl md:text-2xl font-bold gradient-text">AIDI</span>
+            </Link>
+            
+            <nav className="hidden md:flex items-center space-x-6">
+              <Link href="/" className="text-gray-600 hover:text-brand-600 transition-colors">
+                Home
+              </Link>
+              <Link href="/methodology" className="text-gray-600 hover:text-brand-600 transition-colors">
+                Methodology
+              </Link>
+              <Link href="/blog" className="text-brand-600 font-medium">
+                Blog
+              </Link>
+              <Link href="/reports" className="text-gray-600 hover:text-brand-600 transition-colors">
+                Industry Reports
+              </Link>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/evaluate">Get Your Score</Link>
+              </Button>
+            </nav>
+          </div>
+        </div>
+      </header>
+      
+      {/* Page Header */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <h1 className="text-4xl font-bold mb-4">AIDI Blog</h1>
