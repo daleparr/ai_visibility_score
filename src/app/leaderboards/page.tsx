@@ -441,7 +441,7 @@ export default function LeaderboardsPage() {
             
             <Button
               className="h-16 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white"
-              onClick={() => window.location.href = '/evaluate?mode=comparison'}
+              onClick={() => window.location.href = '/#benchmark'}
             >
               <div className="text-center">
                 <GitCompare className="h-5 w-5 mx-auto mb-1" />
