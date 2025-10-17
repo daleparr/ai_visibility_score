@@ -12,20 +12,21 @@ INSERT INTO client_logos (
 ) VALUES
 
 -- AI Model Labs (Tier-based visibility)
--- Using actual PNG filenames with URL encoding for spaces
-('OpenAI', 'openai', '/logos/OpenAI%20logo%20200%20x%2080.png', 'png', 200, 80, 'OpenAI logo', 'ai_model', true, 1, 
+-- IMPORTANT: File paths must match EXACTLY as they appear in /public/logos/
+-- Current files have spaces - we use them directly (Next.js/browsers handle spaces in public folder)
+('OpenAI', 'openai', '/logos/OpenAI logo 200 x 80.png', 'png', 200, 80, 'OpenAI logo', 'ai_model', true, 1, 
  ARRAY['homepage_models', 'evaluation_report_models']),
 
-('Anthropic', 'anthropic', '/logos/Anthropic%20logo%20200%20x%2080.png', 'png', 200, 80, 'Anthropic logo', 'ai_model', true, 2,
+('Anthropic', 'anthropic', '/logos/Anthropic logo 200 x 80.png', 'png', 200, 80, 'Anthropic logo', 'ai_model', true, 2,
  ARRAY['homepage_models', 'evaluation_report_models']),
 
-('Google AI', 'google-ai', '/logos/Google%20logo%20200%20x%2080.png', 'png', 200, 80, 'Google AI logo', 'ai_model', true, 3,
+('Google AI', 'google-ai', '/logos/Google logo 200 x 80.png', 'png', 200, 80, 'Google AI logo', 'ai_model', true, 3,
  ARRAY['homepage_models', 'evaluation_report_models']),
 
-('Perplexity', 'perplexity', '/logos/Perplexity%20AI%20logo%20200%20x%2080.png', 'png', 200, 80, 'Perplexity logo', 'ai_model', true, 4,
+('Perplexity', 'perplexity', '/logos/Perplexity AI logo 200 x 80.png', 'png', 200, 80, 'Perplexity logo', 'ai_model', true, 4,
  ARRAY['homepage_models', 'evaluation_report_models']),
 
-('Mistral AI', 'mistral', '/logos/Mistral%20ai%20logo%20200%20x%2080.png', 'png', 200, 80, 'Mistral AI logo', 'ai_model', true, 5,
+('Mistral AI', 'mistral', '/logos/Mistral ai logo 200 x 80.png', 'png', 200, 80, 'Mistral AI logo', 'ai_model', true, 5,
  ARRAY['homepage_models', 'evaluation_report_models'])
 
 ON CONFLICT (logo_slug) DO UPDATE SET
