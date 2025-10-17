@@ -16,7 +16,7 @@ export const revalidate = 0;
 
 export default async function HomePage() {
   // Fetch CMS content for hero section
-  let heroHeadline, heroSubhead, heroDescription, trustIndicators, pricingTiers, footerAbout
+  let heroHeadline, heroSubhead, heroDescription, trustIndicators, pricingTiers, footerAbout, threePillars
   
   try {
     heroHeadline = await contentManager.getBlockByKey('homepage', 'hero_headline')
@@ -25,6 +25,7 @@ export default async function HomePage() {
     trustIndicators = await contentManager.getBlockByKey('homepage', 'trust_indicators')
     pricingTiers = await contentManager.getBlockByKey('homepage', 'pricing_tiers')
     footerAbout = await contentManager.getBlockByKey('homepage', 'footer_about')
+    threePillars = await contentManager.getBlockByKey('homepage', 'three_pillars_cards')
   } catch (error) {
     console.error('Error loading CMS content:', error)
     // Fallback to defaults if CMS not available yet
@@ -205,80 +206,55 @@ export default async function HomePage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">
-              Three Pillars of AI Visibility
+              {threePillars?.heading || 'Three Pillars of AI Visibility'}
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Our evaluation framework tests how AI models discover, understand, and recommend your brand
+              {threePillars?.subheading || 'Our evaluation framework tests how AI models discover, understand, and recommend your brand'}
             </p>
           </div>
           
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Infrastructure Pillar */}
-            <Card className="pillar-infrastructure">
-              <CardHeader>
-                <div className="flex items-center space-x-2">
-                  <Zap className="h-6 w-6 text-brand-600" />
-                  <CardTitle>Infrastructure & Machine Readability</CardTitle>
-                </div>
-                <CardDescription>
-                  Can AI parse and understand your brand's digital footprint?
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm">
-                  <li>• Schema & Structured Data Coverage</li>
-                  <li>• Semantic Clarity & Disambiguation</li>
-                  <li>• Ontologies & Taxonomy Structure</li>
-                  <li>• Knowledge Graph Presence</li>
-                  <li>• LLM Readability Optimization</li>
-                  <li>• Conversational Copy Analysis</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* Perception Pillar */}
-            <Card className="pillar-perception">
-              <CardHeader>
-                <div className="flex items-center space-x-2">
-                  <Search className="h-6 w-6 text-success-600" />
-                  <CardTitle>Perception & Reputation</CardTitle>
-                </div>
-                <CardDescription>
-                  Can AI explain why your brand matters?
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm">
-                  <li>• Geographic Visibility Testing</li>
-                  <li>• Citation Strength Analysis</li>
-                  <li>• AI Response Quality Assessment</li>
-                  <li>• Sentiment & Trust Signals</li>
-                  <li>• Brand Heritage Recognition</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* Commerce Pillar */}
-            <Card className="pillar-commerce">
-              <CardHeader>
-                <div className="flex items-center space-x-2">
-                  <BarChart3 className="h-6 w-6 text-warning-600" />
-                  <CardTitle>Commerce & Customer Experience</CardTitle>
-                </div>
-                <CardDescription>
-                  Can AI recommend and transact with confidence?
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm">
-                  <li>• Hero Product Identification</li>
-                  <li>• Product Recommendation Accuracy</li>
-                  <li>• Shipping & Delivery Clarity</li>
-                  <li>• Return Policy Accessibility</li>
-                  <li>• Competitive Positioning</li>
-                </ul>
-              </CardContent>
-            </Card>
+            {(threePillars?.pillars || [
+              {
+                number: "1", icon: "🏗️", title: "Infrastructure & Machine Readability",
+                subtitle: "Can AI parse and understand your brand's digital footprint?",
+                features: ["Schema & Structured Data Coverage", "Semantic Clarity & Disambiguation", "Ontologies & Taxonomy Structure", "Knowledge Graph Presence", "LLM Readability Optimization", "Conversational Copy Analysis"]
+              },
+              {
+                number: "2", icon: "🔍", title: "Perception & Reputation",
+                subtitle: "Can AI explain why your brand matters?",
+                features: ["Geographic Visibility Testing", "Citation Strength Analysis", "AI Response Quality Assessment", "Sentiment & Trust Signals", "Brand Heritage Recognition"]
+              },
+              {
+                number: "3", icon: "🛒", title: "Commerce & Customer Experience",
+                subtitle: "Can AI recommend and transact with confidence?",
+                features: ["Hero Product Identification", "Product Recommendation Accuracy", "Shipping & Delivery Clarity", "Return Policy Accessibility", "Competitive Positioning"]
+              }
+            ]).map((pillar: any, idx: number) => (
+              <Card key={idx} className={`pillar-${idx === 0 ? 'infrastructure' : idx === 1 ? 'perception' : 'commerce'}`}>
+                <CardHeader>
+                  <div className="flex items-center space-x-2">
+                    <div className="text-3xl">{pillar.icon}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-brand-600">{pillar.number}</span>
+                        <CardTitle className="text-lg">{pillar.title}</CardTitle>
+                      </div>
+                      <CardDescription className="text-sm mt-1">
+                        {pillar.subtitle}
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm">
+                    {pillar.features.map((feature: string, fIdx: number) => (
+                      <li key={fIdx}>• {feature}</li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>

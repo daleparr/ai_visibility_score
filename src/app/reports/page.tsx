@@ -119,21 +119,18 @@ export default async function IndustryReportsPage() {
 
         {/* Value Propositions */}
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-16">
-          <ValueProp
-            icon="📊"
-            title="Brand Leaderboards"
-            description="See how your brand ranks in AI recommendations vs. competitors. Track month-over-month changes."
-          />
-          <ValueProp
-            icon="🎯"
-            title="Emerging Threats"
-            description="Spot new competitors gaining AI visibility before they dominate your market."
-          />
-          <ValueProp
-            icon="💡"
-            title="Actionable Insights"
-            description="Get specific recommendations to improve your brand's AI discoverability."
-          />
+          {(valueProps?.props || [
+            {icon: "📊", title: "Brand Leaderboards", description: "See how your brand ranks in AI recommendations vs. competitors. Track month-over-month changes."},
+            {icon: "🎯", title: "Emerging Threats", description: "Spot new competitors gaining AI visibility before they dominate your market."},
+            {icon: "💡", title: "Actionable Insights", description: "Get specific recommendations to improve your brand's AI discoverability."}
+          ]).map((prop: any, idx: number) => (
+            <ValueProp
+              key={idx}
+              icon={prop.icon}
+              title={prop.title}
+              description={prop.description}
+            />
+          ))}
         </div>
 
         {/* Sectors Grid */}
