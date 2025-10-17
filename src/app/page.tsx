@@ -33,7 +33,7 @@ export default async function HomePage() {
 
   // Otherwise render full homepage (existing design)
   // Fetch CMS content for hero section
-  let heroHeadline, heroSubhead, heroDescription, trustIndicators, pricingTiers, footerAbout, threePillars
+  let heroHeadline, heroSubhead, heroDescription, trustIndicators, pricingTiers, footerAbout, threePillars, evaluationFormConfig
   
   try {
     heroHeadline = await contentManager.getBlockByKey('homepage', 'hero_headline')
@@ -43,6 +43,7 @@ export default async function HomePage() {
     pricingTiers = await contentManager.getBlockByKey('homepage', 'pricing_tiers')
     footerAbout = await contentManager.getBlockByKey('homepage', 'footer_about')
     threePillars = await contentManager.getBlockByKey('homepage', 'three_pillars_cards')
+    evaluationFormConfig = await contentManager.getBlockByKey('homepage', 'evaluation_form_config')
   } catch (error) {
     console.error('Error loading CMS content:', error)
     // Fallback to defaults if CMS not available yet
@@ -89,7 +90,7 @@ export default async function HomePage() {
             )}
 
             {/* URL Input Section - Interactive Client Component */}
-            <HomePageInteractive />
+            <HomePageInteractive config={evaluationFormConfig} />
 
             {/* Statistical Rigor Indicators */}
             <div className="flex flex-wrap justify-center items-center gap-6 text-sm text-gray-500 mb-12">

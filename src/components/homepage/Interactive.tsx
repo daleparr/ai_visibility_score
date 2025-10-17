@@ -8,7 +8,28 @@ import { Card } from '@/components/ui/card'
 import { Globe, ArrowRight, CheckCircle } from 'lucide-react'
 import { safeHref } from '@/lib/url'
 
-export function HomePageInteractive() {
+interface EvaluationFormConfig {
+  input?: {
+    placeholder?: string;
+    icon?: string;
+  };
+  button?: {
+    text?: string;
+    text_analyzing?: string;
+  };
+  subtext?: {
+    items?: Array<{text: string}>;
+  };
+  tier_buttons?: Array<{
+    tier_key: string;
+    label: string;
+    price: string;
+    subtitle: string;
+    color?: string;
+  }>;
+}
+
+export function HomePageInteractive({ config }: { config?: EvaluationFormConfig }) {
   const [url, setUrl] = useState('')
   const [tier, setTier] = useState<'quick-scan' | 'full-audit' | 'enterprise'>('quick-scan')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -82,7 +103,7 @@ export function HomePageInteractive() {
             <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input
               type="url"
-              placeholder="Enter your website URL (e.g., example.com)"
+              placeholder={config?.input?.placeholder || "Enter your website URL (e.g., example.com)"}
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyPress={handleKeyPress}
@@ -96,7 +117,7 @@ export function HomePageInteractive() {
             disabled={!url || isAnalyzing}
             className="h-12 px-8 text-lg"
           >
-            {isAnalyzing ? 'Analyzing...' : 'Get Benchmark Score'}
+            {isAnalyzing ? (config?.button?.text_analyzing || 'Analyzing...') : (config?.button?.text || 'Get Benchmark Score')}
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
