@@ -1,7 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
+import { jobManager } from '@/lib/cms/cms-client';
 import { db } from '@/lib/db';
 import { sql } from 'drizzle-orm';
+
+// GET /api/cms/jobs/[id] - Get single job posting by slug or ID
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    // The 'id' parameter is actually a slug from the URL (e.g., /careers/ai-discoverability-analyst)
+    const job = await jobManager.getJob(params.id);
+
+    if (!job) {
+      return NextResponse.json(
+        { error: 'Job posting not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ job });
+  } catch (error) {
+    console.error('Failed to get job:', error);
+    return NextResponse.json(
+      { error: 'Failed to load job posting' },
+      { status: 500 }
+    );
+  }
+}
 
 // PUT /api/cms/jobs/[id] - Update job posting
 export async function PUT(
