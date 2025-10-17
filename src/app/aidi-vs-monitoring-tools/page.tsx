@@ -139,20 +139,24 @@ export default async function PositioningPage() {
           </div>
           
           {/* CTA Section */}
-          <div className="bg-gradient-to-r from-brand-600 to-purple-600 text-white rounded-2xl p-12 text-center">
-            <h2 className="text-3xl font-bold mb-4">
+          <div className="mt-16 bg-gradient-to-r from-brand-600 to-purple-600 text-white rounded-2xl p-8 md:p-12 text-center">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">
               Ready to Add Benchmark Intelligence to Your AEO Stack?
             </h2>
-            <p className="text-xl text-brand-100 mb-8 max-w-2xl mx-auto">
+            <p className="text-base md:text-xl text-brand-100 mb-6 md:mb-8 max-w-2xl mx-auto px-4">
               Get the strategic metrics you need for board presentations.
               Complement with monitoring tools for ongoing visibility.
             </p>
-            <div className="flex justify-center gap-4">
-              <Button size="lg" variant="secondary">
-                Get Your Benchmark Score →
+            <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-4 px-4">
+              <Button size="lg" variant="secondary" className="w-full sm:w-auto" asChild>
+                <Link href="/evaluate">
+                  Get Your Benchmark Score →
+                </Link>
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
-                View Sample Report
+              <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white/10" asChild>
+                <Link href="/reports">
+                  View Sample Report
+                </Link>
               </Button>
             </div>
           </div>

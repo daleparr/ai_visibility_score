@@ -30,30 +30,34 @@ export default async function HomePage() {
       <HomePageHeader />
 
       {/* Hero Section with URL Input - CMS Driven */}
-      <section className="py-16 md:py-24 gradient-bg">
+      <section className="py-12 md:py-24 gradient-bg">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <Badge variant="secondary" className="mb-6">
+            <Badge variant="secondary" className="mb-4 md:mb-6">
               ✓ Available Now - No Waitlist
             </Badge>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-balance">
+            
+            {/* Title - Single Row on Mobile */}
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 md:mb-6 leading-tight">
               {heroHeadline?.text || 'The Benchmark Standard for AEO Intelligence'}
             </h1>
-            <p className="text-xl font-semibold text-gray-700 mb-4 max-w-2xl mx-auto">
+            
+            <p className="text-lg md:text-xl font-semibold text-gray-700 mb-3 md:mb-4 max-w-2xl mx-auto px-2">
               {heroSubhead?.text || 'Scientifically rigorous. Statistically validated. Board-ready insights.'}
             </p>
+            
             <div 
-              className="text-lg text-gray-600 mb-6 max-w-2xl mx-auto"
+              className="text-base md:text-lg text-gray-600 mb-6 max-w-2xl mx-auto px-2"
               dangerouslySetInnerHTML={{ 
                 __html: heroDescription?.html || '<p>While monitoring tools provide quick feedback, AIDI delivers the systematic benchmarking enterprises need for strategic decisions.</p>' 
               }}
             />
             
-            {/* Trust Indicators - CMS Driven */}
+            {/* Trust Indicators - 2 Rows on Mobile, 1 Row on Desktop */}
             {trustIndicators?.items && (
-              <div className="flex flex-wrap justify-center gap-4 mb-8">
+              <div className="flex flex-wrap justify-center gap-2 md:gap-4 mb-8 max-w-3xl mx-auto">
                 {trustIndicators.items.map((item: string, idx: number) => (
-                  <div key={idx} className="flex items-center text-sm text-gray-700 bg-white/80 px-4 py-2 rounded-full border border-brand-200">
+                  <div key={idx} className="flex items-center text-xs md:text-sm text-gray-700 bg-white/80 px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-brand-200 whitespace-nowrap">
                     {item}
                   </div>
                 ))}

@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 
+export const dynamic = 'force-dynamic'
+
 export default async function MethodologyPage() {
   // Fetch CMS content
   const page = await contentManager.getPage('methodology')
@@ -179,20 +181,24 @@ export default async function MethodologyPage() {
           )}
           
           {/* CTA Section */}
-          <div className="bg-brand-600 text-white rounded-2xl p-12 text-center">
-            <h2 className="text-3xl font-bold mb-4">
+          <div className="mt-16 bg-brand-600 text-white rounded-2xl p-8 md:p-12 text-center">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">
               Ready for Benchmark-Grade AEO Intelligence?
             </h2>
-            <p className="text-xl text-brand-100 mb-8 max-w-2xl mx-auto">
+            <p className="text-base md:text-xl text-brand-100 mb-6 md:mb-8 max-w-2xl mx-auto px-4">
               Our peer-reviewed methodology ensures results you can defend to boards, 
               present to CFOs, and rely on for strategic investment.
             </p>
-            <div className="flex justify-center gap-4">
-              <Button size="lg" variant="secondary">
-                Get Your Benchmark Score →
+            <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-4 px-4">
+              <Button size="lg" variant="secondary" className="w-full sm:w-auto" asChild>
+                <Link href="/evaluate">
+                  Get Your Benchmark Score →
+                </Link>
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
-                View Sample Report
+              <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white/10" asChild>
+                <Link href="/reports">
+                  View Sample Report
+                </Link>
               </Button>
             </div>
           </div>

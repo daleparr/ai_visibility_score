@@ -71,26 +71,30 @@ export default async function FAQPage() {
           ))}
           
           {/* Still Have Questions CTA */}
-          <div className="bg-brand-50 border-l-4 border-brand-500 p-8 rounded-r-xl mt-16">
-            <h3 className="text-2xl font-bold mb-4 text-brand-900">Still have questions?</h3>
-            <p className="text-gray-700 mb-6">
+          <div className="bg-brand-50 border-l-4 border-brand-500 p-6 md:p-8 rounded-r-xl mt-16">
+            <h3 className="text-xl md:text-2xl font-bold mb-4 text-brand-900">Still have questions?</h3>
+            <p className="text-gray-700 mb-6 text-sm md:text-base">
               We're here to help. Our team includes data scientists, AEO strategists, 
               and former Fortune 500 executives who understand your challenges.
             </p>
             
-            <div className="flex flex-wrap gap-4">
-              <Button variant="outline" className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                Email: hello@aidi.com
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 md:gap-4">
+              <Button variant="outline" className="flex items-center justify-center gap-2 w-full sm:w-auto" asChild>
+                <a href="mailto:hello@aidi.com">
+                  <Mail className="h-4 w-4" />
+                  <span className="text-sm md:text-base">hello@aidi.com</span>
+                </a>
               </Button>
-              <Button variant="outline" className="flex items-center gap-2">
-                <MessageCircle className="h-4 w-4" />
-                Book a Consultation
+              <Button variant="outline" className="flex items-center justify-center gap-2 w-full sm:w-auto" asChild>
+                <Link href="/evaluate">
+                  <MessageCircle className="h-4 w-4" />
+                  <span className="text-sm md:text-base">Get Started</span>
+                </Link>
               </Button>
-              <Button variant="outline" className="flex items-center gap-2" asChild>
+              <Button variant="outline" className="flex items-center justify-center gap-2 w-full sm:w-auto" asChild>
                 <Link href="/methodology">
                   <Book className="h-4 w-4" />
-                  Read Methodology
+                  <span className="text-sm md:text-base">Read Methodology</span>
                 </Link>
               </Button>
             </div>
