@@ -1,12 +1,15 @@
 import { contentManager } from '@/lib/cms/cms-client'
-import { Brain, Mail, Book, MessageCircle } from 'lucide-react'
+import { Brain, Mail, Book, MessageCircle, HelpCircle } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { FAQAccordion } from '@/components/faq/Accordion'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+
+// Disable caching so CMS changes appear immediately
+export const revalidate = 0;
 
 export default async function FAQPage() {
   const page = await contentManager.getPage('faq')
-  const categories = await contentManager.getBlockByKey('faq', 'faq_categories')
+  const faqs = await contentManager.getBlockByKey('faq', 'faq_items')
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
@@ -51,24 +54,34 @@ export default async function FAQPage() {
             Clear answers about AIDI's methodology, positioning, and strategic value.
           </p>
           
-          {/* FAQ Categories */}
-          {categories?.categories?.map((category: any, catIdx: number) => (
-            <div key={catIdx} className="mb-16">
-              <h2 className="text-3xl font-bold mb-8 text-gray-900">
-                {category.name}
-              </h2>
-              
-              <div className="space-y-4">
-                {category.questions?.map((q: any) => (
-                  <FAQAccordion 
-                    key={q.id}
-                    question={q.question}
-                    answer={q.answer}
+          {/* FAQ Grid - 3 columns x 4 rows = 12 questions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+            {faqs?.questions?.map((faq: any, idx: number) => (
+              <Card key={idx} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-start gap-3">
+                    <HelpCircle className="h-6 w-6 text-brand-600 mt-1 flex-shrink-0" />
+                    <CardTitle className="text-lg leading-tight">{faq.question}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div 
+                    className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: faq.answer }}
                   />
-                ))}
-              </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          
+          {/* Show placeholder if no FAQs in CMS */}
+          {(!faqs?.questions || faqs.questions.length === 0) && (
+            <div className="text-center py-12 bg-white rounded-xl border">
+              <HelpCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-600">FAQ questions will appear here once added to CMS</p>
+              <p className="text-sm text-gray-500 mt-2">Go to CMS → Page Content → FAQ to add questions</p>
             </div>
-          ))}
+          )}
           
           {/* Still Have Questions CTA */}
           <div className="bg-brand-50 border-l-4 border-brand-500 p-6 md:p-8 rounded-r-xl mt-16">
