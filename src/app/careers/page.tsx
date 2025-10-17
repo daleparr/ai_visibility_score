@@ -32,12 +32,12 @@ export default function CareersPage() {
 
   const loadJobs = async () => {
     try {
-      // Fetch job postings from CMS content_blocks
-      const response = await fetch('/api/cms/content?page=careers&block=job_postings');
+      // Fetch job postings from job_postings table
+      const response = await fetch('/api/cms/jobs?status=open');
       const data = await response.json();
       
-      if (data?.content?.positions) {
-        const positions = data.content.positions;
+      if (data?.jobs) {
+        const positions = data.jobs;
         setJobs(positions);
         
         // Extract unique departments
@@ -91,9 +91,11 @@ export default function CareersPage() {
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <div className="max-w-7xl mx-auto px-4 py-12 md:py-16">
           <h1 className="text-3xl md:text-5xl font-bold mb-4">
-            Join the AIDI Team
+            Join Us: Building the Future of AI Brand Intelligence.
           </h1>
           <p className="text-lg md:text-2xl text-blue-100 max-w-3xl">
+            We've Built AIDI—The World's First AI Discoverability Index
+            AIDI is on a mission to become the Bloomberg of AI visibility—delivering audit-grade intelligence on how brands appear (or disappear) in conversational AI platforms. We're defining a new category and establishing the benchmark standard for an industry worth billions.
             Help us maintain the benchmark standard for AEO intelligence.
             Work with data scientists, executives, and industry leaders.
           </p>
