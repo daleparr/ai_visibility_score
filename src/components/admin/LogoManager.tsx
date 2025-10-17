@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { LogoCollectionManager } from './LogoCollectionManager';
 import {
   Upload,
   Image as ImageIcon,
@@ -14,7 +15,8 @@ import {
   Edit,
   Trash2,
   ExternalLink,
-  Info
+  Info,
+  Layers
 } from 'lucide-react';
 
 interface ClientLogo {
@@ -36,7 +38,7 @@ interface ClientLogo {
 export function LogoManager() {
   const [logos, setLogos] = useState<ClientLogo[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [view, setView] = useState<'list' | 'upload'>('list');
+  const [view, setView] = useState<'list' | 'upload' | 'collections'>('list');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -94,10 +96,16 @@ export function LogoManager() {
             <h2 className="text-2xl font-bold">Brand Logo Management</h2>
             <p className="text-gray-600 mt-1">Manage client/brand logos for "Trusted by" sections</p>
           </div>
-          <Button onClick={() => setView('upload')}>
-            <Upload className="h-4 w-4 mr-2" />
-            Upload Logo
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setView('collections')}>
+              <Layers className="h-4 w-4 mr-2" />
+              Logo Collections
+            </Button>
+            <Button onClick={() => setView('upload')}>
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Logo
+            </Button>
+          </div>
         </div>
 
         {/* Upload Specs Info */}
@@ -220,6 +228,17 @@ export function LogoManager() {
 
   if (view === 'upload') {
     return <LogoUploader onComplete={() => { loadLogos(); setView('list'); }} onCancel={() => setView('list')} />;
+  }
+
+  if (view === 'collections') {
+    return (
+      <div className="space-y-4">
+        <Button variant="outline" onClick={() => setView('list')}>
+          ← Back to Logo List
+        </Button>
+        <LogoCollectionManager />
+      </div>
+    );
   }
 
   return null;
