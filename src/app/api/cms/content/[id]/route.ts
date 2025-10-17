@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { sql } from 'drizzle-orm';
 import { getServerSession } from 'next-auth/next';
 
 // PUT /api/cms/content/[id] - Update a content block by ID
