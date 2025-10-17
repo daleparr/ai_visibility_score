@@ -28,7 +28,11 @@ export async function PUT(
     
     const { content, is_visible } = body;
     const blockId = params.id;
-    const userId = (session.user as any).id || (session.user as any).email || 'system';
+    
+    // Get user ID - must be UUID or NULL (email won't work for UUID column)
+    const rawUserId = (session.user as any).id || (session.user as any).email;
+    const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawUserId);
+    const userId = isValidUUID ? rawUserId : null;
 
     // Validate content
     if (!content) {
@@ -36,7 +40,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Content is required' }, { status: 400 });
     }
 
-    console.log('[CMS Save] Preparing update - blockId:', blockId, 'userId:', userId);
+    console.log('[CMS Save] Preparing update - blockId:', blockId, 'userId:', userId, 'isUUID:', isValidUUID);
     
     // First, check if block exists
     const checkResult = await db.execute(

@@ -164,11 +164,11 @@ export function AgentControlPanel() {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-600">Today:</span>
-                <span className="font-semibold">${costStats.today_spend.toFixed(2)} / ${costStats.daily_budget}</span>
+                <span className="font-semibold">${Number(costStats.today_spend || 0).toFixed(2)} / ${costStats.daily_budget}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">This Month:</span>
-                <span className="font-semibold">${costStats.month_spend.toFixed(2)} / ${costStats.monthly_budget}</span>
+                <span className="font-semibold">${Number(costStats.month_spend || 0).toFixed(2)} / ${costStats.monthly_budget}</span>
               </div>
               <div className="mt-2 pt-2 border-t">
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -254,19 +254,19 @@ export function AgentControlPanel() {
                     <div>
                       <div className="text-gray-500 text-xs mb-1">Cost/Eval</div>
                       <div className="font-semibold text-blue-600">
-                        ${model.estimated_cost_per_evaluation.toFixed(2)}
+                        ${Number(model.estimated_cost_per_evaluation || 0).toFixed(2)}
                       </div>
                     </div>
                     <div>
                       <div className="text-gray-500 text-xs mb-1">Input/1K</div>
                       <div className="font-semibold">
-                        ${model.cost_per_1k_input_tokens.toFixed(4)}
+                        ${Number(model.cost_per_1k_input_tokens || 0).toFixed(4)}
                       </div>
                     </div>
                     <div>
                       <div className="text-gray-500 text-xs mb-1">Output/1K</div>
                       <div className="font-semibold">
-                        ${model.cost_per_1k_output_tokens.toFixed(4)}
+                        ${Number(model.cost_per_1k_output_tokens || 0).toFixed(4)}
                       </div>
                     </div>
                     <div>
@@ -353,7 +353,7 @@ export function AgentControlPanel() {
                               >
                                 {models.filter(m => m.is_active).map((m) => (
                                   <option key={m.model_key} value={m.model_key}>
-                                    {m.model_name} (${m.estimated_cost_per_evaluation.toFixed(2)})
+                                    {m.model_name} (${Number(m.estimated_cost_per_evaluation || 0).toFixed(2)})
                                   </option>
                                 ))}
                               </select>
@@ -361,7 +361,7 @@ export function AgentControlPanel() {
                           )}
                           {agent.avg_cost_per_run > 0 && (
                             <span className="text-xs">
-                              💰 ${agent.avg_cost_per_run.toFixed(4)}/run
+                              💰 ${Number(agent.avg_cost_per_run || 0).toFixed(4)}/run
                             </span>
                           )}
                           {agent.avg_execution_time_ms > 0 && (
@@ -371,7 +371,7 @@ export function AgentControlPanel() {
                           )}
                           {agent.success_rate > 0 && (
                             <span className="text-xs">
-                              ✅ {agent.success_rate.toFixed(1)}%
+                              ✅ {Number(agent.success_rate || 0).toFixed(1)}%
                             </span>
                           )}
                         </div>
@@ -418,7 +418,7 @@ export function AgentControlPanel() {
             <div className="bg-white rounded-lg border p-6">
               <h4 className="font-semibold mb-4">Daily Budget</h4>
               <div className="text-3xl font-bold text-blue-600 mb-2">
-                ${costStats.today_spend.toFixed(2)}
+                ${Number(costStats.today_spend || 0).toFixed(2)}
               </div>
               <div className="text-sm text-gray-600 mb-3">
                 of ${costStats.daily_budget} limit
@@ -426,9 +426,9 @@ export function AgentControlPanel() {
               <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
                 <div 
                   className={`h-full transition-all ${
-                    (costStats.today_spend / costStats.daily_budget) > 0.8 ? 'bg-red-600' : 'bg-green-600'
+                    (Number(costStats.today_spend || 0) / Number(costStats.daily_budget || 1)) > 0.8 ? 'bg-red-600' : 'bg-green-600'
                   }`}
-                  style={{ width: `${Math.min((costStats.today_spend / costStats.daily_budget) * 100, 100)}%` }}
+                  style={{ width: `${Math.min((Number(costStats.today_spend || 0) / Number(costStats.daily_budget || 1)) * 100, 100)}%` }}
                 />
               </div>
             </div>
@@ -436,7 +436,7 @@ export function AgentControlPanel() {
             <div className="bg-white rounded-lg border p-6">
               <h4 className="font-semibold mb-4">Monthly Budget</h4>
               <div className="text-3xl font-bold text-blue-600 mb-2">
-                ${costStats.month_spend.toFixed(2)}
+                ${Number(costStats.month_spend || 0).toFixed(2)}
               </div>
               <div className="text-sm text-gray-600 mb-3">
                 of ${costStats.monthly_budget} limit
@@ -444,9 +444,9 @@ export function AgentControlPanel() {
               <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
                 <div 
                   className={`h-full transition-all ${
-                    (costStats.month_spend / costStats.monthly_budget) > 0.85 ? 'bg-red-600' : 'bg-blue-600'
+                    (Number(costStats.month_spend || 0) / Number(costStats.monthly_budget || 1)) > 0.85 ? 'bg-red-600' : 'bg-blue-600'
                   }`}
-                  style={{ width: `${Math.min((costStats.month_spend / costStats.monthly_budget) * 100, 100)}%` }}
+                  style={{ width: `${Math.min((Number(costStats.month_spend || 0) / Number(costStats.monthly_budget || 1)) * 100, 100)}%` }}
                 />
               </div>
             </div>
@@ -468,9 +468,9 @@ export function AgentControlPanel() {
                     </div>
                   </div>
                   <div className="text-sm font-semibold w-24 text-right">
-                    ${model.total_cost.toFixed(2)}
+                    ${Number(model.total_cost || 0).toFixed(2)}
                     <span className="text-xs text-gray-500 ml-1">
-                      ({((model.total_cost / costStats.month_spend) * 100).toFixed(0)}%)
+                      ({((Number(model.total_cost || 0) / Number(costStats.month_spend || 1)) * 100).toFixed(0)}%)
                     </span>
                   </div>
                 </div>
@@ -485,7 +485,7 @@ export function AgentControlPanel() {
               {costStats.by_agent?.map((agent: any) => (
                 <div key={agent.agent_key} className="flex justify-between">
                   <span>{agent.agent_name}</span>
-                  <span className="font-semibold">${agent.total_cost.toFixed(2)}</span>
+                  <span className="font-semibold">${Number(agent.total_cost || 0).toFixed(2)}</span>
                 </div>
               ))}
             </div>
