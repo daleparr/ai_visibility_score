@@ -8,6 +8,9 @@ import { contentManager } from '@/lib/cms/cms-client'
 import { HomePageInteractive } from '@/components/homepage/Interactive'
 import { HomePageHeader } from '@/components/homepage/Header'
 
+// Disable caching so CMS changes appear immediately
+export const revalidate = 0;
+
 export default async function HomePage() {
   // Fetch CMS content for hero section
   let heroHeadline, heroSubhead, heroDescription, trustIndicators, pricingTiers, footerAbout

@@ -411,7 +411,7 @@ function InvoiceCreator({
                 variant="outline"
                 onClick={() => addTierAsLineItem(tier.id)}
               >
-                {tier.tier_name} - £{tier.price_amount}
+                {tier.tier_name} - £{Number(tier.price_amount || 0)}
               </Button>
             ))}
           </div>

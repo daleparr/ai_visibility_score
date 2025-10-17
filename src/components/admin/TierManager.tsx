@@ -184,7 +184,7 @@ export function TierManager() {
                   <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
                     <span className="flex items-center gap-1">
                       <DollarSign className="h-4 w-4" />
-                      {tier.price_currency} {tier.price_amount.toFixed(2)}
+                      {tier.price_currency} {Number(tier.price_amount || 0).toFixed(2)}
                     </span>
                     <span>•</span>
                     <span>{tier.billing_period}</span>
