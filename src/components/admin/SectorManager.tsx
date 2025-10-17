@@ -150,14 +150,14 @@ export function SectorManager() {
                 <Switch checked={bundle.is_active} disabled />
               </div>
               <div className="text-2xl font-bold text-blue-600 my-2">
-                £{parseFloat(bundle.monthly_price || 0).toLocaleString()}
+                £{Number(bundle.monthly_price || 0).toLocaleString()}
                 <span className="text-sm text-gray-500 font-normal">/mo</span>
               </div>
               <div className="text-xs text-gray-600 space-y-1">
                 {bundle.sector_count && (
                   <div>Choose {bundle.sector_count} sectors</div>
                 )}
-                <div>£{parseFloat(bundle.price_per_sector || 0).toFixed(2)}/sector</div>
+                <div>£{Number(bundle.price_per_sector || 0).toFixed(2)}/sector</div>
                 <div className="text-green-600 font-medium">{bundle.value_proposition}</div>
               </div>
             </div>
