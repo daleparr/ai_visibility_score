@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Calendar, Clock, Tag, ArrowLeft, Brain } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { markdownToHtmlAdvanced } from '@/lib/markdown';
 
 interface BlogPost {
   id: string;
@@ -181,12 +182,11 @@ export default function BlogPostPage() {
             </div>
           )}
 
-          {/* Article Content - Simple pre-wrap display */}
-          <div className="prose prose-lg prose-slate max-w-none">
-            <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8' }}>
-              {post.content}
-            </div>
-          </div>
+          {/* Article Content - Rendered HTML from markdown */}
+          <div 
+            className="prose prose-lg prose-slate max-w-none"
+            dangerouslySetInnerHTML={{ __html: markdownToHtmlAdvanced(post.content) }}
+          />
 
           {/* Tags */}
           {post.tags && post.tags.length > 0 && (

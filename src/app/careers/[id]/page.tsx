@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Calendar, MapPin, Clock, DollarSign, Briefcase, ArrowLeft, Brain, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { markdownToHtmlAdvanced } from '@/lib/markdown';
 
 interface JobPosting {
   id: string;
@@ -161,34 +162,11 @@ export default function JobPostingPage() {
             </div>
           </div>
 
-          {/* Description */}
-          <div className="prose prose-lg max-w-none mb-8">
-            {job.description.split('\n\n').map((paragraph, idx) => {
-              if (paragraph.startsWith('# ')) {
-                return <h1 key={idx} className="text-3xl font-bold mt-8 mb-4">{paragraph.substring(2)}</h1>;
-              }
-              if (paragraph.startsWith('## ')) {
-                return <h2 key={idx} className="text-2xl font-bold mt-6 mb-3">{paragraph.substring(3)}</h2>;
-              }
-              if (paragraph.startsWith('**') && paragraph.endsWith('**')) {
-                return <h3 key={idx} className="text-xl font-semibold mt-4 mb-2">{paragraph.replace(/\*\*/g, '')}</h3>;
-              }
-              if (paragraph.startsWith('- ')) {
-                const items = paragraph.split('\n').filter(line => line.trim());
-                return (
-                  <ul key={idx} className="list-disc list-inside mb-4 space-y-1">
-                    {items.map((item, i) => (
-                      <li key={i}>{item.replace(/^-\s+/, '')}</li>
-                    ))}
-                  </ul>
-                );
-              }
-              if (paragraph.trim()) {
-                return <p key={idx} className="mb-4 leading-relaxed">{paragraph}</p>;
-              }
-              return null;
-            })}
-          </div>
+          {/* Description - Rendered HTML from markdown */}
+          <div 
+            className="prose prose-lg max-w-none mb-8"
+            dangerouslySetInnerHTML={{ __html: markdownToHtmlAdvanced(job.description) }}
+          />
 
           {/* Requirements */}
           {job.requirements && job.requirements.length > 0 && (

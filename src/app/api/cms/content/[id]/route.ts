@@ -19,19 +19,17 @@ export async function PUT(
     const blockId = params.id;
     const userId = (session.user as any).id || (session.user as any).email || 'system';
 
-    // Update the content block using raw query
-    const contentJson = JSON.stringify(content);
-    const visibleValue = is_visible !== undefined ? is_visible : true;
-    
-    await db.execute({
-      sql: `UPDATE content_blocks
-            SET content = $1::jsonb,
-                is_visible = $2,
-                updated_by = $3,
-                updated_at = NOW()
-            WHERE id = $4`,
-      args: [contentJson, visibleValue, userId, blockId]
-    });
+    // Update the content block using drizzle-orm sql template
+    await db.execute(
+      sql`
+        UPDATE content_blocks
+        SET content = ${JSON.stringify(content)}::jsonb,
+            is_visible = ${is_visible !== undefined ? is_visible : true},
+            updated_by = ${userId},
+            updated_at = NOW()
+        WHERE id = ${blockId}
+      `
+    );
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -49,7 +49,7 @@ export function BlogManager() {
   const loadData = async () => {
     try {
       const [postsRes, catsRes] = await Promise.all([
-        fetch('/api/cms/blog'),
+        fetch('/api/cms/blog?limit=100'), // Get all posts, not just 10
         fetch('/api/cms/blog/categories')
       ]);
       const postsData = await postsRes.json();
