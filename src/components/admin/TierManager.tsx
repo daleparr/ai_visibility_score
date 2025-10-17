@@ -28,6 +28,8 @@ interface PricingTier {
   is_active: boolean;
   is_visible_public: boolean;
   is_custom: boolean;
+  requires_auth: boolean;
+  access_level: 'public' | 'authenticated' | 'paid_only' | 'admin_only';
   badge_text?: string;
   description?: string;
   features: TierFeature[];
@@ -193,9 +195,32 @@ export function TierManager() {
                   {tier.description && (
                     <p className="text-gray-700 text-sm">{tier.description}</p>
                   )}
+                  
+                  {/* Access Level Indicator */}
+                  <div className="mt-2 flex items-center gap-2 text-xs">
+                    {tier.is_visible_public ? (
+                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded">
+                        🌐 Public
+                      </span>
+                    ) : (
+                      <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded">
+                        🔒 Hidden from public
+                      </span>
+                    )}
+                    {tier.requires_auth && (
+                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                        🔐 Requires login
+                      </span>
+                    )}
+                    {tier.access_level === 'paid_only' && (
+                      <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded">
+                        💎 Paid customers only
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col items-end gap-2">
                   <div className="flex items-center gap-2">
                     <Label className="text-sm">Active</Label>
                     <Switch
@@ -288,7 +313,9 @@ function TierEditor({
     badge_text: tier?.badge_text || '',
     description: tier?.description || '',
     is_custom: tier?.is_custom || false,
-    is_visible_public: tier?.is_visible_public !== false
+    is_visible_public: tier?.is_visible_public !== false,
+    requires_auth: tier?.requires_auth || false,
+    access_level: tier?.access_level || 'public'
   });
 
   const [selectedFeatures, setSelectedFeatures] = useState<Set<string>>(
@@ -396,7 +423,14 @@ function TierEditor({
                 checked={formData.is_visible_public}
                 onCheckedChange={(checked) => setFormData({ ...formData, is_visible_public: checked })}
               />
-              <span className="text-sm">Visible on public pricing page</span>
+              <span className="text-sm">🌐 Visible on public pricing page</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Switch
+                checked={formData.requires_auth}
+                onCheckedChange={(checked) => setFormData({ ...formData, requires_auth: checked })}
+              />
+              <span className="text-sm">🔒 Requires authentication to access</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <Switch
@@ -406,6 +440,25 @@ function TierEditor({
               <span className="text-sm">Custom tier (for specific customer)</span>
             </label>
           </div>
+        </div>
+
+        {/* Access Level */}
+        <div>
+          <Label>Access Level (Who can see this tier?)</Label>
+          <select
+            value={formData.access_level}
+            onChange={(e) => setFormData({ ...formData, access_level: e.target.value as any })}
+            className="w-full p-2 border rounded mt-2"
+          >
+            <option value="public">🌐 Public - Anyone can see and purchase</option>
+            <option value="authenticated">🔒 Authenticated - Only logged-in users</option>
+            <option value="paid_only">💎 Paid Only - Only existing customers (upsell)</option>
+            <option value="admin_only">🔧 Admin Only - Internal/testing only</option>
+          </select>
+          <p className="text-xs text-gray-500 mt-1">
+            Tip: Use "Authenticated" to hide premium tiers until users sign up (conversion funnel)
+          </p>
+        </div>
         </div>
 
         {/* Feature Selection */}
