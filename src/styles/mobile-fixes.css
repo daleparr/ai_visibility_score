@@ -1,0 +1,84 @@
+/* Mobile Optimization Fixes */
+
+@media (max-width: 768px) {
+  /* Reduce font sizes by 2px across the board */
+  body {
+    font-size: 14px; /* Was 16px */
+  }
+  
+  h1 {
+    font-size: 30px !important; /* Was 32px+ */
+  }
+  
+  h2 {
+    font-size: 24px !important; /* Was 26px+ */
+  }
+  
+  h3 {
+    font-size: 18px !important; /* Was 20px+ */
+  }
+  
+  p, li, span {
+    font-size: 14px !important; /* Was 16px */
+  }
+  
+  .text-sm {
+    font-size: 12px !important; /* Was 14px */
+  }
+  
+  .text-xs {
+    font-size: 10px !important; /* Was 12px */
+  }
+
+  /* Fix buttons breaking margins */
+  button, .btn, a[class*="button"] {
+    max-width: 100%;
+    word-wrap: break-word;
+    white-space: normal;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  /* Container padding on mobile */
+  .container {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /* Fix badge overlapping titles */
+  .absolute.-top-3 {
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+    margin-bottom: 8px;
+    display: inline-block;
+  }
+
+  /* Stack columns on mobile */
+  .grid-cols-2,
+  .grid-cols-3,
+  .lg\\:grid-cols-3,
+  .md\\:grid-cols-2,
+  .md\\:grid-cols-3 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Card padding reduction on mobile */
+  .card, [class*="Card"] {
+    padding: 12px !important;
+  }
+
+  /* Prevent horizontal overflow */
+  * {
+    max-width: 100%;
+    overflow-wrap: break-word;
+  }
+
+  /* Fix long URLs/emails */
+  a[href^="mailto"],
+  a[href^="http"] {
+    word-break: break-all;
+  }
+}
+
