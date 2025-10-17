@@ -8,6 +8,7 @@ import { contentManager } from '@/lib/cms/cms-client';
 import { LogoDisplay } from '@/components/LogoDisplay';
 import { db } from '@/lib/db';
 import { sql } from 'drizzle-orm';
+import { Footer } from '@/components/Footer';
 
 // Force dynamic rendering since we need database access
 export const dynamic = 'force-dynamic';
@@ -238,6 +239,8 @@ export default async function IndustryReportsPage() {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }
