@@ -177,8 +177,21 @@ export default function EvaluatePage() {
   const searchParams = useSearchParams()
   const url = searchParams.get('url') || 'example.com'
   const tierParam = searchParams.get('tier')
-  const tier: 'free' | 'index-pro' | 'enterprise' = 
-    tierParam === 'index-pro' || tierParam === 'enterprise' ? tierParam : 'free'
+  
+  // Map tier variations to standard tier names
+  const getTierFromParam = (param: string | null): 'free' | 'index-pro' | 'enterprise' => {
+    if (!param) return 'free';
+    
+    // Map all tier variations
+    if (param === 'index-pro' || param === 'index-pro-monthly') return 'index-pro';
+    if (param === 'full-audit' || param === 'protected-site') return 'index-pro'; // Paid one-time = Index Pro features
+    if (param === 'enterprise' || param === 'enterprise-package' || param === 'enterprise-monthly') return 'enterprise';
+    
+    // Default to free for quick-scan or any other
+    return 'free';
+  };
+  
+  const tier = getTierFromParam(tierParam);
   const [isLoading, setIsLoading] = useState(true)
   const [evaluationData, setEvaluationData] = useState<EvaluationData | null>(null)
   const [error, setError] = useState<string | null>(null)
