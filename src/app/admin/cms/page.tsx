@@ -8,6 +8,8 @@ import { JobManager } from '@/components/admin/JobManager';
 import { TierManager } from '@/components/admin/TierManager';
 import { UserManager } from '@/components/admin/UserManager';
 import { InvoiceManager } from '@/components/admin/InvoiceManager';
+import { SectorManager } from '@/components/admin/SectorManager';
+import { LogoManager } from '@/components/admin/LogoManager';
 import {
   Palette,
   FileText,
@@ -16,10 +18,12 @@ import {
   Settings,
   Package,
   Users,
-  Receipt
+  Receipt,
+  BarChart3,
+  Image
 } from 'lucide-react';
 
-type CMSSection = 'theme' | 'content' | 'blog' | 'jobs' | 'tiers' | 'users' | 'invoices';
+type CMSSection = 'theme' | 'content' | 'blog' | 'jobs' | 'tiers' | 'users' | 'invoices' | 'sectors' | 'logos';
 
 interface CMSPage {
   slug: string;
@@ -168,6 +172,30 @@ export default function CMSAdminPage() {
               <Receipt className="h-4 w-4" />
               Invoicing
             </button>
+
+            <button
+              onClick={() => setActiveSection('sectors')}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeSection === 'sectors'
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <BarChart3 className="h-4 w-4" />
+              Industry Reports
+            </button>
+
+            <button
+              onClick={() => setActiveSection('logos')}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeSection === 'logos'
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Image className="h-4 w-4" />
+              Brand Logos
+            </button>
           </nav>
 
           {/* Page Selector for Content Section */}
@@ -204,6 +232,8 @@ export default function CMSAdminPage() {
           {activeSection === 'tiers' && <TierManager />}
           {activeSection === 'users' && <UserManager />}
           {activeSection === 'invoices' && <InvoiceManager />}
+          {activeSection === 'sectors' && <SectorManager />}
+          {activeSection === 'logos' && <LogoManager />}
         </main>
       </div>
     </div>
