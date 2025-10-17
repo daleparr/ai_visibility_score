@@ -459,7 +459,6 @@ function TierEditor({
             Tip: Use "Authenticated" to hide premium tiers until users sign up (conversion funnel)
           </p>
         </div>
-        </div>
 
         {/* Feature Selection */}
         <div>
