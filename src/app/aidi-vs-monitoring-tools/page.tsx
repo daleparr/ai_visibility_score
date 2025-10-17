@@ -5,6 +5,9 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
+// Revalidate immediately when CMS content changes
+export const revalidate = 0; // Disable caching for CMS-driven pages
+
 export default async function PositioningPage() {
   // Fetch CMS content
   const page = await contentManager.getPage('aidi-vs-monitoring-tools')
