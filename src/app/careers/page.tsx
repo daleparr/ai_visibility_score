@@ -94,8 +94,10 @@ export default function CareersPage() {
             Join Us: Building the Future of AI Brand Intelligence.
           </h1>
           <p className="text-lg md:text-2xl text-blue-100 max-w-3xl">
-            We've Built AIDI—The World's First AI Discoverability Index
+            We've Built AIDI—The World's First AI Discoverability Index.
+            <br></br>
             AIDI is on a mission to become the Bloomberg of AI visibility—delivering audit-grade intelligence on how brands appear (or disappear) in conversational AI platforms. We're defining a new category and establishing the benchmark standard for an industry worth billions.
+            <br></br>
             Help us maintain the benchmark standard for AEO intelligence.
             Work with data scientists, executives, and industry leaders.
           </p>
