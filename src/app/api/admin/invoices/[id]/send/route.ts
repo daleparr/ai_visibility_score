@@ -83,9 +83,14 @@ export async function POST(
         customer: customerId,
         invoice: stripeInvoice.id,
         description: item.description,
-        quantity: item.quantity,
-        unit_amount: Math.round(item.unit_price * 100), // Convert to cents
-        currency: 'gbp'
+        price_data: {
+          currency: 'gbp',
+          product_data: {
+            name: item.description
+          },
+          unit_amount: Math.round(item.unit_price * 100) // Unit price in cents
+        },
+        quantity: item.quantity
       });
     }
 
