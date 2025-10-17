@@ -869,8 +869,805 @@ I'll create a single SQL script that populates all CMS content:
 
 ---
 
-**Status:** Mapping Complete ✅  
-**Next:** Create SQL migration script  
+## SECTION 10: LEADERBOARDS PAGE MAPPING
+
+### Current File: `src/app/leaderboards/page.tsx`
+
+#### 10.1 TERMINAL HEADER
+
+**Current Code (Lines 175-190):**
+```tsx
+<div className="flex items-center gap-4">
+  <Link href="/" className="flex items-center text-green-400 hover:text-green-300">
+    <Brain className="h-5 w-5 mr-2" />
+    <span className="font-bold">AI DISCOVERABILITY TERMINAL</span>
+  </Link>
+  <div className="flex items-center gap-2">
+    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+    <span className="text-xs">LIVE DATA FEED</span>
+  </div>
+</div>
+```
+
+**CMS Block Mapping:**
+```json
+{
+  "page_id": "leaderboards",
+  "leaderboard_terminal_title": {
+    "block_type": "text",
+    "content": { "text": "AI DISCOVERABILITY TERMINAL" }
+  },
+  "leaderboard_status_badge": {
+    "block_type": "text",
+    "content": { "text": "LIVE DATA FEED" }
+  }
+}
+```
+
+#### 10.2 FOMO ALERT BAR
+
+**Current Code (Lines 255-267):**
+```tsx
+<div className="flex items-center gap-2">
+  <Zap className="h-4 w-4 animate-pulse" />
+  <span className="font-bold">MARKET ALERT:</span>
+  <span>3 brands moved up this week • Rankings updated daily • Don't fall behind</span>
+</div>
+<Button>Track My Brand</Button>
+```
+
+**CMS Block Mapping:**
+```json
+{
+  "leaderboard_alert_bar": {
+    "block_type": "json",
+    "content": {
+      "icon": "⚡",
+      "headline": "MARKET ALERT:",
+      "message": "3 brands moved up this week • Rankings updated daily • Don't fall behind",
+      "cta_text": "Track My Brand",
+      "cta_url": "/evaluate"
+    }
+  }
+}
+```
+
+#### 10.3 INTELLIGENCE CARDS
+
+**Current Code (Lines 332-410):**
+```tsx
+<Card className="bg-gradient-to-br from-blue-900 to-blue-800">
+  <CardTitle>Market Intelligence</CardTitle>
+  <CardContent>
+    <div className="flex justify-between">
+      <span>Sector Average:</span>
+      <span>{leaderboardData?.sectorInsights?.averageScore || 75}/100</span>
+    </div>
+  </CardContent>
+</Card>
+```
+
+**CMS Block Mapping:**
+```json
+{
+  "leaderboard_intelligence_cards": {
+    "block_type": "json",
+    "content": {
+      "cards": [
+        {
+          "id": "market-intelligence",
+          "icon": "📊",
+          "title": "Market Intelligence",
+          "metrics": [
+            {
+              "label": "Sector Average",
+              "value": "dynamic",
+              "key": "averageScore"
+            }
+          ],
+          "gradient": "from-blue-900 to-blue-800"
+        }
+      ]
+    }
+  }
+}
+```
+
+#### 10.4 MARKET OVERVIEW
+
+**Current Code (Lines 490-517):**
+```tsx
+<h2>AI Discoverability Market Overview</h2>
+<div className="font-semibold">👕 Fashion & Apparel</div>
+<div>5 niches • Avg: 78/100</div>
+<div className="text-green-600">↗ +2.3 this quarter</div>
+```
+
+**CMS Block Mapping:**
+```json
+{
+  "leaderboard_market_overview": {
+    "block_type": "json",
+    "content": {
+      "headline": "AI Discoverability Market Overview",
+      "sectors": [
+        {
+          "emoji": "👕",
+          "name": "Fashion & Apparel",
+          "niches": 5,
+          "avg_score": "78/100",
+          "trend": "+2.3 this quarter",
+          "trend_direction": "up"
+        }
+      ]
+    }
+  }
+}
+```
+
+#### 10.5 EXECUTIVE SUMMARY
+
+**Current Code (Lines 520-545):**
+```tsx
+<h3>📈 Executive Summary</h3>
+<h4 className="text-green-400">Market Leaders</h4>
+<p>Top performers excel in schema implementation and knowledge graph presence.</p>
+```
+
+**CMS Block Mapping:**
+```json
+{
+  "leaderboard_executive_summary": {
+    "block_type": "json",
+    "content": {
+      "headline": "Executive Summary",
+      "insights": [
+        {
+          "title": "Market Leaders",
+          "color": "green-400",
+          "description": "Top performers excel in schema implementation..."
+        }
+      ]
+    }
+  }
+}
+```
+
+---
+
+## SECTION 11: INDUSTRY REPORT TEMPLATE MAPPING
+
+### Template File: Used for `/reports/[sector]` pages
+
+#### 11.1 HERO SECTION
+
+**CMS Block Mapping:**
+```json
+{
+  "page_id": "industry-report-template",
+  "industry_report_hero": {
+    "block_type": "json",
+    "content": {
+      "badge": {
+        "text": "Monthly Report",
+        "icon": "📊"
+      },
+      "headline_template": "{sector_name} AI Visibility Report",
+      "subheadline_template": "{month} {year} Edition",
+      "description": "<p>Track how leading AI models recommend brands in {sector_name}...</p>"
+    }
+  }
+}
+```
+
+**Frontend Usage:**
+```tsx
+// src/app/reports/[sector]/page.tsx
+const heroContent = await getBlockByKey('industry-report-template', 'industry_report_hero')
+const headline = heroContent.headline_template.replace('{sector_name}', sectorName)
+```
+
+#### 11.2 BETA BANNER
+
+**CMS Block Mapping:**
+```json
+{
+  "industry_report_beta_banner": {
+    "block_type": "json",
+    "content": {
+      "enabled": true,
+      "title": "🌟 BETA REPORT - FOUNDING MEMBER PRICING",
+      "message": "This is a beta report using AIDI evaluation data...",
+      "cta": {
+        "text": "Get Beta Access - £99/month",
+        "url": "/pricing?tier=beta-pro"
+      }
+    }
+  }
+}
+```
+
+#### 11.3 METHODOLOGY NOTE
+
+**CMS Block Mapping:**
+```json
+{
+  "industry_report_methodology_note": {
+    "block_type": "richtext",
+    "content": {
+      "html": "<div class=\"border-l-4 border-blue-500\">...</div>"
+    }
+  }
+}
+```
+
+#### 11.4 KEY INSIGHTS
+
+**CMS Block Mapping:**
+```json
+{
+  "industry_report_key_insights": {
+    "block_type": "json",
+    "content": {
+      "headline": "Key Insights",
+      "insights_template": [
+        {
+          "type": "top_performer",
+          "icon": "👑",
+          "title_template": "{brand_name} Leads the Pack",
+          "description_template": "With an AIDI score of {score}/100..."
+        }
+      ]
+    }
+  }
+}
+```
+
+#### 11.5 LEADERBOARD TABLE
+
+**CMS Block Mapping:**
+```json
+{
+  "industry_report_leaderboard_headers": {
+    "block_type": "json",
+    "content": {
+      "table_title": "Complete Rankings",
+      "columns": [
+        {"key": "rank", "label": "Rank", "width": "w-16"},
+        {"key": "brand", "label": "Brand", "width": "flex-1"},
+        {"key": "aidi_score", "label": "AIDI Score", "width": "w-24"}
+      ],
+      "free_view_limit": 10,
+      "lock_message": "Subscribe to see all {total_brands} brands"
+    }
+  }
+}
+```
+
+#### 11.6 PRICING TIERS
+
+**CMS Block Mapping:**
+```json
+{
+  "industry_report_pricing": {
+    "block_type": "json",
+    "content": {
+      "headline": "Choose Your Access Level",
+      "tiers": [
+        {
+          "id": "beta-pro",
+          "name": "Beta Pro",
+          "price": "£99",
+          "period": "/sector/month",
+          "original_price": "£119",
+          "save": "Save £20/month",
+          "badge": "BETA SPECIAL",
+          "features": [
+            "Complete leaderboard (50+ brands)",
+            "95% confidence intervals"
+          ]
+        }
+      ]
+    }
+  }
+}
+```
+
+---
+
+## SECTION 12: EVALUATION REPORT TEMPLATE MAPPING
+
+### Template File: Used for individual evaluation reports
+
+#### 12.1 HEADER SECTION
+
+**CMS Block Mapping:**
+```json
+{
+  "page_id": "evaluation-report-template",
+  "eval_report_header": {
+    "block_type": "json",
+    "content": {
+      "badge": {
+        "text": "AIDI Evaluation Report",
+        "icon": "📊"
+      },
+      "title_template": "{brand_name} AI Discoverability Analysis",
+      "subtitle_template": "Complete evaluation across {dimension_count} dimensions",
+      "metadata": [
+        {"label": "Evaluation Date", "key": "evaluation_date"},
+        {"label": "Evaluation ID", "key": "evaluation_id"}
+      ]
+    }
+  }
+}
+```
+
+#### 12.2 EXECUTIVE SUMMARY
+
+**CMS Block Mapping:**
+```json
+{
+  "eval_report_executive_summary": {
+    "block_type": "json",
+    "content": {
+      "headline": "Executive Summary",
+      "score_card": {
+        "overall_label": "Overall AIDI Score",
+        "grade_labels": {
+          "A+": "Exceptional AI Visibility",
+          "A": "Excellent AI Visibility",
+          "B": "Good AI Visibility"
+        }
+      },
+      "pillars_section": {
+        "title": "Pillar Performance",
+        "pillars": [
+          {
+            "key": "infrastructure",
+            "name": "Infrastructure & Machine Readability",
+            "icon": "⚡"
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+#### 12.3 COMPETITIVE CONTEXT
+
+**CMS Block Mapping:**
+```json
+{
+  "eval_report_competitive_context": {
+    "block_type": "json",
+    "content": {
+      "headline": "Competitive Context",
+      "description": "See how you compare to industry benchmarks...",
+      "metrics": [
+        {
+          "label": "Industry Rank",
+          "key": "industry_rank",
+          "format": "rank_of_total"
+        },
+        {
+          "label": "Percentile",
+          "key": "percentile",
+          "format": "percentile"
+        }
+      ]
+    }
+  }
+}
+```
+
+#### 12.4 STRENGTHS & GAPS
+
+**CMS Block Mapping:**
+```json
+{
+  "eval_report_strengths_gaps": {
+    "block_type": "json",
+    "content": {
+      "sections": [
+        {
+          "type": "strengths",
+          "headline": "🏆 Key Strengths",
+          "description": "Areas where you excel...",
+          "card_style": "border-green-500 bg-green-50"
+        },
+        {
+          "type": "gaps",
+          "headline": "🎯 Priority Gaps",
+          "description": "High-impact opportunities...",
+          "card_style": "border-orange-500 bg-orange-50"
+        }
+      ]
+    }
+  }
+}
+```
+
+#### 12.5 DIMENSION DETAILS
+
+**CMS Block Mapping:**
+```json
+{
+  "eval_report_dimension_details": {
+    "block_type": "json",
+    "content": {
+      "headline": "Detailed Dimension Analysis",
+      "description": "In-depth evaluation across all 12 AIDI dimensions",
+      "dimension_card_template": {
+        "header": {
+          "dimension_name": "{dimension}",
+          "pillar": "{pillar}",
+          "score": "{score}/100"
+        },
+        "body": {
+          "what_we_tested": "Description of evaluation methodology",
+          "findings": "Key findings from the analysis",
+          "impact": "Business impact of performance"
+        }
+      }
+    }
+  }
+}
+```
+
+#### 12.6 ACTION PLAN
+
+**CMS Block Mapping:**
+```json
+{
+  "eval_report_action_plan": {
+    "block_type": "json",
+    "content": {
+      "headline": "90-Day Action Roadmap",
+      "description": "Prioritized recommendations to improve AI discoverability",
+      "phases": [
+        {
+          "phase": "Quick Wins (Days 1-30)",
+          "icon": "⚡",
+          "description": "High-impact, low-effort improvements",
+          "color": "green"
+        }
+      ]
+    }
+  }
+}
+```
+
+#### 12.7 METHODOLOGY TRANSPARENCY
+
+**CMS Block Mapping:**
+```json
+{
+  "eval_report_methodology": {
+    "block_type": "richtext",
+    "content": {
+      "html": "<div class=\"border-t-2\"><h3>📚 Methodology & Validation</h3>...</div>"
+    }
+  }
+}
+```
+
+---
+
+## SECTION 13: FRONTEND IMPLEMENTATION GUIDE
+
+### Step 1: Create CMS Client Helper
+
+**File:** `src/lib/cms/cms-client.ts` (Update)
+
+```typescript
+// Add new helper for template-based content
+export async function getTemplateContent(
+  templateSlug: string,
+  blockKey: string,
+  replacements: Record<string, string> = {}
+): Promise<any> {
+  const block = await getBlockByKey(templateSlug, blockKey)
+  
+  if (!block) return null
+  
+  // Handle template replacements
+  let content = JSON.stringify(block.content)
+  Object.entries(replacements).forEach(([key, value]) => {
+    content = content.replaceAll(`{${key}}`, value)
+  })
+  
+  return JSON.parse(content)
+}
+```
+
+### Step 2: Update Leaderboards Page
+
+**File:** `src/app/leaderboards/page.tsx`
+
+```typescript
+// Add at top
+import { contentManager } from '@/lib/cms/cms-client'
+
+// In component
+export default async function LeaderboardsPage() {
+  // Fetch CMS content
+  const terminalTitle = await contentManager.getBlockByKey('leaderboards', 'leaderboard_terminal_title')
+  const alertBar = await contentManager.getBlockByKey('leaderboards', 'leaderboard_alert_bar')
+  const intelligenceCards = await contentManager.getBlockByKey('leaderboards', 'leaderboard_intelligence_cards')
+  const marketOverview = await contentManager.getBlockByKey('leaderboards', 'leaderboard_market_overview')
+  const executiveSummary = await contentManager.getBlockByKey('leaderboards', 'leaderboard_executive_summary')
+  const bottomCta = await contentManager.getBlockByKey('leaderboards', 'leaderboard_bottom_cta')
+  
+  return (
+    <div>
+      {/* Use CMS content */}
+      <span className="font-bold">{terminalTitle?.text}</span>
+      
+      {/* Alert Bar */}
+      {alertBar && (
+        <div className="flex items-center gap-2">
+          <span>{alertBar.icon}</span>
+          <span className="font-bold">{alertBar.headline}</span>
+          <span>{alertBar.message}</span>
+          <Button onClick={() => router.push(alertBar.cta_url)}>
+            {alertBar.cta_text}
+          </Button>
+        </div>
+      )}
+      
+      {/* Intelligence Cards */}
+      {intelligenceCards?.cards.map(card => (
+        <Card key={card.id} className={`bg-gradient-to-br ${card.gradient}`}>
+          <CardTitle>{card.title}</CardTitle>
+          {/* Render metrics */}
+        </Card>
+      ))}
+    </div>
+  )
+}
+```
+
+### Step 3: Create Industry Report Page
+
+**File:** `src/app/reports/[sector]/page.tsx` (New/Update)
+
+```typescript
+import { contentManager, getTemplateContent } from '@/lib/cms/cms-client'
+
+export default async function IndustryReportPage({ 
+  params 
+}: { 
+  params: { sector: string } 
+}) {
+  // Fetch report data
+  const reportData = await fetchIndustryReportData(params.sector)
+  
+  // Fetch CMS content with template replacements
+  const hero = await getTemplateContent('industry-report-template', 'industry_report_hero', {
+    sector_name: reportData.sectorName,
+    month: reportData.month,
+    year: reportData.year,
+    brand_count: reportData.brandCount.toString()
+  })
+  
+  const betaBanner = await contentManager.getBlockByKey('industry-report-template', 'industry_report_beta_banner')
+  const methodologyNote = await contentManager.getBlockByKey('industry-report-template', 'industry_report_methodology_note')
+  const keyInsights = await contentManager.getBlockByKey('industry-report-template', 'industry_report_key_insights')
+  const leaderboardHeaders = await contentManager.getBlockByKey('industry-report-template', 'industry_report_leaderboard_headers')
+  const pricing = await contentManager.getBlockByKey('industry-report-template', 'industry_report_pricing')
+  
+  return (
+    <div>
+      {/* Hero */}
+      <Badge>{hero.badge.text}</Badge>
+      <h1>{hero.headline_template}</h1>
+      <h2>{hero.subheadline_template}</h2>
+      <div dangerouslySetInnerHTML={{ __html: hero.description }} />
+      
+      {/* Beta Banner */}
+      {betaBanner?.enabled && (
+        <div className="bg-gradient-to-r from-orange-600">
+          <h3>{betaBanner.title}</h3>
+          <p>{betaBanner.message}</p>
+          <Button onClick={() => router.push(betaBanner.cta.url)}>
+            {betaBanner.cta.text}
+          </Button>
+        </div>
+      )}
+      
+      {/* Methodology Note */}
+      <div dangerouslySetInnerHTML={{ __html: methodologyNote?.html }} />
+      
+      {/* Key Insights */}
+      {keyInsights?.insights_template.map(insight => {
+        const title = insight.title_template
+          .replace('{brand_name}', reportData.topBrand.name)
+          .replace('{score}', reportData.topBrand.score)
+        return (
+          <div key={insight.type}>
+            <h4>{insight.icon} {title}</h4>
+          </div>
+        )
+      })}
+      
+      {/* Leaderboard Table */}
+      <h3>{leaderboardHeaders.table_title}</h3>
+      <table>
+        <thead>
+          <tr>
+            {leaderboardHeaders.columns.map(col => (
+              <th key={col.key} className={col.width}>
+                {col.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        {/* Render brand rows */}
+      </table>
+      
+      {/* Pricing */}
+      <h2>{pricing.headline}</h2>
+      {pricing.tiers.map(tier => (
+        <PricingCard key={tier.id} {...tier} />
+      ))}
+    </div>
+  )
+}
+```
+
+### Step 4: Create Evaluation Report Page
+
+**File:** `src/app/dashboard/evaluation/[id]/page.tsx` (New/Update)
+
+```typescript
+import { contentManager, getTemplateContent } from '@/lib/cms/cms-client'
+
+export default async function EvaluationReportPage({ 
+  params 
+}: { 
+  params: { id: string } 
+}) {
+  // Fetch evaluation data
+  const evaluation = await fetchEvaluationData(params.id)
+  
+  // Fetch CMS content
+  const header = await getTemplateContent('evaluation-report-template', 'eval_report_header', {
+    brand_name: evaluation.brandName,
+    dimension_count: '12'
+  })
+  
+  const executiveSummary = await contentManager.getBlockByKey('evaluation-report-template', 'eval_report_executive_summary')
+  const competitiveContext = await contentManager.getBlockByKey('evaluation-report-template', 'eval_report_competitive_context')
+  const strengthsGaps = await contentManager.getBlockByKey('evaluation-report-template', 'eval_report_strengths_gaps')
+  const dimensionDetails = await contentManager.getBlockByKey('evaluation-report-template', 'eval_report_dimension_details')
+  const actionPlan = await contentManager.getBlockByKey('evaluation-report-template', 'eval_report_action_plan')
+  const methodology = await contentManager.getBlockByKey('evaluation-report-template', 'eval_report_methodology')
+  
+  return (
+    <div>
+      {/* Header */}
+      <Badge>{header.badge.text}</Badge>
+      <h1>{header.title_template}</h1>
+      <p>{header.subtitle_template}</p>
+      
+      {/* Executive Summary */}
+      <h2>{executiveSummary.headline}</h2>
+      <div className="score-card">
+        <div className="text-6xl">{evaluation.overallScore}</div>
+        <div className="text-2xl">{executiveSummary.score_card.grade_labels[evaluation.grade]}</div>
+      </div>
+      
+      {/* Pillars */}
+      <h3>{executiveSummary.pillars_section.title}</h3>
+      {executiveSummary.pillars_section.pillars.map(pillar => (
+        <PillarCard 
+          key={pillar.key}
+          icon={pillar.icon}
+          name={pillar.name}
+          description={pillar.description}
+          score={evaluation.pillarScores[pillar.key]}
+        />
+      ))}
+      
+      {/* Competitive Context */}
+      <h2>{competitiveContext.headline}</h2>
+      <p>{competitiveContext.description}</p>
+      {competitiveContext.metrics.map(metric => (
+        <MetricCard 
+          key={metric.key}
+          label={metric.label}
+          value={evaluation[metric.key]}
+          format={metric.format}
+        />
+      ))}
+      
+      {/* Strengths & Gaps */}
+      {strengthsGaps.sections.map(section => (
+        <div key={section.type} className={section.card_style}>
+          <h3>{section.headline}</h3>
+          <p>{section.description}</p>
+          {evaluation[section.type].map(item => (
+            <StrengthGapCard key={item.dimension} {...item} />
+          ))}
+        </div>
+      ))}
+      
+      {/* Dimension Details */}
+      <h2>{dimensionDetails.headline}</h2>
+      {evaluation.dimensions.map(dimension => (
+        <DimensionCard 
+          key={dimension.name}
+          template={dimensionDetails.dimension_card_template}
+          data={dimension}
+        />
+      ))}
+      
+      {/* Action Plan */}
+      <h2>{actionPlan.headline}</h2>
+      <p>{actionPlan.description}</p>
+      {actionPlan.phases.map(phase => (
+        <PhaseCard key={phase.phase} {...phase} />
+      ))}
+      
+      {/* Methodology */}
+      <div dangerouslySetInnerHTML={{ __html: methodology.html }} />
+    </div>
+  )
+}
+```
+
+---
+
+## SECTION 14: CMS UPDATE WORKFLOW
+
+### For Marketing Team to Update Copy
+
+1. **Access CMS Admin**
+   ```
+   https://ai-discoverability-index.netlify.app/admin/cms
+   ```
+
+2. **Select Page**
+   - Choose "Leaderboards", "Industry Report Template", or "Evaluation Report Template"
+
+3. **Edit Content Blocks**
+   - Click on any block to edit
+   - For text blocks: Edit directly
+   - For JSON blocks: Edit structured data
+   - For richtext blocks: HTML editor
+
+4. **Save Changes**
+   - Click "Save"
+   - Changes apply immediately (no deployment needed)
+
+### Common Updates
+
+#### Update Alert Bar Message
+1. Go to "Leaderboards" page
+2. Find "leaderboard_alert_bar" block
+3. Edit `message` field
+4. Save
+
+#### Update Pricing
+1. Go to "Industry Report Template" page
+2. Find "industry_report_pricing" block
+3. Edit tier prices, features, or CTAs
+4. Save
+
+#### Update Grade Labels
+1. Go to "Evaluation Report Template" page
+2. Find "eval_report_executive_summary" block
+3. Edit `grade_labels` object
+4. Save
+
+---
+
+**Status:** CMS Expansion Complete ✅  
+**Pages Added:** Leaderboards, Industry Reports, Evaluation Reports  
+**Total Content Blocks:** 32 new blocks  
+**Next:** Run SQL migration, update frontend components  
 **Owner:** AI Assistant (End-to-End Oversight)
 
 

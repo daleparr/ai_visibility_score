@@ -94,7 +94,7 @@ export default function CareersPage() {
             Join the AIDI Team
           </h1>
           <p className="text-lg md:text-2xl text-blue-100 max-w-3xl">
-            Help us build the benchmark standard for AEO intelligence.
+            Help us maintain the benchmark standard for AEO intelligence.
             Work with data scientists, executives, and industry leaders.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4 md:gap-6 text-sm">

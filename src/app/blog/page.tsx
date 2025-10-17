@@ -31,12 +31,12 @@ export default function BlogPage() {
 
   const loadPosts = async () => {
     try {
-      // Fetch blog content from CMS content_blocks
-      const response = await fetch('/api/cms/content?page=blog&block=blog_posts');
+      // Fetch blog posts from blog_posts table
+      const response = await fetch('/api/cms/blog?status=published&limit=100');
       const data = await response.json();
       
-      if (data?.content?.posts) {
-        const allPosts = data.content.posts;
+      if (data?.posts) {
+        const allPosts = data.posts;
         setPosts(allPosts);
         setFeatured(allPosts.find((p: any) => p.featured) || null);
       }
