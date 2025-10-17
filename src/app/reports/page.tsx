@@ -291,7 +291,7 @@ function SectorCard({ sector }: SectorCardProps) {
         </h3>
         <p className="text-slate-500 text-sm mb-4">{sector.description}</p>
         
-        {sector.brand_count > 0 && (
+        {sector.brand_count && sector.brand_count > 0 && (
           <p className="text-xs text-slate-600 mb-4">
             {sector.brand_count} brands being analyzed
           </p>
@@ -327,7 +327,7 @@ function SectorCard({ sector }: SectorCardProps) {
       </h3>
       <p className="text-slate-400 text-sm mb-4">{sector.description}</p>
       
-      {sector.brand_count > 0 && (
+      {sector.brand_count && sector.brand_count > 0 && (
         <p className="text-xs text-emerald-400 mb-3">
           ✓ {sector.brand_count} brands analyzed
         </p>
