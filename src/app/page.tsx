@@ -10,11 +10,28 @@ import { HomePageHeader } from '@/components/homepage/Header'
 import { LogoDisplay } from '@/components/LogoDisplay'
 import { DynamicPricingCards } from '@/components/DynamicPricingCards'
 import { AIModelLogos } from '@/components/AIModelLogos'
+import { MinimalHomepageVariant } from '@/components/homepage/MinimalVariant'
 
 // Disable caching so CMS changes appear immediately
 export const revalidate = 0;
 
 export default async function HomePage() {
+  // Check which homepage variant to display
+  let homepageVariant = 'full'; // Default
+  
+  try {
+    const variantSetting = await contentManager.getBlockByKey('homepage', 'homepage_variant');
+    homepageVariant = variantSetting?.active_variant || 'full';
+  } catch (error) {
+    console.log('Homepage variant not set, using full version');
+  }
+
+  // If minimal variant selected, render that instead
+  if (homepageVariant === 'minimal') {
+    return <MinimalHomepageVariant />;
+  }
+
+  // Otherwise render full homepage (existing design)
   // Fetch CMS content for hero section
   let heroHeadline, heroSubhead, heroDescription, trustIndicators, pricingTiers, footerAbout, threePillars
   
