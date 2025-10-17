@@ -257,11 +257,18 @@ function ValueProp({ icon, title, description }: { icon: string; title: string; 
 
 interface SectorCardProps {
   sector: {
-    id: string;
+    id?: string;
     slug: string;
     name: string;
     description: string;
     targetAudience?: string;
+    is_available?: boolean;
+    has_content?: boolean;
+    brand_count?: number;
+    monthly_price?: number;
+    badge_text?: string;
+    demo_cta_text?: string;
+    demo_cta_url?: string;
   };
 }
 
