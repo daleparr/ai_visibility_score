@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { WYSIWYGEditor } from '@/components/ui/wysiwyg-editor';
 import { Save, Edit, Eye, Trash2 } from 'lucide-react';
 
 interface ContentBlock {
@@ -199,14 +200,15 @@ function BlockEditor({
 
       {block.block_type === 'richtext' && (
         <div>
-          <Label>Content</Label>
-          <Textarea
-            value={typeof content === 'string' ? content : content.html || ''}
-            onChange={(e) => setContent({ html: e.target.value })}
-            rows={8}
-            className="mt-2 font-mono text-sm"
+          <Label>Content (WYSIWYG Editor)</Label>
+          <WYSIWYGEditor
+            content={typeof content === 'string' ? content : content.html || ''}
+            onChange={(html) => setContent({ html })}
+            className="mt-2"
           />
-          <p className="text-xs text-gray-500 mt-1">Supports HTML and Markdown</p>
+          <p className="text-xs text-gray-500 mt-1">
+            Visual editor with formatting toolbar. HTML is generated automatically.
+          </p>
         </div>
       )}
 
