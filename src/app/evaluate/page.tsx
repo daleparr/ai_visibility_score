@@ -1152,39 +1152,17 @@ Next Step Today: ${bottomLine.nextStep}`
 
           {/* AI Models Analysis */}
           <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>AI Models Analyzed</CardTitle>
-              <CardDescription>
-                {tier === 'free' 
-                  ? 'Free tier uses GPT-4 for comprehensive analysis' 
-                  : 'Index Pro: Frontier model consensus analysis with detailed insights from each AI system'
-                }
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {tier === 'free' ? (
-                <div className="space-y-4">
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline" className="capitalize">GPT-4 Turbo</Badge>
-                    <Badge variant="secondary" className="ml-2">
-                      <Lock className="h-3 w-3 mr-1" />
-                      Upgrade for multi-model comparison
-                    </Badge>
-                  </div>
-                  <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
-                    <p className="text-sm text-gray-600 mb-2">
-                      <strong>Upgrade to Index Pro</strong> to see detailed insights from all frontier models:
-                    </p>
-                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
-                      <div>• GPT-4 Turbo analysis</div>
-                      <div>• Claude 3.5 Sonnet insights</div>
-                      <div>• Perplexity Pro validation</div>
-                      <div>• Gemini Pro 1.5 assessment</div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-6">
+            <CardContent className="pt-6">
+              <AIModelLogos
+                userTier={tier as 'free' | 'index-pro' | 'enterprise'}
+                showUpgradePrompt={tier === 'free'}
+                variant="report"
+              />
+              
+              {/* Show detailed model analysis if available (Index Pro/Enterprise) */}
+              {tier !== 'free' && evaluationData.modelAnalysis && evaluationData.modelAnalysis.length > 0 && (
+                <div className="space-y-6 mt-8 pt-6 border-t">
+                  <h4 className="font-semibold text-gray-900">Detailed Insights by Model:</h4>
                   {(evaluationData.modelAnalysis || []).map((model, index) => (
                     <div key={index} className="border rounded-lg p-4 bg-gradient-to-r from-slate-50 to-white">
                       <div className="flex items-center justify-between mb-3">
