@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Calendar, Clock, Tag, ArrowLeft, Brain } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import ReactMarkdown from 'react-markdown';
+// Removed react-markdown dependency - using simple HTML rendering
 
 interface BlogPost {
   id: string;
@@ -187,47 +187,60 @@ export default function BlogPostPage() {
           )}
 
           {/* Article Content */}
-          <div className="prose prose-lg max-w-none">
-            <ReactMarkdown
-              components={{
-                h1: ({ children }) => <h1 className="text-3xl font-bold mt-8 mb-4">{children}</h1>,
-                h2: ({ children }) => <h2 className="text-2xl font-bold mt-8 mb-4">{children}</h2>,
-                h3: ({ children }) => <h3 className="text-xl font-bold mt-6 mb-3">{children}</h3>,
-                p: ({ children }) => <p className="mb-4 leading-relaxed text-gray-700">{children}</p>,
-                ul: ({ children }) => <ul className="list-disc list-inside mb-4 space-y-2">{children}</ul>,
-                ol: ({ children }) => <ol className="list-decimal list-inside mb-4 space-y-2">{children}</ol>,
-                li: ({ children }) => <li className="text-gray-700">{children}</li>,
-                blockquote: ({ children }) => (
-                  <blockquote className="border-l-4 border-blue-500 pl-4 italic my-6 text-gray-600">
-                    {children}
+          <div className="prose prose-lg prose-slate max-w-none">
+            {/* Simple markdown rendering - formats headings, lists, and paragraphs */}
+            {post.content.split('\n\n').map((paragraph, idx) => {
+              // Headings
+              if (paragraph.startsWith('# ')) {
+                return <h1 key={idx} className="text-3xl font-bold mt-8 mb-4">{paragraph.substring(2)}</h1>;
+              }
+              if (paragraph.startsWith('## ')) {
+                return <h2 key={idx} className="text-2xl font-bold mt-8 mb-4">{paragraph.substring(3)}</h2>;
+              }
+              if (paragraph.startsWith('### ')) {
+                return <h3 key={idx} className="text-xl font-bold mt-6 mb-3">{paragraph.substring(4)}</h3>;
+              }
+              // Lists
+              if (paragraph.startsWith('- ') || paragraph.startsWith('* ')) {
+                const items = paragraph.split('\n').filter(line => line.trim());
+                return (
+                  <ul key={idx} className="list-disc list-inside mb-4 space-y-2">
+                    {items.map((item, i) => (
+                      <li key={i} className="text-gray-700">
+                        {item.replace(/^[-*]\s+/, '').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}
+                      </li>
+                    ))}
+                  </ul>
+                );
+              }
+              // Blockquotes
+              if (paragraph.startsWith('> ')) {
+                return (
+                  <blockquote key={idx} className="border-l-4 border-blue-500 pl-4 italic my-6 text-gray-600">
+                    {paragraph.replace(/^>\s+/, '').split('\n').map((line, i) => (
+                      <p key={i}>{line.replace(/^>\s+/, '')}</p>
+                    ))}
                   </blockquote>
-                ),
-                strong: ({ children }) => <strong className="font-bold text-gray-900">{children}</strong>,
-                table: ({ children }) => (
-                  <div className="overflow-x-auto my-6">
-                    <table className="min-w-full divide-y divide-gray-200 border">
-                      {children}
-                    </table>
-                  </div>
-                ),
-                thead: ({ children }) => <thead className="bg-gray-50">{children}</thead>,
-                tbody: ({ children }) => <tbody className="divide-y divide-gray-200">{children}</tbody>,
-                tr: ({ children }) => <tr>{children}</tr>,
-                th: ({ children }) => (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {children}
-                  </th>
-                ),
-                td: ({ children }) => <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{children}</td>,
-                code: ({ children }) => (
-                  <code className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono text-blue-600">
-                    {children}
-                  </code>
-                ),
-              }}
-            >
-              {post.content}
-            </ReactMarkdown>
+                );
+              }
+              // Horizontal rules
+              if (paragraph === '---') {
+                return <hr key={idx} className="my-8 border-gray-300" />;
+              }
+              // Regular paragraphs
+              if (paragraph.trim()) {
+                return (
+                  <p 
+                    key={idx} 
+                    className="mb-4 leading-relaxed text-gray-700"
+                    dangerouslySetInnerHTML={{
+                      __html: paragraph.replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-gray-900">$1</strong>')
+                    }}
+                  />
+                );
+              }
+              return null;
+            })}
           </div>
 
           {/* Tags */}
