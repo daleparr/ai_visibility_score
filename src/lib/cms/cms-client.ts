@@ -248,6 +248,13 @@ export class ThemeManager {
 // ============================================================================
 
 export class ContentManager {
+  async getAllPages(): Promise<any[]> {
+    const result = await db.execute(
+      sql`SELECT id, slug, title, status, published_at FROM cms_pages ORDER BY title ASC`
+    );
+    return result.rows as any;
+  }
+
   async getPage(slug: string): Promise<any> {
     const result = await db.execute(
       sql`SELECT * FROM cms_pages WHERE slug = ${slug} AND status = 'published'`

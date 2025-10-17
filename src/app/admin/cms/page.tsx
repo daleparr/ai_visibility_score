@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ThemeEditor } from '@/components/admin/ThemeEditor';
 import { ContentEditor } from '@/components/admin/ContentEditor';
 import { BlogManager } from '@/components/admin/BlogManager';
@@ -15,16 +15,59 @@ import {
 
 type CMSSection = 'theme' | 'content' | 'blog' | 'jobs';
 
+interface CMSPage {
+  slug: string;
+  label: string;
+  title: string;
+}
+
 export default function CMSAdminPage() {
   const [activeSection, setActiveSection] = useState<CMSSection>('theme');
   const [selectedPage, setSelectedPage] = useState('homepage');
+  const [pages, setPages] = useState<CMSPage[]>([
+    { slug: 'homepage', label: 'Homepage', title: 'Homepage' }
+  ]);
+  const [loadingPages, setLoadingPages] = useState(true);
 
-  const pages = [
-    { slug: 'homepage', label: 'Homepage' },
-    { slug: 'about', label: 'About' },
-    { slug: 'pricing', label: 'Pricing' },
-    { slug: 'contact', label: 'Contact' }
-  ];
+  // Load all CMS pages from database
+  useEffect(() => {
+    loadPages();
+  }, []);
+
+  const loadPages = async () => {
+    try {
+      const response = await fetch('/api/cms/pages');
+      const data = await response.json();
+      
+      if (data?.pages) {
+        const formattedPages = data.pages.map((p: any) => ({
+          slug: p.slug,
+          label: p.title,
+          title: p.title
+        }));
+        setPages(formattedPages);
+        
+        // Set first page as selected if current selection doesn't exist
+        if (formattedPages.length > 0 && !formattedPages.find((p: any) => p.slug === selectedPage)) {
+          setSelectedPage(formattedPages[0].slug);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load pages:', error);
+      // Fallback to default pages if API fails
+      setPages([
+        { slug: 'homepage', label: 'Homepage', title: 'Homepage' },
+        { slug: 'about', label: 'About', title: 'About' },
+        { slug: 'pricing', label: 'Pricing', title: 'Pricing' },
+        { slug: 'contact', label: 'Contact', title: 'Contact' },
+        { slug: 'leaderboards', label: 'Leaderboards', title: 'AI Discoverability Leaderboards' },
+        { slug: 'industry-report-template', label: 'Industry Report Template', title: 'Industry Report Template' },
+        { slug: 'evaluation-report-template', label: 'Evaluation Report Template', title: 'Evaluation Report Template' }
+      ]);
+    } finally {
+      setLoadingPages(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
