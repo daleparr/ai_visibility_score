@@ -41,6 +41,7 @@ interface Agent {
   agent_category: string;
   is_active: boolean;
   is_required: boolean;
+  execution_order: number;
   primary_model_key: string;
   uses_llm: boolean;
   avg_cost_per_run: number;
