@@ -107,12 +107,13 @@ export function LogoManager() {
             <div className="text-sm text-blue-900">
               <div className="font-semibold mb-1">📏 Optimal Logo Specifications:</div>
               <div className="space-y-1 text-blue-800">
+                <div><strong>Purpose:</strong> Trust indicators only - logos are NOT clickable (keeps users on site)</div>
                 <div><strong>Format:</strong> SVG (preferred), PNG or WebP with transparency</div>
-                <div><strong>Dimensions:</strong> 200px width × 80px height (2.5:1 ratio)</div>
-                <div><strong>Acceptable Range:</strong> 150-300px width, 60-120px height</div>
+                <div><strong>Dimensions:</strong> 200px width × 80px height (2.5:1 ratio) for client logos</div>
+                <div><strong>AI Model Logos:</strong> 120×120px square format</div>
                 <div><strong>File Size:</strong> Max 500KB (ideally &lt;100KB)</div>
                 <div><strong>Background:</strong> Transparent (no white boxes)</div>
-                <div><strong>Color Mode:</strong> Should work on both light AND dark backgrounds</div>
+                <div><strong>Display:</strong> Grayscale by default, color on hover for visual interest</div>
               </div>
             </div>
           </div>
@@ -237,8 +238,7 @@ function LogoUploader({
     file_url: '',
     file_type: 'svg',
     alt_text: '',
-    category: 'client',
-    company_url: ''
+    category: 'client'
   });
   const [uploading, setUploading] = useState(false);
 
@@ -259,16 +259,25 @@ function LogoUploader({
       return;
     }
 
-    // TODO: Implement actual file upload to storage service
-    // For now, show instructions
-    alert(`File selected: ${file.name} (${(file.size / 1024).toFixed(1)}KB)
+    // Show file info and auto-fill URL if using /public folder
+    const fileName = file.name;
+    const publicUrl = `/logos/${fileName}`;
     
-Next step: Upload to your image hosting service (Cloudinary, Uploadcare, or /public folder)
-Then paste the URL below.
+    setFormData({
+      ...formData,
+      file_url: publicUrl,
+      file_type: file.type.includes('svg') ? 'svg' : file.type.includes('png') ? 'png' : 'webp'
+    });
+    
+    alert(`✅ File selected: ${fileName} (${(file.size / 1024).toFixed(1)}KB)
 
-For /public folder:
-1. Place file in: /public/logos/${file.name}
-2. URL will be: /logos/${file.name}`);
+📁 NEXT STEPS:
+1. Place this file in: /public/logos/${fileName}
+2. URL auto-filled: ${publicUrl}
+3. Fill in remaining fields below
+4. Click "Add Logo" to save
+
+💡 TIP: You can also upload to Cloudinary/Uploadcare and change the URL manually.`);
   };
 
   const handleSubmit = async () => {
@@ -384,14 +393,7 @@ For /public folder:
           </div>
         </div>
 
-        <div>
-          <Label>Company URL (Optional - for clickable logos)</Label>
-          <Input
-            value={formData.company_url}
-            onChange={(e) => setFormData({ ...formData, company_url: e.target.value })}
-            placeholder="https://www.nike.com"
-          />
-        </div>
+        {/* Company URL removed - logos are trust indicators only, not clickable */}
 
         {/* Preview */}
         {formData.file_url && (
