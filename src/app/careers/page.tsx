@@ -32,15 +32,20 @@ export default function CareersPage() {
 
   const loadJobs = async () => {
     try {
-      const response = await fetch('/api/cms/jobs?status=open');
+      // Fetch job postings from CMS content_blocks
+      const response = await fetch('/api/cms/content?page=careers&block=job_postings');
       const data = await response.json();
-      setJobs(data.jobs || []);
-
-      // Extract unique departments
-      const depts = [...new Set(data.jobs?.map((j: JobPosting) => j.department) || [])];
-      setDepartments(depts as string[]);
+      
+      if (data?.content?.positions) {
+        const positions = data.content.positions;
+        setJobs(positions);
+        
+        // Extract unique departments
+        const depts = [...new Set(positions.map((j: JobPosting) => j.department))];
+        setDepartments(depts as string[]);
+      }
     } catch (error) {
-      console.error('Failed to load jobs:', error);
+      console.error('Failed to load jobs from CMS:', error);
     } finally {
       setLoading(false);
     }

@@ -31,18 +31,17 @@ export default function BlogPage() {
 
   const loadPosts = async () => {
     try {
-      const [postsRes, featuredRes] = await Promise.all([
-        fetch('/api/cms/blog?status=published&limit=10'),
-        fetch('/api/cms/blog?status=published&featured=true&limit=1')
-      ]);
-
-      const postsData = await postsRes.json();
-      const featuredData = await featuredRes.json();
-
-      setPosts(postsData.posts || []);
-      setFeatured(featuredData.posts?.[0] || null);
+      // Fetch blog content from CMS content_blocks
+      const response = await fetch('/api/cms/content?page=blog&block=blog_posts');
+      const data = await response.json();
+      
+      if (data?.content?.posts) {
+        const allPosts = data.content.posts;
+        setPosts(allPosts);
+        setFeatured(allPosts.find((p: any) => p.featured) || null);
+      }
     } catch (error) {
-      console.error('Failed to load posts:', error);
+      console.error('Failed to load posts from CMS:', error);
     } finally {
       setLoading(false);
     }
