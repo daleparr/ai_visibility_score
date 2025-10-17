@@ -133,3 +133,4 @@ export function PlatformIndicators({ platforms }: { platforms: Platform[] }) {
   );
 }
 
+

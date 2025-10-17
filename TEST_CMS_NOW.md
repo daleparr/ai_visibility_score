@@ -200,3 +200,4 @@ psql $env:DATABASE_URL -c "SELECT * FROM site_settings LIMIT 1;"
 
 **Run through the 3 tests above and report results!** ✓
 
+

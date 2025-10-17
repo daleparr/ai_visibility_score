@@ -6,6 +6,8 @@ import { Brain, Menu, X, Home, BarChart3 } from 'lucide-react';
 import { BrowseReportsButton } from '@/components/industry-reports/BrowseButton';
 import { contentManager } from '@/lib/cms/cms-client';
 import { LogoDisplay } from '@/components/LogoDisplay';
+import { db } from '@/lib/db';
+import { sql } from 'drizzle-orm';
 
 // Force dynamic rendering since we need database access
 export const dynamic = 'force-dynamic';
@@ -19,7 +21,26 @@ export default async function IndustryReportsPage() {
   let heroHeadline, heroDescription, heroBadges, valueProps;
   
   try {
-    sectors = await industryReportsDB.getSectors(true);
+    // Fetch sectors from industry_report_sectors table (CMS-managed with lock status)
+    const sectorsResult = await db.execute(
+      sql`
+        SELECT 
+          sector_slug as slug,
+          sector_name as name,
+          sector_description as description,
+          is_available,
+          has_content,
+          brand_count,
+          monthly_price,
+          badge_text,
+          demo_cta_text,
+          demo_cta_url,
+          display_order
+        FROM industry_report_sectors
+        ORDER BY display_order, sector_name
+      `
+    );
+    sectors = sectorsResult.rows as any;
     
     // Fetch from CMS
     heroHeadline = await contentManager.getBlockByKey('reports-landing', 'reports_hero_headline');
@@ -245,15 +266,66 @@ interface SectorCardProps {
 }
 
 function SectorCard({ sector }: SectorCardProps) {
+  // Check if sector is locked (not available)
+  const isLocked = sector.is_available === false || !sector.has_content;
+  
+  if (isLocked) {
+    // Locked sector - show demo CTA, not clickable to sector page
+    return (
+      <div className="bg-slate-800/30 border-2 border-dashed border-slate-700 rounded-xl p-6 relative">
+        <div className="absolute top-4 right-4">
+          <span className="px-3 py-1 bg-orange-500/20 text-orange-400 text-xs font-bold rounded-full border border-orange-500/30">
+            🔒 {sector.badge_text || 'Coming Soon'}
+          </span>
+        </div>
+        
+        <h3 className="text-xl font-semibold text-slate-300 mb-3">
+          {sector.name}
+        </h3>
+        <p className="text-slate-500 text-sm mb-4">{sector.description}</p>
+        
+        {sector.brand_count > 0 && (
+          <p className="text-xs text-slate-600 mb-4">
+            {sector.brand_count} brands being analyzed
+          </p>
+        )}
+        
+        <Link
+          href={sector.demo_cta_url || '/demo'}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
+        >
+          {sector.demo_cta_text || 'Request Demo for This Sector'}
+          <span>→</span>
+        </Link>
+      </div>
+    );
+  }
+  
+  // Available sector - clickable to sector report
   return (
     <Link
       href={`/reports/${sector.slug}`}
       className="group bg-slate-800/50 border border-slate-700 hover:border-emerald-500 rounded-xl p-6 transition-all hover:scale-105"
     >
+      <div className="absolute top-4 right-4">
+        {sector.badge_text && (
+          <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-bold rounded-full border border-emerald-500/30">
+            {sector.badge_text}
+          </span>
+        )}
+      </div>
+      
       <h3 className="text-xl font-semibold text-white mb-3 group-hover:text-emerald-400 transition">
         {sector.name}
       </h3>
       <p className="text-slate-400 text-sm mb-4">{sector.description}</p>
+      
+      {sector.brand_count > 0 && (
+        <p className="text-xs text-emerald-400 mb-3">
+          ✓ {sector.brand_count} brands analyzed
+        </p>
+      )}
+      
       {sector.targetAudience && (
         <p className="text-xs text-slate-500">
           <span className="text-emerald-400">For:</span> {sector.targetAudience}

@@ -8,6 +8,7 @@ import { contentManager } from '@/lib/cms/cms-client'
 import { HomePageInteractive } from '@/components/homepage/Interactive'
 import { HomePageHeader } from '@/components/homepage/Header'
 import { LogoDisplay } from '@/components/LogoDisplay'
+import { DynamicPricingCards } from '@/components/DynamicPricingCards'
 
 // Disable caching so CMS changes appear immediately
 export const revalidate = 0;
@@ -338,120 +339,8 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {/* Free Tier */}
-            <Card className="border-2 border-green-200">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl">AIDI Score</CardTitle>
-                <div className="text-4xl font-bold text-green-600">£0</div>
-                <CardDescription>Get your AI discoverability score</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3 mb-6">
-                  <li className="flex items-center">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                    Complete AI visibility analysis
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                    All 12 dimension scores
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                    Basic recommendations
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                    Online report viewing
-                  </li>
-                </ul>
-                <Button className="w-full" variant="outline">
-                  Always Free
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Professional Tier */}
-            <Card className="border-2 border-brand-500 relative">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-brand-600 text-white px-4 py-1">
-                  Most Popular
-                </Badge>
-              </div>
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl">AIDI Index Pro</CardTitle>
-                <div className="text-4xl font-bold text-brand-600">£119</div>
-                <CardDescription>Professional AI discoverability analysis</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3 mb-6">
-                  <li className="flex items-center">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                    Everything in Free
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                    Testing across 5+ AI models (ChatGPT, Claude, Gemini)
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                    PDF & Excel exports
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                    Detailed optimization guides
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                    Industry benchmarking
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                    Priority support
-                  </li>
-                </ul>
-                <Button className="w-full">
-                  Upgrade After Audit
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Enterprise Tier */}
-            <Card className="border-2 border-purple-200">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl">Enterprise</CardTitle>
-                <div className="text-4xl font-bold text-purple-600">£319</div>
-                <CardDescription>Complete AI discoverability mastery</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-3 mb-6">
-                  <li className="flex items-center">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                    Everything in Professional
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                    AIDI leaderboard access
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                    Market insights & trends
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                    Historical tracking
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                    API access & integrations
-                  </li>
-                </ul>
-                <Button className="w-full" variant="outline">
-                  Contact Sales
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Dynamic Pricing Cards - Fully CMS Controlled */}
+          <DynamicPricingCards className="max-w-5xl mx-auto" />
         </div>
       </section>
 

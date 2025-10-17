@@ -117,3 +117,4 @@ export function RecommendationSummaryCompact({ recommendations }: { recommendati
   );
 }
 
+

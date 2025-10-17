@@ -84,3 +84,4 @@ export function formatPlatformName(platform: Platform): string {
   return platform.model ? `${platform.name} (${platform.model})` : platform.name;
 }
 
+

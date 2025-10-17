@@ -115,3 +115,4 @@ export function getCriticalCount(recommendations: Recommendation[]): number {
   return recommendations.filter(rec => calculateSeverity(rec) === 'critical').length;
 }
 
+

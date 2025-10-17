@@ -633,3 +633,4 @@ They have marketers. You have data scientists.
 
 That's your positioning. Own it.
 
+

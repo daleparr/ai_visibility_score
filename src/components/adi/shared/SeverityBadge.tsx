@@ -122,3 +122,4 @@ export function SeverityCard({ level, count, onClick }: { level: SeverityLevel; 
   );
 }
 
+

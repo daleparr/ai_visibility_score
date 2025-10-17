@@ -193,3 +193,4 @@ export function getDimensionDescription(dimension: QuickScanDimension): string {
   return descriptions[dimension];
 }
 
+
