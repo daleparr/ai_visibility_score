@@ -5,15 +5,21 @@ import { ThemeEditor } from '@/components/admin/ThemeEditor';
 import { ContentEditor } from '@/components/admin/ContentEditor';
 import { BlogManager } from '@/components/admin/BlogManager';
 import { JobManager } from '@/components/admin/JobManager';
+import { TierManager } from '@/components/admin/TierManager';
+import { UserManager } from '@/components/admin/UserManager';
+import { InvoiceManager } from '@/components/admin/InvoiceManager';
 import {
   Palette,
   FileText,
   Newspaper,
   Briefcase,
-  Settings
+  Settings,
+  Package,
+  Users,
+  Receipt
 } from 'lucide-react';
 
-type CMSSection = 'theme' | 'content' | 'blog' | 'jobs';
+type CMSSection = 'theme' | 'content' | 'blog' | 'jobs' | 'tiers' | 'users' | 'invoices';
 
 interface CMSPage {
   slug: string;
@@ -126,6 +132,42 @@ export default function CMSAdminPage() {
               <Briefcase className="h-4 w-4" />
               Job Board
             </button>
+
+            <button
+              onClick={() => setActiveSection('tiers')}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeSection === 'tiers'
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Package className="h-4 w-4" />
+              Pricing Tiers
+            </button>
+
+            <button
+              onClick={() => setActiveSection('users')}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeSection === 'users'
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Users className="h-4 w-4" />
+              User Management
+            </button>
+
+            <button
+              onClick={() => setActiveSection('invoices')}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeSection === 'invoices'
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Receipt className="h-4 w-4" />
+              Invoicing
+            </button>
           </nav>
 
           {/* Page Selector for Content Section */}
@@ -159,6 +201,9 @@ export default function CMSAdminPage() {
           {activeSection === 'content' && <ContentEditor pageSlug={selectedPage} />}
           {activeSection === 'blog' && <BlogManager />}
           {activeSection === 'jobs' && <JobManager />}
+          {activeSection === 'tiers' && <TierManager />}
+          {activeSection === 'users' && <UserManager />}
+          {activeSection === 'invoices' && <InvoiceManager />}
         </main>
       </div>
     </div>
