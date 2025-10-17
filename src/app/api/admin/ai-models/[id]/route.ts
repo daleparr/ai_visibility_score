@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { db } from '@/lib/db';
+import { sql } from 'drizzle-orm';
 
 // PATCH /api/admin/ai-models/[id] - Toggle model active status
 export async function PATCH(
@@ -16,14 +17,19 @@ export async function PATCH(
     const body = await req.json();
     const modelId = params.id;
 
-    await db.execute({
-      sql: `UPDATE ai_model_configurations
-            SET is_active = $1,
-                updated_at = NOW()
-            WHERE id = $2`,
-      args: [body.is_active, modelId]
-    });
+    console.log('[AI Model Toggle] Updating model:', modelId, 'with:', body);
 
+    // Use sql template literal (format that works)
+    await db.execute(
+      sql`
+        UPDATE ai_model_configurations
+        SET is_active = ${body.is_active},
+            updated_at = NOW()
+        WHERE id = ${modelId}
+      `
+    );
+
+    console.log('[AI Model Toggle] ✅ Update successful');
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to update model:', error);

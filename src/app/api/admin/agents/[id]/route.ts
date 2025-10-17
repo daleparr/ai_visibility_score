@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { db } from '@/lib/db';
+import { sql } from 'drizzle-orm';
 
 // PATCH /api/admin/agents/[id] - Update agent configuration
 export async function PATCH(
@@ -16,31 +17,32 @@ export async function PATCH(
     const body = await req.json();
     const agentId = params.id;
 
-    const updates: string[] = [];
-    const values: any[] = [];
-    let valueIndex = 1;
+    console.log('[Agent Toggle] Updating agent:', agentId, 'with:', body);
 
+    // Use sql template literal (format that works)
     if (body.is_active !== undefined) {
-      updates.push(`is_active = $${valueIndex++}`);
-      values.push(body.is_active);
+      await db.execute(
+        sql`
+          UPDATE agent_configurations
+          SET is_active = ${body.is_active},
+              updated_at = NOW()
+          WHERE id = ${agentId}
+        `
+      );
     }
+    
     if (body.primary_model_key !== undefined) {
-      updates.push(`primary_model_key = $${valueIndex++}`);
-      values.push(body.primary_model_key);
+      await db.execute(
+        sql`
+          UPDATE agent_configurations
+          SET primary_model_key = ${body.primary_model_key},
+              updated_at = NOW()
+          WHERE id = ${agentId}
+        `
+      );
     }
 
-    if (updates.length === 0) {
-      return NextResponse.json({ error: 'No updates provided' }, { status: 400 });
-    }
-
-    updates.push(`updated_at = NOW()`);
-    values.push(agentId);
-
-    await db.execute({
-      sql: `UPDATE agent_configurations SET ${updates.join(', ')} WHERE id = $${valueIndex}`,
-      args: values
-    });
-
+    console.log('[Agent Toggle] ✅ Update successful');
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to update agent:', error);

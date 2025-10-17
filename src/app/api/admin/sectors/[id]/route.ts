@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { db } from '@/lib/db';
+import { sql } from 'drizzle-orm';
 
 // PATCH /api/admin/sectors/[id] - Update sector availability and pricing
 export async function PATCH(
@@ -16,48 +17,55 @@ export async function PATCH(
     const body = await req.json();
     const sectorId = params.id;
 
-    // Build dynamic update
-    const updates: string[] = [];
-    const values: any[] = [];
-    let valueIndex = 1;
+    console.log('[Sector Toggle] Updating sector:', sectorId, 'with:', body);
 
+    // Use sql template literal (format that works)
     if (body.is_available !== undefined) {
-      updates.push(`is_available = $${valueIndex++}`);
-      values.push(body.is_available);
+      await db.execute(
+        sql`
+          UPDATE industry_report_sectors
+          SET is_available = ${body.is_available},
+              updated_at = NOW()
+          WHERE id = ${sectorId}
+        `
+      );
     }
-    if (body.has_content !== undefined) {
-      updates.push(`has_content = $${valueIndex++}`);
-      values.push(body.has_content);
-    }
+    
     if (body.monthly_price !== undefined) {
-      updates.push(`monthly_price = $${valueIndex++}`);
-      values.push(body.monthly_price);
+      await db.execute(
+        sql`
+          UPDATE industry_report_sectors
+          SET monthly_price = ${body.monthly_price},
+              annual_price = ${body.annual_price || body.monthly_price * 10},
+              updated_at = NOW()
+          WHERE id = ${sectorId}
+        `
+      );
     }
-    if (body.annual_price !== undefined) {
-      updates.push(`annual_price = $${valueIndex++}`);
-      values.push(body.annual_price);
-    }
+    
     if (body.badge_text !== undefined) {
-      updates.push(`badge_text = $${valueIndex++}`);
-      values.push(body.badge_text || null);
+      await db.execute(
+        sql`
+          UPDATE industry_report_sectors
+          SET badge_text = ${body.badge_text || null},
+              updated_at = NOW()
+          WHERE id = ${sectorId}
+        `
+      );
     }
+    
     if (body.demo_cta_text !== undefined) {
-      updates.push(`demo_cta_text = $${valueIndex++}`);
-      values.push(body.demo_cta_text);
+      await db.execute(
+        sql`
+          UPDATE industry_report_sectors
+          SET demo_cta_text = ${body.demo_cta_text},
+              updated_at = NOW()
+          WHERE id = ${sectorId}
+        `
+      );
     }
 
-    if (updates.length === 0) {
-      return NextResponse.json({ error: 'No updates provided' }, { status: 400 });
-    }
-
-    updates.push(`updated_at = NOW()`);
-    values.push(sectorId);
-
-    await db.execute({
-      sql: `UPDATE industry_report_sectors SET ${updates.join(', ')} WHERE id = $${valueIndex}`,
-      args: values
-    });
-
+    console.log('[Sector Toggle] ✅ Update successful');
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to update sector:', error);

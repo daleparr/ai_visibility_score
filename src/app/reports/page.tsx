@@ -4,17 +4,28 @@ import Link from 'next/link';
 import { industryReportsDB } from '@/lib/industry-reports/db';
 import { Brain, Menu, X, Home, BarChart3 } from 'lucide-react';
 import { BrowseReportsButton } from '@/components/industry-reports/BrowseButton';
+import { contentManager } from '@/lib/cms/cms-client';
+import { LogoDisplay } from '@/components/LogoDisplay';
 
 // Force dynamic rendering since we need database access
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 0; // Fetch fresh CMS content every time
 
 export default async function IndustryReportsPage() {
   let sectors: any[] = [];
   let error: string | null = null;
   
+  // Fetch CMS content for hero section
+  let heroHeadline, heroDescription, heroBadges, valueProps;
+  
   try {
     sectors = await industryReportsDB.getSectors(true);
+    
+    // Fetch from CMS
+    heroHeadline = await contentManager.getBlockByKey('reports-landing', 'reports_hero_headline');
+    heroDescription = await contentManager.getBlockByKey('reports-landing', 'reports_hero_description');
+    heroBadges = await contentManager.getBlockByKey('reports-landing', 'reports_hero_badges');
+    valueProps = await contentManager.getBlockByKey('reports-landing', 'reports_value_props');
   } catch (err) {
     console.error('Error loading sectors:', err);
     error = 'Failed to load sectors';
@@ -58,22 +69,30 @@ export default async function IndustryReportsPage() {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto">
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
-            Monthly AI Brand Visibility Reports
+            {heroHeadline?.text || 'Monthly AI Brand Visibility Reports'}
           </h1>
-          <p className="text-xl text-slate-300 mb-8">
-            Track how leading AI models recommend brands across {sectors.length} industries.
-            Data-driven insights for CMOs, brand strategists, and marketing executives.
-          </p>
+          <div 
+            className="text-xl text-slate-300 mb-8"
+            dangerouslySetInnerHTML={{ __html: heroDescription?.html || `Track how leading AI models recommend brands across ${sectors.length} industries.` }}
+          />
           <div className="flex justify-center gap-4 mb-12">
-            <span className="px-4 py-2 bg-emerald-600/20 text-emerald-400 rounded-full text-sm font-medium border border-emerald-600/30">
-              4 AI Models Tracked
-            </span>
-            <span className="px-4 py-2 bg-blue-600/20 text-blue-400 rounded-full text-sm font-medium border border-blue-600/30">
-              Monthly Updates
-            </span>
-            <span className="px-4 py-2 bg-purple-600/20 text-purple-400 rounded-full text-sm font-medium border border-purple-600/30">
-              Audit-Grade Data
-            </span>
+            {heroBadges?.badges?.map((badge: string, idx: number) => (
+              <span key={idx} className="px-4 py-2 bg-emerald-600/20 text-emerald-400 rounded-full text-sm font-medium border border-emerald-600/30">
+                {badge}
+              </span>
+            )) || (
+              <>
+                <span className="px-4 py-2 bg-emerald-600/20 text-emerald-400 rounded-full text-sm font-medium border border-emerald-600/30">
+                  4 AI Models Tracked
+                </span>
+                <span className="px-4 py-2 bg-blue-600/20 text-blue-400 rounded-full text-sm font-medium border border-blue-600/30">
+                  Monthly Updates
+                </span>
+                <span className="px-4 py-2 bg-purple-600/20 text-purple-400 rounded-full text-sm font-medium border border-purple-600/30">
+                  Audit-Grade Data
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -138,16 +157,12 @@ export default async function IndustryReportsPage() {
         </div>
 
         {/* Social Proof */}
-        <div className="mt-20 max-w-4xl mx-auto text-center">
-          <p className="text-slate-400 mb-8">
-            Trusted by brand managers at leading companies
-          </p>
-          <div className="flex justify-center gap-8 flex-wrap opacity-50">
-            <div className="text-2xl font-bold text-slate-500">BRAND 1</div>
-            <div className="text-2xl font-bold text-slate-500">BRAND 2</div>
-            <div className="text-2xl font-bold text-slate-500">BRAND 3</div>
-            <div className="text-2xl font-bold text-slate-500">BRAND 4</div>
-          </div>
+        <div className="mt-20 max-w-4xl mx-auto">
+          <LogoDisplay 
+            collectionKey="industry_leaders"
+            title="Trusted by brand managers at leading companies"
+            className="text-slate-400"
+          />
         </div>
 
         {/* CTA Section */}

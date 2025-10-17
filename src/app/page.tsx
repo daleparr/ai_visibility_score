@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { contentManager } from '@/lib/cms/cms-client'
 import { HomePageInteractive } from '@/components/homepage/Interactive'
 import { HomePageHeader } from '@/components/homepage/Header'
+import { LogoDisplay } from '@/components/LogoDisplay'
 
 // Disable caching so CMS changes appear immediately
 export const revalidate = 0;
@@ -500,6 +501,17 @@ export default async function HomePage() {
               </Card>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Social Proof - Logos */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <LogoDisplay 
+            collectionKey="homepage_trusted"
+            title="Trusted by brand managers at leading companies"
+            className=""
+          />
         </div>
       </section>
 

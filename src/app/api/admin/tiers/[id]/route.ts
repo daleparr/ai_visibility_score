@@ -17,36 +17,32 @@ export async function PATCH(
     const body = await req.json();
     const tierId = params.id;
 
-    // Build dynamic update query
-    const updates: string[] = [];
-    const values: any[] = [];
-    let valueIndex = 1;
+    console.log('[Tier Toggle] Updating tier:', tierId, 'with:', body);
 
+    // Use sql template literal (format that works)
     if (body.is_active !== undefined) {
-      updates.push(`is_active = $${valueIndex++}`);
-      values.push(body.is_active);
+      await db.execute(
+        sql`
+          UPDATE pricing_tiers
+          SET is_active = ${body.is_active},
+              updated_at = NOW()
+          WHERE id = ${tierId}
+        `
+      );
     }
+    
     if (body.is_visible_public !== undefined) {
-      updates.push(`is_visible_public = $${valueIndex++}`);
-      values.push(body.is_visible_public);
-    }
-    if (body.badge_text !== undefined) {
-      updates.push(`badge_text = $${valueIndex++}`);
-      values.push(body.badge_text);
-    }
-
-    if (updates.length === 0) {
-      return NextResponse.json({ error: 'No updates provided' }, { status: 400 });
+      await db.execute(
+        sql`
+          UPDATE pricing_tiers
+          SET is_visible_public = ${body.is_visible_public},
+              updated_at = NOW()
+          WHERE id = ${tierId}
+        `
+      );
     }
 
-    updates.push(`updated_at = NOW()`);
-    values.push(tierId);
-
-    await db.execute({
-      sql: `UPDATE pricing_tiers SET ${updates.join(', ')} WHERE id = $${valueIndex}`,
-      args: values
-    });
-
+    console.log('[Tier Toggle] ✅ Update successful');
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to update tier:', error);
