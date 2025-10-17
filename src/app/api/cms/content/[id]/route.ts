@@ -19,26 +19,24 @@ export async function PUT(
     const blockId = params.id;
     const userId = (session.user as any).id || (session.user as any).email || 'system';
 
-    console.log('Updating block:', blockId, 'with content:', content);
+    console.log('Updating block:', blockId);
 
     // Validate content
     if (!content) {
       return NextResponse.json({ error: 'Content is required' }, { status: 400 });
     }
 
-    // Update using parameterized query for better compatibility
-    const contentJson = JSON.stringify(content);
-    const visibleValue = is_visible !== undefined ? is_visible : true;
-    
-    await db.execute({
-      sql: `UPDATE content_blocks
-            SET content = $1::jsonb,
-                is_visible = $2,
-                updated_by = $3,
-                updated_at = NOW()
-            WHERE id = $4`,
-      args: [contentJson, visibleValue, userId, blockId]
-    });
+    // Use exact same pattern as cms-client.ts updateBlock (which works)
+    await db.execute(
+      sql`
+        UPDATE content_blocks
+        SET content = ${JSON.stringify(content)}::jsonb,
+            is_visible = ${is_visible !== undefined ? is_visible : true},
+            updated_by = ${userId},
+            updated_at = NOW()
+        WHERE id = ${blockId}
+      `
+    );
 
     console.log('Block updated successfully:', blockId);
 
