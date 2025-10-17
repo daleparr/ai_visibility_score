@@ -10,6 +10,7 @@ import { UserManager } from '@/components/admin/UserManager';
 import { InvoiceManager } from '@/components/admin/InvoiceManager';
 import { SectorManager } from '@/components/admin/SectorManager';
 import { LogoManager } from '@/components/admin/LogoManager';
+import { AgentControlPanel } from '@/components/admin/AgentControlPanel';
 import {
   Palette,
   FileText,
@@ -20,10 +21,11 @@ import {
   Users,
   Receipt,
   BarChart3,
-  Image
+  Image,
+  Bot
 } from 'lucide-react';
 
-type CMSSection = 'theme' | 'content' | 'blog' | 'jobs' | 'tiers' | 'users' | 'invoices' | 'sectors' | 'logos';
+type CMSSection = 'theme' | 'content' | 'blog' | 'jobs' | 'tiers' | 'users' | 'invoices' | 'sectors' | 'logos' | 'agents';
 
 interface CMSPage {
   slug: string;
@@ -196,6 +198,18 @@ export default function CMSAdminPage() {
               <Image className="h-4 w-4" />
               Brand Logos
             </button>
+
+            <button
+              onClick={() => setActiveSection('agents')}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeSection === 'agents'
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Bot className="h-4 w-4" />
+              Agent Control
+            </button>
           </nav>
 
           {/* Page Selector for Content Section */}
@@ -234,6 +248,7 @@ export default function CMSAdminPage() {
           {activeSection === 'invoices' && <InvoiceManager />}
           {activeSection === 'sectors' && <SectorManager />}
           {activeSection === 'logos' && <LogoManager />}
+          {activeSection === 'agents' && <AgentControlPanel />}
         </main>
       </div>
     </div>
