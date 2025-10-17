@@ -23,7 +23,8 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const blocks = await contentManager.getPageBlocks(page.id);
+    // For admin, get ALL blocks including hidden ones
+    const blocks = await contentManager.getAllBlocksForPage(pageSlug);
 
     return NextResponse.json({ page, blocks });
   } catch (error) {

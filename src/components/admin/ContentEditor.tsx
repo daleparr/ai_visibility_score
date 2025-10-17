@@ -25,6 +25,8 @@ export function ContentEditor({ pageSlug, onSave }: ContentEditorProps) {
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
   const [editingBlock, setEditingBlock] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
     loadBlocks();
@@ -44,16 +46,39 @@ export function ContentEditor({ pageSlug, onSave }: ContentEditorProps) {
 
   const updateBlock = async (blockId: string, updates: Partial<ContentBlock>) => {
     try {
-      await fetch(`/api/cms/content/${blockId}`, {
+      setSaveStatus('saving');
+      setErrorMessage('');
+      
+      const response = await fetch(`/api/cms/content/${blockId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save changes');
+      }
+
+      // Reload blocks to show updated content
       await loadBlocks();
       setEditingBlock(null);
+      setSaveStatus('success');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSaveStatus('idle'), 3000);
+      
       onSave?.();
     } catch (error) {
       console.error('Failed to update block:', error);
+      setSaveStatus('error');
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to save changes');
+      
+      // Clear error after 5 seconds
+      setTimeout(() => {
+        setSaveStatus('idle');
+        setErrorMessage('');
+      }, 5000);
     }
   };
 
@@ -63,6 +88,26 @@ export function ContentEditor({ pageSlug, onSave }: ContentEditorProps) {
 
   return (
     <div className="space-y-6">
+      {/* Save Status Messages */}
+      {saveStatus === 'success' && (
+        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center gap-2">
+          <span className="text-lg">✅</span>
+          <span className="font-medium">Changes saved successfully!</span>
+        </div>
+      )}
+      
+      {saveStatus === 'error' && (
+        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">❌</span>
+            <span className="font-medium">Failed to save changes</span>
+          </div>
+          {errorMessage && (
+            <p className="text-sm mt-1 ml-7">{errorMessage}</p>
+          )}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -100,6 +145,7 @@ export function ContentEditor({ pageSlug, onSave }: ContentEditorProps) {
                 block={block}
                 onSave={(updates) => updateBlock(block.id, updates)}
                 onCancel={() => setEditingBlock(null)}
+                isSaving={saveStatus === 'saving'}
               />
             ) : (
               <BlockPreview block={block} />
@@ -123,11 +169,13 @@ export function ContentEditor({ pageSlug, onSave }: ContentEditorProps) {
 function BlockEditor({
   block,
   onSave,
-  onCancel
+  onCancel,
+  isSaving
 }: {
   block: ContentBlock;
   onSave: (updates: Partial<ContentBlock>) => void;
   onCancel: () => void;
+  isSaving?: boolean;
 }) {
   const [content, setContent] = useState(block.content);
   const [isVisible, setIsVisible] = useState(block.is_visible);
@@ -194,11 +242,11 @@ function BlockEditor({
       </div>
 
       <div className="flex gap-2">
-        <Button onClick={handleSave}>
+        <Button onClick={handleSave} disabled={isSaving}>
           <Save className="h-4 w-4 mr-2" />
-          Save Changes
+          {isSaving ? 'Saving...' : 'Save Changes'}
         </Button>
-        <Button variant="outline" onClick={onCancel}>
+        <Button variant="outline" onClick={onCancel} disabled={isSaving}>
           Cancel
         </Button>
       </div>

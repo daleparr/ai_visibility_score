@@ -262,12 +262,30 @@ export class ContentManager {
     return result.rows[0];
   }
 
-  async getPageBlocks(pageId: string): Promise<ContentBlock[]> {
+  async getPageBlocks(pageId: string, includeHidden: boolean = false): Promise<ContentBlock[]> {
+    const result = await db.execute(
+      includeHidden
+        ? sql`
+            SELECT * FROM content_blocks 
+            WHERE page_id = ${pageId}
+            ORDER BY display_order ASC
+          `
+        : sql`
+            SELECT * FROM content_blocks 
+            WHERE page_id = ${pageId} AND is_visible = true
+            ORDER BY display_order ASC
+          `
+    );
+    return result.rows as any;
+  }
+  
+  async getAllBlocksForPage(pageSlug: string): Promise<ContentBlock[]> {
     const result = await db.execute(
       sql`
-        SELECT * FROM content_blocks 
-        WHERE page_id = ${pageId} AND is_visible = true
-        ORDER BY display_order ASC
+        SELECT cb.* FROM content_blocks cb
+        JOIN cms_pages p ON p.id = cb.page_id
+        WHERE p.slug = ${pageSlug}
+        ORDER BY cb.display_order ASC
       `
     );
     return result.rows as any;
