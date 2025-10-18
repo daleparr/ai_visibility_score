@@ -5,7 +5,6 @@
  * This component integrates the Figma design with existing CMS functionality
  */
 
-import { motion } from 'framer-motion';
 import { CheckCircle2, BarChart3, TrendingUp, Award, ArrowRight, Database } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Footer } from './Footer';
@@ -137,12 +136,9 @@ export async function FigmaHomepage() {
               </p>
 
               {/* Input Section - Exact Figma Design */}
-              <motion.div
+              <div
                 className="bg-white rounded-2xl p-6 md:p-8 shadow-xl max-w-4xl mx-auto border"
                 style={{ borderColor: 'var(--slate-200)' }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
               >
                 <div className="flex flex-col md:flex-row gap-3 md:gap-4 mb-4 md:mb-6">
                   <div className="flex-1 relative">
@@ -192,7 +188,7 @@ export async function FigmaHomepage() {
                     <span>Statistical significance tested</span>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </div>
           </div>
         </section>
@@ -202,12 +198,9 @@ export async function FigmaHomepage() {
           <div className="max-w-6xl mx-auto px-4 md:px-8">
             <div className="grid grid-cols-3 gap-4 md:gap-8">
               {trustStats.map((stat, index) => (
-                <motion.div
+                <div
                   key={index}
                   className="text-center"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 * index, duration: 0.4 }}
                 >
                   <div className="text-3xl md:text-5xl mb-2" style={{ fontWeight: 400, color: 'var(--slate-950)', fontFamily: 'Georgia, serif' }}>
                     {stat.value}
@@ -218,7 +211,7 @@ export async function FigmaHomepage() {
                   <div className="text-xs md:text-sm" style={{ color: 'var(--slate-500)', fontWeight: 400 }}>
                     {stat.sublabel}
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
@@ -239,12 +232,9 @@ export async function FigmaHomepage() {
             {/* AI Models Grid with Motion */}
             <div className="grid grid-cols-2 md:flex md:justify-center items-center gap-8 md:gap-16 mb-8 md:mb-12">
               {aiModels.map((model, index) => (
-                <motion.div
+                <div
                   key={index}
                   className="text-center"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1, duration: 0.4 }}
                 >
                   <div 
                     className="w-16 h-16 md:w-20 md:h-20 rounded-xl flex items-center justify-center text-3xl md:text-4xl mb-3 mx-auto shadow-md border-2"
@@ -261,7 +251,7 @@ export async function FigmaHomepage() {
                   }}>
                     {model.name}
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
@@ -410,16 +400,12 @@ export async function FigmaHomepage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
               {tiers.map((tier: any, index: number) => (
-                <motion.div
+                <div
                   key={tier.id}
                   className="relative bg-white rounded-2xl p-8 border-2 shadow-lg hover:shadow-2xl transition-all"
                   style={{
                     borderColor: tier.recommended ? '#d4a574' : 'var(--slate-200)',
                   }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.15, duration: 0.4 }}
-                  whileHover={{ y: -4 }}
                 >
                   {tier.recommended && (
                     <div 
@@ -464,7 +450,7 @@ export async function FigmaHomepage() {
                   >
                     {tier.cta || 'Subscribe Now'}
                   </button>
-                </motion.div>
+                </div>
               ))}
             </div>
 
