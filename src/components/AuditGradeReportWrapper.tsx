@@ -460,7 +460,7 @@ export function AuditGradeReportWrapper({ evaluationData }: AuditGradeReportWrap
               </div>
             </div>
           </div>
-        </motion.section>
+        </section>
 
         {/* Key Metrics with Statistical Rigor */}
         <section>
