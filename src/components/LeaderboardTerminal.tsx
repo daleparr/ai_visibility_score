@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * AIDI Leaderboard Terminal
  * Bloomberg Terminal-inspired competitive intelligence

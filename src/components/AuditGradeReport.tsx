@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * AIDI Audit-Grade Report
  * The Bloomberg Terminal of AI Visibility

@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * AIDI Blog Page
  * Light theme, editorial content
