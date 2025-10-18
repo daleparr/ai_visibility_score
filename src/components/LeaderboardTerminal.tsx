@@ -171,7 +171,7 @@ export function LeaderboardTerminal() {
     if (grade.startsWith('B')) return '#3b82f6';
     if (grade.startsWith('C')) return '#f59e0b';
     if (grade.startsWith('D')) return '#ef4444';
-    return 'var(--slate-500)';
+    return '#64748b';
   };
 
   const Sparkline = ({ data }: { data: number[] }) => {
@@ -217,22 +217,22 @@ export function LeaderboardTerminal() {
             transition={{ duration: 0.2 }}
             className="absolute z-50 w-80 p-4 rounded-lg shadow-xl"
             style={{
-              backgroundColor: 'var(--slate-900)',
-              border: '1px solid var(--slate-700)',
+              backgroundColor: '#0f172a',
+              border: '1px solid #334155',
               bottom: '100%',
               left: '50%',
               transform: 'translateX(-50%)',
               marginBottom: '8px'
             }}
           >
-            <div className="text-xs" style={{ color: 'var(--slate-300)', lineHeight: 1.6 }}>
+            <div className="text-xs" style={{ color: '#cbd5e1', lineHeight: 1.6 }}>
               {metricExplanations[metric as keyof typeof metricExplanations]}
             </div>
             <div 
               className="absolute w-2 h-2 rotate-45"
               style={{
-                backgroundColor: 'var(--slate-900)',
-                border: '1px solid var(--slate-700)',
+                backgroundColor: '#0f172a',
+                border: '1px solid #334155',
                 borderTop: 'none',
                 borderLeft: 'none',
                 bottom: '-5px',
@@ -261,7 +261,7 @@ export function LeaderboardTerminal() {
                 <div className="text-xs md:text-sm" style={{ color: '#22c55e', fontWeight: 500, fontFamily: 'monospace', letterSpacing: '0.03em' }}>
                   AIDI TERMINAL
                 </div>
-                <div className="hidden md:block text-xs" style={{ color: 'var(--slate-500)', fontFamily: 'monospace', fontWeight: 400 }}>
+                <div className="hidden md:block text-xs" style={{ color: '#64748b', fontFamily: 'monospace', fontWeight: 400 }}>
                   LIVE DATA FEED
                 </div>
               </div>
@@ -274,7 +274,7 @@ export function LeaderboardTerminal() {
                 className="px-4 py-2 rounded border text-xs flex items-center gap-2 hover:bg-slate-800 transition-colors"
                 style={{ 
                   borderColor: showExplanations ? '#22c55e' : '#1e293b',
-                  color: showExplanations ? '#22c55e' : 'var(--slate-400)',
+                  color: showExplanations ? '#22c55e' : '#94a3b8',
                   fontFamily: 'monospace',
                   fontWeight: 400
                 }}
@@ -283,7 +283,7 @@ export function LeaderboardTerminal() {
                 {showExplanations ? 'HIDE' : 'SHOW'} INFO
               </button>
               
-              <button className="px-4 py-2 rounded border text-xs flex items-center gap-2 hover:bg-slate-800 transition-colors" style={{ borderColor: '#1e293b', color: 'var(--slate-400)', fontFamily: 'monospace', fontWeight: 400 }}>
+              <button className="px-4 py-2 rounded border text-xs flex items-center gap-2 hover:bg-slate-800 transition-colors" style={{ borderColor: '#1e293b', color: '#94a3b8', fontFamily: 'monospace', fontWeight: 400 }}>
                 <Download className="w-4 h-4" />
                 EXPORT
               </button>
@@ -298,7 +298,7 @@ export function LeaderboardTerminal() {
               <SheetTrigger asChild>
                 <button 
                   className="md:hidden p-2 rounded border hover:bg-slate-800 transition-colors"
-                  style={{ borderColor: '#1e293b', color: 'var(--slate-400)' }}
+                  style={{ borderColor: '#1e293b', color: '#94a3b8' }}
                   aria-label="Menu"
                 >
                   <Menu className="w-5 h-5" />
@@ -318,7 +318,7 @@ export function LeaderboardTerminal() {
                       <div style={{ fontWeight: 500, color: '#22c55e', letterSpacing: '0.03em', fontFamily: 'monospace' }}>
                         AIDI
                       </div>
-                      <div className="text-xs uppercase tracking-wider" style={{ color: 'var(--slate-500)', fontWeight: 400, fontFamily: 'monospace' }}>
+                      <div className="text-xs uppercase tracking-wider" style={{ color: '#64748b', fontWeight: 400, fontFamily: 'monospace' }}>
                         TERMINAL
                       </div>
                     </div>
@@ -329,7 +329,7 @@ export function LeaderboardTerminal() {
                     <a 
                       href="#leaderboard" 
                       className="px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors"
-                      style={{ color: 'var(--slate-300)', fontWeight: 400, fontFamily: 'monospace' }}
+                      style={{ color: '#cbd5e1', fontWeight: 400, fontFamily: 'monospace' }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Leaderboard
@@ -337,7 +337,7 @@ export function LeaderboardTerminal() {
                     <a 
                       href="#methodology" 
                       className="px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors"
-                      style={{ color: 'var(--slate-400)', fontWeight: 400, fontFamily: 'monospace' }}
+                      style={{ color: '#94a3b8', fontWeight: 400, fontFamily: 'monospace' }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Methodology
@@ -345,7 +345,7 @@ export function LeaderboardTerminal() {
                     <a 
                       href="#home" 
                       className="px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors"
-                      style={{ color: 'var(--slate-400)', fontWeight: 400, fontFamily: 'monospace' }}
+                      style={{ color: '#94a3b8', fontWeight: 400, fontFamily: 'monospace' }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Home
@@ -356,7 +356,7 @@ export function LeaderboardTerminal() {
                         setMobileMenuOpen(false);
                       }}
                       className="px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-left flex items-center gap-2"
-                      style={{ color: 'var(--slate-400)', fontWeight: 400, fontFamily: 'monospace' }}
+                      style={{ color: '#94a3b8', fontWeight: 400, fontFamily: 'monospace' }}
                     >
                       <Info className="w-4 h-4" />
                       {showExplanations ? 'Hide' : 'Show'} Info
@@ -364,7 +364,7 @@ export function LeaderboardTerminal() {
                     <a 
                       href="#export" 
                       className="px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2"
-                      style={{ color: 'var(--slate-400)', fontWeight: 400, fontFamily: 'monospace' }}
+                      style={{ color: '#94a3b8', fontWeight: 400, fontFamily: 'monospace' }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <Download className="w-4 h-4" />
@@ -393,7 +393,7 @@ export function LeaderboardTerminal() {
           <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-2 md:py-3">
             <div className="flex items-center gap-2">
               <Bell className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" style={{ color: '#ef4444' }} />
-              <div className="text-xs md:text-sm" style={{ color: 'var(--slate-300)', fontWeight: 400 }}>
+              <div className="text-xs md:text-sm" style={{ color: '#cbd5e1', fontWeight: 400 }}>
                 <span className="hidden md:inline uppercase tracking-wider mr-2" style={{ color: '#ef4444', fontWeight: 500, fontFamily: 'monospace' }}>
                   ALERT:
                 </span>
@@ -435,14 +435,14 @@ export function LeaderboardTerminal() {
             <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border rounded-lg p-4 md:p-5" style={{ borderColor: '#1e293b' }}>
               <div className="flex items-center gap-2 mb-2">
                 <BarChart3 className="w-3 h-3 md:w-4 md:h-4" style={{ color: '#22c55e' }} />
-                <div className="text-xs uppercase tracking-wider" style={{ color: 'var(--slate-500)', fontFamily: 'monospace', fontWeight: 400 }}>
+                <div className="text-xs uppercase tracking-wider" style={{ color: '#64748b', fontFamily: 'monospace', fontWeight: 400 }}>
                   Average
                 </div>
               </div>
               <div className="text-xl md:text-3xl mb-1" style={{ color: '#22c55e', fontWeight: 400, fontFamily: 'Georgia, serif' }}>
                 {sectorAverage.toFixed(0)}
               </div>
-              <div className="text-xs" style={{ color: 'var(--slate-500)', fontWeight: 400 }}>
+              <div className="text-xs" style={{ color: '#64748b', fontWeight: 400 }}>
                 Sector baseline
               </div>
             </div>
@@ -450,14 +450,14 @@ export function LeaderboardTerminal() {
             <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border rounded-lg p-4 md:p-5" style={{ borderColor: '#1e293b' }}>
               <div className="flex items-center gap-2 mb-2">
                 <Award className="w-3 h-3 md:w-4 md:h-4" style={{ color: '#3b82f6' }} />
-                <div className="text-xs uppercase tracking-wider" style={{ color: 'var(--slate-500)', fontFamily: 'monospace', fontWeight: 400 }}>
+                <div className="text-xs uppercase tracking-wider" style={{ color: '#64748b', fontFamily: 'monospace', fontWeight: 400 }}>
                   Leader
                 </div>
               </div>
               <div className="text-lg md:text-2xl mb-1" style={{ color: 'white', fontWeight: 500 }}>
                 {topPerformer.brand}
               </div>
-              <div className="text-xs" style={{ color: 'var(--slate-500)', fontWeight: 400 }}>
+              <div className="text-xs" style={{ color: '#64748b', fontWeight: 400 }}>
                 Score: {topPerformer.score}
               </div>
             </div>
@@ -465,14 +465,14 @@ export function LeaderboardTerminal() {
             <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border rounded-lg p-4 md:p-5" style={{ borderColor: '#1e293b' }}>
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="w-3 h-3 md:w-4 md:h-4" style={{ color: '#22c55e' }} />
-                <div className="text-xs uppercase tracking-wider" style={{ color: 'var(--slate-500)', fontFamily: 'monospace', fontWeight: 400 }}>
+                <div className="text-xs uppercase tracking-wider" style={{ color: '#64748b', fontFamily: 'monospace', fontWeight: 400 }}>
                   Rising
                 </div>
               </div>
               <div className="text-xl md:text-3xl mb-1" style={{ color: '#22c55e', fontWeight: 500 }}>
                 {risingBrands}
               </div>
-              <div className="text-xs" style={{ color: 'var(--slate-500)', fontWeight: 400 }}>
+              <div className="text-xs" style={{ color: '#64748b', fontWeight: 400 }}>
                 Gaining
               </div>
             </div>
@@ -480,14 +480,14 @@ export function LeaderboardTerminal() {
             <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border rounded-lg p-4 md:p-5" style={{ borderColor: '#1e293b' }}>
               <div className="flex items-center gap-2 mb-2">
                 <TrendingDown className="w-3 h-3 md:w-4 md:h-4" style={{ color: '#ef4444' }} />
-                <div className="text-xs uppercase tracking-wider" style={{ color: 'var(--slate-500)', fontFamily: 'monospace', fontWeight: 400 }}>
+                <div className="text-xs uppercase tracking-wider" style={{ color: '#64748b', fontFamily: 'monospace', fontWeight: 400 }}>
                   Falling
                 </div>
               </div>
               <div className="text-xl md:text-3xl mb-1" style={{ color: '#ef4444', fontWeight: 500 }}>
                 {decliningBrands}
               </div>
-              <div className="text-xs" style={{ color: 'var(--slate-500)', fontWeight: 400 }}>
+              <div className="text-xs" style={{ color: '#64748b', fontWeight: 400 }}>
                 Declining
               </div>
             </div>
@@ -502,11 +502,11 @@ export function LeaderboardTerminal() {
               League Table
             </div>
             <div className="hidden md:flex items-center gap-4">
-              <button className="text-xs flex items-center gap-2 px-3 py-1.5 rounded border hover:bg-slate-800 transition-colors" style={{ borderColor: '#1e293b', color: 'var(--slate-400)', fontFamily: 'monospace', fontWeight: 400 }}>
+              <button className="text-xs flex items-center gap-2 px-3 py-1.5 rounded border hover:bg-slate-800 transition-colors" style={{ borderColor: '#1e293b', color: '#94a3b8', fontFamily: 'monospace', fontWeight: 400 }}>
                 <Filter className="w-3 h-3" />
                 Compare
               </button>
-              <button className="text-xs flex items-center gap-2 px-3 py-1.5 rounded border hover:bg-slate-800 transition-colors" style={{ borderColor: '#1e293b', color: 'var(--slate-400)', fontFamily: 'monospace', fontWeight: 400 }}>
+              <button className="text-xs flex items-center gap-2 px-3 py-1.5 rounded border hover:bg-slate-800 transition-colors" style={{ borderColor: '#1e293b', color: '#94a3b8', fontFamily: 'monospace', fontWeight: 400 }}>
                 <RefreshCw className="w-3 h-3" />
                 Alerts
               </button>
@@ -529,7 +529,7 @@ export function LeaderboardTerminal() {
                     className="w-10 h-10 rounded flex items-center justify-center flex-shrink-0"
                     style={{ 
                       backgroundColor: entry.rank <= 3 ? (entry.rank === 1 ? '#fbbf24' : entry.rank === 2 ? '#94a3b8' : '#c07a4d') : '#1e293b',
-                      color: entry.rank <= 3 ? '#0a0e1a' : 'var(--slate-400)',
+                      color: entry.rank <= 3 ? '#0a0e1a' : '#94a3b8',
                       fontWeight: 600,
                       fontSize: '1rem'
                     }}
@@ -571,7 +571,7 @@ export function LeaderboardTerminal() {
                             </span>
                           </>
                         ) : (
-                          <span className="text-sm" style={{ color: 'var(--slate-500)', fontWeight: 500 }}>
+                          <span className="text-sm" style={{ color: '#64748b', fontWeight: 500 }}>
                             —
                           </span>
                         )}
@@ -607,10 +607,10 @@ export function LeaderboardTerminal() {
                     <span className="text-xs" style={{ color: '#475569', fontWeight: 300 }}>7-day</span>
                   </div>
                   <div className="flex gap-2">
-                    <button className="w-8 h-8 rounded border flex items-center justify-center" style={{ borderColor: '#1e293b', color: 'var(--slate-400)' }}>
+                    <button className="w-8 h-8 rounded border flex items-center justify-center" style={{ borderColor: '#1e293b', color: '#94a3b8' }}>
                       <ExternalLink className="w-4 h-4" />
                     </button>
-                    <button className="w-8 h-8 rounded border flex items-center justify-center" style={{ borderColor: '#1e293b', color: 'var(--slate-400)' }}>
+                    <button className="w-8 h-8 rounded border flex items-center justify-center" style={{ borderColor: '#1e293b', color: '#94a3b8' }}>
                       <Bell className="w-4 h-4" />
                     </button>
                   </div>
@@ -622,7 +622,7 @@ export function LeaderboardTerminal() {
           {/* Desktop Table View */}
           <div className="hidden md:block">
           {/* Column Headers */}
-          <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b text-xs uppercase tracking-wider" style={{ borderColor: '#1e293b', backgroundColor: '#0a0e1a', color: 'var(--slate-500)', fontFamily: 'monospace', fontWeight: 500 }}>
+          <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b text-xs uppercase tracking-wider" style={{ borderColor: '#1e293b', backgroundColor: '#0a0e1a', color: '#64748b', fontFamily: 'monospace', fontWeight: 500 }}>
             <div className="col-span-1">Rank</div>
             <div className="col-span-2">Brand</div>
             <div className="col-span-1">
@@ -693,7 +693,7 @@ export function LeaderboardTerminal() {
                       {entry.rank}
                     </div>
                   ) : (
-                    <div className="text-lg" style={{ color: 'var(--slate-500)', fontWeight: 500, fontFamily: 'monospace' }}>
+                    <div className="text-lg" style={{ color: '#64748b', fontWeight: 500, fontFamily: 'monospace' }}>
                       #{entry.rank}
                     </div>
                   )}
@@ -766,14 +766,14 @@ export function LeaderboardTerminal() {
                       </>
                     ) : (
                       <>
-                        <Minus className="w-4 h-4" style={{ color: 'var(--slate-500)' }} />
-                        <span style={{ color: 'var(--slate-500)', fontWeight: 500, fontFamily: 'monospace' }}>
+                        <Minus className="w-4 h-4" style={{ color: '#64748b' }} />
+                        <span style={{ color: '#64748b', fontWeight: 500, fontFamily: 'monospace' }}>
                           0
                         </span>
                       </>
                     )}
                   </div>
-                  <div className="text-xs ml-2" style={{ color: 'var(--slate-600)', fontWeight: 400 }}>
+                  <div className="text-xs ml-2" style={{ color: '#475569', fontWeight: 400 }}>
                     Q4 2024
                   </div>
                 </div>
@@ -788,10 +788,10 @@ export function LeaderboardTerminal() {
 
                 {/* Actions */}
                 <div className="col-span-1 flex items-center gap-2">
-                  <button className="w-8 h-8 rounded border flex items-center justify-center hover:bg-slate-700 transition-colors" style={{ borderColor: '#1e293b', color: 'var(--slate-400)' }}>
+                  <button className="w-8 h-8 rounded border flex items-center justify-center hover:bg-slate-700 transition-colors" style={{ borderColor: '#1e293b', color: '#94a3b8' }}>
                     <ExternalLink className="w-4 h-4" />
                   </button>
-                  <button className="w-8 h-8 rounded border flex items-center justify-center hover:bg-slate-700 transition-colors" style={{ borderColor: '#1e293b', color: 'var(--slate-400)' }}>
+                  <button className="w-8 h-8 rounded border flex items-center justify-center hover:bg-slate-700 transition-colors" style={{ borderColor: '#1e293b', color: '#94a3b8' }}>
                     <Bell className="w-4 h-4" />
                   </button>
                 </div>
@@ -802,7 +802,7 @@ export function LeaderboardTerminal() {
 
           {/* Table Footer */}
           <div className="border-t px-4 md:px-6 py-3 md:py-4" style={{ borderColor: '#1e293b', backgroundColor: '#0f1419' }}>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-xs" style={{ color: 'var(--slate-500)', fontWeight: 400 }}>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 text-xs" style={{ color: '#64748b', fontWeight: 400 }}>
               <div>
                 <span className="md:hidden">5 of 20 brands</span>
                 <span className="hidden md:inline">Showing 5 of 20 brands • Multi-run averaging (n≥3) • 95% CI</span>
@@ -847,15 +847,15 @@ export function LeaderboardTerminal() {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <span className="text-xs px-2 py-1 rounded-md" style={{ backgroundColor: '#22c55e', color: '#0a0e1a', fontWeight: 400 }}>Rising</span>
-                <span className="text-sm" style={{ color: 'var(--slate-300)', fontWeight: 300 }}>Supreme</span>
+                <span className="text-sm" style={{ color: '#cbd5e1', fontWeight: 300 }}>Supreme</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs px-2 py-1 rounded-md" style={{ backgroundColor: '#22c55e', color: '#0a0e1a', fontWeight: 400 }}>Rising</span>
-                <span className="text-sm" style={{ color: 'var(--slate-300)', fontWeight: 300 }}>Palace</span>
+                <span className="text-sm" style={{ color: '#cbd5e1', fontWeight: 300 }}>Palace</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs px-2 py-1 rounded-md" style={{ backgroundColor: '#ef4444', color: 'white', fontWeight: 400 }}>Declining</span>
-                <span className="text-sm" style={{ color: 'var(--slate-300)', fontWeight: 300 }}>Off-White</span>
+                <span className="text-sm" style={{ color: '#cbd5e1', fontWeight: 300 }}>Off-White</span>
               </div>
             </div>
           </div>
@@ -898,7 +898,7 @@ export function LeaderboardTerminal() {
                   <h4 className="text-sm uppercase tracking-wider mb-4" style={{ color: '#22c55e', fontWeight: 500 }}>
                     AIDI Methodology
                   </h4>
-                  <ul className="space-y-3 text-sm" style={{ color: 'var(--slate-400)', lineHeight: 1.7, fontWeight: 400 }}>
+                  <ul className="space-y-3 text-sm" style={{ color: '#94a3b8', lineHeight: 1.7, fontWeight: 400 }}>
                     <li>• Multi-model testing across 4+ frontier AI systems</li>
                     <li>• Standardized, brand-agnostic query framework</li>
                     <li>• Multi-run averaging (n≥3) with statistical significance testing</li>
@@ -911,7 +911,7 @@ export function LeaderboardTerminal() {
                   <h4 className="text-sm uppercase tracking-wider mb-4" style={{ color: '#3b82f6', fontWeight: 500 }}>
                     Professional Features
                   </h4>
-                  <ul className="space-y-3 text-sm" style={{ color: 'var(--slate-400)', lineHeight: 1.7, fontWeight: 400 }}>
+                  <ul className="space-y-3 text-sm" style={{ color: '#94a3b8', lineHeight: 1.7, fontWeight: 400 }}>
                     <li>• Live competitive intelligence dashboards</li>
                     <li>• Market alerts for ranking changes</li>
                     <li>• Historical trend analysis (7-period sparklines)</li>

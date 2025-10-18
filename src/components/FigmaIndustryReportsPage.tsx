@@ -152,16 +152,16 @@ export function FigmaIndustryReportsPage() {
             </div>
             
             <div className="hidden md:flex items-center gap-6 md:gap-8">
-              <a href="/" className="text-sm hover:opacity-70 transition-opacity" style={{ color: 'var(--slate-300)', fontWeight: 500 }}>
+              <a href="/" className="text-sm hover:opacity-70 transition-opacity" style={{ color: '#cbd5e1', fontWeight: 500 }}>
                 Home
               </a>
-              <a href="/evaluate" className="text-sm hover:opacity-70 transition-opacity" style={{ color: 'var(--slate-300)', fontWeight: 500 }}>
+              <a href="/evaluate" className="text-sm hover:opacity-70 transition-opacity" style={{ color: '#cbd5e1', fontWeight: 500 }}>
                 Get Your Score
               </a>
               <a href="/reports" className="text-sm hover:opacity-70 transition-opacity" style={{ color: '#22c55e', fontWeight: 500 }}>
                 Industry Reports
               </a>
-              <a href="/leaderboards" className="text-sm hover:opacity-70 transition-opacity" style={{ color: 'var(--slate-300)', fontWeight: 500 }}>
+              <a href="/leaderboards" className="text-sm hover:opacity-70 transition-opacity" style={{ color: '#cbd5e1', fontWeight: 500 }}>
                 Leaderboards
               </a>
               <button 
@@ -178,7 +178,7 @@ export function FigmaIndustryReportsPage() {
                   className="md:hidden p-2 hover:bg-slate-800 rounded-lg transition-colors"
                   aria-label="Menu"
                 >
-                  <Menu className="w-6 h-6" style={{ color: 'var(--slate-300)' }} />
+                  <Menu className="w-6 h-6" style={{ color: '#cbd5e1' }} />
                 </button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[280px] sm:w-[320px]" style={{ backgroundColor: '#0f1419', borderLeft: '1px solid #1e293b' }}>
@@ -194,7 +194,7 @@ export function FigmaIndustryReportsPage() {
                       <div style={{ fontWeight: 600, color: 'white', letterSpacing: '-0.01em' }}>
                         AIDI
                       </div>
-                      <div className="text-xs uppercase tracking-wider" style={{ color: 'var(--slate-500)', fontWeight: 400 }}>
+                      <div className="text-xs uppercase tracking-wider" style={{ color: '#64748b', fontWeight: 400 }}>
                         Industry Reports
                       </div>
                     </div>
@@ -204,7 +204,7 @@ export function FigmaIndustryReportsPage() {
                     <a 
                       href="/" 
                       className="px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors"
-                      style={{ color: 'var(--slate-300)', fontWeight: 500 }}
+                      style={{ color: '#cbd5e1', fontWeight: 500 }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Home
@@ -212,7 +212,7 @@ export function FigmaIndustryReportsPage() {
                     <a 
                       href="/evaluate" 
                       className="px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors"
-                      style={{ color: 'var(--slate-300)', fontWeight: 500 }}
+                      style={{ color: '#cbd5e1', fontWeight: 500 }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Get Your Score
@@ -228,7 +228,7 @@ export function FigmaIndustryReportsPage() {
                     <a 
                       href="/leaderboards" 
                       className="px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors"
-                      style={{ color: 'var(--slate-300)', fontWeight: 500 }}
+                      style={{ color: '#cbd5e1', fontWeight: 500 }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Leaderboards
