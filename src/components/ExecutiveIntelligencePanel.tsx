@@ -5,69 +5,161 @@
  * Board-ready intelligence with actionable insights and priority alerts
  */
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, AlertTriangle, CheckCircle2, Award, BarChart3 } from 'lucide-react';
+import { TrendingUp, AlertTriangle, CheckCircle2, Award, BarChart3, Loader2 } from 'lucide-react';
 import { Badge } from './ui/badge';
 
+interface PortfolioHealthSummary {
+  totalBrands: number;
+  avgAidiScore: number;
+  avgAidiScoreChange: number;
+  aboveBenchmark: number;
+  actionRequired: number;
+  lastUpdated: Date;
+  trends: {
+    scoreTrend: 'up' | 'down' | 'stable';
+    benchmarkTrend: 'up' | 'down' | 'stable';
+    portfolioGrowth: number;
+  };
+  insights: string[];
+}
+
+interface PriorityAlert {
+  id: string;
+  type: 'Critical' | 'Warning' | 'Opportunity' | 'Success';
+  title: string;
+  description: string;
+  recommendation: string;
+  metric: string;
+  change: number;
+  p_value: string;
+  confidence_interval: string;
+  brandName: string;
+  brandId: string;
+  createdAt: Date;
+}
+
 export function ExecutiveIntelligencePanel() {
-  const portfolioMetrics = [
+  const [portfolioData, setPortfolioData] = useState<PortfolioHealthSummary | null>(null);
+  const [priorityAlerts, setPriorityAlerts] = useState<PriorityAlert[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Load portfolio summary and priority alerts in parallel
+      const [portfolioResponse, alertsResponse] = await Promise.all([
+        fetch('/api/dashboard/portfolio-summary'),
+        fetch('/api/dashboard/priority-alerts')
+      ]);
+
+      if (!portfolioResponse.ok || !alertsResponse.ok) {
+        throw new Error('Failed to load dashboard data');
+      }
+
+      const portfolioResult = await portfolioResponse.json();
+      const alertsResult = await alertsResponse.json();
+
+      if (portfolioResult.success) {
+        setPortfolioData(portfolioResult.data);
+      }
+
+      if (alertsResult.success) {
+        setPriorityAlerts(alertsResult.data);
+      }
+    } catch (err) {
+      console.error('Error loading dashboard data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getAlertColor = (type: string) => {
+    switch (type) {
+      case 'Critical': return '#ef4444';
+      case 'Warning': return '#f59e0b';
+      case 'Opportunity': return '#3b82f6';
+      case 'Success': return '#22c55e';
+      default: return '#64748b';
+    }
+  };
+
+  const getTrendIcon = (trend: string) => {
+    return trend === 'up' ? TrendingUp : trend === 'down' ? TrendingUp : null;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" style={{ color: '#d4a574' }} />
+          <p style={{ color: '#64748b' }}>Loading executive intelligence...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <AlertTriangle className="w-8 h-8 mx-auto mb-4" style={{ color: '#ef4444' }} />
+        <p style={{ color: '#ef4444' }}>Error loading dashboard data: {error}</p>
+        <button 
+          onClick={loadDashboardData}
+          className="mt-4 px-4 py-2 rounded-md text-sm font-medium"
+          style={{ 
+            backgroundColor: '#d4a574', 
+            color: 'white',
+            border: 'none'
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  const portfolioMetrics = portfolioData ? [
     {
       label: 'PORTFOLIO BRANDS',
-      value: '12 brands',
+      value: `${portfolioData.totalBrands} brands`,
       icon: Award,
       color: '#0f172a'
     },
     {
       label: 'AVG AIDI SCORE',
-      value: '78',
-      change: '+4',
+      value: portfolioData.avgAidiScore.toString(),
+      change: portfolioData.avgAidiScoreChange > 0 ? `+${portfolioData.avgAidiScoreChange}` : portfolioData.avgAidiScoreChange.toString(),
       icon: BarChart3,
-      color: '#22c55e',
-      trend: 'up'
+      color: portfolioData.avgAidiScoreChange > 0 ? '#22c55e' : portfolioData.avgAidiScoreChange < 0 ? '#ef4444' : '#64748b',
+      trend: portfolioData.trends.scoreTrend
     },
     {
       label: 'ABOVE BENCHMARK',
-      value: '9 of 12',
+      value: `${portfolioData.aboveBenchmark} of ${portfolioData.totalBrands}`,
       icon: CheckCircle2,
       color: '#22c55e'
     },
     {
       label: 'ACTION REQUIRED',
-      value: '2 brands',
+      value: `${portfolioData.actionRequired} brands`,
       icon: AlertTriangle,
       color: '#ef4444'
     }
-  ];
+  ] : [];
 
-  const executiveSummary = [
-    'Portfolio strengthening: 7 of 12 brands trending upward with statistically significant improvements (p < 0.05)',
-    'Competitive threats: Nike showing concerning 12-point decline while Adidas vulnerability presents opportunity',
-    'Industry context: Athletic Footwear sector benchmark rose 8 points; maintaining 78-point average keeps portfolio in 82nd percentile',
-    'Recommended action: Immediate review of Technical Foundation dimension for declining brands; replicate Shopping Experience Quality approach across portfolio'
-  ];
-
-  const priorityAlerts = [
-    {
-      type: 'critical',
-      title: 'Nike Score Decline',
-      description: '12-point drop in Q4 (p < 0.01)',
-      action: 'Review Technical Foundation dimension',
-      color: '#ef4444'
-    },
-    {
-      type: 'opportunity',
-      title: 'Adidas Vulnerability',
-      description: 'Competitor showing 8-point decline',
-      action: 'Increase market share capture',
-      color: '#f59e0b'
-    },
-    {
-      type: 'success',
-      title: 'Jordan Brand Excellence',
-      description: 'Consistent 85+ scores across quarters',
-      action: 'Replicate strategies across portfolio',
-      color: '#22c55e'
-    }
+  const executiveSummary = portfolioData?.insights || [
+    'Portfolio data is being processed. Please check back in a few minutes.',
+    'If this message persists, please contact support.'
   ];
 
   return (
@@ -222,9 +314,9 @@ export function ExecutiveIntelligencePanel() {
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {priorityAlerts.map((alert, index) => (
+          {priorityAlerts.length > 0 ? priorityAlerts.map((alert, index) => (
             <motion.div
-              key={index}
+              key={alert.id}
               className="bg-white rounded-xl border p-4 md:p-6"
               style={{ borderColor: '#e2e8f0' }}
               initial={{ opacity: 0, y: 20 }}
@@ -235,7 +327,7 @@ export function ExecutiveIntelligencePanel() {
               <div className="flex items-start gap-3">
                 <div 
                   className="w-3 h-3 rounded-full mt-1.5 flex-shrink-0"
-                  style={{ backgroundColor: alert.color }}
+                  style={{ backgroundColor: getAlertColor(alert.type) }}
                 />
                 <div className="flex-1">
                   <h3 
@@ -258,18 +350,31 @@ export function ExecutiveIntelligencePanel() {
                     {alert.description}
                   </p>
                   <div 
-                    className="text-xs font-medium"
+                    className="text-xs font-medium mb-2"
                     style={{ 
-                      color: alert.color,
+                      color: getAlertColor(alert.type),
                       fontWeight: 500
                     }}
                   >
-                    Action: {alert.action}
+                    Action: {alert.recommendation}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs" style={{ color: '#94a3b8' }}>
+                    <span>p-value: {alert.p_value}</span>
+                    <span>•</span>
+                    <span>CI: {alert.confidence_interval}</span>
                   </div>
                 </div>
               </div>
             </motion.div>
-          ))}
+          )) : (
+            <div className="col-span-full text-center py-8">
+              <CheckCircle2 className="w-8 h-8 mx-auto mb-4" style={{ color: '#22c55e' }} />
+              <p style={{ color: '#64748b' }}>No priority alerts at this time</p>
+              <p className="text-sm mt-2" style={{ color: '#94a3b8' }}>
+                All brands are performing within expected parameters
+              </p>
+            </div>
+          )}
         </div>
       </motion.div>
     </div>

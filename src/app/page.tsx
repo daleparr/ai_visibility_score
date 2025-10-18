@@ -14,7 +14,8 @@ export default async function HomePage() {
     const variantSetting = await contentManager.getBlockByKey('homepage', 'homepage_variant');
     homepageVariant = variantSetting?.active_variant || 'figma';
   } catch (error) {
-    console.log('Homepage variant not set, using Figma version');
+    console.log('Homepage variant not set, using Figma version:', error instanceof Error ? error.message : 'Unknown error');
+    // Continue with default figma variant
   }
 
   // If minimal variant selected, render that instead

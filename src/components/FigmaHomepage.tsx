@@ -14,7 +14,7 @@ import { FigmaHomepageClient } from './FigmaHomepageClient';
 import { LogoImage } from './LogoImage';
 
 export async function FigmaHomepage() {
-  // Fetch CMS content
+  // Fetch CMS content with fallbacks
   let heroHeadline, heroSubhead, heroDescription, trustIndicators, pricingTiers, footerAbout, threePillars, evaluationFormConfig;
   
   try {
@@ -27,7 +27,8 @@ export async function FigmaHomepage() {
     threePillars = await contentManager.getBlockByKey('homepage', 'three_pillars_cards');
     evaluationFormConfig = await contentManager.getBlockByKey('homepage', 'evaluation_form_config');
   } catch (error) {
-    console.error('Error loading CMS content:', error);
+    console.error('Error loading CMS content, using defaults:', error instanceof Error ? error.message : 'Unknown error');
+    // Continue with default content
   }
 
   // Process pricing tiers from CMS
