@@ -96,7 +96,7 @@ export function AuditGradeReport() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--slate-50)' }}>
       {/* Premium Header - Editorial Authority */}
-      <header className="bg-white border-b" style={{ borderColor: 'var(--slate-200)' }}>
+      <header className="bg-white border-b" style={{ borderColor: '#e2e8f0' }}>
         <div className="max-w-7xl mx-auto px-4 md:px-12 py-6 md:py-8">
           <div className="flex flex-col md:flex-row items-start md:justify-between gap-4 md:gap-0">
             <div>
@@ -126,7 +126,7 @@ export function AuditGradeReport() {
                     </p>
                   </div>
                 </div>
-                <div className="hidden md:block h-10 w-px" style={{ backgroundColor: 'var(--slate-200)' }} />
+                <div className="hidden md:block h-10 w-px" style={{ backgroundColor: '#e2e8f0' }} />
                 <span 
                   className="text-xs uppercase tracking-wider px-3 py-1 rounded-md"
                   style={{ 
@@ -166,15 +166,15 @@ export function AuditGradeReport() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="bg-gradient-to-br rounded-2xl border overflow-hidden" 
+          <div className="bg-gradient-to-br rounded-xl border overflow-hidden" 
             style={{ 
               backgroundImage: 'linear-gradient(135deg, var(--slate-950) 0%, var(--slate-800) 100%)',
-              borderColor: 'var(--slate-700)'
+              borderColor: '#334155'
             }}
           >
             <div className="grid grid-cols-1 md:grid-cols-12 gap-0">
               {/* Left: Score Display */}
-              <div className="md:col-span-5 p-6 md:p-12 flex flex-col justify-center md:border-r" style={{ borderColor: 'var(--slate-700)' }}>
+              <div className="md:col-span-5 p-6 md:p-12 flex flex-col justify-center md:border-r" style={{ borderColor: '#334155' }}>
                 <div className="text-xs uppercase tracking-widest mb-6" style={{ color: '#94a3b8', fontFamily: 'monospace' }}>
                   Audit-Grade AIDI Score
                 </div>
@@ -207,7 +207,7 @@ export function AuditGradeReport() {
                 </div>
 
                 {/* Confidence Interval */}
-                <div className="bg-slate-800 rounded-lg p-4 border" style={{ borderColor: '#334155' }}>
+                <div className="bg-slate-800 rounded-md p-4 border" style={{ borderColor: '#334155' }}>
                   <div className="flex items-center gap-2 mb-2">
                     <BarChart3 className="w-4 h-4" style={{ color: '#94a3b8' }} />
                     <div className="text-xs uppercase tracking-wider" style={{ color: '#94a3b8', fontFamily: 'monospace' }}>
@@ -229,7 +229,7 @@ export function AuditGradeReport() {
               </div>
 
               {/* Right: Context & Benchmarking */}
-              <div className="md:col-span-7 p-6 md:p-12 border-t md:border-t-0" style={{ borderColor: 'var(--slate-700)' }}>
+              <div className="md:col-span-7 p-6 md:p-12 border-t md:border-t-0" style={{ borderColor: '#334155' }}>
                 <div className="mb-6 md:mb-8">
                   <h2 
                     className="text-xl md:text-2xl lg:text-3xl mb-3"
@@ -252,7 +252,7 @@ export function AuditGradeReport() {
 
                 {/* Benchmark Position */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
-                  <div className="bg-slate-800 rounded-lg p-4 md:p-6 border" style={{ borderColor: '#334155' }}>
+                  <div className="bg-slate-800 rounded-md p-4 md:p-6 border" style={{ borderColor: '#334155' }}>
                     <div className="text-xs uppercase tracking-wider mb-2" style={{ color: '#94a3b8', fontFamily: 'monospace' }}>
                       Percentile Rank
                     </div>
@@ -267,7 +267,7 @@ export function AuditGradeReport() {
                     </div>
                   </div>
 
-                  <div className="bg-slate-800 rounded-lg p-4 md:p-6 border" style={{ borderColor: '#334155' }}>
+                  <div className="bg-slate-800 rounded-md p-4 md:p-6 border" style={{ borderColor: '#334155' }}>
                     <div className="text-xs uppercase tracking-wider mb-2" style={{ color: '#94a3b8', fontFamily: 'monospace' }}>
                       vs Industry Average
                     </div>
@@ -284,7 +284,7 @@ export function AuditGradeReport() {
                 </div>
 
                 {/* Statistical Significance */}
-                <div className="bg-emerald-900/20 border rounded-lg p-5" style={{ borderColor: '#22c55e40' }}>
+                <div className="bg-emerald-900/20 border rounded-md p-5" style={{ borderColor: '#22c55e40' }}>
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#22c55e' }} />
                     <div>
@@ -317,7 +317,7 @@ export function AuditGradeReport() {
             </p>
           </div>
 
-          <div className="bg-white rounded-xl border overflow-hidden" style={{ borderColor: '#e2e8f0' }}>
+          <div className="bg-white rounded-lg border overflow-hidden" style={{ borderColor: '#e2e8f0' }}>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -397,7 +397,7 @@ export function AuditGradeReport() {
 
             <div className="bg-gradient-to-r from-slate-50 to-white px-4 md:px-6 py-5 md:py-6 border-t" style={{ borderColor: '#e2e8f0' }}>
               <div className="flex flex-col md:flex-row items-start gap-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#d4a574' }}>
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-md flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#d4a574' }}>
                   <LogoImage size={28} />
                 </div>
                 <div className="flex-1">
@@ -410,7 +410,7 @@ export function AuditGradeReport() {
                   </p>
                 </div>
                 <button 
-                  className="w-full md:w-auto px-5 md:px-6 py-2.5 md:py-3 rounded-lg text-white hover:opacity-90 transition-opacity text-sm flex items-center justify-center gap-2"
+                  className="w-full md:w-auto px-5 md:px-6 py-2.5 md:py-3 rounded-md text-white hover:opacity-90 transition-opacity text-sm flex items-center justify-center gap-2"
                   style={{ backgroundColor: 'var(--slate-950)', fontWeight: 500 }}
                 >
                   <FileText className="w-4 h-4" />
@@ -436,7 +436,7 @@ export function AuditGradeReport() {
             {keyMetrics.map((metric, index) => (
               <motion.div
                 key={index}
-                className="bg-white rounded-xl border p-5 md:p-6"
+                className="bg-white rounded-lg border p-5 md:p-6"
                 style={{ borderColor: '#e2e8f0' }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -486,10 +486,10 @@ export function AuditGradeReport() {
                         <span>0</span>
                         <span>100</span>
                       </div>
-                      <div className="relative h-10 md:h-12 rounded-lg" style={{ backgroundColor: 'var(--slate-100)' }}>
+                      <div className="relative h-10 md:h-12 rounded-md" style={{ backgroundColor: 'var(--slate-100)' }}>
                         {/* Confidence Interval Band */}
                         <motion.div
-                          className="absolute h-full rounded-lg"
+                          className="absolute h-full rounded-md"
                           style={{ 
                             backgroundColor: '#22c55e20',
                             left: `${metric.confidence[0]}%`,
@@ -501,7 +501,7 @@ export function AuditGradeReport() {
                         />
                         {/* Score Bar */}
                         <motion.div
-                          className="absolute h-full rounded-lg"
+                          className="absolute h-full rounded-md"
                           style={{ backgroundColor: '#22c55e' }}
                           initial={{ width: 0 }}
                           animate={{ width: `${metric.score}%` }}
@@ -528,7 +528,7 @@ export function AuditGradeReport() {
 
                     {/* Status Message */}
                     <div 
-                      className="bg-slate-50 rounded-lg p-3 md:p-4 border"
+                      className="bg-slate-50 rounded-md p-3 md:p-4 border"
                       style={{ borderColor: '#e2e8f0' }}
                     >
                       <div className="flex items-start gap-2 md:gap-3">
@@ -557,10 +557,10 @@ export function AuditGradeReport() {
         {/* Board-Ready CTA */}
         <section className="relative overflow-hidden">
           <div 
-            className="rounded-xl md:rounded-2xl p-6 md:p-12 border relative z-10"
+            className="rounded-lg md:rounded-xl p-6 md:p-12 border relative z-10"
             style={{ 
               backgroundColor: 'var(--slate-950)',
-              borderColor: 'var(--slate-800)'
+              borderColor: '#334155'
             }}
           >
             <div className="max-w-3xl">
@@ -589,15 +589,15 @@ export function AuditGradeReport() {
               
               <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
                 <button 
-                  className="px-6 md:px-8 py-3 md:py-4 rounded-lg text-slate-950 hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                  className="px-6 md:px-8 py-3 md:py-4 rounded-md text-slate-950 hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
                   style={{ backgroundColor: 'white', fontWeight: 600 }}
                 >
                   <Download className="w-4 h-4 md:w-5 md:h-5" />
                   Download Executive PDF
                 </button>
                 <button 
-                  className="px-6 md:px-8 py-3 md:py-4 rounded-lg border text-white hover:bg-slate-900 transition-colors flex items-center justify-center gap-2"
-                  style={{ borderColor: 'var(--slate-700)', fontWeight: 500 }}
+                  className="px-6 md:px-8 py-3 md:py-4 rounded-md border text-white hover:bg-slate-900 transition-colors flex items-center justify-center gap-2"
+                  style={{ borderColor: '#334155', fontWeight: 500 }}
                 >
                   <FileText className="w-4 h-4 md:w-5 md:h-5" />
                   View Full Methodology
