@@ -126,20 +126,19 @@ export function AuditGradeReport() {
                   </div>
                 </div>
                 <div className="hidden md:block h-10 w-px" style={{ backgroundColor: 'var(--slate-200)' }} />
-                <Badge 
-                  className="text-xs uppercase tracking-wider w-fit"
+                <span 
+                  className="text-xs uppercase tracking-wider px-4 py-1.5 rounded-md"
                   style={{ 
                     backgroundColor: '#d4a574',
                     color: 'white',
                     fontWeight: 600,
-                    letterSpacing: '0.12em',
-                    padding: '0.375rem 1rem'
+                    letterSpacing: '0.12em'
                   }}
                 >
                   Audit-Grade Intelligence
-                </Badge>
+                </span>
               </div>
-              <p className="text-sm max-w-2xl" style={{ color: 'var(--slate-600)', lineHeight: 1.6 }}>
+              <p className="text-sm max-w-2xl" style={{ color: '#64748b', lineHeight: 1.6, fontWeight: 400 }}>
                 Statistical rigor. Peer-reviewable methodology. Board-ready intelligence.
               </p>
             </div>
@@ -307,27 +306,27 @@ export function AuditGradeReport() {
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-3">
               <Award className="w-6 h-6" style={{ color: '#d4a574' }} />
-              <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--slate-900)' }}>
+              <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--slate-900)' }}>
                 Why AIDI is Audit-Grade
               </h2>
             </div>
-            <p className="text-sm max-w-3xl" style={{ color: 'var(--slate-600)', lineHeight: 1.6 }}>
+            <p className="text-sm max-w-3xl" style={{ color: '#64748b', lineHeight: 1.6, fontWeight: 400 }}>
               Not all AI visibility measurement is created equal. AIDI employs peer-reviewable methodology with statistical rigor designed for enterprise decision-making.
             </p>
           </div>
 
-          <div className="bg-white rounded-xl border overflow-hidden" style={{ borderColor: 'var(--slate-200)' }}>
+          <div className="bg-white rounded-xl border overflow-hidden" style={{ borderColor: '#e2e8f0' }}>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr style={{ backgroundColor: 'var(--slate-50)', borderBottom: '1px solid var(--slate-200)' }}>
-                    <th className="text-left px-4 md:px-6 py-3 md:py-4 text-xs uppercase tracking-wider" style={{ color: 'var(--slate-700)', fontWeight: 600 }}>
+                  <tr style={{ backgroundColor: 'var(--slate-50)', borderBottom: '1px solid #e2e8f0' }}>
+                    <th className="text-left px-4 md:px-6 py-3 md:py-4 text-xs uppercase tracking-wider" style={{ color: '#64748b', fontWeight: 500 }}>
                       Dimension
                     </th>
-                    <th className="text-left px-4 md:px-6 py-3 md:py-4 text-xs uppercase tracking-wider" style={{ color: 'var(--slate-500)', fontWeight: 500 }}>
+                    <th className="text-left px-4 md:px-6 py-3 md:py-4 text-xs uppercase tracking-wider" style={{ color: '#94a3b8', fontWeight: 400 }}>
                       Monitoring-Grade Tools
                     </th>
-                    <th className="text-left px-4 md:px-6 py-3 md:py-4 text-xs uppercase tracking-wider" style={{ color: 'var(--slate-900)', fontWeight: 600 }}>
+                    <th className="text-left px-4 md:px-6 py-3 md:py-4 text-xs uppercase tracking-wider" style={{ color: '#1e293b', fontWeight: 500 }}>
                       AIDI (Audit-Grade)
                     </th>
                   </tr>
@@ -359,30 +358,30 @@ export function AuditGradeReport() {
                       <motion.tr
                         key={index}
                         className="border-b"
-                        style={{ borderColor: 'var(--slate-100)' }}
+                        style={{ borderColor: '#e2e8f0' }}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.1, duration: 0.3 }}
                       >
                         <td className="px-4 md:px-6 py-4 md:py-5">
                           <div 
-                            className="inline-block px-3 py-1.5 rounded-lg text-xs md:text-sm"
+                            className="inline-block px-3 py-1.5 rounded-md text-xs md:text-sm"
                             style={{ 
                               backgroundColor: dimensionStyle.backgroundColor,
                               color: dimensionStyle.color,
-                              fontWeight: 600
+                              fontWeight: 500
                             }}
                           >
                             {row.dimension}
                           </div>
                         </td>
-                        <td className="px-4 md:px-6 py-4 md:py-5 text-xs md:text-sm" style={{ color: 'var(--slate-600)' }}>
+                        <td className="px-4 md:px-6 py-4 md:py-5 text-xs md:text-sm" style={{ color: '#64748b', fontWeight: 300 }}>
                           {row.others}
                         </td>
                         <td className="px-4 md:px-6 py-4 md:py-5">
                           <div className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: '#22c55e' }} />
-                            <span className="text-xs md:text-sm" style={{ color: 'var(--slate-900)', fontWeight: 500 }}>
+                            <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: '#4ade80' }} />
+                            <span className="text-xs md:text-sm" style={{ color: 'var(--slate-900)', fontWeight: 400 }}>
                               {row.aidi}
                             </span>
                           </div>
@@ -394,16 +393,16 @@ export function AuditGradeReport() {
               </table>
             </div>
 
-            <div className="bg-gradient-to-r from-slate-50 to-white px-4 md:px-6 py-5 md:py-6 border-t" style={{ borderColor: 'var(--slate-200)' }}>
+            <div className="bg-gradient-to-r from-slate-50 to-white px-4 md:px-6 py-5 md:py-6 border-t" style={{ borderColor: '#e2e8f0' }}>
               <div className="flex flex-col md:flex-row items-start gap-4">
                 <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#d4a574' }}>
                   <LogoImage size={28} />
                 </div>
                 <div className="flex-1">
-                  <h4 className="mb-2 text-sm md:text-base" style={{ fontWeight: 600, color: 'var(--slate-900)' }}>
+                  <h4 className="mb-2 text-sm md:text-base" style={{ fontWeight: 500, color: 'var(--slate-900)' }}>
                     Enterprise-Grade Intelligence
                   </h4>
-                  <p className="text-xs md:text-sm" style={{ color: 'var(--slate-600)', lineHeight: 1.6 }}>
+                  <p className="text-xs md:text-sm" style={{ color: '#64748b', lineHeight: 1.6, fontWeight: 300 }}>
                     AIDI methodology is designed for compliance, M&A diligence, enterprise procurement, and long-term AI search strategy. 
                     Every data point is defensible, reproducible, and peer-reviewable.
                   </p>
@@ -423,10 +422,10 @@ export function AuditGradeReport() {
         {/* Key Metrics with Statistical Rigor */}
         <section>
           <div className="mb-8">
-            <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--slate-900)', marginBottom: '0.5rem' }}>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--slate-900)', marginBottom: '0.5rem' }}>
               Performance Analysis with Statistical Validation
             </h2>
-            <p className="text-sm" style={{ color: 'var(--slate-600)', lineHeight: 1.6 }}>
+            <p className="text-sm" style={{ color: '#64748b', lineHeight: 1.6, fontWeight: 400 }}>
               Each metric includes confidence intervals and significance testing to distinguish real improvements from statistical noise.
             </p>
           </div>
@@ -436,7 +435,7 @@ export function AuditGradeReport() {
               <motion.div
                 key={index}
                 className="bg-white rounded-xl border p-5 md:p-6"
-                style={{ borderColor: 'var(--slate-200)' }}
+                style={{ borderColor: '#e2e8f0' }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.15, duration: 0.4 }}
@@ -528,19 +527,19 @@ export function AuditGradeReport() {
                     {/* Status Message */}
                     <div 
                       className="bg-slate-50 rounded-lg p-3 md:p-4 border"
-                      style={{ borderColor: 'var(--slate-200)' }}
+                      style={{ borderColor: '#e2e8f0' }}
                     >
                       <div className="flex items-start gap-2 md:gap-3">
                         {metric.significance.includes('<') ? (
                           <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0 mt-0.5" style={{ color: '#16a34a' }} />
                         ) : (
-                          <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0 mt-0.5" style={{ color: 'var(--slate-400)' }} />
+                          <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0 mt-0.5" style={{ color: '#94a3b8' }} />
                         )}
                         <div>
                           <div className="text-xs md:text-sm mb-1" style={{ fontWeight: 500, color: 'var(--slate-900)' }}>
                             Statistical Interpretation
                           </div>
-                          <div className="text-xs" style={{ color: 'var(--slate-600)', lineHeight: 1.5 }}>
+                          <div className="text-xs" style={{ color: '#64748b', lineHeight: 1.5, fontWeight: 400 }}>
                             {metric.status}
                           </div>
                         </div>
@@ -565,17 +564,16 @@ export function AuditGradeReport() {
             <div className="max-w-3xl">
               <div className="flex items-center gap-2 md:gap-3 mb-4">
                 <Database className="w-6 h-6 md:w-8 md:h-8" style={{ color: '#d4a574' }} />
-                <Badge 
-                  className="text-xs uppercase tracking-wider"
+                <span 
+                  className="text-xs uppercase tracking-wider px-3 py-1.5 rounded-md"
                   style={{ 
                     backgroundColor: '#d4a574',
                     color: 'white',
-                    fontWeight: 600,
-                    padding: '0.375rem 0.75rem'
+                    fontWeight: 600
                   }}
                 >
                   Board-Ready Intelligence
-                </Badge>
+                </span>
               </div>
               
               <h2 className="mb-3 md:mb-4 text-xl md:text-2xl lg:text-3xl" style={{ color: 'white', fontWeight: 300, lineHeight: 1.3 }}>

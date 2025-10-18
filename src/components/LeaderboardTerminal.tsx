@@ -415,9 +415,9 @@ export function LeaderboardTerminal() {
                 <h1 className="text-lg md:text-3xl" style={{ color: 'white', fontWeight: 400, fontFamily: 'Georgia, serif' }}>
                   Luxury Fashion Top 20
                 </h1>
-                <Badge className="text-xs uppercase tracking-wider" style={{ backgroundColor: '#22c55e', color: '#0a0e1a', fontWeight: 500 }}>
+                <span className="text-xs uppercase tracking-wider px-3 py-1 rounded-md" style={{ backgroundColor: '#22c55e', color: '#0a0e1a', fontWeight: 400 }}>
                   LIVE
-                </Badge>
+                </span>
               </div>
               <p className="text-xs md:text-sm" style={{ color: 'var(--slate-400)', fontWeight: 400 }}>
                 Real-time AI rankings • Q4 2024
@@ -551,7 +551,7 @@ export function LeaderboardTerminal() {
                       <div className="text-2xl" style={{ color: getGradeColor(entry.grade), fontWeight: 600 }}>
                         {entry.score}
                       </div>
-                      <div className="text-xs px-2 py-1 rounded" style={{ backgroundColor: `${getGradeColor(entry.grade)}20`, color: getGradeColor(entry.grade), fontWeight: 500 }}>
+                      <div className="text-xs px-2 py-1 rounded-md" style={{ backgroundColor: `${getGradeColor(entry.grade)}20`, color: getGradeColor(entry.grade), fontWeight: 500 }}>
                         Grade {entry.grade}
                       </div>
                       {/* Movement */}
@@ -717,7 +717,7 @@ export function LeaderboardTerminal() {
                     <div className="text-2xl mb-1" style={{ color: getGradeColor(entry.grade), fontWeight: 600 }}>
                       {entry.score}
                     </div>
-                    <div className="text-xs px-2 py-0.5 rounded inline-block" style={{ backgroundColor: `${getGradeColor(entry.grade)}20`, color: getGradeColor(entry.grade), fontWeight: 500 }}>
+                    <div className="text-xs px-2 py-0.5 rounded-md inline-block" style={{ backgroundColor: `${getGradeColor(entry.grade)}20`, color: getGradeColor(entry.grade), fontWeight: 500 }}>
                       Grade {entry.grade}
                     </div>
                   </div>
