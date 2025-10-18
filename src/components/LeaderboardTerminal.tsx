@@ -582,19 +582,19 @@ export function LeaderboardTerminal() {
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-2 mb-3">
-                  <div className="bg-emerald-900/20 border rounded px-3 py-2" style={{ borderColor: '#22c55e40' }}>
-                    <div className="text-xs mb-1" style={{ color: '#22c55e', fontWeight: 500 }}>
-                      {entry.strengthsCount} Strengths
+                  <div className="bg-emerald-900/20 border rounded-md px-3 py-2" style={{ borderColor: '#22c55e40' }}>
+                    <div className="text-xs mb-1" style={{ color: '#4ade80', fontWeight: 400 }}>
+                      {entry.strengthsCount} dimensions
                     </div>
-                    <div className="text-xs" style={{ color: '#22c55e80', fontWeight: 400 }}>
+                    <div className="text-xs" style={{ color: '#22c55e60', fontWeight: 300 }}>
                       {entry.strengthsLabel}
                     </div>
                   </div>
-                  <div className="bg-purple-900/20 border rounded px-3 py-2" style={{ borderColor: '#a855f740' }}>
-                    <div className="text-xs mb-1" style={{ color: '#a855f7', fontWeight: 500 }}>
-                      {entry.weaknessesCount} Gaps
+                  <div className="bg-purple-900/20 border rounded-md px-3 py-2" style={{ borderColor: '#a855f740' }}>
+                    <div className="text-xs mb-1" style={{ color: '#c084fc', fontWeight: 400 }}>
+                      {entry.weaknessesCount} areas
                     </div>
-                    <div className="text-xs" style={{ color: '#a855f780', fontWeight: 400 }}>
+                    <div className="text-xs" style={{ color: '#a855f760', fontWeight: 300 }}>
                       {entry.weaknessesLabel}
                     </div>
                   </div>
@@ -604,7 +604,7 @@ export function LeaderboardTerminal() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Sparkline data={entry.trend} />
-                    <span className="text-xs" style={{ color: 'var(--slate-500)', fontWeight: 400 }}>7-day</span>
+                    <span className="text-xs" style={{ color: '#475569', fontWeight: 300 }}>7-day</span>
                   </div>
                   <div className="flex gap-2">
                     <button className="w-8 h-8 rounded border flex items-center justify-center" style={{ borderColor: '#1e293b', color: 'var(--slate-400)' }}>
@@ -725,11 +725,11 @@ export function LeaderboardTerminal() {
 
                 {/* Strengths */}
                 <div className="col-span-2 flex items-center">
-                  <div className="bg-emerald-900/20 border rounded px-3 py-2" style={{ borderColor: '#22c55e40' }}>
-                    <div className="text-sm mb-1" style={{ color: '#22c55e', fontWeight: 500 }}>
+                  <div className="bg-emerald-900/20 border rounded-md px-3 py-2" style={{ borderColor: '#22c55e40' }}>
+                    <div className="text-sm mb-1" style={{ color: '#4ade80', fontWeight: 400 }}>
                       {entry.strengthsCount} dimensions
                     </div>
-                    <div className="text-xs" style={{ color: '#22c55e80', fontWeight: 400 }}>
+                    <div className="text-xs" style={{ color: '#22c55e60', fontWeight: 300 }}>
                       {entry.strengthsLabel}
                     </div>
                   </div>
@@ -737,11 +737,11 @@ export function LeaderboardTerminal() {
 
                 {/* Weaknesses */}
                 <div className="col-span-2 flex items-center">
-                  <div className="bg-purple-900/20 border rounded px-3 py-2" style={{ borderColor: '#a855f740' }}>
-                    <div className="text-sm mb-1" style={{ color: '#a855f7', fontWeight: 500 }}>
+                  <div className="bg-purple-900/20 border rounded-md px-3 py-2" style={{ borderColor: '#a855f740' }}>
+                    <div className="text-sm mb-1" style={{ color: '#c084fc', fontWeight: 400 }}>
                       {entry.weaknessesCount} areas
                     </div>
-                    <div className="text-xs" style={{ color: '#a855f780', fontWeight: 400 }}>
+                    <div className="text-xs" style={{ color: '#a855f760', fontWeight: 300 }}>
                       {entry.weaknessesLabel}
                     </div>
                   </div>
@@ -781,7 +781,7 @@ export function LeaderboardTerminal() {
                 {/* Trend Sparkline */}
                 <div className="col-span-2 flex items-center gap-3">
                   <Sparkline data={entry.trend} />
-                  <div className="text-xs" style={{ color: 'var(--slate-500)', fontWeight: 400 }}>
+                  <div className="text-xs" style={{ color: '#475569', fontWeight: 300 }}>
                     7-period
                   </div>
                 </div>
@@ -820,20 +820,20 @@ export function LeaderboardTerminal() {
           <div className="bg-gradient-to-br from-blue-900/20 to-blue-800/20 border rounded-xl p-5 md:p-6" style={{ borderColor: '#3b82f6' }}>
             <div className="flex items-center gap-2 mb-4">
               <Zap className="w-4 h-4 md:w-5 md:h-5" style={{ color: '#3b82f6' }} />
-              <h3 style={{ color: 'white', fontWeight: 500, fontSize: '0.9375rem' }}>Market Intelligence</h3>
+              <h3 style={{ color: 'white', fontWeight: 400, fontSize: '0.9375rem' }}>Market Intelligence</h3>
             </div>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span style={{ color: 'var(--slate-400)', fontWeight: 400 }}>Sector Average:</span>
-                <span style={{ color: '#3b82f6', fontWeight: 600 }}>88/100</span>
+                <span style={{ color: 'var(--slate-400)', fontWeight: 300 }}>Sector Average:</span>
+                <span style={{ color: '#60a5fa', fontWeight: 400 }}>88/100</span>
               </div>
               <div className="flex justify-between">
-                <span style={{ color: 'var(--slate-400)', fontWeight: 400 }}>Top Performer:</span>
-                <span style={{ color: '#22c55e', fontWeight: 600 }}>Supreme</span>
+                <span style={{ color: 'var(--slate-400)', fontWeight: 300 }}>Top Performer:</span>
+                <span style={{ color: '#4ade80', fontWeight: 400 }}>Supreme</span>
               </div>
               <div className="flex justify-between">
-                <span style={{ color: 'var(--slate-400)', fontWeight: 400 }}>Opportunity:</span>
-                <span style={{ color: '#f59e0b', fontWeight: 600 }}>+6 points</span>
+                <span style={{ color: 'var(--slate-400)', fontWeight: 300 }}>Opportunity:</span>
+                <span style={{ color: '#fbbf24', fontWeight: 400 }}>+6 points</span>
               </div>
             </div>
           </div>
@@ -842,20 +842,20 @@ export function LeaderboardTerminal() {
           <div className="bg-gradient-to-br from-emerald-900/20 to-emerald-800/20 border rounded-xl p-5 md:p-6" style={{ borderColor: '#22c55e' }}>
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="w-4 h-4 md:w-5 md:h-5" style={{ color: '#22c55e' }} />
-              <h3 style={{ color: 'white', fontWeight: 500, fontSize: '0.9375rem' }}>Trends</h3>
+              <h3 style={{ color: 'white', fontWeight: 400, fontSize: '0.9375rem' }}>Trends</h3>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Badge className="text-xs" style={{ backgroundColor: '#22c55e', color: '#0a0e1a', fontWeight: 500 }}>Rising</Badge>
-                <span className="text-sm" style={{ color: 'var(--slate-300)', fontWeight: 400 }}>Supreme</span>
+                <span className="text-xs px-2 py-1 rounded-md" style={{ backgroundColor: '#22c55e', color: '#0a0e1a', fontWeight: 400 }}>Rising</span>
+                <span className="text-sm" style={{ color: 'var(--slate-300)', fontWeight: 300 }}>Supreme</span>
               </div>
               <div className="flex items-center gap-2">
-                <Badge className="text-xs" style={{ backgroundColor: '#22c55e', color: '#0a0e1a', fontWeight: 500 }}>Rising</Badge>
-                <span className="text-sm" style={{ color: 'var(--slate-300)', fontWeight: 400 }}>Palace</span>
+                <span className="text-xs px-2 py-1 rounded-md" style={{ backgroundColor: '#22c55e', color: '#0a0e1a', fontWeight: 400 }}>Rising</span>
+                <span className="text-sm" style={{ color: 'var(--slate-300)', fontWeight: 300 }}>Palace</span>
               </div>
               <div className="flex items-center gap-2">
-                <Badge className="text-xs" style={{ backgroundColor: '#ef4444', color: 'white', fontWeight: 500 }}>Declining</Badge>
-                <span className="text-sm" style={{ color: 'var(--slate-300)', fontWeight: 400 }}>Off-White</span>
+                <span className="text-xs px-2 py-1 rounded-md" style={{ backgroundColor: '#ef4444', color: 'white', fontWeight: 400 }}>Declining</span>
+                <span className="text-sm" style={{ color: 'var(--slate-300)', fontWeight: 300 }}>Off-White</span>
               </div>
             </div>
           </div>
@@ -864,12 +864,12 @@ export function LeaderboardTerminal() {
           <div className="bg-gradient-to-br from-purple-900/20 to-purple-800/20 border rounded-xl p-5 md:p-6" style={{ borderColor: '#a855f7' }}>
             <div className="flex items-center gap-2 mb-4">
               <Target className="w-4 h-4 md:w-5 md:h-5" style={{ color: '#a855f7' }} />
-              <h3 style={{ color: 'white', fontWeight: 500, fontSize: '0.9375rem' }}>Get Started</h3>
+              <h3 style={{ color: 'white', fontWeight: 400, fontSize: '0.9375rem' }}>Get Started</h3>
             </div>
-            <p className="text-sm mb-4" style={{ color: 'var(--slate-400)', lineHeight: 1.6, fontWeight: 400 }}>
+            <p className="text-sm mb-4" style={{ color: 'var(--slate-400)', lineHeight: 1.6, fontWeight: 300 }}>
               See how your brand scores
             </p>
-            <button className="w-full px-4 py-3 rounded-lg" style={{ backgroundColor: '#a855f7', color: 'white', fontWeight: 500 }}>
+            <button className="w-full px-4 py-3 rounded-lg" style={{ backgroundColor: '#a855f7', color: 'white', fontWeight: 400 }}>
               Analyze My Brand →
             </button>
           </div>
