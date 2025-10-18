@@ -174,7 +174,7 @@ export function AuditGradeReport() {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-0">
               {/* Left: Score Display */}
               <div className="md:col-span-5 p-6 md:p-12 flex flex-col justify-center md:border-r" style={{ borderColor: 'var(--slate-700)' }}>
-                <div className="text-xs uppercase tracking-widest mb-6" style={{ color: 'var(--slate-400)' }}>
+                <div className="text-xs uppercase tracking-widest mb-6" style={{ color: '#94a3b8' }}>
                   Audit-Grade AIDI Score
                 </div>
                 
@@ -195,7 +195,7 @@ export function AuditGradeReport() {
                     {reportData.score}
                   </motion.div>
                   <div className="mb-2 md:mb-3">
-                    <div className="text-xl md:text-2xl" style={{ color: 'var(--slate-400)' }}>/100</div>
+                    <div className="text-xl md:text-2xl" style={{ color: '#94a3b8' }}>/100</div>
                     <div 
                       className="px-3 md:px-4 py-1 md:py-1.5 rounded-full text-white text-xs uppercase tracking-wider mt-2"
                       style={{ backgroundColor: '#d4a574', fontWeight: 600 }}
@@ -206,10 +206,10 @@ export function AuditGradeReport() {
                 </div>
 
                 {/* Confidence Interval */}
-                <div className="bg-slate-800 rounded-lg p-4 border" style={{ borderColor: 'var(--slate-700)' }}>
+                <div className="bg-slate-800 rounded-lg p-4 border" style={{ borderColor: '#334155' }}>
                   <div className="flex items-center gap-2 mb-2">
-                    <BarChart3 className="w-4 h-4" style={{ color: 'var(--slate-400)' }} />
-                    <div className="text-xs uppercase tracking-wider" style={{ color: 'var(--slate-400)' }}>
+                    <BarChart3 className="w-4 h-4" style={{ color: '#94a3b8' }} />
+                    <div className="text-xs uppercase tracking-wider" style={{ color: '#94a3b8' }}>
                       95% Confidence Interval
                     </div>
                   </div>
@@ -217,11 +217,11 @@ export function AuditGradeReport() {
                     <div style={{ color: 'white', fontSize: '1.5rem', fontWeight: 600 }}>
                       {reportData.confidenceInterval[0]}–{reportData.confidenceInterval[1]}
                     </div>
-                    <div className="text-xs" style={{ color: 'var(--slate-400)' }}>
+                    <div className="text-xs" style={{ color: '#94a3b8' }}>
                       n = {reportData.sampleSize} runs
                     </div>
                   </div>
-                  <div className="text-xs mt-2" style={{ color: 'var(--slate-500)' }}>
+                  <div className="text-xs mt-2" style={{ color: '#64748b' }}>
                     Multi-run averaging with statistical significance testing
                   </div>
                 </div>
@@ -241,7 +241,7 @@ export function AuditGradeReport() {
                   >
                     AI Visibility Intelligence Report
                   </h2>
-                  <div className="flex items-center gap-3 text-sm" style={{ color: 'var(--slate-400)' }}>
+                  <div className="flex items-center gap-3 text-sm" style={{ color: '#94a3b8' }}>
                     <span>{reportData.url}</span>
                     <span>•</span>
                     <span>{reportData.sector}</span>
@@ -250,23 +250,23 @@ export function AuditGradeReport() {
 
                 {/* Benchmark Position */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
-                  <div className="bg-slate-800 rounded-lg p-4 md:p-6 border" style={{ borderColor: 'var(--slate-700)' }}>
-                    <div className="text-xs uppercase tracking-wider mb-2" style={{ color: 'var(--slate-400)' }}>
+                  <div className="bg-slate-800 rounded-lg p-4 md:p-6 border" style={{ borderColor: '#334155' }}>
+                    <div className="text-xs uppercase tracking-wider mb-2" style={{ color: '#94a3b8' }}>
                       Percentile Rank
                     </div>
                     <div className="flex items-end gap-2">
                       <div className="text-3xl md:text-4xl" style={{ color: 'white', fontWeight: 600, lineHeight: 1 }}>
                         {reportData.percentile}
-                        <span className="text-xl md:text-2xl" style={{ color: 'var(--slate-400)' }}>th</span>
+                        <span className="text-xl md:text-2xl" style={{ color: '#94a3b8' }}>th</span>
                       </div>
                     </div>
-                    <div className="text-xs mt-2" style={{ color: 'var(--slate-500)' }}>
+                    <div className="text-xs mt-2" style={{ color: '#64748b' }}>
                       Top {100 - reportData.percentile}% in {reportData.sector}
                     </div>
                   </div>
 
-                  <div className="bg-slate-800 rounded-lg p-4 md:p-6 border" style={{ borderColor: 'var(--slate-700)' }}>
-                    <div className="text-xs uppercase tracking-wider mb-2" style={{ color: 'var(--slate-400)' }}>
+                  <div className="bg-slate-800 rounded-lg p-4 md:p-6 border" style={{ borderColor: '#334155' }}>
+                    <div className="text-xs uppercase tracking-wider mb-2" style={{ color: '#94a3b8' }}>
                       vs Industry Average
                     </div>
                     <div className="flex items-center gap-3">
@@ -275,7 +275,7 @@ export function AuditGradeReport() {
                       </div>
                       <TrendingUp className="w-5 h-5 md:w-6 md:h-6" style={{ color: '#22c55e' }} />
                     </div>
-                    <div className="text-xs mt-2" style={{ color: 'var(--slate-500)' }}>
+                    <div className="text-xs mt-2" style={{ color: '#64748b' }}>
                       Industry avg: {reportData.industryAvg}/100
                     </div>
                   </div>
@@ -289,7 +289,7 @@ export function AuditGradeReport() {
                       <div className="text-sm mb-1" style={{ color: 'white', fontWeight: 500 }}>
                         Statistically Significant Performance
                       </div>
-                      <div className="text-xs" style={{ color: 'var(--slate-400)', lineHeight: 1.6 }}>
+                      <div className="text-xs" style={{ color: '#94a3b8', lineHeight: 1.6 }}>
                         Your score exceeds industry baseline with high confidence (p = {reportData.pValue}). 
                         This result is defensible for board presentation and M&A due diligence.
                       </div>
