@@ -5,13 +5,14 @@
  * This component integrates the Figma design with existing CMS functionality
  */
 
-import { CheckCircle2, BarChart3, TrendingUp, Award, ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { CheckCircle2, BarChart3, TrendingUp, Award, ArrowRight, Database } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Footer } from './Footer';
 import { contentManager } from '@/lib/cms/cms-client';
-import { FigmaHeroInput } from './homepage/FigmaHeroInput';
 import { AIModelLogos } from './AIModelLogos';
 import { FigmaHomepageClient } from './FigmaHomepageClient';
+import { LogoImage } from './LogoImage';
 
 export async function FigmaHomepage() {
   // Fetch CMS content
@@ -135,8 +136,63 @@ export async function FigmaHomepage() {
                 {heroSubhead?.content?.text || 'See exactly how ChatGPT, Claude, and Gemini recommend your brand. Statistical rigor. Peer-reviewable methodology. Board-ready intelligence.'}
               </p>
 
-              {/* Input Section - Figma Hero Input */}
-              <FigmaHeroInput />
+              {/* Input Section - Exact Figma Design */}
+              <motion.div
+                className="bg-white rounded-2xl p-6 md:p-8 shadow-xl max-w-4xl mx-auto border"
+                style={{ borderColor: 'var(--slate-200)' }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                <div className="flex flex-col md:flex-row gap-3 md:gap-4 mb-4 md:mb-6">
+                  <div className="flex-1 relative">
+                    <div 
+                      className="absolute left-4 top-1/2 -translate-y-1/2"
+                      style={{ color: 'var(--slate-400)' }}
+                    >
+                      <Database className="w-5 h-5" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Enter your website URL (e.g., example.com)"
+                      className="w-full pl-14 pr-6 py-4 md:py-5 rounded-xl text-base md:text-lg border-2 focus:outline-none transition-all"
+                      style={{
+                        borderColor: 'var(--slate-200)',
+                        backgroundColor: 'var(--slate-50)',
+                        color: 'var(--slate-900)',
+                        fontWeight: 400
+                      }}
+                    />
+                  </div>
+                  <button
+                    className="px-8 md:px-10 py-4 md:py-5 rounded-xl flex items-center justify-center gap-3 hover:opacity-90 transition-all shadow-lg"
+                    style={{
+                      backgroundColor: 'var(--slate-950)',
+                      color: 'white',
+                      fontWeight: 500,
+                      fontSize: '1rem'
+                    }}
+                  >
+                    Initiate Analysis
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Trust Signals */}
+                <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 text-sm" 
+                     style={{ color: 'var(--slate-600)' }}>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4" style={{ color: '#22c55e' }} />
+                    <span>Board-ready • Multi-run averaging</span>
+                  </div>
+                  <div className="hidden md:block w-1 h-1 rounded-full" 
+                       style={{ backgroundColor: 'var(--slate-300)' }} />
+                  <div className="flex items-center gap-2">
+                    <LogoImage size={16} />
+                    <span>Statistical significance tested</span>
+                  </div>
+                </div>
+              </motion.div>
             </div>
           </div>
         </section>
@@ -146,7 +202,13 @@ export async function FigmaHomepage() {
           <div className="max-w-6xl mx-auto px-4 md:px-8">
             <div className="grid grid-cols-3 gap-4 md:gap-8">
               {trustStats.map((stat, index) => (
-                <div key={index} className="text-center">
+                <motion.div
+                  key={index}
+                  className="text-center"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 * index, duration: 0.4 }}
+                >
                   <div className="text-3xl md:text-5xl mb-2" style={{ fontWeight: 400, color: 'var(--slate-950)', fontFamily: 'Georgia, serif' }}>
                     {stat.value}
                   </div>
@@ -156,7 +218,7 @@ export async function FigmaHomepage() {
                   <div className="text-xs md:text-sm" style={{ color: 'var(--slate-500)', fontWeight: 400 }}>
                     {stat.sublabel}
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
@@ -174,13 +236,34 @@ export async function FigmaHomepage() {
               </h2>
             </div>
 
-            {/* Use existing AIModelLogos component */}
-            <AIModelLogos 
-              userTier="free"
-              showUpgradePrompt={false}
-              variant="homepage"
-              className="mb-8 md:mb-12"
-            />
+            {/* AI Models Grid with Motion */}
+            <div className="grid grid-cols-2 md:flex md:justify-center items-center gap-8 md:gap-16 mb-8 md:mb-12">
+              {aiModels.map((model, index) => (
+                <motion.div
+                  key={index}
+                  className="text-center"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1, duration: 0.4 }}
+                >
+                  <div 
+                    className="w-16 h-16 md:w-20 md:h-20 rounded-xl flex items-center justify-center text-3xl md:text-4xl mb-3 mx-auto shadow-md border-2"
+                    style={{ 
+                      backgroundColor: 'white',
+                      borderColor: '#d4a574'
+                    }}
+                  >
+                    {model.icon}
+                  </div>
+                  <div className="text-sm md:text-base" style={{ 
+                    color: 'var(--slate-900)',
+                    fontWeight: 500
+                  }}>
+                    {model.name}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -326,13 +409,17 @@ export async function FigmaHomepage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
-              {tiers.map((tier: any) => (
-                <div
+              {tiers.map((tier: any, index: number) => (
+                <motion.div
                   key={tier.id}
                   className="relative bg-white rounded-2xl p-8 border-2 shadow-lg hover:shadow-2xl transition-all"
                   style={{
                     borderColor: tier.recommended ? '#d4a574' : 'var(--slate-200)',
                   }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.15, duration: 0.4 }}
+                  whileHover={{ y: -4 }}
                 >
                   {tier.recommended && (
                     <div 
@@ -377,7 +464,7 @@ export async function FigmaHomepage() {
                   >
                     {tier.cta || 'Subscribe Now'}
                   </button>
-                </div>
+                </motion.div>
               ))}
             </div>
 
