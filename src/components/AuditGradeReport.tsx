@@ -112,15 +112,16 @@ export function AuditGradeReport() {
                     <h1 
                       className="text-xl md:text-2xl"
                       style={{ 
-                        fontWeight: 'var(--font-weight-semibold)',
+                        fontWeight: 600,
                         color: 'var(--slate-950)',
                         letterSpacing: '-0.02em',
                         lineHeight: 1.2,
+                        fontFamily: 'Georgia, serif'
                       }}
                     >
                       AIDI
                     </h1>
-                    <p className="text-xs uppercase tracking-widest" style={{ color: 'var(--slate-500)', fontWeight: 500 }}>
+                    <p className="text-xs uppercase tracking-widest" style={{ color: 'var(--slate-500)', fontWeight: 500, fontFamily: 'monospace' }}>
                       AI Discoverability Index
                     </p>
                   </div>
@@ -138,19 +139,19 @@ export function AuditGradeReport() {
                   Audit-Grade Intelligence
                 </span>
               </div>
-              <p className="text-sm max-w-2xl" style={{ color: '#64748b', lineHeight: 1.6, fontWeight: 400 }}>
+              <p className="text-sm max-w-2xl" style={{ color: '#64748b', lineHeight: 1.6, fontWeight: 400, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                 Statistical rigor. Peer-reviewable methodology. Board-ready intelligence.
               </p>
             </div>
             
             <div className="text-left md:text-right">
-              <div className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--slate-500)' }}>
+              <div className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--slate-500)', fontFamily: 'monospace' }}>
                 Report Generated
               </div>
-              <div style={{ color: 'var(--slate-900)', fontWeight: 500 }}>
+              <div style={{ color: 'var(--slate-900)', fontWeight: 500, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                 {reportData.dateGenerated}
               </div>
-              <div className="text-xs mt-2" style={{ color: 'var(--slate-500)' }}>
+              <div className="text-xs mt-2" style={{ color: 'var(--slate-500)', fontFamily: 'monospace' }}>
                 {reportData.testRuns} test runs • {reportData.modelsAnalyzed} AI models
               </div>
             </div>
@@ -174,7 +175,7 @@ export function AuditGradeReport() {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-0">
               {/* Left: Score Display */}
               <div className="md:col-span-5 p-6 md:p-12 flex flex-col justify-center md:border-r" style={{ borderColor: 'var(--slate-700)' }}>
-                <div className="text-xs uppercase tracking-widest mb-6" style={{ color: '#94a3b8' }}>
+                <div className="text-xs uppercase tracking-widest mb-6" style={{ color: '#94a3b8', fontFamily: 'monospace' }}>
                   Audit-Grade AIDI Score
                 </div>
                 
@@ -195,10 +196,10 @@ export function AuditGradeReport() {
                     {reportData.score}
                   </motion.div>
                   <div className="mb-2 md:mb-3">
-                    <div className="text-xl md:text-2xl" style={{ color: '#94a3b8' }}>/100</div>
+                    <div className="text-xl md:text-2xl" style={{ color: '#94a3b8', fontFamily: 'monospace' }}>/100</div>
                     <div 
                       className="px-3 md:px-4 py-1 md:py-1.5 rounded-full text-white text-xs uppercase tracking-wider mt-2"
-                      style={{ backgroundColor: '#d4a574', fontWeight: 600 }}
+                      style={{ backgroundColor: '#d4a574', fontWeight: 600, fontFamily: 'monospace' }}
                     >
                       Grade {reportData.grade}
                     </div>
@@ -209,19 +210,19 @@ export function AuditGradeReport() {
                 <div className="bg-slate-800 rounded-lg p-4 border" style={{ borderColor: '#334155' }}>
                   <div className="flex items-center gap-2 mb-2">
                     <BarChart3 className="w-4 h-4" style={{ color: '#94a3b8' }} />
-                    <div className="text-xs uppercase tracking-wider" style={{ color: '#94a3b8' }}>
+                    <div className="text-xs uppercase tracking-wider" style={{ color: '#94a3b8', fontFamily: 'monospace' }}>
                       95% Confidence Interval
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div style={{ color: 'white', fontSize: '1.5rem', fontWeight: 600 }}>
+                    <div style={{ color: 'white', fontSize: '1.5rem', fontWeight: 600, fontFamily: 'monospace' }}>
                       {reportData.confidenceInterval[0]}–{reportData.confidenceInterval[1]}
                     </div>
-                    <div className="text-xs" style={{ color: '#94a3b8' }}>
+                    <div className="text-xs" style={{ color: '#94a3b8', fontFamily: 'monospace' }}>
                       n = {reportData.sampleSize} runs
                     </div>
                   </div>
-                  <div className="text-xs mt-2" style={{ color: '#64748b' }}>
+                  <div className="text-xs mt-2" style={{ color: '#64748b', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                     Multi-run averaging with statistical significance testing
                   </div>
                 </div>
@@ -236,12 +237,13 @@ export function AuditGradeReport() {
                       color: 'white',
                       fontWeight: 300,
                       lineHeight: 1.3,
-                      letterSpacing: '-0.02em'
+                      letterSpacing: '-0.02em',
+                      fontFamily: 'Georgia, serif'
                     }}
                   >
                     AI Visibility Intelligence Report
                   </h2>
-                  <div className="flex items-center gap-3 text-sm" style={{ color: '#94a3b8' }}>
+                  <div className="flex items-center gap-3 text-sm" style={{ color: '#94a3b8', fontFamily: 'monospace' }}>
                     <span>{reportData.url}</span>
                     <span>•</span>
                     <span>{reportData.sector}</span>
@@ -251,31 +253,31 @@ export function AuditGradeReport() {
                 {/* Benchmark Position */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
                   <div className="bg-slate-800 rounded-lg p-4 md:p-6 border" style={{ borderColor: '#334155' }}>
-                    <div className="text-xs uppercase tracking-wider mb-2" style={{ color: '#94a3b8' }}>
+                    <div className="text-xs uppercase tracking-wider mb-2" style={{ color: '#94a3b8', fontFamily: 'monospace' }}>
                       Percentile Rank
                     </div>
                     <div className="flex items-end gap-2">
-                      <div className="text-3xl md:text-4xl" style={{ color: 'white', fontWeight: 600, lineHeight: 1 }}>
+                      <div className="text-3xl md:text-4xl" style={{ color: 'white', fontWeight: 600, lineHeight: 1, fontFamily: 'monospace' }}>
                         {reportData.percentile}
                         <span className="text-xl md:text-2xl" style={{ color: '#94a3b8' }}>th</span>
                       </div>
                     </div>
-                    <div className="text-xs mt-2" style={{ color: '#64748b' }}>
+                    <div className="text-xs mt-2" style={{ color: '#64748b', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                       Top {100 - reportData.percentile}% in {reportData.sector}
                     </div>
                   </div>
 
                   <div className="bg-slate-800 rounded-lg p-4 md:p-6 border" style={{ borderColor: '#334155' }}>
-                    <div className="text-xs uppercase tracking-wider mb-2" style={{ color: '#94a3b8' }}>
+                    <div className="text-xs uppercase tracking-wider mb-2" style={{ color: '#94a3b8', fontFamily: 'monospace' }}>
                       vs Industry Average
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="text-3xl md:text-4xl" style={{ color: 'white', fontWeight: 600, lineHeight: 1 }}>
+                      <div className="text-3xl md:text-4xl" style={{ color: 'white', fontWeight: 600, lineHeight: 1, fontFamily: 'monospace' }}>
                         +{reportData.score - reportData.industryAvg}
                       </div>
                       <TrendingUp className="w-5 h-5 md:w-6 md:h-6" style={{ color: '#22c55e' }} />
                     </div>
-                    <div className="text-xs mt-2" style={{ color: '#64748b' }}>
+                    <div className="text-xs mt-2" style={{ color: '#64748b', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                       Industry avg: {reportData.industryAvg}/100
                     </div>
                   </div>
@@ -286,10 +288,10 @@ export function AuditGradeReport() {
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#22c55e' }} />
                     <div>
-                      <div className="text-sm mb-1" style={{ color: 'white', fontWeight: 500 }}>
+                      <div className="text-sm mb-1" style={{ color: 'white', fontWeight: 500, fontFamily: 'Georgia, serif' }}>
                         Statistically Significant Performance
                       </div>
-                      <div className="text-xs" style={{ color: '#94a3b8', lineHeight: 1.6 }}>
+                      <div className="text-xs" style={{ color: '#94a3b8', lineHeight: 1.6, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                         Your score exceeds industry baseline with high confidence (p = {reportData.pValue}). 
                         This result is defensible for board presentation and M&A due diligence.
                       </div>
