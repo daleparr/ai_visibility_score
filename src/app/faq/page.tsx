@@ -11,8 +11,10 @@ export const revalidate = 0;
 export default async function FAQPage() {
   // Use Figma design (will integrate CMS FAQ content later)
   return <FigmaFAQPage />;
-  
-  /* CMS Integration will be added later
+}
+
+/* OLD CMS VERSION - Will be enhanced with Figma design later
+export default async function FAQPageOld() {
   const page = await contentManager.getPage('faq')
   const faqs = await contentManager.getBlockByKey('faq', 'faq_items')
   

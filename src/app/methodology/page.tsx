@@ -5,14 +5,16 @@ export const dynamic = 'force-dynamic'
 export default async function MethodologyPage() {
   // Use Figma design (will integrate CMS methodology content later)
   return <FigmaMethodologyPage />;
-  
-  /* CMS Integration will be added later
+}
+
+/* OLD CMS VERSION - Will be enhanced with Figma design later
+export default async function MethodologyPageOld() {
   const page = await contentManager.getPage('methodology')
   const intro = await contentManager.getBlockByKey('methodology', 'methodology_intro')
   const version = await contentManager.getBlockByKey('methodology', 'methodology_version')
   const principles = await contentManager.getBlockByKey('methodology', 'core_principles')
   
-  return old_page (
+  return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">

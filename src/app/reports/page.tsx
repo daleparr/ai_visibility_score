@@ -9,8 +9,10 @@ export const revalidate = 0;
 export default async function IndustryReportsPage() {
   // Use Figma design (will integrate CMS sector data later)
   return <FigmaIndustryReportsPage />;
-  
-  /* CMS Integration will be added later
+}
+
+/* OLD CMS VERSION - Will be enhanced with Figma design later
+export async function OldIndustryReportsPage() {
   let sectors: any[] = [];
   let error: string | null = null;
   let heroHeadline, heroDescription, heroBadges, valueProps;

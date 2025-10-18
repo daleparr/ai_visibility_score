@@ -12,13 +12,15 @@ export const revalidate = 0; // Disable caching for CMS-driven pages
 export default async function PositioningPage() {
   // Use Figma design (will integrate CMS positioning content later)
   return <FigmaVsMonitoringToolsPage />;
-  
-  /* CMS Integration will be added later
+}
+
+/* OLD CMS VERSION - Will be enhanced with Figma design later
+export default async function PositioningPageOld() {
   const page = await contentManager.getPage('aidi-vs-monitoring-tools')
   const intro = await contentManager.getBlockByKey('aidi-vs-monitoring-tools', 'positioning_intro')
   const comparison = await contentManager.getBlockByKey('aidi-vs-monitoring-tools', 'comparison_table')
   
-  return old_page(
+  return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">

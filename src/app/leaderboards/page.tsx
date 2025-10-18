@@ -1,22 +1,17 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import {
-  Brain, TrendingUp, BarChart3, Globe, Building, Factory, Target, Sparkles,
-  Zap, Bell, Download, GitCompare, Shield, ExternalLink, ArrowRight, Lock
-} from 'lucide-react'
-import Link from 'next/link'
-import { BloombergLeaderboardTable } from '@/components/adi/leaderboards/BloombergLeaderboardTable'
-import { LeaderboardData, LEADERBOARD_CATEGORIES } from '@/types/leaderboards'
-import { getUniqueSectors, getCategoriesBySector, getAllCategories } from '@/lib/brand-taxonomy'
-import { createCheckoutSession } from '@/lib/stripe-client'
-import BurgerMenu from '@/components/navigation/BurgerMenu'
+import { LeaderboardTerminal } from '@/components/LeaderboardTerminal'
 
 export default function LeaderboardsPage() {
+  // Use Figma Leaderboard Terminal design (will integrate CMS leaderboard data later)
+  return <LeaderboardTerminal />;
+  
+  /* CMS Integration will be added later
+  import { useEffect, useState } from 'react'
+  import { BloombergLeaderboardTable } from '@/components/adi/leaderboards/BloombergLeaderboardTable'
+  import { LeaderboardData, LEADERBOARD_CATEGORIES } from '@/types/leaderboards'
+
+export default function OldLeaderboardsPage() {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null)
   const [loading, setLoading] = useState(false)
   const [selectedType, setSelectedType] = useState<'global' | 'sector' | 'industry' | 'niche'>('niche')

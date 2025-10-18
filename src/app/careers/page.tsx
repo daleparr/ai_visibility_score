@@ -5,8 +5,25 @@ import { FigmaCareersPage } from '@/components/FigmaCareersPage';
 export default function CareersPage() {
   // Use Figma design (will integrate CMS job postings later)
   return <FigmaCareersPage />;
-  
-  /* CMS Integration will be added later
+}
+
+/* OLD CMS VERSION - Will be enhanced with Figma design later
+interface JobPosting {
+  id: string;
+  slug: string;
+  title: string;
+  department: string;
+  location: string;
+  employment_type: string;
+  experience_level: string;
+  salary_range?: string;
+  description: string;
+  requirements: string[];
+  posted_at: Date;
+  application_count: number;
+}
+
+export function OldCareersPage() {
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
   const [selectedDept, setSelectedDept] = useState<string>('all');

@@ -17,6 +17,12 @@ interface BlogPost {
 }
 
 export default function BlogPage() {
+  // Use Figma design (will integrate CMS posts later)
+  return <FigmaBlogPage />;
+}
+
+/* OLD CMS VERSION - Will be enhanced with Figma design later
+export function OldBlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [featured, setFeatured] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,9 +47,6 @@ export default function BlogPage() {
       setLoading(false);
     }
   };
-
-  // Use Figma design (will integrate CMS posts later)
-  return <FigmaBlogPage />;
 
   if (loading) {
     return (
