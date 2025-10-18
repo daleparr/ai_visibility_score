@@ -128,7 +128,7 @@ export function AuditGradeReport() {
                 </div>
                 <div className="hidden md:block h-10 w-px" style={{ backgroundColor: 'var(--slate-200)' }} />
                 <span 
-                  className="text-xs uppercase tracking-wider px-4 py-1.5 rounded-md"
+                  className="text-xs uppercase tracking-wider px-3 py-1 rounded-md"
                   style={{ 
                     backgroundColor: '#d4a574',
                     color: 'white',
@@ -198,7 +198,7 @@ export function AuditGradeReport() {
                   <div className="mb-2 md:mb-3">
                     <div className="text-xl md:text-2xl" style={{ color: '#94a3b8', fontFamily: 'monospace' }}>/100</div>
                     <div 
-                      className="px-3 md:px-4 py-1 md:py-1.5 rounded-full text-white text-xs uppercase tracking-wider mt-2"
+                      className="px-2 py-1 rounded-md text-white text-xs uppercase tracking-wider mt-2"
                       style={{ backgroundColor: '#d4a574', fontWeight: 600, fontFamily: 'monospace' }}
                     >
                       Grade {reportData.grade}
@@ -367,7 +367,7 @@ export function AuditGradeReport() {
                       >
                         <td className="px-4 md:px-6 py-4 md:py-5">
                           <div 
-                            className="inline-block px-3 py-1.5 rounded-md text-xs md:text-sm"
+                            className="inline-block px-2 py-1 rounded-md text-xs md:text-sm"
                             style={{ 
                               backgroundColor: dimensionStyle.backgroundColor,
                               color: dimensionStyle.color,
@@ -454,7 +454,7 @@ export function AuditGradeReport() {
                       </div>
                       <div className="mb-1">
                         <div 
-                          className="px-2 md:px-3 py-1 rounded text-xs flex items-center gap-1"
+                          className="px-2 py-1 rounded-md text-xs flex items-center gap-1"
                           style={{ backgroundColor: '#22c55e20', color: '#16a34a', fontWeight: 600 }}
                         >
                           <TrendingUp className="w-3 h-3" />
@@ -509,7 +509,7 @@ export function AuditGradeReport() {
                         />
                         {/* Score Label */}
                         <div 
-                          className="absolute top-1/2 -translate-y-1/2 px-2 md:px-3 py-1 rounded text-xs text-white"
+                          className="absolute top-1/2 -translate-y-1/2 px-2 py-1 rounded-md text-xs text-white"
                           style={{ 
                             left: `${metric.score}%`,
                             transform: 'translate(-50%, -50%)',
@@ -567,7 +567,7 @@ export function AuditGradeReport() {
               <div className="flex items-center gap-2 md:gap-3 mb-4">
                 <Database className="w-6 h-6 md:w-8 md:h-8" style={{ color: '#d4a574' }} />
                 <span 
-                  className="text-xs uppercase tracking-wider px-3 py-1.5 rounded-md"
+                  className="text-xs uppercase tracking-wider px-2 py-1 rounded-md"
                   style={{ 
                     backgroundColor: '#d4a574',
                     color: 'white',
