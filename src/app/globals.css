@@ -1,68 +1,209 @@
+/**
+ * AIDI Design System — LUXURY INTELLIGENCE Calibration
+ * Hermès meets Apple — C-Suite fashion & cultural edge
+ * 
+ * Characteristics:
+ * - Warm, sophisticated palette (champagne golds, warm grays, refined blacks)
+ * - Generous spacing (breathing room = elegance)
+ * - Softer shadows, refined gradients
+ * - Serif typography for editorial authority
+ * - Premium materials feel
+ * - Cultural sophistication over institutional authority
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
-
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
+    /* ========================================
+       TYPOGRAPHY SYSTEM — Luxury Edition
+       Serif headlines for editorial elegance
+       Sans-serif for data clarity
+       ======================================== */
+    --font-size: 16px;
+    --font-weight-light: 300;
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    
+    /* Typography scale - more generous, refined */
+    --text-xs: 0.6875rem;     /* 11px - whisper labels */
+    --text-sm: 0.8125rem;     /* 13px - metadata */
+    --text-base: 0.9375rem;   /* 15px - body */
+    --text-lg: 1.125rem;      /* 18px - emphasis */
+    --text-xl: 1.5rem;        /* 24px - section headers */
+    --text-2xl: 2rem;         /* 32px - page titles */
+    --text-3xl: 2.625rem;     /* 42px - hero numbers */
+    --text-4xl: 3.5rem;       /* 56px - primary score */
+    --text-5xl: 4.5rem;       /* 72px - statement data */
+    
+    /* ========================================
+       COLOR SYSTEM — Warm Sophistication
+       Champagne, warm grays, refined blacks
+       ======================================== */
+    
+    /* Warm Neutrals - Sophisticated foundation */
+    --warm-50: #fafaf9;
+    --warm-100: #f5f5f4;
+    --warm-200: #e7e5e4;
+    --warm-300: #d6d3d1;
+    --warm-400: #a8a29e;
+    --warm-500: #78716c;
+    --warm-600: #57534e;
+    --warm-700: #44403c;
+    --warm-800: #292524;
+    --warm-900: #1c1917;
+    --warm-950: #0c0a09;
+    
+    /* Champagne Gold - Premium accent (replaces intelligence blue) */
+    --champagne-50: #fefce8;
+    --champagne-100: #fef9c3;
+    --champagne-200: #fef08a;
+    --champagne-300: #fde047;
+    --champagne-400: #facc15;
+    --champagne-500: #d4a574;   /* Primary luxury signal */
+    --champagne-600: #b8956a;
+    --champagne-700: #9c7f5a;
+    --champagne-800: #7d6548;
+    --champagne-900: #654e38;
+    
+    /* Sage Green - Success, refined growth (softer than alpha green) */
+    --sage-50: #f6f7f6;
+    --sage-100: #e8ebe8;
+    --sage-200: #d1d8d1;
+    --sage-300: #a8b8a8;
+    --sage-400: #7d947d;
+    --sage-500: #5a7359;   /* Primary success */
+    --sage-600: #4a5f49;
+    --sage-700: #3d4e3c;
+    --sage-800: #323f32;
+    --sage-900: #28332a;
+    
+    /* Terracotta - Warm attention (replaces warning amber) */
+    --terracotta-50: #fef5f1;
+    --terracotta-100: #fde8dd;
+    --terracotta-200: #fbd0bb;
+    --terracotta-300: #f7ad8e;
+    --terracotta-400: #f28562;
+    --terracotta-500: #c97a5a;   /* Primary attention */
+    --terracotta-600: #a86449;
+    --terracotta-700: #8a523c;
+    --terracotta-800: #6e4230;
+    --terracotta-900: #583629;
+    
+    /* Burgundy - Critical, refined urgency */
+    --burgundy-50: #fef2f2;
+    --burgundy-100: #fee2e2;
+    --burgundy-200: #fecaca;
+    --burgundy-300: #fca5a5;
+    --burgundy-400: #f87171;
+    --burgundy-500: #8b4049;   /* Primary critical */
+    --burgundy-600: #73353d;
+    --burgundy-700: #5e2b32;
+    --burgundy-800: #4c232a;
+    --burgundy-900: #3e1d23;
+    
+    /* ========================================
+       SEMANTIC TOKENS - Luxury mapped
+       ======================================== */
+    --background: #ffffff;
+    --foreground: var(--warm-900);
+    --card: #ffffff;
+    --card-foreground: var(--warm-900);
+    --popover: #ffffff;
+    --popover-foreground: var(--warm-900);
+    --primary: var(--warm-950);
+    --primary-foreground: #ffffff;
+    --secondary: var(--warm-100);
+    --secondary-foreground: var(--warm-900);
+    --muted: var(--warm-100);
+    --muted-foreground: var(--warm-500);
+    --accent: var(--champagne-50);
+    --accent-foreground: var(--champagne-900);
+    --destructive: var(--burgundy-500);
+    --destructive-foreground: #ffffff;
+    --border: var(--warm-200);
+    --input: transparent;
+    --input-background: var(--warm-50);
+    --switch-background: var(--warm-300);
+    --ring: var(--champagne-500);
+    
+    /* ========================================
+       DATA VISUALIZATION - Luxury palette
+       ======================================== */
+    --chart-1: var(--champagne-500);
+    --chart-2: var(--sage-500);
+    --chart-3: var(--terracotta-500);
+    --chart-4: #8b7ea8;  /* Muted lavender */
+    --chart-5: #a87c8b;  /* Dusty rose */
+    
+    /* ========================================
+       SPACING SYSTEM - More generous
+       12px base unit for elegance
+       ======================================== */
+    --space-0: 0;
+    --space-1: 0.375rem;   /* 6px */
+    --space-2: 0.75rem;    /* 12px - base unit */
+    --space-3: 1rem;       /* 16px */
+    --space-4: 1.5rem;     /* 24px */
+    --space-5: 2rem;       /* 32px */
+    --space-6: 2.5rem;     /* 40px */
+    --space-8: 3rem;       /* 48px */
+    --space-10: 4rem;      /* 64px */
+    --space-12: 5rem;      /* 80px */
+    --space-16: 6rem;      /* 96px */
+    --space-20: 8rem;      /* 128px */
+    --space-24: 10rem;     /* 160px */
+    
+    /* ========================================
+       BORDERS & RADIUS - Softer, refined
+       ======================================== */
+    --radius: 0.75rem;     /* 12px - more rounded */
+    --border-width: 1px;
+    --border-width-thick: 1.5px;
+    
+    /* ========================================
+       SHADOWS - Softer, more diffused
+       Premium elevation
+       ======================================== */
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    --shadow-lg: 0 12px 24px -4px rgb(0 0 0 / 0.1), 0 4px 8px -4px rgb(0 0 0 / 0.06);
+    --shadow-xl: 0 24px 48px -8px rgb(0 0 0 / 0.12), 0 8px 16px -6px rgb(0 0 0 / 0.08);
+    --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.04);
+    
+    /* ========================================
+       GRADIENTS - Refined, subtle
+       ======================================== */
+    --gradient-luxury: linear-gradient(135deg, #fafaf9 0%, #f5f5f4 100%);
+    --gradient-champagne: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+    --gradient-warm: linear-gradient(180deg, #ffffff 0%, #fafaf9 100%);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    /* Dark mode - inverted warm scale with maintained sophistication */
+    --background: var(--warm-950);
+    --foreground: var(--warm-50);
+    --card: var(--warm-900);
+    --card-foreground: var(--warm-50);
+    --popover: var(--warm-900);
+    --popover-foreground: var(--warm-50);
+    --primary: var(--warm-50);
+    --primary-foreground: var(--warm-950);
+    --secondary: var(--warm-800);
+    --secondary-foreground: var(--warm-50);
+    --muted: var(--warm-800);
+    --muted-foreground: var(--warm-400);
+    --accent: var(--champagne-900);
+    --accent-foreground: var(--champagne-100);
+    --destructive: var(--burgundy-400);
+    --destructive-foreground: var(--warm-50);
+    --border: var(--warm-800);
+    --input: var(--warm-800);
+    --ring: var(--champagne-400);
   }
 }
 
@@ -72,68 +213,112 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  
+  /* Serif for headlines */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: Georgia, serif;
+    font-weight: var(--font-weight-light);
+    letter-spacing: -0.02em;
+  }
+  
+  /* Monospace for data/terminal */
+  code, pre, .font-mono {
+    font-family: 'Courier New', monospace;
   }
 }
 
 @layer components {
+  /* Luxury gradient backgrounds */
   .gradient-bg {
-    @apply bg-gradient-to-br from-brand-50 via-white to-brand-100;
+    background: var(--gradient-warm);
+  }
+  
+  .gradient-luxury {
+    background: var(--gradient-luxury);
+  }
+  
+  .gradient-champagne {
+    background: var(--gradient-champagne);
   }
   
   .gradient-text {
-    @apply bg-gradient-to-r from-brand-600 to-brand-800 bg-clip-text text-transparent;
+    background: linear-gradient(to right, var(--champagne-600), var(--champagne-800));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   
   .card-shadow {
-    @apply shadow-lg shadow-brand-100/50;
+    box-shadow: var(--shadow-lg);
   }
   
+  /* Score circles with luxury palette */
   .score-circle {
     @apply relative inline-flex items-center justify-center w-24 h-24 rounded-full border-4;
   }
   
   .score-a {
-    @apply border-success-500 bg-success-50 text-success-700;
+    border-color: var(--sage-500);
+    background-color: var(--sage-50);
+    color: var(--sage-700);
   }
   
   .score-b {
-    @apply border-brand-500 bg-brand-50 text-brand-700;
+    border-color: var(--champagne-500);
+    background-color: var(--champagne-50);
+    color: var(--champagne-700);
   }
   
   .score-c {
-    @apply border-warning-500 bg-warning-50 text-warning-700;
+    border-color: var(--terracotta-500);
+    background-color: var(--terracotta-50);
+    color: var(--terracotta-700);
   }
   
   .score-d {
-    @apply border-warning-600 bg-warning-100 text-warning-800;
+    border-color: var(--terracotta-600);
+    background-color: var(--terracotta-100);
+    color: var(--terracotta-800);
   }
   
   .score-f {
-    @apply border-danger-500 bg-danger-50 text-danger-700;
+    border-color: var(--burgundy-500);
+    background-color: var(--burgundy-50);
+    color: var(--burgundy-700);
   }
   
+  /* Pillar colors with luxury palette */
   .pillar-infrastructure {
-    @apply border-l-4 border-l-brand-500 bg-brand-50/50;
+    border-left: 4px solid var(--champagne-500);
+    background-color: rgba(212, 165, 116, 0.1);
   }
   
   .pillar-perception {
-    @apply border-l-4 border-l-success-500 bg-success-50/50;
+    border-left: 4px solid var(--sage-500);
+    background-color: rgba(90, 115, 89, 0.1);
   }
   
   .pillar-commerce {
-    @apply border-l-4 border-l-warning-500 bg-warning-50/50;
+    border-left: 4px solid var(--terracotta-500);
+    background-color: rgba(201, 122, 90, 0.1);
   }
   
+  /* Priority recommendations with refined urgency */
   .recommendation-priority-1 {
-    @apply border-l-4 border-l-danger-500 bg-danger-50;
+    border-left: 4px solid var(--burgundy-500);
+    background-color: var(--burgundy-50);
   }
   
   .recommendation-priority-2 {
-    @apply border-l-4 border-l-warning-500 bg-warning-50;
+    border-left: 4px solid var(--terracotta-500);
+    background-color: var(--terracotta-50);
   }
   
   .recommendation-priority-3 {
-    @apply border-l-4 border-l-brand-500 bg-brand-50;
+    border-left: 4px solid var(--champagne-500);
+    background-color: var(--champagne-50);
   }
 }
 
@@ -143,24 +328,26 @@
   }
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - refined luxury */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100;
+  background-color: var(--warm-100);
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full;
+  background-color: var(--warm-300);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400;
+  background-color: var(--champagne-500);
 }
 
-/* Loading animations */
+/* Loading animations - softer shimmer */
 @keyframes shimmer {
   0% {
     background-position: -200px 0;
@@ -171,7 +358,7 @@
 }
 
 .shimmer {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, var(--warm-100) 25%, var(--warm-200) 50%, var(--warm-100) 75%);
   background-size: 200px 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -189,4 +376,17 @@
   .print-avoid-break {
     page-break-inside: avoid;
   }
+}
+
+/* Luxury focus states */
+*:focus-visible {
+  outline: 2px solid var(--champagne-500);
+  outline-offset: 2px;
+}
+
+/* Smooth transitions */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }
