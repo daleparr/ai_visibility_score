@@ -113,7 +113,7 @@ export function AuditGradeReport() {
                       className="text-xl md:text-2xl"
                       style={{ 
                         fontWeight: 600,
-                        color: 'var(--slate-950)',
+                        color: '#0f172a',
                         letterSpacing: '-0.02em',
                         lineHeight: 1.2,
                         fontFamily: 'Georgia, serif'
@@ -121,7 +121,7 @@ export function AuditGradeReport() {
                     >
                       AIDI
                     </h1>
-                    <p className="text-xs uppercase tracking-widest" style={{ color: 'var(--slate-500)', fontWeight: 500, fontFamily: 'monospace' }}>
+                    <p className="text-xs uppercase tracking-widest" style={{ color: '#64748b', fontWeight: 500, fontFamily: 'monospace' }}>
                       AI Discoverability Index
                     </p>
                   </div>
@@ -145,13 +145,13 @@ export function AuditGradeReport() {
             </div>
             
             <div className="text-left md:text-right">
-              <div className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--slate-500)', fontFamily: 'monospace' }}>
+              <div className="text-xs uppercase tracking-wider mb-1" style={{ color: '#64748b', fontFamily: 'monospace' }}>
                 Report Generated
               </div>
-              <div style={{ color: 'var(--slate-900)', fontWeight: 500, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+              <div style={{ color: '#0f172a', fontWeight: 500, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                 {reportData.dateGenerated}
               </div>
-              <div className="text-xs mt-2" style={{ color: 'var(--slate-500)', fontFamily: 'monospace' }}>
+              <div className="text-xs mt-2" style={{ color: '#64748b', fontFamily: 'monospace' }}>
                 {reportData.testRuns} test runs • {reportData.modelsAnalyzed} AI models
               </div>
             </div>
@@ -308,7 +308,7 @@ export function AuditGradeReport() {
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-3">
               <Award className="w-6 h-6" style={{ color: '#d4a574' }} />
-              <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--slate-900)' }}>
+              <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#0f172a', fontFamily: 'Georgia, serif' }}>
                 Why AIDI is Audit-Grade
               </h2>
             </div>
@@ -383,7 +383,7 @@ export function AuditGradeReport() {
                         <td className="px-4 md:px-6 py-4 md:py-5">
                           <div className="flex items-center gap-2">
                             <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: '#4ade80' }} />
-                            <span className="text-xs md:text-sm" style={{ color: 'var(--slate-900)', fontWeight: 400 }}>
+                            <span className="text-xs md:text-sm" style={{ color: '#0f172a', fontWeight: 400 }}>
                               {row.aidi}
                             </span>
                           </div>
@@ -401,7 +401,7 @@ export function AuditGradeReport() {
                   <LogoImage size={28} />
                 </div>
                 <div className="flex-1">
-                  <h4 className="mb-2 text-sm md:text-base" style={{ fontWeight: 500, color: 'var(--slate-900)' }}>
+                  <h4 className="mb-2 text-sm md:text-base" style={{ fontWeight: 500, color: '#0f172a' }}>
                     Enterprise-Grade Intelligence
                   </h4>
                   <p className="text-xs md:text-sm" style={{ color: '#64748b', lineHeight: 1.6, fontWeight: 300 }}>
@@ -424,7 +424,7 @@ export function AuditGradeReport() {
         {/* Key Metrics with Statistical Rigor */}
         <section>
           <div className="mb-8">
-            <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--slate-900)', marginBottom: '0.5rem' }}>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#0f172a', marginBottom: '0.5rem', fontFamily: 'Georgia, serif' }}>
               Performance Analysis with Statistical Validation
             </h2>
             <p className="text-sm" style={{ color: '#64748b', lineHeight: 1.6, fontWeight: 400 }}>
@@ -445,11 +445,11 @@ export function AuditGradeReport() {
                 <div className="space-y-4">
                   {/* Metric Header */}
                   <div>
-                    <h3 className="mb-3 text-sm md:text-base" style={{ fontWeight: 600, color: 'var(--slate-900)' }}>
+                    <h3 className="mb-3 text-sm md:text-base" style={{ fontWeight: 600, color: '#0f172a' }}>
                       {metric.name}
                     </h3>
                     <div className="flex items-end gap-3 mb-3">
-                      <div className="text-5xl md:text-6xl" style={{ fontWeight: 600, color: 'var(--slate-950)', lineHeight: 1, letterSpacing: '-0.02em' }}>
+                      <div className="text-5xl md:text-6xl" style={{ fontWeight: 600, color: '#0f172a', lineHeight: 1, letterSpacing: '-0.02em' }}>
                         {metric.score}
                       </div>
                       <div className="mb-1">
@@ -464,14 +464,14 @@ export function AuditGradeReport() {
                     </div>
                     <div className="space-y-2 text-xs md:text-sm">
                       <div className="flex justify-between">
-                        <span style={{ color: 'var(--slate-600)' }}>95% CI:</span>
-                        <span style={{ fontWeight: 500, color: 'var(--slate-900)' }}>
+                        <span style={{ color: '#475569' }}>95% CI:</span>
+                        <span style={{ fontWeight: 500, color: '#0f172a' }}>
                           [{metric.confidence[0]}, {metric.confidence[1]}]
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span style={{ color: 'var(--slate-600)' }}>Significance:</span>
-                        <span style={{ fontWeight: 600, color: metric.significance.includes('<') ? '#16a34a' : 'var(--slate-500)' }}>
+                        <span style={{ color: '#475569' }}>Significance:</span>
+                        <span style={{ fontWeight: 600, color: metric.significance.includes('<') ? '#16a34a' : '#64748b' }}>
                           {metric.significance}
                         </span>
                       </div>
@@ -482,11 +482,11 @@ export function AuditGradeReport() {
                   <div>
                     {/* Progress Bar with CI Overlay */}
                     <div className="mb-4">
-                      <div className="flex justify-between text-xs mb-2" style={{ color: 'var(--slate-500)' }}>
+                      <div className="flex justify-between text-xs mb-2" style={{ color: '#64748b' }}>
                         <span>0</span>
                         <span>100</span>
                       </div>
-                      <div className="relative h-10 md:h-12 rounded-md" style={{ backgroundColor: 'var(--slate-100)' }}>
+                      <div className="relative h-10 md:h-12 rounded-md" style={{ backgroundColor: '#f1f5f9' }}>
                         {/* Confidence Interval Band */}
                         <motion.div
                           className="absolute h-full rounded-md"
@@ -513,14 +513,14 @@ export function AuditGradeReport() {
                           style={{ 
                             left: `${metric.score}%`,
                             transform: 'translate(-50%, -50%)',
-                            backgroundColor: 'var(--slate-950)',
+                            backgroundColor: '#0f172a',
                             fontWeight: 600
                           }}
                         >
                           {metric.score}
                         </div>
                       </div>
-                      <div className="flex justify-between text-xs mt-2" style={{ color: 'var(--slate-500)' }}>
+                      <div className="flex justify-between text-xs mt-2" style={{ color: '#64748b' }}>
                         <span>CI Lower: {metric.confidence[0]}</span>
                         <span>CI Upper: {metric.confidence[1]}</span>
                       </div>
@@ -538,7 +538,7 @@ export function AuditGradeReport() {
                           <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0 mt-0.5" style={{ color: '#94a3b8' }} />
                         )}
                         <div>
-                          <div className="text-xs md:text-sm mb-1" style={{ fontWeight: 500, color: 'var(--slate-900)' }}>
+                          <div className="text-xs md:text-sm mb-1" style={{ fontWeight: 500, color: '#0f172a' }}>
                             Statistical Interpretation
                           </div>
                           <div className="text-xs" style={{ color: '#64748b', lineHeight: 1.5, fontWeight: 400 }}>
@@ -558,10 +558,10 @@ export function AuditGradeReport() {
         <section className="relative overflow-hidden">
           <div 
             className="rounded-lg md:rounded-xl p-6 md:p-12 border relative z-10"
-            style={{ 
-              backgroundColor: 'var(--slate-950)',
-              borderColor: '#334155'
-            }}
+                style={{ 
+                  backgroundColor: '#0f172a',
+                  borderColor: '#334155'
+                }}
           >
             <div className="max-w-3xl">
               <div className="flex items-center gap-2 md:gap-3 mb-4">
@@ -578,7 +578,7 @@ export function AuditGradeReport() {
                 </span>
               </div>
               
-              <h2 className="mb-3 md:mb-4 text-xl md:text-2xl lg:text-3xl" style={{ color: 'white', fontWeight: 300, lineHeight: 1.3 }}>
+              <h2 className="mb-3 md:mb-4 text-xl md:text-2xl lg:text-3xl" style={{ color: 'white', fontWeight: 300, lineHeight: 1.3, fontFamily: 'Georgia, serif' }}>
                 Export for CFO, CEO, and Board Presentations
               </h2>
               
