@@ -281,7 +281,7 @@ export function FigmaIndustryReportsPage() {
                 maxWidth: '700px',
                 margin: '0 auto 3rem',
                 lineHeight: 1.7,
-                fontWeight: 300
+                fontWeight: 400
               }}
             >
               Track how leading <span style={{ color: '#4ade80', fontWeight: 400 }}>AI models recommend brands</span> across industries with <span style={{ color: '#4ade80', fontWeight: 400 }}>statistical confidence intervals</span>. Data-driven insights for CMOs and data scientists.
@@ -344,7 +344,7 @@ export function FigmaIndustryReportsPage() {
                   className="mb-2"
                   style={{ 
                     fontSize: '1.125rem',
-                    fontWeight: 400,
+                    fontWeight: 600,
                     color: 'white'
                   }}
                 >
@@ -355,7 +355,7 @@ export function FigmaIndustryReportsPage() {
                   style={{ 
                     color: '#94a3b8',
                     lineHeight: 1.6,
-                    fontWeight: 300
+                    fontWeight: 400
                   }}
                 >
                   {feature.description}
@@ -423,7 +423,7 @@ export function FigmaIndustryReportsPage() {
                   style={{ 
                     color: '#94a3b8',
                     lineHeight: 1.6,
-                    fontWeight: 300
+                    fontWeight: 400
                   }}
                 >
                   {sector.description}

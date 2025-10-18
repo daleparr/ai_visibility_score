@@ -419,7 +419,7 @@ export function LeaderboardTerminal() {
                   LIVE
                 </span>
               </div>
-              <p className="text-xs md:text-sm" style={{ color: 'var(--slate-400)', fontWeight: 400 }}>
+              <p className="text-xs md:text-sm" style={{ color: '#94a3b8', fontWeight: 300 }}>
                 Real-time AI rankings • Q4 2024
               </p>
             </div>
@@ -824,15 +824,15 @@ export function LeaderboardTerminal() {
             </div>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span style={{ color: 'var(--slate-400)', fontWeight: 300 }}>Sector Average:</span>
+                <span style={{ color: '#94a3b8', fontWeight: 300 }}>Sector Average:</span>
                 <span style={{ color: '#60a5fa', fontWeight: 400 }}>88/100</span>
               </div>
               <div className="flex justify-between">
-                <span style={{ color: 'var(--slate-400)', fontWeight: 300 }}>Top Performer:</span>
+                <span style={{ color: '#94a3b8', fontWeight: 300 }}>Top Performer:</span>
                 <span style={{ color: '#4ade80', fontWeight: 400 }}>Supreme</span>
               </div>
               <div className="flex justify-between">
-                <span style={{ color: 'var(--slate-400)', fontWeight: 300 }}>Opportunity:</span>
+                <span style={{ color: '#94a3b8', fontWeight: 300 }}>Opportunity:</span>
                 <span style={{ color: '#fbbf24', fontWeight: 400 }}>+6 points</span>
               </div>
             </div>
@@ -866,7 +866,7 @@ export function LeaderboardTerminal() {
               <Target className="w-4 h-4 md:w-5 md:h-5" style={{ color: '#a855f7' }} />
               <h3 style={{ color: 'white', fontWeight: 400, fontSize: '0.9375rem' }}>Get Started</h3>
             </div>
-            <p className="text-sm mb-4" style={{ color: 'var(--slate-400)', lineHeight: 1.6, fontWeight: 300 }}>
+            <p className="text-sm mb-4" style={{ color: '#94a3b8', lineHeight: 1.6, fontWeight: 300 }}>
               See how your brand scores
             </p>
             <button className="w-full px-4 py-3 rounded-lg" style={{ backgroundColor: '#a855f7', color: 'white', fontWeight: 400 }}>
