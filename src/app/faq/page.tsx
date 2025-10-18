@@ -1,3 +1,4 @@
+import { FigmaFAQPage } from '@/components/FigmaFAQPage'
 import { contentManager } from '@/lib/cms/cms-client'
 import { Brain, Mail, Book, MessageCircle, HelpCircle } from 'lucide-react'
 import Link from 'next/link'
@@ -8,6 +9,10 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 export const revalidate = 0;
 
 export default async function FAQPage() {
+  // Use Figma design (will integrate CMS FAQ content later)
+  return <FigmaFAQPage />;
+  
+  /* CMS Integration will be added later
   const page = await contentManager.getPage('faq')
   const faqs = await contentManager.getBlockByKey('faq', 'faq_items')
   

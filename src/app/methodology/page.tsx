@@ -1,20 +1,18 @@
-import { contentManager } from '@/lib/cms/cms-client'
-import { Brain, Download, FileText, GitBranch, Users } from 'lucide-react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { FigmaMethodologyPage } from '@/components/FigmaMethodologyPage'
 
 export const dynamic = 'force-dynamic'
 
 export default async function MethodologyPage() {
-  // Fetch CMS content
+  // Use Figma design (will integrate CMS methodology content later)
+  return <FigmaMethodologyPage />;
+  
+  /* CMS Integration will be added later
   const page = await contentManager.getPage('methodology')
   const intro = await contentManager.getBlockByKey('methodology', 'methodology_intro')
   const version = await contentManager.getBlockByKey('methodology', 'methodology_version')
   const principles = await contentManager.getBlockByKey('methodology', 'core_principles')
   
-  return (
+  return old_page (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">

@@ -1,24 +1,18 @@
-// Industry Reports Landing Page
+// Industry Reports Landing Page with Figma Design
 
-import Link from 'next/link';
-import { industryReportsDB } from '@/lib/industry-reports/db';
-import { Brain, Menu, X, Home, BarChart3 } from 'lucide-react';
-import { BrowseReportsButton } from '@/components/industry-reports/BrowseButton';
-import { contentManager } from '@/lib/cms/cms-client';
-import { LogoDisplay } from '@/components/LogoDisplay';
-import { db } from '@/lib/db';
-import { sql } from 'drizzle-orm';
-import { Footer } from '@/components/Footer';
+import { FigmaIndustryReportsPage } from '@/components/FigmaIndustryReportsPage';
 
-// Force dynamic rendering since we need database access
+// Force dynamic rendering
 export const dynamic = 'force-dynamic';
-export const revalidate = 0; // Fetch fresh CMS content every time
+export const revalidate = 0;
 
 export default async function IndustryReportsPage() {
+  // Use Figma design (will integrate CMS sector data later)
+  return <FigmaIndustryReportsPage />;
+  
+  /* CMS Integration will be added later
   let sectors: any[] = [];
   let error: string | null = null;
-  
-  // Fetch CMS content for hero section
   let heroHeadline, heroDescription, heroBadges, valueProps;
   
   try {

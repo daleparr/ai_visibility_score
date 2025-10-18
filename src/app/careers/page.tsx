@@ -1,26 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Briefcase, MapPin, Clock, DollarSign, ArrowRight, Brain } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-
-interface JobPosting {
-  id: string;
-  slug: string;
-  title: string;
-  department: string;
-  location: string;
-  employment_type: string;
-  experience_level: string;
-  salary_range?: string;
-  description: string;
-  requirements: string[];
-  posted_at: Date;
-  application_count: number;
-}
+import { FigmaCareersPage } from '@/components/FigmaCareersPage';
 
 export default function CareersPage() {
+  // Use Figma design (will integrate CMS job postings later)
+  return <FigmaCareersPage />;
+  
+  /* CMS Integration will be added later
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
   const [selectedDept, setSelectedDept] = useState<string>('all');

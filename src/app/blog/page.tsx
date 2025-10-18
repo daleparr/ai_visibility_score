@@ -1,11 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Calendar, Clock, Tag, ArrowRight, Brain } from 'lucide-react';
-import { format } from 'date-fns';
-import { Button } from '@/components/ui/button';
+import { FigmaBlogPage } from '@/components/FigmaBlogPage';
 
 interface BlogPost {
   id: string;
@@ -31,7 +27,6 @@ export default function BlogPage() {
 
   const loadPosts = async () => {
     try {
-      // Fetch blog posts from blog_posts table
       const response = await fetch('/api/cms/blog?status=published&limit=100');
       const data = await response.json();
       
@@ -46,6 +41,9 @@ export default function BlogPage() {
       setLoading(false);
     }
   };
+
+  // Use Figma design (will integrate CMS posts later)
+  return <FigmaBlogPage />;
 
   if (loading) {
     return (

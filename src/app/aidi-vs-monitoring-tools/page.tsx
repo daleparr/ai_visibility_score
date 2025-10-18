@@ -1,3 +1,4 @@
+import { FigmaVsMonitoringToolsPage } from '@/components/FigmaVsMonitoringToolsPage'
 import { contentManager } from '@/lib/cms/cms-client'
 import { Brain, ArrowRight, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
@@ -9,12 +10,15 @@ import { Badge } from '@/components/ui/badge'
 export const revalidate = 0; // Disable caching for CMS-driven pages
 
 export default async function PositioningPage() {
-  // Fetch CMS content
+  // Use Figma design (will integrate CMS positioning content later)
+  return <FigmaVsMonitoringToolsPage />;
+  
+  /* CMS Integration will be added later
   const page = await contentManager.getPage('aidi-vs-monitoring-tools')
   const intro = await contentManager.getBlockByKey('aidi-vs-monitoring-tools', 'positioning_intro')
   const comparison = await contentManager.getBlockByKey('aidi-vs-monitoring-tools', 'comparison_table')
   
-  return (
+  return old_page(
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
