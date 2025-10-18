@@ -5,12 +5,11 @@
  * This component integrates the Figma design with existing CMS functionality
  */
 
-import { CheckCircle2, BarChart3, Database, TrendingUp, Award, ArrowRight } from 'lucide-react';
+import { CheckCircle2, BarChart3, TrendingUp, Award, ArrowRight } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Footer } from './Footer';
-import { LogoImage } from './LogoImage';
 import { contentManager } from '@/lib/cms/cms-client';
-import { HomePageInteractive } from './homepage/Interactive';
+import { FigmaHeroInput } from './homepage/FigmaHeroInput';
 import { AIModelLogos } from './AIModelLogos';
 import { FigmaHomepageClient } from './FigmaHomepageClient';
 
@@ -136,22 +135,8 @@ export async function FigmaHomepage() {
                 {heroSubhead?.content?.text || 'See exactly how ChatGPT, Claude, and Gemini recommend your brand. Statistical rigor. Peer-reviewable methodology. Board-ready intelligence.'}
               </p>
 
-              {/* Input Section - Using existing Interactive component */}
-              <div className="bg-white rounded-2xl p-6 md:p-8 shadow-xl max-w-4xl mx-auto border" style={{ borderColor: 'var(--slate-200)' }}>
-                <HomePageInteractive config={evaluationFormConfig} />
-                
-                {/* Trust Signals - CMS Driven */}
-                {trustIndicators?.content?.items && (
-                  <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 text-sm mt-6" style={{ color: 'var(--slate-600)' }}>
-                    {trustIndicators.content.items.slice(0, 2).map((item: string, idx: number) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4" style={{ color: '#22c55e' }} />
-                        <span>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {/* Input Section - Figma Hero Input */}
+              <FigmaHeroInput />
             </div>
           </div>
         </section>
