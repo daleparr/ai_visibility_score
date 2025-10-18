@@ -169,7 +169,8 @@ export async function FigmaHomepage() {
                       fontSize: '1rem'
                     }}
                     onClick={() => {
-                      const url = document.querySelector('input[type="text"]')?.value;
+                      const input = document.querySelector('input[type="text"]') as HTMLInputElement;
+                      const url = input?.value;
                       if (url) {
                         window.location.href = `/evaluate?url=${encodeURIComponent(url)}`;
                       }
