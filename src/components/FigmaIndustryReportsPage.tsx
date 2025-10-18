@@ -288,42 +288,39 @@ export function FigmaIndustryReportsPage() {
             </p>
 
             <div className="flex flex-wrap justify-center gap-4 mb-8">
-              <Badge 
-                className="text-xs"
+              <span 
+                className="text-xs px-4 py-1.5 rounded-md"
                 style={{ 
                   backgroundColor: '#22c55e20',
-                  color: '#22c55e',
+                  color: '#4ade80',
                   border: '1px solid #22c55e40',
-                  fontWeight: 500,
-                  padding: '0.5rem 1rem'
+                  fontWeight: 400
                 }}
               >
                 3+ AI Models Tested
-              </Badge>
-              <Badge 
-                className="text-xs"
+              </span>
+              <span 
+                className="text-xs px-4 py-1.5 rounded-md"
                 style={{ 
                   backgroundColor: '#22c55e20',
-                  color: '#22c55e',
+                  color: '#4ade80',
                   border: '1px solid #22c55e40',
-                  fontWeight: 500,
-                  padding: '0.5rem 1rem'
+                  fontWeight: 400
                 }}
               >
                 95% Confidence Intervals
-              </Badge>
-              <Badge 
-                className="text-xs"
+              </span>
+              <span 
+                className="text-xs px-4 py-1.5 rounded-md"
                 style={{ 
                   backgroundColor: '#22c55e20',
-                  color: '#22c55e',
+                  color: '#4ade80',
                   border: '1px solid #22c55e40',
-                  fontWeight: 500,
-                  padding: '0.5rem 1rem'
+                  fontWeight: 400
                 }}
               >
                 Audit-Grade Data
-              </Badge>
+              </span>
             </div>
           </motion.div>
         </div>
@@ -337,17 +334,17 @@ export function FigmaIndustryReportsPage() {
               <motion.div
                 key={index}
                 className="bg-gradient-to-br from-slate-900/50 to-slate-800/50 rounded-xl p-6 border"
-                style={{ borderColor: '#1e293b' }}
+                style={{ borderColor: '#334155' }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1, duration: 0.4 }}
               >
-                <feature.icon className="w-8 h-8 mb-4" style={{ color: '#22c55e' }} />
+                <feature.icon className="w-8 h-8 mb-4" style={{ color: '#4ade80' }} />
                 <h3 
                   className="mb-2"
                   style={{ 
                     fontSize: '1.125rem',
-                    fontWeight: 500,
+                    fontWeight: 400,
                     color: 'white'
                   }}
                 >
@@ -356,9 +353,9 @@ export function FigmaIndustryReportsPage() {
                 <p 
                   className="text-sm"
                   style={{ 
-                    color: 'var(--slate-400)',
+                    color: '#94a3b8',
                     lineHeight: 1.6,
-                    fontWeight: 400
+                    fontWeight: 300
                   }}
                 >
                   {feature.description}
@@ -389,7 +386,7 @@ export function FigmaIndustryReportsPage() {
               <motion.div
                 key={index}
                 className="bg-gradient-to-br from-slate-900/80 to-slate-800/80 rounded-xl p-6 border hover:border-emerald-500/50 transition-all cursor-pointer"
-                style={{ borderColor: '#1e293b' }}
+                style={{ borderColor: '#334155' }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05, duration: 0.3 }}
@@ -397,24 +394,24 @@ export function FigmaIndustryReportsPage() {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="text-3xl">{sector.emoji}</div>
-                  <Badge 
-                    className="text-xs"
+                  <span 
+                    className="text-xs px-3 py-1 rounded-md"
                     style={{ 
                       backgroundColor: sector.status === 'Premium' ? '#d4a57420' : '#3b82f620',
-                      color: sector.status === 'Premium' ? '#d4a574' : '#3b82f6',
+                      color: sector.status === 'Premium' ? '#e9c896' : '#60a5fa',
                       border: sector.status === 'Premium' ? '1px solid #d4a57440' : '1px solid #3b82f640',
-                      fontWeight: 500
+                      fontWeight: 400
                     }}
                   >
                     {sector.status}
-                  </Badge>
+                  </span>
                 </div>
 
                 <h3 
                   className="mb-2"
                   style={{ 
                     fontSize: '1.125rem',
-                    fontWeight: 500,
+                    fontWeight: 400,
                     color: 'white'
                   }}
                 >
@@ -424,21 +421,21 @@ export function FigmaIndustryReportsPage() {
                 <p 
                   className="mb-4 text-sm"
                   style={{ 
-                    color: 'var(--slate-400)',
+                    color: '#94a3b8',
                     lineHeight: 1.6,
-                    fontWeight: 400
+                    fontWeight: 300
                   }}
                 >
                   {sector.description}
                 </p>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-xs" style={{ color: 'var(--slate-500)', fontWeight: 500 }}>
+                  <span className="text-xs" style={{ color: '#64748b', fontWeight: 300 }}>
                     {sector.brandCount} brands
                   </span>
                   <button 
                     className="text-xs flex items-center gap-1 hover:opacity-70 transition-opacity"
-                    style={{ color: '#22c55e', fontWeight: 500 }}
+                    style={{ color: '#4ade80', fontWeight: 400 }}
                   >
                     View Report →
                   </button>

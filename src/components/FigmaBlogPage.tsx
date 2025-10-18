@@ -220,21 +220,20 @@ export function FigmaBlogPage() {
       {/* Featured Post */}
       <section className="py-12 md:py-16 bg-white">
         <div className="max-w-4xl mx-auto px-4 md:px-8">
-          <Badge 
-            className="mb-6 text-xs uppercase tracking-wider"
+          <span 
+            className="inline-block mb-6 text-xs uppercase tracking-wider px-4 py-1.5 rounded-md"
             style={{ 
               backgroundColor: '#d4a574',
               color: 'white',
-              fontWeight: 500,
-              padding: '0.5rem 1rem'
+              fontWeight: 400
             }}
           >
             {featuredPost.badge}
-          </Badge>
+          </span>
 
           <motion.article
             className="bg-white rounded-2xl border p-6 md:p-8 hover:shadow-lg transition-shadow cursor-pointer"
-            style={{ borderColor: 'var(--slate-200)' }}
+            style={{ borderColor: '#e2e8f0' }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
@@ -308,11 +307,15 @@ export function FigmaBlogPage() {
               <motion.article
                 key={index}
                 className="bg-white rounded-xl border p-6 hover:shadow-lg transition-shadow cursor-pointer"
-                style={{ borderColor: 'var(--slate-200)' }}
+                style={{ borderColor: '#e2e8f0' }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: index * 0.1 }}
                 whileHover={{ y: -4 }}
+                onClick={() => {
+                  // Navigate to blog post - will integrate with CMS routing later
+                  console.log('Navigate to post:', post.title);
+                }}
               >
                 <h3 
                   className="mb-3"
@@ -359,8 +362,8 @@ export function FigmaBlogPage() {
       {/* Newsletter CTA */}
       <section className="py-12 md:py-16 bg-white">
         <div className="max-w-2xl mx-auto px-4 md:px-8 text-center">
-          <div className="bg-slate-50 rounded-2xl p-8 md:p-12 border" style={{ borderColor: 'var(--slate-200)' }}>
-            <TrendingUp className="w-12 h-12 mx-auto mb-4" style={{ color: '#3b82f6' }} />
+          <div className="bg-white rounded-2xl p-8 md:p-12 border" style={{ borderColor: '#e2e8f0' }}>
+            <TrendingUp className="w-12 h-12 mx-auto mb-4" style={{ color: '#60a5fa' }} />
             <h2 
               className="mb-4"
               style={{ 
@@ -372,26 +375,26 @@ export function FigmaBlogPage() {
             >
               Stay Ahead of AI Visibility Trends
             </h2>
-            <p className="mb-6 text-base" style={{ color: 'var(--slate-600)', lineHeight: 1.7 }}>
+            <p className="mb-6 text-base" style={{ color: 'var(--slate-600)', lineHeight: 1.7, fontWeight: 400 }}>
               Get monthly benchmark reports, methodology updates, and strategic insights delivered to your inbox.
             </p>
             <div className="flex flex-col md:flex-row gap-3 max-w-md mx-auto">
               <input
                 type="email"
                 placeholder="Enter your email"
-                className="flex-1 px-4 py-3 rounded-lg border-2 focus:outline-none transition-all text-base"
+                className="flex-1 px-4 py-3 rounded-xl border focus:outline-none transition-all text-base"
                 style={{
-                  borderColor: 'var(--slate-200)',
+                  borderColor: '#e2e8f0',
                   backgroundColor: 'white',
                   color: 'var(--slate-900)'
                 }}
               />
               <button
-                className="px-6 py-3 rounded-lg hover:opacity-90 transition-all"
+                className="px-6 py-3 rounded-xl hover:opacity-90 transition-all"
                 style={{
                   backgroundColor: 'var(--slate-950)',
                   color: 'white',
-                  fontWeight: 500
+                  fontWeight: 400
                 }}
               >
                 Subscribe
