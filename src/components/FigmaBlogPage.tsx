@@ -238,6 +238,14 @@ export function FigmaBlogPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
             whileHover={{ y: -4 }}
+            onClick={() => {
+              // Navigate to featured blog post
+              const slug = featuredPost.title.toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .substring(0, 50);
+              window.location.href = `/blog/${slug}`;
+            }}
           >
             <h2 
               className="mb-4"
@@ -313,8 +321,12 @@ export function FigmaBlogPage() {
                 transition={{ duration: 0.4, delay: index * 0.1 }}
                 whileHover={{ y: -4 }}
                 onClick={() => {
-                  // Navigate to blog post - will integrate with CMS routing later
-                  console.log('Navigate to post:', post.title);
+                  // Navigate to blog post - using a placeholder URL structure
+                  const slug = post.title.toLowerCase()
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .substring(0, 50);
+                  window.location.href = `/blog/${slug}`;
                 }}
               >
                 <h3 

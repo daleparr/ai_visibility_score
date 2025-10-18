@@ -138,13 +138,13 @@ export async function FigmaHomepage() {
               {/* Input Section - Exact Figma Design */}
               <div
                 className="bg-white rounded-2xl p-6 md:p-8 shadow-xl max-w-4xl mx-auto border"
-                style={{ borderColor: 'var(--slate-200)' }}
+                style={{ borderColor: '#e2e8f0' }}
               >
                 <div className="flex flex-col md:flex-row gap-3 md:gap-4 mb-4 md:mb-6">
                   <div className="flex-1 relative">
                     <div 
                       className="absolute left-4 top-1/2 -translate-y-1/2"
-                      style={{ color: 'var(--slate-400)' }}
+                      style={{ color: '#94a3b8' }}
                     >
                       <Database className="w-5 h-5" />
                     </div>
@@ -153,9 +153,9 @@ export async function FigmaHomepage() {
                       placeholder="Enter your website URL (e.g., example.com)"
                       className="w-full pl-14 pr-6 py-4 md:py-5 rounded-xl text-base md:text-lg border-2 focus:outline-none transition-all"
                       style={{
-                        borderColor: 'var(--slate-200)',
-                        backgroundColor: 'var(--slate-50)',
-                        color: 'var(--slate-900)',
+                        borderColor: '#e2e8f0',
+                        backgroundColor: '#f8fafc',
+                        color: '#0f172a',
                         fontWeight: 400
                       }}
                     />
@@ -163,10 +163,16 @@ export async function FigmaHomepage() {
                   <button
                     className="px-8 md:px-10 py-4 md:py-5 rounded-xl flex items-center justify-center gap-3 hover:opacity-90 transition-all shadow-lg"
                     style={{
-                      backgroundColor: 'var(--slate-950)',
+                      backgroundColor: '#0f172a',
                       color: 'white',
                       fontWeight: 500,
                       fontSize: '1rem'
+                    }}
+                    onClick={() => {
+                      const url = document.querySelector('input[type="text"]')?.value;
+                      if (url) {
+                        window.location.href = `/evaluate?url=${encodeURIComponent(url)}`;
+                      }
                     }}
                   >
                     Initiate Analysis
@@ -176,13 +182,13 @@ export async function FigmaHomepage() {
 
                 {/* Trust Signals */}
                 <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 text-sm" 
-                     style={{ color: 'var(--slate-600)' }}>
+                     style={{ color: '#475569' }}>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4" style={{ color: '#22c55e' }} />
                     <span>Board-ready • Multi-run averaging</span>
                   </div>
                   <div className="hidden md:block w-1 h-1 rounded-full" 
-                       style={{ backgroundColor: 'var(--slate-300)' }} />
+                       style={{ backgroundColor: '#cbd5e1' }} />
                   <div className="flex items-center gap-2">
                     <LogoImage size={16} />
                     <span>Statistical significance tested</span>
@@ -483,8 +489,11 @@ export async function FigmaHomepage() {
             <button
               className="px-10 md:px-12 py-4 md:py-5 rounded-xl text-white text-base md:text-lg hover:opacity-90 transition-all shadow-xl"
               style={{
-                backgroundColor: 'var(--slate-950)',
+                backgroundColor: '#0f172a',
                 fontWeight: 500
+              }}
+              onClick={() => {
+                window.location.href = '/evaluate';
               }}
             >
               Get Your AIDI Score →

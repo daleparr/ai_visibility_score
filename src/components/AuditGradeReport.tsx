@@ -94,7 +94,7 @@ export function AuditGradeReport() {
   ];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--slate-50)' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#f8fafc' }}>
       {/* Premium Header - Editorial Authority */}
       <header className="bg-white border-b" style={{ borderColor: '#e2e8f0' }}>
         <div className="max-w-7xl mx-auto px-4 md:px-12 py-6 md:py-8">
@@ -103,8 +103,8 @@ export function AuditGradeReport() {
               <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 mb-3">
                 <div className="flex items-center gap-3">
                   <div 
-                    className="w-10 h-10 md:w-12 md:h-12 rounded flex items-center justify-center"
-                    style={{ backgroundColor: 'var(--slate-950)' }}
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-md flex items-center justify-center"
+                    style={{ backgroundColor: '#0f172a' }}
                   >
                     <LogoImage size={28} className="md:w-7 md:h-7" />
                   </div>
@@ -168,7 +168,7 @@ export function AuditGradeReport() {
         >
           <div className="bg-gradient-to-br rounded-xl border overflow-hidden" 
             style={{ 
-              backgroundImage: 'linear-gradient(135deg, var(--slate-950) 0%, var(--slate-800) 100%)',
+              backgroundImage: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
               borderColor: '#334155'
             }}
           >
@@ -235,7 +235,7 @@ export function AuditGradeReport() {
                     className="text-xl md:text-2xl lg:text-3xl mb-3"
                     style={{ 
                       color: 'white',
-                      fontWeight: 300,
+                      fontWeight: 400,
                       lineHeight: 1.3,
                       letterSpacing: '-0.02em',
                       fontFamily: 'Georgia, serif'
@@ -321,7 +321,7 @@ export function AuditGradeReport() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr style={{ backgroundColor: 'var(--slate-50)', borderBottom: '1px solid #e2e8f0' }}>
+                  <tr style={{ backgroundColor: '#f1f5f9', borderBottom: '1px solid #e2e8f0' }}>
                     <th className="text-left px-4 md:px-6 py-3 md:py-4 text-xs uppercase tracking-wider" style={{ color: '#64748b', fontWeight: 500 }}>
                       Dimension
                     </th>
@@ -350,7 +350,7 @@ export function AuditGradeReport() {
                       }
                       return {
                         backgroundColor: 'transparent',
-                        color: 'var(--slate-700)'
+                        color: '#475569'
                       };
                     };
 
@@ -411,7 +411,7 @@ export function AuditGradeReport() {
                 </div>
                 <button 
                   className="w-full md:w-auto px-5 md:px-6 py-2.5 md:py-3 rounded-md text-white hover:opacity-90 transition-opacity text-sm flex items-center justify-center gap-2"
-                  style={{ backgroundColor: 'var(--slate-950)', fontWeight: 500 }}
+                  style={{ backgroundColor: '#0f172a', fontWeight: 500 }}
                 >
                   <FileText className="w-4 h-4" />
                   View Full Methodology
@@ -582,7 +582,7 @@ export function AuditGradeReport() {
                 Export for CFO, CEO, and Board Presentations
               </h2>
               
-              <p className="text-xs md:text-sm mb-6 md:mb-8" style={{ color: 'var(--slate-400)', lineHeight: 1.7 }}>
+              <p className="text-xs md:text-sm mb-6 md:mb-8" style={{ color: '#94a3b8', lineHeight: 1.7 }}>
                 Every data point in this report includes statistical validation, confidence intervals, and peer-reviewable methodology. 
                 Designed for M&A diligence, enterprise procurement, and strategic planning.
               </p>

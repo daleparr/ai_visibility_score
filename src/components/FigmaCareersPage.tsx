@@ -276,6 +276,14 @@ export function FigmaCareersPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: index * 0.1 }}
                 whileHover={{ y: -4 }}
+                onClick={() => {
+                  // Navigate to job details - using a placeholder URL structure
+                  const slug = job.title.toLowerCase()
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .substring(0, 50);
+                  window.location.href = `/careers/${slug}`;
+                }}
               >
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-4">
                   <div>
@@ -307,6 +315,15 @@ export function FigmaCareersPage() {
                       backgroundColor: '#3b82f6',
                       color: 'white',
                       fontWeight: 500
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent card click
+                      // Navigate to job details
+                      const slug = job.title.toLowerCase()
+                        .replace(/[^a-z0-9\s-]/g, '')
+                        .replace(/\s+/g, '-')
+                        .substring(0, 50);
+                      window.location.href = `/careers/${slug}`;
                     }}
                   >
                     View Details →
