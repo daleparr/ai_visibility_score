@@ -11,7 +11,7 @@
  * - Premium tier positioning upfront
  */
 
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { CheckCircle2, BarChart3, Database, TrendingUp, Lock, ArrowRight, Award, Zap, Target, ExternalLink, Menu } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Badge } from './ui/badge';

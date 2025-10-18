@@ -11,7 +11,7 @@
  * - Statistical rigor visible throughout
  */
 
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   TrendingUp, 
   TrendingDown, 

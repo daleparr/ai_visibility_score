@@ -9,7 +9,7 @@
  * - Every element defensible, peer-reviewable
  */
 
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { TrendingUp, Database, Lock, CheckCircle2, AlertTriangle, Award, BarChart3, FileText, Download } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Footer } from './Footer';
