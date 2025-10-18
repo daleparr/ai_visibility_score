@@ -7,18 +7,18 @@ import { Footer } from '../Footer';
 export function MinimalHomepageVariant() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      {/* Minimal Top Nav - Just Logo + Sign In */}
-      <header className="py-6 px-6">
+      {/* Minimal Top Nav - Mobile Menu Included */}
+      <header className="py-4 px-4 md:px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-2">
-            <Brain className="h-8 w-8 text-brand-600" />
-            <span className="text-xl font-bold text-gray-900">AIDI</span>
+            <Brain className="h-7 w-7 md:h-8 md:w-8 text-brand-600" />
+            <span className="text-lg md:text-xl font-bold text-gray-900">AIDI</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-8 text-sm">
+          <nav className="flex items-center gap-4 md:gap-8 text-sm">
             <Link href="/methodology" className="text-gray-600 hover:text-gray-900 transition">
               Methodology
             </Link>
-            <Link href="/reports" className="text-gray-600 hover:text-gray-900 transition">
+            <Link href="/reports" className="text-gray-600 hover:text-gray-900 transition hidden sm:inline">
               Reports
             </Link>
             <Link href="/auth/signin" className="text-gray-600 hover:text-gray-900 transition">
@@ -28,17 +28,17 @@ export function MinimalHomepageVariant() {
         </div>
       </header>
 
-      {/* Spacious Hero - Maximum White Space */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-20">
-        <div className="max-w-4xl w-full text-center space-y-16">
-          {/* Premium Tagline - Minimal Copy */}
-          <div className="space-y-6">
-            <h1 className="text-5xl md:text-7xl font-bold text-gray-900 tracking-tight leading-none">
+      {/* Hero - Reduced Padding */}
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-6 md:py-16 -mt-4 md:-mt-8">
+        <div className="max-w-4xl w-full text-center space-y-8 md:space-y-12">
+          {/* Premium Tagline - Smaller on Mobile */}
+          <div className="space-y-4">
+            <h1 className="text-4xl md:text-7xl font-bold text-gray-900 tracking-tight leading-none">
               Discover Your AI Visibility.
               <br />
               Instantly.
             </h1>
-            <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto font-light">
+            <p className="text-lg md:text-2xl text-gray-600 max-w-3xl mx-auto font-light">
               See exactly how ChatGPT, Claude, and Gemini recommend your brand.
             </p>
           </div>
@@ -48,24 +48,21 @@ export function MinimalHomepageVariant() {
             <HomePageInteractive />
           </div>
 
-          {/* AI Model Logos - Trust Signals (All Labs Visible) */}
-          <div className="pt-12 max-w-3xl mx-auto">
-            <p className="text-sm text-gray-500 text-center mb-8 uppercase tracking-wider font-semibold">
+          {/* AI Model Logos - Trust Signals (Single Row) */}
+          <div className="pt-12 max-w-4xl mx-auto">
+            <p className="text-xs text-gray-500 text-center mb-6 uppercase tracking-wider font-semibold">
               Testing Across Frontier AI Models
             </p>
-            <div className="flex items-center justify-center gap-12 flex-wrap">
+            <div className="flex items-center justify-between gap-4 md:gap-8 overflow-x-auto pb-4" style={{flexWrap: 'nowrap'}}>
               {['openai', 'anthropic', 'google-ai', 'perplexity', 'mistral'].map((model) => (
-                <div key={model} className="flex flex-col items-center opacity-70 hover:opacity-100 transition-opacity">
-                  <div className="w-32 h-32 flex items-center justify-center">
+                <div key={model} className="flex-shrink-0 flex flex-col items-center opacity-70 hover:opacity-100 transition-opacity">
+                  <div className="w-16 h-16 md:w-28 md:h-28 flex items-center justify-center">
                     <img
                       src={`/logos/${model === 'openai' ? 'OpenAI' : model === 'anthropic' ? 'Anthropic' : model === 'google-ai' ? 'Google' : model === 'perplexity' ? 'Perplexity AI' : 'Mistral ai'} logo 200 x 80.png`}
                       alt={`${model} logo`}
                       className="max-w-full max-h-full object-contain grayscale hover:grayscale-0 transition-all"
                     />
                   </div>
-                  <span className="text-xs text-gray-400 mt-2">
-                    {model === 'openai' ? 'ChatGPT' : model === 'anthropic' ? 'Claude' : model === 'google-ai' ? 'Gemini' : model === 'perplexity' ? 'Perplexity' : 'Mistral'}
-                  </span>
                 </div>
               ))}
             </div>
