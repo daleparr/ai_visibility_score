@@ -277,19 +277,19 @@ export function FigmaIndustryReportsPage() {
             <p 
               className="mb-8 text-base md:text-lg"
               style={{ 
-                color: 'var(--slate-300)',
+                color: '#94a3b8',
                 maxWidth: '700px',
                 margin: '0 auto 3rem',
                 lineHeight: 1.7,
-                fontWeight: 400
+                fontWeight: 300
               }}
             >
-              Track how leading <span style={{ color: '#22c55e', fontWeight: 500 }}>AI models recommend brands</span> across industries with <span style={{ color: '#22c55e', fontWeight: 500 }}>statistical confidence intervals</span>. Data-driven insights for CMOs and data scientists.
+              Track how leading <span style={{ color: '#4ade80', fontWeight: 400 }}>AI models recommend brands</span> across industries with <span style={{ color: '#4ade80', fontWeight: 400 }}>statistical confidence intervals</span>. Data-driven insights for CMOs and data scientists.
             </p>
 
             <div className="flex flex-wrap justify-center gap-4 mb-8">
               <span 
-                className="text-xs px-4 py-1.5 rounded-md"
+                className="text-sm px-4 py-2 rounded-md"
                 style={{ 
                   backgroundColor: '#22c55e20',
                   color: '#4ade80',
@@ -300,7 +300,7 @@ export function FigmaIndustryReportsPage() {
                 3+ AI Models Tested
               </span>
               <span 
-                className="text-xs px-4 py-1.5 rounded-md"
+                className="text-sm px-4 py-2 rounded-md"
                 style={{ 
                   backgroundColor: '#22c55e20',
                   color: '#4ade80',
@@ -311,7 +311,7 @@ export function FigmaIndustryReportsPage() {
                 95% Confidence Intervals
               </span>
               <span 
-                className="text-xs px-4 py-1.5 rounded-md"
+                className="text-sm px-4 py-2 rounded-md"
                 style={{ 
                   backgroundColor: '#22c55e20',
                   color: '#4ade80',

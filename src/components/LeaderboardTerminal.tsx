@@ -514,7 +514,7 @@ export function LeaderboardTerminal() {
           </div>
 
           {/* Mobile Card View */}
-          <div className="md:hidden divide-y" style={{ borderColor: '#1e293b' }}>
+          <div className="md:hidden divide-y" style={{ borderColor: '#334155' }}>
             {leaderboardData.map((entry, index) => (
               <motion.div
                 key={entry.brand}
@@ -542,7 +542,7 @@ export function LeaderboardTerminal() {
                     <h3 className="mb-0.5" style={{ color: 'white', fontWeight: 500, fontSize: '1rem' }}>
                       {entry.brand}
                     </h3>
-                    <div className="text-xs mb-2" style={{ color: 'var(--slate-500)', fontFamily: 'monospace', fontWeight: 400 }}>
+                    <div className="text-xs mb-2" style={{ color: '#64748b', fontFamily: 'monospace', fontWeight: 400 }}>
                       {entry.url}
                     </div>
                     
@@ -669,7 +669,7 @@ export function LeaderboardTerminal() {
           </div>
 
           {/* Table Rows */}
-          <div className="divide-y" style={{ borderColor: '#1e293b' }}>
+          <div className="divide-y" style={{ borderColor: '#334155' }}>
             {leaderboardData.map((entry, index) => (
               <motion.div
                 key={entry.brand}
@@ -705,7 +705,7 @@ export function LeaderboardTerminal() {
                     <div style={{ color: 'white', fontWeight: 500, marginBottom: '0.125rem' }}>
                       {entry.brand}
                     </div>
-                    <div className="text-xs" style={{ color: 'var(--slate-500)', fontFamily: 'monospace', fontWeight: 400 }}>
+                    <div className="text-xs" style={{ color: '#64748b', fontFamily: 'monospace', fontWeight: 400 }}>
                       {entry.url}
                     </div>
                   </div>
